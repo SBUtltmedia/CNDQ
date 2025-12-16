@@ -1,0 +1,18 @@
+<If "env('ENVIRONMENT') == 'local'">
+    # Set env vars only if LOCAL=true
+    SetEnv cn test_cn
+    SetEnv nickname test_nickname
+    SetEnv givenName test_givenName
+    SetEnv sn test_sn
+    SetEnv mail test_mail1@stonybrook.edu
+</If>
+<Else>
+    <IfModule mod_shib.c>
+        AuthType shibboleth
+        ShibRequestSetting requireSession false
+        #require valid-user
+        #ShibRequestSetting requireSession false
+        require shibboleth
+    </IfModule>
+    SetEnv PHP_VALUE "session.save_path=/home/tltsecure/apache2/htdocs/userData/sessionData"
+</Else>

@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
+
+body.phpDetails {
+    background-color: black;
+}
+
+body {
+    font-family: 'Georgia', serif;
+    margin: 0;
+    padding: 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    justify-content: flex-start;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+#header {
+    text-align: center; 
+    margin-bottom: 20px;
+}
+
+#header h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+
+#details-request {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.data-row {
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    flex-direction: column; 
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+.label {
+    font-weight: bold;
+    font-size: 16px;
+    text-align: center; 
+    padding-bottom: 5px;
+}
+
+.value {
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+}
+
+.data-container {
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.message-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: black;
+}
+
+.message {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+}
+
+
+
+button {
+    cursor: pointer;
+    background: white;
+}
+
+button:hover {
+    opacity: 0.7;
+}
+
+.yes {
+    background-color: green;
+    color: white;
+}
+
+.no {
+    background-color: red;
+    color: white;
+}
+
+#approval-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 5%;
+    color: white;
+}
+
+

@@ -1,0 +1,104 @@
+#ddev-generated
+# If you remove the ddev-generated line above you
+# are responsible for maintaining this file. DDEV will not then
+# update it, for example if you add `additional_hostnames`, etc.
+
+http:
+  routers:
+    goodLuck-xhgui-80-http:
+      entrypoints:
+        - http-8143
+      rule: HostRegexp(`^goodluck\.ddev\.site$`)
+      
+      service: "goodLuck-xhgui-80"
+      ruleSyntax: v3
+      tls: false
+      # middlewares:
+      #   - "goodLuck-redirectHttps"
+    goodLuck-web-80-http:
+      entrypoints:
+        - http-80
+      rule: HostRegexp(`^goodluck\.ddev\.site$`)
+      
+      service: "goodLuck-web-80"
+      ruleSyntax: v3
+      tls: false
+      # middlewares:
+      #   - "goodLuck-redirectHttps"
+    goodLuck-web-8025-http:
+      entrypoints:
+        - http-8025
+      rule: HostRegexp(`^goodluck\.ddev\.site$`)
+      
+      service: "goodLuck-web-8025"
+      ruleSyntax: v3
+      tls: false
+      # middlewares:
+      #   - "goodLuck-redirectHttps"
+    
+    
+    goodLuck-xhgui-80-https:
+      entrypoints:
+        - http-8142
+      rule: HostRegexp(`^goodluck\.ddev\.site$`)
+      
+      service: "goodLuck-xhgui-80"
+      ruleSyntax: v3
+      
+      tls: true
+      
+    
+    
+    goodLuck-web-80-https:
+      entrypoints:
+        - http-443
+      rule: HostRegexp(`^goodluck\.ddev\.site$`)
+      
+      service: "goodLuck-web-80"
+      ruleSyntax: v3
+      
+      tls: true
+      
+    goodLuck-web-8025-https:
+      entrypoints:
+        - http-8026
+      rule: HostRegexp(`^goodluck\.ddev\.site$`)
+      
+      service: "goodLuck-web-8025"
+      ruleSyntax: v3
+      
+      tls: true
+      
+    
+
+  middlewares:
+    goodLuck-redirectHttps:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+  services:
+    goodLuck-xhgui-80:
+      loadbalancer:
+        servers:
+          - url: http://ddev-goodLuck-xhgui:80
+        
+    
+    goodLuck-web-80:
+      loadbalancer:
+        servers:
+          - url: http://ddev-goodLuck-web:80
+        
+    goodLuck-web-8025:
+      loadbalancer:
+        servers:
+          - url: http://ddev-goodLuck-web:8025
+        
+    
+    
+    
+
+tls:
+  certificates:
+    - certFile: /mnt/ddev-global-cache/traefik/certs/goodLuck.crt
+      keyFile: /mnt/ddev-global-cache/traefik/certs/goodLuck.key
