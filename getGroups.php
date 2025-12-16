@@ -18,10 +18,6 @@ foreach($values as $lineNumber => $lineContent){
      
         $row[$headers[$index]]=$values;
 
-        // if(!array_key_exists($headers[$index], $groups)){
-        //     $groups[$headers[$index]]=array();
-        // }
-
     }
 
     array_push($groups, $row);
