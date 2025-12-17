@@ -24,4 +24,5 @@ foreach($values as $lineNumber => $lineContent){
 
 }
 
-print_r(json_encode($groups));
+header('Content-Type: application/json');
+echo json_encode($groups);
