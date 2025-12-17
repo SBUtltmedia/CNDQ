@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production & Profit Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .transition-width { transition: width 0.5s ease-in-out; }
+        .currency::before { content: '$'; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>
+                    Enterprise Manager
+                </h1>
+                <p class="text-slate-500">Inventory, Production & Profit Tracking</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="reset-btn" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors text-slate-600 font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    Reset Session
+                </button>
+            </div>
+        </header>
+
+        <!-- Financial Summary -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-indigo-600 p-6 rounded-2xl text-white shadow-lg">
+                <p class="text-indigo-100 text-xs uppercase font-bold mb-1">Total Bank Balance</p>
+                <h3 class="text-3xl font-black currency" id="total-balance">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <p class="text-slate-400 text-xs uppercase font-bold mb-1">Projected Profit</p>
+                <h3 class="text-3xl font-black text-emerald-600 currency" id="total-profit">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <p class="text-slate-400 text-xs uppercase font-bold mb-1">Starting Capital</p>
+                <h3 class="text-3xl font-black text-slate-800 currency" id="starting-fund">0</h3>
+            </div>
+        </section>
+
+        <!-- Inventory Grid -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="inventory-grid">
+            <!-- Dynamically injected -->
+        </section>
+
+        <!-- Product Controls -->
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Deicer Card -->
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+                <div class="h-2 bg-blue-500"></div>
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Deicer</h2>
+                            <p class="text-slate-500 text-sm">50 Gallon Drum • <span class="text-emerald-600 font-bold">+$100 Profit</span></p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-blue-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-4">
+                        <button id="deicer-minus" class="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:border-slate-400 transition-all active:scale-95 disabled:opacity-20">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+                        </button>
+                        <div class="flex-1 text-center">
+                            <div id="deicer-count" class="text-3xl font-black text-slate-800">0</div>
+                            <div class="text-[10px] uppercase font-bold text-slate-400">Drums Produced</div>
+                        </div>
+                        <button id="deicer-plus" class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-sm active:scale-95 disabled:bg-slate-100 disabled:text-slate-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                    </div>
+                    <p id="deicer-warning" class="hidden mt-4 text-center text-xs text-amber-600 font-medium">Insufficient materials</p>
+                </div>
+            </div>
+
+            <!-- Solvent Card -->
+            <div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
+                <div class="h-2 bg-emerald-500"></div>
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-800">Solvent</h2>
+                            <p class="text-slate-500 text-sm">20 Gallon Drum • <span class="text-emerald-600 font-bold">+$60 Profit</span></p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-emerald-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between gap-4">
+                        <button id="solvent-minus" class="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:border-slate-400 transition-all active:scale-95 disabled:opacity-20">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
+                        </button>
+                        <div class="flex-1 text-center">
+                            <div id="solvent-count" class="text-3xl font-black text-slate-800">0</div>
+                            <div class="text-[10px] uppercase font-bold text-slate-400">Drums Produced</div>
+                        </div>
+                        <button id="solvent-plus" class="w-12 h-12 flex items-center justify-center rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:bg-slate-100 disabled:text-slate-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                    </div>
+                    <p id="solvent-warning" class="hidden mt-4 text-center text-xs text-amber-600 font-medium">Insufficient materials</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Footer -->
+        <footer class="mt-12 p-6 bg-slate-900 rounded-2xl text-white shadow-xl">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-center md:text-left">
+                <div>
+                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Production Volume</p>
+                    <p class="text-2xl font-bold"><span id="total-vol">0</span> <span class="text-sm font-normal">gal</span></p>
+                </div>
+                <div>
+                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Resource Utilization</p>
+                    <p class="text-2xl font-bold" id="utilization">0.0%</p>
+                </div>
+                <div class="col-span-2 md:col-span-1 flex flex-col items-center md:items-start">
+                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Session Status</p>
+                    <div class="flex items-center gap-2" id="sync-status">
+                        <div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                        <p class="text-sm font-medium">Initializing...</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
