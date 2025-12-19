@@ -14,7 +14,10 @@
     <div class="max-w-7xl mx-auto">
         <header class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-slate-800">Market Dashboard</h1>
-            <a href="index.html" class="text-indigo-600 hover:underline">Back to Production</a>
+            <div class="flex gap-4">
+                <a href="calculator.html" class="text-indigo-600 hover:underline">Shadow Prices</a>
+                <a href="index.html" class="text-indigo-600 hover:underline">Back to Production</a>
+            </div>
         </header>
 
         <div id="error-msg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
@@ -44,13 +47,6 @@
             <h3 class="text-xl font-bold mb-4" id="modal-title">Trade</h3>
             <p class="mb-4 text-slate-600" id="modal-desc">...</p>
             
-            <div id="target-selector-div" class="hidden mb-4">
-                <label class="block mb-2 text-sm font-bold text-slate-700">Select Team to Sell To</label>
-                <select id="target-team-select" class="w-full border rounded p-2 bg-white">
-                    <!-- Teams injected here -->
-                </select>
-            </div>
-
             <div class="flex justify-end gap-2">
                 <button onclick="closeModal()" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded transition-colors">Cancel</button>
                 <button id="confirm-trade-btn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors shadow-sm">Confirm Trade</button>
@@ -102,23 +98,42 @@
                 
                 ['C', 'N', 'D', 'Q'].forEach(chem => {
                     const amount = team.inventory[chem] || 0;
+                    const isListed = team.listings && team.listings[chem];
                     
-                    html += `
-                        <td class="px-6 py-4 text-center">
-                            <div class="text-sm font-bold mb-1">${amount.toFixed(0)}</div>
+                    let displayContent = '';
+
+                    if (isMe) {
+                        // My Row: Show Amount + List/Unlist Toggle
+                        displayContent = `
+                            <div class="text-sm font-bold mb-1 text-slate-900">${amount.toFixed(0)}</div>
                             <div class="flex justify-center">
-                                ${isMe ? `
-                                    <button onclick="openTrade('sell', null, '${chem}', ${amount})" 
-                                            class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            ${amount <= 0 ? 'disabled' : ''}>Sell</button>
-                                ` : `
-                                    <button onclick="openTrade('buy', '${team.id}', '${chem}', ${amount})" 
-                                            class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                            ${amount <= 0 ? 'disabled' : ''}>Buy</button>
-                                `}
+                                <button onclick="toggleListing('${chem}')" 
+                                        class="px-3 py-1 text-xs rounded transition-colors shadow-sm font-medium ${isListed ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-blue-600 text-white hover:bg-blue-700'}">
+                                    ${isListed ? 'Unlist' : 'List for Sale'}
+                                </button>
                             </div>
-                        </td>
-                    `;
+                            ${isListed ? '<div class="mt-1 text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Listed</div>' : ''}
+                        `;
+                    } else {
+                        // Others: Show "Available" IF Listed, else "Not Listed"
+                        if (isListed && amount > 0) {
+                            displayContent = `
+                                <div class="text-sm font-bold mb-1 text-emerald-600">Available</div>
+                                <div class="flex justify-center">
+                                    <button onclick="openTrade('buy', '${team.id}', '${chem}', ${amount})" 
+                                            class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors shadow-sm">
+                                        Buy
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                             displayContent = `
+                                <div class="text-sm font-bold mb-1 text-slate-400 italic">Not Listed</div>
+                            `;
+                        }
+                    }
+
+                    html += `<td class="px-6 py-4 text-center">${displayContent}</td>`;
                 });
                 
                 row.innerHTML = html;
@@ -126,28 +141,29 @@
             });
         }
 
+        async function toggleListing(chem) {
+            try {
+                const response = await fetch('toggle_listing.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chemical: chem })
+                });
+                if (response.ok) {
+                    init(); // Reload
+                } else {
+                    alert("Failed to toggle listing");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         window.openTrade = (action, targetId, chem, amount) => {
-            const title = action === 'buy' ? `Buy Chemical ${chem}` : `Sell Chemical ${chem}`;
-            const desc = action === 'buy' 
-                ? `You are buying ALL <b>${amount.toFixed(0)}</b> gallons of ${chem} from this team.`
-                : `You are selling ALL your <b>${amount.toFixed(0)}</b> gallons of ${chem}.`;
+            const title = `Buy Chemical ${chem}`;
+            const desc = `You are buying <b>ALL available gallons</b> of ${chem} from this team.`;
             
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-desc').innerHTML = desc;
-            
-            const selectorDiv = document.getElementById('target-selector-div');
-            const selector = document.getElementById('target-team-select');
-            
-            if (action === 'sell') {
-                selectorDiv.classList.remove('hidden');
-                selector.innerHTML = '<option value="">-- Select Buyer --</option>';
-                const safeCurrentUser = currentUser.replace(/[^a-zA-Z0-9_\-@.]/g, '_');
-                currentTeams.filter(t => t.id !== safeCurrentUser).forEach(t => {
-                    selector.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.display}</option>`);
-                });
-            } else {
-                selectorDiv.classList.add('hidden');
-            }
             
             pendingTrade = { action, targetId, chemical: chem };
             document.getElementById('trade-modal').classList.remove('hidden');
@@ -163,14 +179,8 @@
         document.getElementById('confirm-trade-btn').addEventListener('click', async () => {
             if (!pendingTrade) return;
             
-            let targetId = pendingTrade.targetId;
-            if (pendingTrade.action === 'sell') {
-                targetId = document.getElementById('target-team-select').value;
-                if (!targetId) {
-                    alert("Please select a buyer.");
-                    return;
-                }
-            }
+            // Only 'buy' actions exist now in the modal
+            const targetId = pendingTrade.targetId;
 
             try {
                 const response = await fetch('trade.php', {

@@ -1,4 +1,5 @@
 <?php
+require_once 'userData.php';
 header('Content-Type: application/json');
 
 $dataDir = __DIR__ . '/data';
@@ -28,10 +29,11 @@ foreach ($files as $file) {
                 'display' => str_replace('_', '.', $email), // Rough formatting
                 'inventory' => $data['inventory'] ?? [], // This is the reduced (current) inventory
                 'baseInventory' => $data['baseInventory'] ?? ($data['inventory'] ?? []),
+                'listings' => $data['market_listings'] ?? [], // Listing status
                 // We might need to know if they are 'active' or valid
             ];
         }
     }
 }
 
-echo json_encode(['teams' => $teams, 'currentUser' => $_SERVER['mail'] ?? 'dev_user']);
+echo json_encode(['teams' => $teams, 'currentUser' => getCurrentUserEmail()]);

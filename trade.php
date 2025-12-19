@@ -22,7 +22,7 @@ if (!$action || !$targetId || !$chemical) {
 }
 
 // Identify Actor (Current User)
-$currentUserEmail = $_SERVER['mail'] ?? 'dev_user';
+$currentUserEmail = getCurrentUserEmail();
 $actorSafeEmail = preg_replace('/[^a-zA-Z0-9_\-@.]/', '_', $currentUserEmail);
 $actorFile = __DIR__ . '/data/user_' . $actorSafeEmail . '.json';
 
@@ -65,6 +65,13 @@ $message = "";
 if ($action === 'buy') {
     // Actor BUYS from Target (Takes ALL)
     
+    // Check if Target has listed this item
+    $isListed = $targetData['market_listings'][$chemical] ?? false;
+    if (!$isListed) {
+        echo json_encode(['error' => 'This item is not listed for sale']);
+        exit;
+    }
+
     $amount = $targetData['inventory'][$chemical];
     
     if ($amount <= 0) {
