@@ -9,7 +9,7 @@
 <Else>
     <IfModule mod_shib>
         AuthType shibboleth
-        ShibRequestSetting requireSession false
+        ShibRequestSetting requireSession true
         #require valid-user
         #ShibRequestSetting requireSession false
         require shibboleth
