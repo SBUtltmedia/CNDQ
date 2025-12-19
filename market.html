@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800">Market Dashboard</h1>
+            <a href="index.html" class="text-indigo-600 hover:underline">Back to Production</a>
+        </header>
+
+        <div id="error-msg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+        <div id="success-msg" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"></div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Team</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Chemical C</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Chemical N</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Chemical D</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Chemical Q</th>
+                    </tr>
+                </thead>
+                <tbody id="market-table" class="bg-white divide-y divide-slate-200">
+                    <!-- Rows injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Trade Modal -->
+    <div id="trade-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4" id="modal-title">Trade</h3>
+            <p class="mb-4 text-slate-600" id="modal-desc">...</p>
+            
+            <div id="target-selector-div" class="hidden mb-4">
+                <label class="block mb-2 text-sm font-bold text-slate-700">Select Team to Sell To</label>
+                <select id="target-team-select" class="w-full border rounded p-2 bg-white">
+                    <!-- Teams injected here -->
+                </select>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="closeModal()" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded transition-colors">Cancel</button>
+                <button id="confirm-trade-btn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors shadow-sm">Confirm Trade</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTeams = [];
+        let currentUser = '';
+        let pendingTrade = null;
+
+        async function init() {
+            try {
+                const response = await fetch('getAllTeams.php');
+                const data = await response.json();
+                currentTeams = data.teams;
+                currentUser = data.currentUser;
+                render();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function render() {
+            const tbody = document.getElementById('market-table');
+            tbody.innerHTML = '';
+            
+            // Identify current user's safe ID
+            const safeCurrentUser = currentUser.replace(/[^a-zA-Z0-9_\-@.]/g, '_');
+
+            // Sort teams to put the current user at the top
+            currentTeams.sort((a, b) => {
+                if (a.id === safeCurrentUser) return -1;
+                if (b.id === safeCurrentUser) return 1;
+                return a.display.localeCompare(b.display);
+            });
+
+            currentTeams.forEach(team => {
+                const isMe = team.id === safeCurrentUser;
+                const row = document.createElement('tr');
+                row.className = isMe ? 'bg-indigo-50 border-l-4 border-indigo-500' : '';
+                
+                let html = `<td class="px-6 py-4 whitespace-nowrap font-medium text-slate-900">
+                    <div class="flex items-center gap-2">
+                        ${team.display} ${isMe ? '<span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] rounded-full uppercase font-bold tracking-wider">You</span>' : ''}
+                    </div>
+                </td>`;
+                
+                ['C', 'N', 'D', 'Q'].forEach(chem => {
+                    const amount = team.inventory[chem] || 0;
+                    
+                    html += `
+                        <td class="px-6 py-4 text-center">
+                            <div class="text-sm font-bold mb-1">${amount.toFixed(0)}</div>
+                            <div class="flex justify-center">
+                                ${isMe ? `
+                                    <button onclick="openTrade('sell', null, '${chem}', ${amount})" 
+                                            class="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            ${amount <= 0 ? 'disabled' : ''}>Sell</button>
+                                ` : `
+                                    <button onclick="openTrade('buy', '${team.id}', '${chem}', ${amount})" 
+                                            class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            ${amount <= 0 ? 'disabled' : ''}>Buy</button>
+                                `}
+                            </div>
+                        </td>
+                    `;
+                });
+                
+                row.innerHTML = html;
+                tbody.appendChild(row);
+            });
+        }
+
+        window.openTrade = (action, targetId, chem, amount) => {
+            const title = action === 'buy' ? `Buy Chemical ${chem}` : `Sell Chemical ${chem}`;
+            const desc = action === 'buy' 
+                ? `You are buying ALL <b>${amount.toFixed(0)}</b> gallons of ${chem} from this team.`
+                : `You are selling ALL your <b>${amount.toFixed(0)}</b> gallons of ${chem}.`;
+            
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerHTML = desc;
+            
+            const selectorDiv = document.getElementById('target-selector-div');
+            const selector = document.getElementById('target-team-select');
+            
+            if (action === 'sell') {
+                selectorDiv.classList.remove('hidden');
+                selector.innerHTML = '<option value="">-- Select Buyer --</option>';
+                const safeCurrentUser = currentUser.replace(/[^a-zA-Z0-9_\-@.]/g, '_');
+                currentTeams.filter(t => t.id !== safeCurrentUser).forEach(t => {
+                    selector.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.display}</option>`);
+                });
+            } else {
+                selectorDiv.classList.add('hidden');
+            }
+            
+            pendingTrade = { action, targetId, chemical: chem };
+            document.getElementById('trade-modal').classList.remove('hidden');
+            document.getElementById('trade-modal').classList.add('flex');
+        };
+
+        window.closeModal = () => {
+             document.getElementById('trade-modal').classList.add('hidden');
+             document.getElementById('trade-modal').classList.remove('flex');
+             pendingTrade = null;
+        };
+
+        document.getElementById('confirm-trade-btn').addEventListener('click', async () => {
+            if (!pendingTrade) return;
+            
+            let targetId = pendingTrade.targetId;
+            if (pendingTrade.action === 'sell') {
+                targetId = document.getElementById('target-team-select').value;
+                if (!targetId) {
+                    alert("Please select a buyer.");
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch('trade.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...pendingTrade, targetId })
+                });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showSuccess(result.message);
+                    closeModal();
+                    init(); // Reload data
+                } else {
+                    showError(result.error);
+                    closeModal();
+                }
+            } catch (e) {
+                showError("Trade failed");
+            }
+        });
+
+        function showError(msg) {
+            const el = document.getElementById('error-msg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        function showSuccess(msg) {
+             const el = document.getElementById('success-msg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
