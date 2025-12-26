@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ddev status:*)",
+      "Bash(wsl ddev:*)",
+      "Bash(cat:*)"
+    ]
+  }
+}

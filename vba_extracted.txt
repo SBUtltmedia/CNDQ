@@ -1,0 +1,578 @@
+olevba 0.60.2 on Python 3.13.11 - http://decalage.info/python/oletools
+===============================================================================
+FILE: Deicer and Solvent Model Blank Template 19Dect2025.xlsm
+Type: OpenXML
+WARNING  For now, VBA stomping cannot be detected for files in memory
+-------------------------------------------------------------------------------
+VBA MACRO ThisWorkbook.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/ThisWorkbook'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Private Sub Workbook_Open()
+Dim J As Integer
+
+Load UserForm1
+
+For J = 1 To 20
+    UserForm1.ComboBox1.AddItem "Team " & J
+    UserForm1.ComboBox2.AddItem "Team " & J
+Next J
+
+UserForm1.ComboBox3.AddItem "C"
+UserForm1.ComboBox3.AddItem "N"
+UserForm1.ComboBox3.AddItem "D"
+UserForm1.ComboBox3.AddItem "Q"
+
+UserForm1.CommandButton1.Enabled = False
+
+UserForm1.Show
+
+End Sub
+-------------------------------------------------------------------------------
+VBA MACRO Sheet1.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet2.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet2'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet3.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet3'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet4.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet4'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet5.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet5'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet6.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet6'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet7.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet7'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet8.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet8'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet9.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet9'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet10.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet10'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet11.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet11'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet12.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet12'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet13.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet13'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet14.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet14'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet15.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet15'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet16.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet16'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet17.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet17'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet18.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet18'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet19.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet19'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet20.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet20'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO UserForm1.frm 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Private Sub ComboBox1_Change()
+
+If ComboBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox2.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox3.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox2.Value = "" Then
+    CommandButton1.Enabled = False
+Else
+    CommandButton1.Enabled = True
+End If
+
+End Sub
+
+Private Sub ComboBox2_Change()
+
+If ComboBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox2.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox3.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox2.Value = "" Then
+    CommandButton1.Enabled = False
+Else
+    CommandButton1.Enabled = True
+End If
+
+End Sub
+
+Private Sub ComboBox3_Change()
+
+If ComboBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox2.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox3.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox2.Value = "" Then
+    CommandButton1.Enabled = False
+Else
+    CommandButton1.Enabled = True
+End If
+
+End Sub
+
+Private Sub CommandButton1_Click()
+
+Dim X As Single
+Dim Done  As Boolean
+Dim Msg As String
+Dim J As Integer
+Dim S As Integer
+
+Worksheets(ComboBox1.Value).Select
+X = TextBox1.Value
+Done = False
+
+Select Case ComboBox3.Value
+    Case "C"
+        If Range("F5").Value < X Then
+            Msg = ComboBox1.Value & " does not have " & X & " gallons of Liquid C available."
+            MsgBox (Msg)
+            Done = True
+        End If
+    Case "N"
+        If Range("F6").Value < X Then
+            Msg = ComboBox1.Value & " does not have " & X & " gallons of Liquid N available."
+            MsgBox (Msg)
+            Done = True
+        End If
+    Case "D"
+        If Range("F7").Value < X Then
+            Msg = ComboBox1.Value & " does not have " & X & " gallons of Liquid D available."
+            MsgBox (Msg)
+            Done = True
+        End If
+    Case "Q"
+        If Range("F8").Value < X Then
+            Msg = ComboBox1.Value & " does not have " & X & " gallons of Liquid Q available."
+            MsgBox (Msg)
+            Done = True
+        End If
+End Select
+
+If Done = False Then
+    J = 1
+    Do
+        If Range("N5").Offset(J, 0).Value = "" Then
+            Range("N5").Offset(J, 0).Value = ComboBox2.Value
+            Select Case ComboBox3.Value
+                Case "C"
+                    Range("J5").Offset(J, 0).Value = TextBox1.Value
+                    Range("O5").Offset(J, 0).Value = TextBox2.Value
+                Case "N"
+                    Range("K5").Offset(J, 0).Value = TextBox1.Value
+                    Range("P5").Offset(J, 0).Value = TextBox2.Value
+                Case "D"
+                    Range("L5").Offset(J, 0).Value = TextBox1.Value
+                    Range("Q5").Offset(J, 0).Value = TextBox2.Value
+                Case "Q"
+                    Range("M5").Offset(J, 0).Value = TextBox1.Value
+                    Range("R5").Offset(J, 0).Value = TextBox2.Value
+            End Select
+            Done = True
+        Else
+            J = J + 1
+        End If
+    Loop Until Done
+    
+    S = SolverSolve(False)
+    If S <> 0 Then
+        MsgBox (S)
+    End If
+    
+    Worksheets(ComboBox2.Value).Select
+    Done = False
+    J = 1
+    Do
+        If Range("Z5").Offset(J, 0).Value = "" Then
+            Range("Z5").Offset(J, 0).Value = ComboBox1.Value
+            Select Case ComboBox3.Value
+                Case "C"
+                    Range("V5").Offset(J, 0).Value = TextBox1.Value
+                    Range("AA5").Offset(J, 0).Value = TextBox2.Value
+                Case "N"
+                    Range("W5").Offset(J, 0).Value = TextBox1.Value
+                    Range("AB5").Offset(J, 0).Value = TextBox2.Value
+                Case "D"
+                    Range("X5").Offset(J, 0).Value = TextBox1.Value
+                    Range("AC5").Offset(J, 0).Value = TextBox2.Value
+                Case "Q"
+                    Range("Y5").Offset(J, 0).Value = TextBox1.Value
+                    Range("AD5").Offset(J, 0).Value = TextBox2.Value
+            End Select
+            Done = True
+        Else
+            J = J + 1
+        End If
+    Loop Until Done
+    
+    S = SolverSolve(False)
+    If S <> 0 Then
+        MsgBox (S)
+    End If
+
+End If
+
+Worksheets("Scoreboard").Select
+
+Call CommandButton2_Click
+
+End Sub
+
+Private Sub CommandButton2_Click()
+ComboBox1.Value = ""
+ComboBox2.Value = ""
+ComboBox3.Value = ""
+TextBox1.Value = ""
+TextBox2.Value = ""
+CommandButton1.Enabled = False
+End Sub
+
+Private Sub TextBox1_Change()
+
+If ComboBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox2.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox3.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox2.Value = "" Then
+    CommandButton1.Enabled = False
+Else
+    CommandButton1.Enabled = True
+End If
+
+End Sub
+
+Private Sub TextBox1_Exit(ByVal Cancel As MSForms.ReturnBoolean)
+                    
+Dim Msg 'Declare local variables
+
+'Check for numerical value
+If IsNumeric(UserForm1.TextBox1.Text) Then
+    'Check for number > 0
+    If UserForm1.TextBox1.Text <= 0 Then
+        Msg = "Number greater than 0"   'Message text
+        MsgBox (Msg)    'Display message
+        UserForm1.TextBox1.Text = ""
+    Else
+        'UserForm1.TextBox1.Text = FormatNumber(UserForm1.TextBox1.Text, 0) 'Format value
+    End If
+Else
+    Msg = "Numerical value required"   'Message text
+    MsgBox (Msg)    'Display message
+    UserForm1.TextBox1.Text = ""
+End If
+
+End Sub
+
+Private Sub TextBox2_Change()
+
+If ComboBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox2.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf ComboBox3.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox1.Value = "" Then
+    CommandButton1.Enabled = False
+ElseIf TextBox2.Value = "" Then
+    CommandButton1.Enabled = False
+Else
+    CommandButton1.Enabled = True
+End If
+
+End Sub
+
+Private Sub TextBox2_Exit(ByVal Cancel As MSForms.ReturnBoolean)
+
+Dim Msg 'Declare local variables
+
+'Check for numerical value
+If IsNumeric(UserForm1.TextBox2.Text) Then
+    'Check for number > 0
+    If UserForm1.TextBox2.Text <= 0 Then
+        Msg = "Number greater than 0"   'Message text
+        MsgBox (Msg)    'Display message
+        UserForm1.TextBox2.Text = ""
+    Else
+        UserForm1.TextBox2.Text = FormatCurrency(UserForm1.TextBox2.Text, 2) 'Format value
+    End If
+Else
+    Msg = "Numerical value required"   'Message text
+    MsgBox (Msg)    'Display message
+    UserForm1.TextBox2.Text = ""
+End If
+
+End Sub
+-------------------------------------------------------------------------------
+VBA MACRO Sheet21.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet21'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet22.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet22'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet23.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet23'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet24.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet24'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Sheet25.cls 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Sheet25'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+(empty macro)
+-------------------------------------------------------------------------------
+VBA MACRO Module1.bas 
+in file: xl/vbaProject.bin - OLE stream: 'VBA/Module1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Sub Button1_Click()
+Dim J As Integer
+
+Load UserForm1
+
+For J = 1 To 20
+    UserForm1.ComboBox1.AddItem "Team " & J
+    UserForm1.ComboBox2.AddItem "Team " & J
+Next J
+
+UserForm1.ComboBox3.AddItem "C"
+UserForm1.ComboBox3.AddItem "N"
+UserForm1.ComboBox3.AddItem "D"
+UserForm1.ComboBox3.AddItem "Q"
+
+UserForm1.CommandButton1.Enabled = False
+
+UserForm1.Show
+
+End Sub
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+�Selling Team�	
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahoma5
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahoma5
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+�Purchasing Team
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahoma5
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahoma5
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+�Liquid5
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahoma5
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahoma5
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+�Gallons
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahomas
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+H�,�	
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahomas
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+�Submits
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahomas
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+�Cancels
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahomas
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+H�,�	
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahomas
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+�Price per Gallon�	
+-------------------------------------------------------------------------------
+VBA FORM STRING IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1/o'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Tahomas
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'Label1'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+None
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'ComboBox1'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+b''
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'Label2'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+None
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'ComboBox2'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+b''
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'Label3'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+None
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'ComboBox3'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+b''
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'Label4'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+None
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'TextBox1'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+b''
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'CommandButton1'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+None
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'CommandButton2'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+None
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'TextBox2'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+b''
+-------------------------------------------------------------------------------
+VBA FORM Variable "b'Label5'" IN 'xl/vbaProject.bin' - OLE stream: 'UserForm1'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+None
++----------+--------------------+---------------------------------------------+
+|Type      |Keyword             |Description                                  |
++----------+--------------------+---------------------------------------------+
+|AutoExec  |Workbook_Open       |Runs when the Excel Workbook is opened       |
+|AutoExec  |CommandButton1_Click|Runs when the file is opened and ActiveX     |
+|          |                    |objects trigger events                       |
+|AutoExec  |ComboBox1_Change    |Runs when the file is opened and ActiveX     |
+|          |                    |objects trigger events                       |
+|Suspicious|Call                |May call a DLL using Excel 4 Macros (XLM/XLF)|
+|Suspicious|Hex Strings         |Hex-encoded strings were detected, may be    |
+|          |                    |used to obfuscate strings (option --decode to|
+|          |                    |see all)                                     |
++----------+--------------------+---------------------------------------------+
+

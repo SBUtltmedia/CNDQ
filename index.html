@@ -21,7 +21,10 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>
                     Enterprise Manager
                 </h1>
-                <p class="text-slate-500">Inventory, Production & Profit Tracking</p>
+                <div class="flex items-center gap-2 mt-1">
+                    <p class="text-slate-500">Inventory, Production & Profit Tracking</p>
+                    <span id="session-phase-badge" class="px-2 py-0.5 rounded text-xs font-bold bg-slate-200 text-slate-600">Phase: Loading...</span>
+                </div>
             </div>
             <div class="flex gap-2">
                 <a href="market.html" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors text-slate-600 font-medium">
@@ -75,19 +78,13 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between gap-4">
-                        <button id="deicer-minus" class="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:border-slate-400 transition-all active:scale-95 disabled:opacity-20">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
-                        </button>
-                        <div class="flex-1 text-center">
-                            <div id="deicer-count" class="text-3xl font-black text-slate-800">0</div>
-                            <div class="text-[10px] uppercase font-bold text-slate-400">Drums Produced</div>
+                    <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-200">
+                        <div id="deicer-count" class="text-3xl font-black text-slate-800">0</div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 mb-2">Drums Produced</div>
+                        <div id="production-status-deicer" class="text-xs font-medium text-slate-500 bg-slate-200 rounded-full px-3 py-1 inline-block">
+                            Waiting for production phase...
                         </div>
-                        <button id="deicer-plus" class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-sm active:scale-95 disabled:bg-slate-100 disabled:text-slate-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                        </button>
                     </div>
-                    <p id="deicer-warning" class="hidden mt-4 text-center text-xs text-amber-600 font-medium">Insufficient materials</p>
                 </div>
             </div>
 
@@ -104,19 +101,13 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between gap-4">
-                        <button id="solvent-minus" class="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:border-slate-400 transition-all active:scale-95 disabled:opacity-20">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>
-                        </button>
-                        <div class="flex-1 text-center">
-                            <div id="solvent-count" class="text-3xl font-black text-slate-800">0</div>
-                            <div class="text-[10px] uppercase font-bold text-slate-400">Drums Produced</div>
+                    <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-200">
+                        <div id="solvent-count" class="text-3xl font-black text-slate-800">0</div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 mb-2">Drums Produced</div>
+                        <div id="production-status-solvent" class="text-xs font-medium text-slate-500 bg-slate-200 rounded-full px-3 py-1 inline-block">
+                            Waiting for production phase...
                         </div>
-                        <button id="solvent-plus" class="w-12 h-12 flex items-center justify-center rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm active:scale-95 disabled:bg-slate-100 disabled:text-slate-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                        </button>
                     </div>
-                    <p id="solvent-warning" class="hidden mt-4 text-center text-xs text-amber-600 font-medium">Insufficient materials</p>
                 </div>
             </div>
         </div>

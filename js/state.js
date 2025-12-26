@@ -1,53 +1,45 @@
 import { DEFAULT_INVENTORY, RECIPES } from './config.js';
 
 export let state = {
+    displayName: 'Loading...',
     counts: { deicer: 0, solvent: 0 },
     startingFund: 0,
+    initialCapital: 0,
     inventory: { ...DEFAULT_INVENTORY },
-    baseInventory: { ...DEFAULT_INVENTORY }
+    baseInventory: { ...DEFAULT_INVENTORY }, // This is now 'initialInventory' from backend
+    netProfit: 0,
+    roi: 0
 };
 
 export function updateState(newState) {
-    // Handle migration/initialization
-    // If loading from a file that doesn't have baseInventory, assume DEFAULT_INVENTORY (legacy behavior)
-    // UNLESS it's a new system file which tracks baseInventory.
-    
-    // We merge newState into state. 
-    // If newState has baseInventory, it overrides.
-    // If not, we keep the current state.baseInventory (which defaults to DEFAULT).
-    
-    // Special case: If newState is completely replacing state (like from a file load)
-    // and keys are missing, we should be careful. 
-    // But usually newState is just the JSON content.
+    // Map backend 'initial_inventory' to 'baseInventory' if present
+    if (newState.initialInventory) {
+        newState.baseInventory = newState.initialInventory;
+    }
     
     state = { ...state, ...newState };
     
-    // Ensure baseInventory exists if not provided
+    // Fallback if baseInventory is missing
     if (!state.baseInventory) {
         state.baseInventory = { ...DEFAULT_INVENTORY };
     }
+    
+    // Calculate performance metrics immediately
+    const start = state.initialCapital || 1; // avoid divide by zero
+    state.netProfit = state.startingFund - state.initialCapital;
+    state.roi = (state.netProfit / start) * 100;
 }
 
 export function calculateCurrentState() {
-    // Start from the base inventory (snapshot at beginning of session)
-    const currentInv = { ...state.baseInventory };
+    // This function was used for client-side simulation, 
+    // but now we rely mostly on server state.
+    // However, for the calculator or predictions, we might still use it.
     
-    Object.keys(state.counts).forEach(key => {
-        const recipe = RECIPES[key];
-        const count = state.counts[key];
-        Object.entries(recipe.composition).forEach(([ing, ratio]) => {
-            currentInv[ing] -= (ratio * recipe.drumSize * count);
-        });
-    });
-    state.inventory = currentInv;
-
-    // Calculate Projected Profits
-    // Production does NOT cost money from the fund (per user instruction)
-    // Fund only decreases when buying (future feature).
+    // Calculate Projected Profits (Legacy logic, mostly unused now)
     const profit = (state.counts.deicer * RECIPES.deicer.profit) + (state.counts.solvent * RECIPES.solvent.profit);
     const balance = state.startingFund;
 
-    return { profit, balance };
+    return { profit, balance, netProfit: state.netProfit, roi: state.roi };
 }
 
 export function checkProductionLimit(key) {

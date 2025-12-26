@@ -42,3 +42,63 @@ export async function syncProduction(retries = 3, delay = 1000) {
         }
     }
 }
+
+// Market Negotiation API Functions
+export async function createOffer(chemical, quantity, reservePrice) {
+    const response = await fetch('createOffer.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chemical, quantity, reserve_price: reservePrice })
+    });
+    return await response.json();
+}
+
+export async function expressInterest(offerId) {
+    const response = await fetch('expressInterest.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offer_id: offerId })
+    });
+    return await response.json();
+}
+
+export async function setInitialPrice(offerId, buyerId, price) {
+    const response = await fetch('setInitialPrice.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offer_id: offerId, buyer_id: buyerId, price })
+    });
+    return await response.json();
+}
+
+export async function respondToOffer(offerId, action) {
+    const response = await fetch('respondToOffer.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offer_id: offerId, action })
+    });
+    return await response.json();
+}
+
+export async function counterOffer(offerId, newPrice) {
+    const response = await fetch('counterOffer.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offer_id: offerId, new_price: newPrice })
+    });
+    return await response.json();
+}
+
+export async function cancelOffer(offerId) {
+    const response = await fetch('cancelOffer.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offer_id: offerId })
+    });
+    return await response.json();
+}
+
+export async function getMarketUpdates(lastPoll = 0) {
+    const response = await fetch(`getMarketUpdates.php?lastPoll=${lastPoll}`);
+    return await response.json();
+}

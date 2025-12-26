@@ -8,216 +8,293 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
+
+        .tab-active {
+            border-bottom: 2px solid #4F46E5;
+            color: #4F46E5;
+            font-weight: 600;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #EF4444;
+            color: white;
+            border-radius: 9999px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .shadow-price-high {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        .shadow-price-low {
+            color: #DC2626;
+            font-weight: 700;
+        }
+
+        .shadow-price-medium {
+            color: #D97706;
+            font-weight: 700;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen p-4 md:p-8">
-    <div class="max-w-7xl mx-auto">
-        <header class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800">Market Dashboard</h1>
-            <div class="flex gap-4">
-                <a href="calculator.html" class="text-indigo-600 hover:underline">Shadow Prices</a>
-                <a href="index.html" class="text-indigo-600 hover:underline">Back to Production</a>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-6">
+                <h1 class="text-2xl font-bold text-slate-800">Market Dashboard</h1>
+                <div class="text-sm text-slate-600">
+                    Team: <span id="team-name" class="font-bold text-slate-900">Loading...</span>
+                </div>
+                <div class="text-sm text-slate-600">
+                    Funds: <span id="team-funds" class="font-bold text-emerald-600">$0</span>
+                </div>
             </div>
-        </header>
-
-        <div id="error-msg" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
-        <div id="success-msg" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"></div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <table class="min-w-full divide-y divide-slate-200">
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Team</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Chemical C</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Chemical N</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Chemical D</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">Chemical Q</th>
-                    </tr>
-                </thead>
-                <tbody id="market-table" class="bg-white divide-y divide-slate-200">
-                    <!-- Rows injected here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Trade Modal -->
-    <div id="trade-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-            <h3 class="text-xl font-bold mb-4" id="modal-title">Trade</h3>
-            <p class="mb-4 text-slate-600" id="modal-desc">...</p>
-            
-            <div class="flex justify-end gap-2">
-                <button onclick="closeModal()" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded transition-colors">Cancel</button>
-                <button id="confirm-trade-btn" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors shadow-sm">Confirm Trade</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let currentTeams = [];
-        let currentUser = '';
-        let pendingTrade = null;
-
-        async function init() {
-            try {
-                const response = await fetch('getAllTeams.php');
-                const data = await response.json();
-                currentTeams = data.teams;
-                currentUser = data.currentUser;
-                render();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        function render() {
-            const tbody = document.getElementById('market-table');
-            tbody.innerHTML = '';
-            
-            // Identify current user's safe ID
-            const safeCurrentUser = currentUser.replace(/[^a-zA-Z0-9_\-@.]/g, '_');
-
-            // Sort teams to put the current user at the top
-            currentTeams.sort((a, b) => {
-                if (a.id === safeCurrentUser) return -1;
-                if (b.id === safeCurrentUser) return 1;
-                return a.display.localeCompare(b.display);
-            });
-
-            currentTeams.forEach(team => {
-                const isMe = team.id === safeCurrentUser;
-                const row = document.createElement('tr');
-                row.className = isMe ? 'bg-indigo-50 border-l-4 border-indigo-500' : '';
-                
-                let html = `<td class="px-6 py-4 whitespace-nowrap font-medium text-slate-900">
-                    <div class="flex items-center gap-2">
-                        ${team.display} ${isMe ? '<span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] rounded-full uppercase font-bold tracking-wider">You</span>' : ''}
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <button id="notification-btn" class="relative p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                        <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <span id="notification-count" class="notification-badge hidden">0</span>
+                    </button>
+                    <!-- Notification Dropdown -->
+                    <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-slate-200 max-h-96 overflow-y-auto z-50">
+                        <div class="p-4 border-b border-slate-200">
+                            <h3 class="font-bold text-slate-900">Notifications</h3>
+                        </div>
+                        <div id="notification-list" class="divide-y divide-slate-100">
+                            <!-- Notifications will be inserted here -->
+                        </div>
                     </div>
-                </td>`;
-                
-                ['C', 'N', 'D', 'Q'].forEach(chem => {
-                    const amount = team.inventory[chem] || 0;
-                    const isListed = team.listings && team.listings[chem];
-                    
-                    let displayContent = '';
+                </div>
+                <a href="calculator.html" class="text-indigo-600 hover:underline text-sm">Calculator</a>
+                <a href="index.html" class="text-indigo-600 hover:underline text-sm">Production</a>
+            </div>
+        </div>
+    </header>
 
-                    if (isMe) {
-                        // My Row: Show Amount + List/Unlist Toggle
-                        displayContent = `
-                            <div class="text-sm font-bold mb-1 text-slate-900">${amount.toFixed(0)}</div>
-                            <div class="flex justify-center">
-                                <button onclick="toggleListing('${chem}')" 
-                                        class="px-3 py-1 text-xs rounded transition-colors shadow-sm font-medium ${isListed ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-blue-600 text-white hover:bg-blue-700'}">
-                                    ${isListed ? 'Unlist' : 'List for Sale'}
-                                </button>
-                            </div>
-                            ${isListed ? '<div class="mt-1 text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Listed</div>' : ''}
-                        `;
-                    } else {
-                        // Others: Show "Available" IF Listed, else "Not Listed"
-                        if (isListed && amount > 0) {
-                            displayContent = `
-                                <div class="text-sm font-bold mb-1 text-emerald-600">Available</div>
-                                <div class="flex justify-center">
-                                    <button onclick="openTrade('buy', '${team.id}', '${chem}', ${amount})" 
-                                            class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors shadow-sm">
-                                        Buy
-                                    </button>
-                                </div>
-                            `;
-                        } else {
-                             displayContent = `
-                                <div class="text-sm font-bold mb-1 text-slate-400 italic">Not Listed</div>
-                            `;
-                        }
-                    }
+    <div class="max-w-7xl mx-auto p-4 flex gap-4">
+        <!-- Left Sidebar: Shadow Prices -->
+        <aside class="w-64 flex-shrink-0">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sticky top-20">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-bold text-slate-900">Shadow Prices</h2>
+                    <button id="refresh-shadow-prices" class="p-1 hover:bg-slate-100 rounded transition-colors" title="Refresh">
+                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-500 mb-4">Value of +1 gallon</p>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-slate-600">Liquid C</span>
+                        <span id="sp-c" class="text-sm shadow-price-medium">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-slate-600">Liquid N</span>
+                        <span id="sp-n" class="text-sm shadow-price-medium">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-slate-600">Liquid D</span>
+                        <span id="sp-d" class="text-sm shadow-price-medium">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-slate-600">Liquid Q</span>
+                        <span id="sp-q" class="text-sm shadow-price-medium">$0.00</span>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                    <p class="text-xs text-indigo-900 font-medium mb-1">Trading Tip:</p>
+                    <p class="text-xs text-indigo-700">Sell if price > shadow price. Buy if price < shadow price.</p>
+                </div>
+            </div>
+        </aside>
 
-                    html += `<td class="px-6 py-4 text-center">${displayContent}</td>`;
-                });
-                
-                row.innerHTML = html;
-                tbody.appendChild(row);
-            });
-        }
+        <!-- Main Content -->
+        <main class="flex-1 relative">
+            <!-- Market Status Banner -->
+            <div id="market-status-banner" class="hidden mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3 text-amber-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <span class="font-bold block">Market is currently Closed</span>
+                    <span class="text-sm" id="market-status-text">Waiting for trading phase...</span>
+                </div>
+            </div>
 
-        async function toggleListing(chem) {
-            try {
-                const response = await fetch('toggle_listing.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chemical: chem })
-                });
-                if (response.ok) {
-                    init(); // Reload
-                } else {
-                    alert("Failed to toggle listing");
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
+            <!-- Tabs -->
+            <div class="bg-white rounded-t-xl border border-slate-200 border-b-0">
+                <div class="flex border-b border-slate-200">
+                    <button class="tab px-6 py-3 text-sm tab-active" data-tab="available">Available Offers</button>
+                    <button class="tab px-6 py-3 text-sm" data-tab="my-offers">My Offers</button>
+                    <button class="tab px-6 py-3 text-sm" data-tab="negotiations">Active Negotiations</button>
+                </div>
+            </div>
 
-        window.openTrade = (action, targetId, chem, amount) => {
-            const title = `Buy Chemical ${chem}`;
-            const desc = `You are buying <b>ALL available gallons</b> of ${chem} from this team.`;
-            
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-desc').innerHTML = desc;
-            
-            pendingTrade = { action, targetId, chemical: chem };
-            document.getElementById('trade-modal').classList.remove('hidden');
-            document.getElementById('trade-modal').classList.add('flex');
-        };
+            <!-- Tab Content -->
+            <div class="bg-white rounded-b-xl border border-slate-200 p-6">
+                <!-- Available Offers Tab -->
+                <div id="tab-available" class="tab-content">
+                    <div id="available-offers-list" class="space-y-3">
+                        <!-- Offers will be inserted here -->
+                    </div>
+                    <div id="no-offers-msg" class="text-center py-12 text-slate-400 hidden">
+                        No offers available at this time
+                    </div>
+                </div>
 
-        window.closeModal = () => {
-             document.getElementById('trade-modal').classList.add('hidden');
-             document.getElementById('trade-modal').classList.remove('flex');
-             pendingTrade = null;
-        };
+                <!-- My Offers Tab -->
+                <div id="tab-my-offers" class="tab-content hidden">
+                    <div class="mb-4">
+                        <button id="create-offer-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm">
+                            Create Sell Offer
+                        </button>
+                    </div>
+                    <div id="my-offers-list" class="space-y-3">
+                        <!-- User's offers will be inserted here -->
+                    </div>
+                    <div id="no-my-offers-msg" class="text-center py-12 text-slate-400 hidden">
+                        You have no active offers
+                    </div>
+                </div>
 
-        document.getElementById('confirm-trade-btn').addEventListener('click', async () => {
-            if (!pendingTrade) return;
-            
-            // Only 'buy' actions exist now in the modal
-            const targetId = pendingTrade.targetId;
+                <!-- Active Negotiations Tab -->
+                <div id="tab-negotiations" class="tab-content hidden">
+                    <div id="negotiations-list" class="space-y-4">
+                        <!-- Active negotiations will be inserted here -->
+                    </div>
+                    <div id="no-negotiations-msg" class="text-center py-12 text-slate-400 hidden">
+                        No active negotiations
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 
-            try {
-                const response = await fetch('trade.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...pendingTrade, targetId })
-                });
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showSuccess(result.message);
-                    closeModal();
-                    init(); // Reload data
-                } else {
-                    showError(result.error);
-                    closeModal();
-                }
-            } catch (e) {
-                showError("Trade failed");
-            }
-        });
+    <!-- Create Offer Modal -->
+    <div id="create-offer-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Create Sell Offer</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Chemical</label>
+                    <select id="offer-chemical" class="w-full border border-slate-300 rounded-lg p-2">
+                        <option value="C">Liquid C</option>
+                        <option value="N">Liquid N</option>
+                        <option value="D">Liquid D</option>
+                        <option value="Q">Liquid Q</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Quantity (gallons)</label>
+                    <input type="number" id="offer-quantity" class="w-full border border-slate-300 rounded-lg p-2" min="1" value="100">
+                    <p class="text-xs text-slate-500 mt-1">Available: <span id="available-quantity">0</span> gallons</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Reserve Price (minimum you'll accept)</label>
+                    <input type="number" id="offer-reserve-price" class="w-full border border-slate-300 rounded-lg p-2" min="0" step="0.01" value="10">
+                    <p class="text-xs text-slate-500 mt-1">Your shadow price: $<span id="offer-shadow-price">0.00</span></p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeCreateOfferModal()" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+                <button id="confirm-create-offer" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">Create Offer</button>
+            </div>
+        </div>
+    </div>
 
-        function showError(msg) {
-            const el = document.getElementById('error-msg');
-            el.textContent = msg;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 5000);
-        }
+    <!-- Express Interest Modal -->
+    <div id="interest-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Express Interest</h3>
+            <p class="text-slate-600 mb-4">You're expressing interest in this offer. The seller will be notified and can set an initial price for you.</p>
+            <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                <p class="text-sm"><span class="font-medium">Chemical:</span> <span id="interest-chemical"></span></p>
+                <p class="text-sm"><span class="font-medium">Quantity:</span> <span id="interest-quantity"></span> gallons</p>
+                <p class="text-sm"><span class="font-medium">Your shadow price:</span> $<span id="interest-shadow-price"></span></p>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeInterestModal()" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+                <button id="confirm-interest" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm">Confirm Interest</button>
+            </div>
+        </div>
+    </div>
 
-        function showSuccess(msg) {
-             const el = document.getElementById('success-msg');
-            el.textContent = msg;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 5000);
-        }
+    <!-- Set Price Modal (Seller) -->
+    <div id="set-price-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Set Initial Price</h3>
+            <p class="text-slate-600 mb-4">A buyer has expressed interest. Set your starting price.</p>
+            <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                <p class="text-sm"><span class="font-medium">Buyer:</span> <span id="price-buyer"></span></p>
+                <p class="text-sm"><span class="font-medium">Chemical:</span> <span id="price-chemical"></span></p>
+                <p class="text-sm"><span class="font-medium">Quantity:</span> <span id="price-quantity"></span> gallons</p>
+                <p class="text-sm"><span class="font-medium">Reserve price:</span> $<span id="price-reserve"></span></p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Your Price</label>
+                <input type="number" id="initial-price" class="w-full border border-slate-300 rounded-lg p-2" min="0" step="0.01">
+                <p class="text-xs text-slate-500 mt-1">Must be >= reserve price</p>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeSetPriceModal()" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+                <button id="confirm-price" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">Set Price</button>
+            </div>
+        </div>
+    </div>
 
-        init();
-    </script>
+    <!-- Respond to Offer Modal (Buyer) -->
+    <div id="respond-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Respond to Offer</h3>
+            <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                <p class="text-sm"><span class="font-medium">Seller:</span> <span id="respond-seller"></span></p>
+                <p class="text-sm"><span class="font-medium">Chemical:</span> <span id="respond-chemical"></span></p>
+                <p class="text-sm"><span class="font-medium">Quantity:</span> <span id="respond-quantity"></span> gallons</p>
+                <p class="text-lg font-bold text-indigo-600 mt-2">Price: $<span id="respond-price"></span></p>
+                <p class="text-sm mt-1"><span class="font-medium">Your shadow price:</span> $<span id="respond-shadow-price"></span></p>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button id="reject-offer" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm">Reject</button>
+                <button id="accept-offer" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm">Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Counter Offer Modal (Seller) -->
+    <div id="counter-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Counter Offer</h3>
+            <p class="text-slate-600 mb-4">The buyer rejected your offer. You can counter with a lower price.</p>
+            <div class="bg-slate-50 p-4 rounded-lg mb-4">
+                <p class="text-sm"><span class="font-medium">Previous price:</span> $<span id="counter-previous"></span></p>
+                <p class="text-sm"><span class="font-medium">Reserve price:</span> $<span id="counter-reserve"></span></p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">New Price</label>
+                <input type="number" id="counter-price" class="w-full border border-slate-300 rounded-lg p-2" min="0" step="0.01">
+                <p class="text-xs text-slate-500 mt-1">Must be < previous price and >= reserve price</p>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeCounterModal()" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+                <button id="confirm-counter" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">Send Counter</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/market.js"></script>
 </body>
 </html>
