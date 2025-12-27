@@ -1,0 +1,21 @@
+{
+    "id": "neg_1766866435_08d5e900",
+    "chemical": "D",
+    "initiatorId": "test_mail1@stonybrook.edu",
+    "initiatorName": "test_mail1@stonybrook.edu",
+    "responderId": "player2@test.edu",
+    "responderName": "player2@test.edu",
+    "offers": [
+        {
+            "fromTeamId": "test_mail1@stonybrook.edu",
+            "fromTeamName": "test_mail1@stonybrook.edu",
+            "quantity": 3,
+            "price": 0.03,
+            "createdAt": 1766866435
+        }
+    ],
+    "status": "pending",
+    "lastOfferBy": "test_mail1@stonybrook.edu",
+    "createdAt": 1766866435,
+    "updatedAt": 1766866435
+}

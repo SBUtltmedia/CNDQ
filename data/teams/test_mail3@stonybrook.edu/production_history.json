@@ -1,0 +1,19 @@
+{
+    "productions": [
+        {
+            "type": "automatic_initial",
+            "deicer": 2394,
+            "solvent": 1422.5,
+            "revenue": 9055.5,
+            "chemicalsConsumed": {
+                "C": 1197,
+                "N": 1073.8249999999998,
+                "D": 976.675,
+                "Q": 569
+            },
+            "note": "Automatic first production run to generate initial trading capital",
+            "timestamp": 1766866728
+        }
+    ],
+    "lastModified": 1766866728
+}

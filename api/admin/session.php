@@ -10,18 +10,11 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../userData.php';
 require_once __DIR__ . '/../../lib/SessionManager.php';
 
-// ADMIN ONLY
-if (!isAdmin()) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Admin privileges required']);
-    exit;
-}
-
 $sessionManager = new SessionManager();
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Get current session state
+        // Get current session state (public - triggers auto-advance if enabled)
         $state = $sessionManager->getState();
 
         echo json_encode([
@@ -30,6 +23,12 @@ try {
         ]);
 
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // ADMIN ONLY for modifications
+        if (!isAdmin()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Admin privileges required']);
+            exit;
+        }
         $input = json_decode(file_get_contents('php://input'), true);
         $action = $input['action'] ?? null;
 

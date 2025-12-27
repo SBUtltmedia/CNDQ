@@ -34,7 +34,9 @@
       "mcp__chrome-devtools__fill_form",
       "Bash(curl:*)",
       "mcp__chrome-devtools__wait_for",
-      "mcp__chrome-devtools__take_screenshot"
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__close_page",
+      "mcp__chrome-devtools__press_key"
     ]
   }
 }

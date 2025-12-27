@@ -1000,6 +1000,7 @@ class MarketplaceApp {
             await this.loadAdvertisements();
             await this.loadNegotiations();
             await this.loadNotifications();
+            await this.checkSessionPhase(); // Trigger auto-advance if enabled
         }, this.pollingFrequency);
     }
 
@@ -1010,6 +1011,26 @@ class MarketplaceApp {
         if (this.pollingInterval) {
             clearInterval(this.pollingInterval);
             this.pollingInterval = null;
+        }
+    }
+
+    /**
+     * Check session phase (triggers auto-advance if enabled)
+     * This runs silently in the background to ensure auto-advance works
+     * even when admin dashboard isn't open
+     */
+    async checkSessionPhase() {
+        try {
+            const response = await fetch('/api/admin/session.php');
+            if (response.ok) {
+                const data = await response.json();
+                // Session state checked - auto-advance will trigger if time expired
+                // We don't need to do anything with the response, just calling
+                // SessionManager::getState() is enough to trigger auto-advance
+            }
+        } catch (error) {
+            // Silently fail - this is a background check
+            // If the user isn't admin, they'll get 403 which is fine
         }
     }
 
