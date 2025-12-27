@@ -2,12 +2,12 @@
     "email": "newteam_test@stonybrook.edu",
     "teamName": "newteam_test@stonybrook.edu",
     "startingFunds": 9603.43,
-    "currentFunds": 9603.620000000004,
+    "currentFunds": 9603.700000000006,
     "createdAt": 1766863595,
     "lastActive": 1766863595,
     "settings": {
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
     },
-    "lastModified": 1766867977
+    "lastModified": 1766868505
 }

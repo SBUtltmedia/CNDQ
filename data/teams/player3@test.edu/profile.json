@@ -2,12 +2,12 @@
     "email": "player3@test.edu",
     "teamName": "player3@test.edu",
     "startingFunds": 10000,
-    "currentFunds": 19091.08999999997,
+    "currentFunds": 19091.16999999996,
     "createdAt": 1766813968,
     "lastActive": 1766813968,
     "settings": {
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
     },
-    "lastModified": 1766867977
+    "lastModified": 1766868505
 }
