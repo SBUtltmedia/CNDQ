@@ -1,0 +1,78 @@
+<?php
+/**
+ * Shadow Prices API - CRITICAL SECURITY
+ * GET: Calculate shadow prices for CURRENT AUTHENTICATED TEAM ONLY
+ *
+ * SECURITY: This endpoint MUST NEVER expose other teams' shadow prices.
+ * Shadow prices are the core secret of each team's strategy.
+ */
+
+require_once __DIR__ . '/../../lib/TeamStorage.php';
+require_once __DIR__ . '/../../lib/LPSolver.php';
+require_once __DIR__ . '/../../userData.php';
+
+header('Content-Type: application/json');
+
+$currentUserEmail = getCurrentUserEmail();
+
+if (!$currentUserEmail || $currentUserEmail === 'dev_user') {
+    http_response_code(401);
+    echo json_encode(['error' => 'Not authenticated']);
+    exit;
+}
+
+// SECURITY CHECK: Reject any attempt to query other teams' shadow prices
+if (isset($_GET['team']) || isset($_GET['email']) || isset($_GET['user'])) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Forbidden - Can only access your own shadow prices']);
+    exit;
+}
+
+try {
+    $storage = new TeamStorage($currentUserEmail);
+    $inventory = $storage->getInventory();
+
+    // Use actual LP solver to calculate shadow prices
+    $solver = new LPSolver();
+    $result = $solver->getShadowPrices($inventory);
+
+    $shadowPrices = $result['shadowPrices'];
+    $optimalMix = $result['optimalMix'];
+    $maxProfit = $result['maxProfit'];
+
+    // Save new shadow prices to team storage
+    $storage->updateShadowPrices($shadowPrices);
+
+    // Reset transaction counter (prices are now fresh)
+    $storage->resetShadowCalcCounter();
+
+    echo json_encode([
+        'success' => true,
+        'shadowPrices' => [
+            'C' => $shadowPrices['C'],
+            'N' => $shadowPrices['N'],
+            'D' => $shadowPrices['D'],
+            'Q' => $shadowPrices['Q']
+        ],
+        'optimalMix' => [
+            'deicer' => $optimalMix['deicer'],
+            'solvent' => $optimalMix['solvent']
+        ],
+        'maxProfit' => $maxProfit,
+        'calculatedAt' => time(),
+        'inventory' => [
+            'C' => $inventory['C'],
+            'N' => $inventory['N'],
+            'D' => $inventory['D'],
+            'Q' => $inventory['Q']
+        ],
+        'note' => 'These shadow prices are PRIVATE to your team and calculated using Linear Programming'
+    ]);
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Server error',
+        'message' => $e->getMessage()
+    ]);
+}

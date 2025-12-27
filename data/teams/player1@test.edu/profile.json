@@ -1,0 +1,12 @@
+{
+    "email": "player1@test.edu",
+    "teamName": "player1@test.edu",
+    "startingFunds": 10000,
+    "currentFunds": 10000,
+    "createdAt": 1766813933,
+    "lastActive": 1766813933,
+    "settings": {
+        "showTradingHints": false,
+        "hasSeenShadowPriceTip": false
+    }
+}

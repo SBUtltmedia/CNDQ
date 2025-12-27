@@ -1,0 +1,113 @@
+{
+    "currentSession": 7,
+    "phase": "production",
+    "autoAdvance": true,
+    "tradingDuration": 300,
+    "phaseStartedAt": 1766818121,
+    "history": [
+        {
+            "session": 1,
+            "phase": "trading",
+            "endedAt": 1766817167,
+            "duration": 3036
+        },
+        {
+            "session": 1,
+            "phase": "closed",
+            "endedAt": 1766817176,
+            "duration": 9
+        },
+        {
+            "session": 2,
+            "phase": "production",
+            "endedAt": 1766817194,
+            "duration": 18
+        },
+        {
+            "session": 2,
+            "phase": "trading",
+            "endedAt": 1766817239,
+            "duration": 45
+        },
+        {
+            "session": 2,
+            "phase": "closed",
+            "endedAt": 1766817464,
+            "duration": 225
+        },
+        {
+            "session": 3,
+            "phase": "production",
+            "endedAt": 1766817467,
+            "duration": 3
+        },
+        {
+            "session": 3,
+            "phase": "trading",
+            "endedAt": 1766817497,
+            "duration": 30
+        },
+        {
+            "session": 3,
+            "phase": "closed",
+            "endedAt": 1766817502,
+            "duration": 5
+        },
+        {
+            "session": 4,
+            "phase": "production",
+            "endedAt": 1766817505,
+            "duration": 3
+        },
+        {
+            "session": 4,
+            "phase": "trading",
+            "endedAt": 1766817535,
+            "duration": 30
+        },
+        {
+            "session": 4,
+            "phase": "closed",
+            "endedAt": 1766817540,
+            "duration": 5
+        },
+        {
+            "session": 5,
+            "phase": "production",
+            "endedAt": 1766817543,
+            "duration": 3
+        },
+        {
+            "session": 5,
+            "phase": "trading",
+            "endedAt": 1766817755,
+            "duration": 212
+        },
+        {
+            "session": 5,
+            "phase": "closed",
+            "endedAt": 1766817760,
+            "duration": 5
+        },
+        {
+            "session": 6,
+            "phase": "production",
+            "endedAt": 1766817763,
+            "duration": 3
+        },
+        {
+            "session": 6,
+            "phase": "trading",
+            "endedAt": 1766818070,
+            "duration": 307
+        },
+        {
+            "session": 6,
+            "phase": "closed",
+            "endedAt": 1766818121,
+            "duration": 51
+        }
+    ],
+    "productionDuration": 3,
+    "productionRun": 1766818121
+}

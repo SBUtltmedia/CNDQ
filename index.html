@@ -3,139 +3,520 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production & Profit Dashboard</title>
+    <title>CNDQ Marketplace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .transition-width { transition: width 0.5s ease-in-out; }
-        .currency::before { content: '$'; }
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-green {
+            animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .good-deal {
+            background-color: rgba(34, 197, 94, 0.2);
+            border-left: 4px solid #22c55e;
+        }
+        .bad-deal {
+            background-color: rgba(239, 68, 68, 0.2);
+            border-left: 4px solid #ef4444;
+        }
+        .fair-deal {
+            background-color: rgba(251, 146, 60, 0.2);
+            border-left: 4px solid #fb923c;
+        }
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #6b7280;
+            border-radius: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>
-                    Enterprise Manager
-                </h1>
-                <div class="flex items-center gap-2 mt-1">
-                    <p class="text-slate-500">Inventory, Production & Profit Tracking</p>
-                    <span id="session-phase-badge" class="px-2 py-0.5 rounded text-xs font-bold bg-slate-200 text-slate-600">Phase: Loading...</span>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <a href="market.html" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors text-slate-600 font-medium">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/><path d="M11 12h10"/><path d="M3 12h2"/><path d="M7 12h2"/></svg>
-                    Market
-                </a>
-                <a href="calculator.html" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors text-slate-600 font-medium">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M18.4 4.6a9 9 0 1 1-12.8 0"/></svg>
-                    Shadow Prices
-                </a>
-                <button id="reset-btn" class="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors text-slate-600 font-medium">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                    Reset Session
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="inline-block h-16 w-16 animate-spin rounded-full border-4 border-solid border-green-500 border-r-transparent"></div>
+            <p class="mt-4 text-green-500 font-mono text-lg">Loading Marketplace...</p>
+        </div>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div id="confirm-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 border border-gray-700 shadow-xl">
+            <h3 class="text-xl font-bold mb-4 text-white" id="confirm-title">Confirm Action</h3>
+            <p class="text-gray-300 mb-6" id="confirm-message"></p>
+            <div class="flex gap-3 justify-end">
+                <button id="confirm-cancel" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded font-semibold transition">
+                    Cancel
                 </button>
+                <button id="confirm-ok" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[9999] space-y-2" role="status" aria-live="polite" aria-atomic="false"></div>
+
+    <!-- Main App Container -->
+    <div id="app" class="hidden">
+
+        <!-- Header -->
+        <header class="bg-gray-800 border-b-2 border-green-500 shadow-lg sticky top-0 z-40">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h1 class="text-3xl font-bold text-green-500 font-mono">CNDQ MARKETPLACE</h1>
+                        <p class="text-sm text-gray-300 mt-1">Team: <span id="team-name" class="text-white font-semibold"></span></p>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <!-- Funds Display -->
+                        <div class="bg-gray-700 px-6 py-3 rounded-lg border border-gray-600">
+                            <span class="text-gray-300 text-sm block">Current Funds</span>
+                            <span class="text-green-400 font-bold text-2xl" id="current-funds">$0</span>
+                        </div>
+
+                        <!-- Notifications -->
+                        <button id="notifications-btn" class="relative bg-gray-700 hover:bg-gray-600 p-3 rounded-lg transition" aria-label="View notifications">
+                            <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-label="unread notifications"></span>
+                        </button>
+
+                        <!-- Settings -->
+                        <button id="settings-btn" class="bg-gray-700 hover:bg-gray-600 p-3 rounded-lg transition" aria-label="Open settings">
+                            <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Shadow Prices & Recalculate -->
+                <div class="mt-4 bg-gray-700 rounded-lg p-4 border border-gray-600">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <div class="flex items-center gap-6 flex-wrap">
+                            <div class="text-sm">
+                                <span class="text-gray-200 font-semibold">Shadow Prices</span>
+                                <span id="staleness-indicator" class="ml-2 text-xs"></span>
+                            </div>
+                            <div class="flex gap-6 font-mono text-lg">
+                                <span class="text-blue-400">C: $<span id="shadow-C">0</span></span>
+                                <span class="text-purple-400">N: $<span id="shadow-N">0</span></span>
+                                <span class="text-yellow-400">D: $<span id="shadow-D">0</span></span>
+                                <span class="text-red-400">Q: $<span id="shadow-Q">0</span></span>
+                            </div>
+                        </div>
+                        <button id="recalc-shadow-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-lg">
+                            Recalculate Shadow Prices
+                        </button>
+                    </div>
+                    <div id="staleness-warning" class="hidden mt-3 p-3 rounded text-sm"></div>
+                </div>
             </div>
         </header>
 
-        <!-- Financial Summary -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div class="bg-indigo-600 p-6 rounded-2xl text-white shadow-lg">
-                <p class="text-indigo-100 text-xs uppercase font-bold mb-1">Total Bank Balance</p>
-                <h3 class="text-3xl font-black currency" id="total-balance">0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <p class="text-slate-400 text-xs uppercase font-bold mb-1">Projected Profit</p>
-                <h3 class="text-3xl font-black text-emerald-600 currency" id="total-profit">0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <p class="text-slate-400 text-xs uppercase font-bold mb-1">Starting Capital</p>
-                <h3 class="text-3xl font-black text-slate-800 currency" id="starting-fund">0</h3>
-            </div>
-        </section>
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-6">
 
-        <!-- Inventory Grid -->
-        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="inventory-grid">
-            <!-- Dynamically injected -->
-        </section>
+            <!-- 4-Column Chemical Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
 
-        <!-- Product Controls -->
-        <div class="grid md:grid-cols-2 gap-6">
-            <!-- Deicer Card -->
-            <div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-                <div class="h-2 bg-blue-500"></div>
-                <div class="p-6">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h2 class="text-xl font-bold text-slate-800">Deicer</h2>
-                            <p class="text-slate-500 text-sm">50 Gallon Drum • <span class="text-emerald-600 font-bold">+$100 Profit</span></p>
+                <!-- Chemical C Column -->
+                <div class="bg-gray-800 rounded-lg border-2 border-blue-500 shadow-xl">
+                    <div class="bg-blue-600 p-4 text-center">
+                        <h2 class="font-bold text-xl">Chemical C</h2>
+                    </div>
+                    <div class="p-4">
+                        <div class="bg-gray-700 rounded-lg p-3 mb-4">
+                            <div class="text-sm text-gray-300">Your Inventory</div>
+                            <div class="text-2xl font-bold" id="inv-C">0</div>
+                            <div class="text-xs text-gray-300 mt-1">Shadow Price: <span class="text-green-400 font-bold">$<span id="your-shadow-C">0</span></span></div>
                         </div>
-                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-blue-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button class="post-sell-interest-btn bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold transition" data-chemical="C">Post Sell Interest</button>
+                            <button class="post-buy-interest-btn bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold transition" data-chemical="C">Post Buy Interest</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">Teams Wanting to Sell</h4>
+                            <div id="sell-ads-C" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                                <p class="text-xs text-gray-300 text-center py-4">No sellers</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">Teams Wanting to Buy</h4>
+                            <div id="buy-ads-C" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                                <p class="text-xs text-gray-300 text-center py-4">No buyers</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-200">
-                        <div id="deicer-count" class="text-3xl font-black text-slate-800">0</div>
-                        <div class="text-[10px] uppercase font-bold text-slate-400 mb-2">Drums Produced</div>
-                        <div id="production-status-deicer" class="text-xs font-medium text-slate-500 bg-slate-200 rounded-full px-3 py-1 inline-block">
-                            Waiting for production phase...
+                </div>
+
+                <!-- Chemical N Column -->
+                <div class="bg-gray-800 rounded-lg border-2 border-purple-500 shadow-xl">
+                    <div class="bg-purple-600 p-4 text-center">
+                        <h2 class="font-bold text-xl">Chemical N</h2>
+                    </div>
+                    <div class="p-4">
+                        <div class="bg-gray-700 rounded-lg p-3 mb-4">
+                            <div class="text-sm text-gray-300">Your Inventory</div>
+                            <div class="text-2xl font-bold" id="inv-N">0</div>
+                            <div class="text-xs text-gray-300 mt-1">Shadow Price: <span class="text-green-400 font-bold">$<span id="your-shadow-N">0</span></span></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button class="post-sell-interest-btn bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold transition" data-chemical="N">Post Sell Interest</button>
+                            <button class="post-buy-interest-btn bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold transition" data-chemical="N">Post Buy Interest</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">Teams Wanting to Sell</h4>
+                            <div id="sell-ads-N" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                                <p class="text-xs text-gray-300 text-center py-4">No sellers</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">Teams Wanting to Buy</h4>
+                            <div id="buy-ads-N" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                                <p class="text-xs text-gray-300 text-center py-4">No buyers</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chemical D Column -->
+                <div class="bg-gray-800 rounded-lg border-2 border-yellow-500 shadow-xl">
+                    <div class="bg-yellow-600 p-4 text-center">
+                        <h2 class="font-bold text-xl">Chemical D</h2>
+                    </div>
+                    <div class="p-4">
+                        <div class="bg-gray-700 rounded-lg p-3 mb-4">
+                            <div class="text-sm text-gray-300">Your Inventory</div>
+                            <div class="text-2xl font-bold" id="inv-D">0</div>
+                            <div class="text-xs text-gray-300 mt-1">Shadow Price: <span class="text-green-400 font-bold">$<span id="your-shadow-D">0</span></span></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button class="post-sell-interest-btn bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold transition" data-chemical="D">Post Sell Interest</button>
+                            <button class="post-buy-interest-btn bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold transition" data-chemical="D">Post Buy Interest</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">Teams Wanting to Sell</h4>
+                            <div id="sell-ads-D" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                                <p class="text-xs text-gray-300 text-center py-4">No sellers</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">Teams Wanting to Buy</h4>
+                            <div id="buy-ads-D" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                                <p class="text-xs text-gray-300 text-center py-4">No buyers</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chemical Q Column -->
+                <div class="bg-gray-800 rounded-lg border-2 border-red-500 shadow-xl">
+                    <div class="bg-red-600 p-4 text-center">
+                        <h2 class="font-bold text-xl">Chemical Q</h2>
+                    </div>
+                    <div class="p-4">
+                        <div class="bg-gray-700 rounded-lg p-3 mb-4">
+                            <div class="text-sm text-gray-300">Your Inventory</div>
+                            <div class="text-2xl font-bold" id="inv-Q">0</div>
+                            <div class="text-xs text-gray-300 mt-1">Shadow Price: <span class="text-green-400 font-bold">$<span id="your-shadow-Q">0</span></span></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button class="post-sell-interest-btn bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold transition" data-chemical="Q">Post Sell Interest</button>
+                            <button class="post-buy-interest-btn bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold transition" data-chemical="Q">Post Buy Interest</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">Teams Wanting to Sell</h4>
+                            <div id="sell-ads-Q" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                                <p class="text-xs text-gray-300 text-center py-4">No sellers</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">Teams Wanting to Buy</h4>
+                            <div id="buy-ads-Q" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                                <p class="text-xs text-gray-300 text-center py-4">No buyers</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Solvent Card -->
-            <div class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden">
-                <div class="h-2 bg-emerald-500"></div>
-                <div class="p-6">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h2 class="text-xl font-bold text-slate-800">Solvent</h2>
-                            <p class="text-slate-500 text-sm">20 Gallon Drum • <span class="text-emerald-600 font-bold">+$60 Profit</span></p>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-emerald-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            <!-- My Negotiations -->
+            <div class="bg-gray-800 rounded-lg p-6 border-2 border-gray-700 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-2xl font-bold text-green-500 flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        MY NEGOTIATIONS
+                    </h3>
+                    <button id="view-all-negotiations-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition">
+                        View All
+                    </button>
+                </div>
+                <div id="my-negotiations" class="space-y-3">
+                    <p class="text-gray-300 text-center py-8">You have no active negotiations</p>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Create Offer Modal -->
+    <div id="offer-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md border-2 border-green-500 shadow-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-green-500" id="offer-modal-title">Create Sell Order</h3>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-300">Chemical</label>
+                    <input type="text" id="offer-chemical" readonly class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-3 text-white font-bold text-xl">
+                </div>
+
+                <div>
+                    <label for="offer-quantity" class="block text-sm font-semibold mb-2 text-gray-300">Quantity (gallons)</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="quantity-minus" class="w-12 h-12 bg-gray-600 hover:bg-gray-500 rounded font-bold text-xl transition" aria-label="Decrease quantity">−</button>
+                        <input type="number" id="offer-quantity" min="1" step="1" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-3 text-white text-lg text-center font-bold" aria-label="Quantity in gallons">
+                        <button type="button" id="quantity-plus" class="w-12 h-12 bg-gray-600 hover:bg-gray-500 rounded font-bold text-xl transition" aria-label="Increase quantity">+</button>
+                    </div>
+                    <p class="text-xs text-gray-300 mt-1">Available: <span id="offer-available" class="font-semibold">0</span></p>
+                </div>
+
+                <div>
+                    <label for="offer-price" class="block text-sm font-semibold mb-2 text-gray-300" id="offer-price-label">Price per Gallon ($)</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="price-minus" class="w-12 h-12 bg-gray-600 hover:bg-gray-500 rounded font-bold text-xl transition" aria-label="Decrease price">−</button>
+                        <input type="number" id="offer-price" min="0" step="0.01" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-3 text-white text-lg text-center font-bold" aria-label="Price per gallon">
+                        <button type="button" id="price-plus" class="w-12 h-12 bg-gray-600 hover:bg-gray-500 rounded font-bold text-xl transition" aria-label="Increase price">+</button>
+                    </div>
+                    <p class="text-xs text-gray-300 mt-1">Your Shadow Price: <span class="text-green-400 font-semibold">$<span id="offer-shadow-hint">0</span></span></p>
+                </div>
+
+                <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+                    <p class="text-sm text-gray-300"><strong>Total:</strong> <span class="text-green-400 font-bold text-xl">$<span id="offer-total">0.00</span></span></p>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button id="offer-submit-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold transition">Create Offer</button>
+                <button id="offer-cancel-btn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded font-semibold transition">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md border-2 border-green-500 shadow-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-green-500">Settings</h3>
+
+            <div class="space-y-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-semibold mb-1">Show Trading Hints</label>
+                        <p class="text-xs text-gray-300">Display color-coded indicators comparing market prices to your shadow prices</p>
+                    </div>
+                    <button id="toggle-hints-btn" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none bg-gray-600">
+                        <span id="toggle-hints-dot" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
+                    </button>
+                </div>
+
+                <div class="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded p-3">
+                    <p class="text-xs text-yellow-300">
+                        <strong>Note:</strong> Trading hints are a learning aid. Try trading without hints to better understand shadow prices!
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button id="settings-close-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded font-semibold transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Negotiation Modal -->
+    <div id="negotiation-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border-2 border-green-500 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-green-500" id="negotiation-modal-title">Negotiations</h3>
+                <button id="negotiation-modal-close-btn" class="text-gray-400 hover:text-white transition" aria-label="Close negotiations">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Negotiation List View -->
+            <div id="negotiation-list-view">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <h4 class="font-bold text-lg mb-2 text-green-400">Pending Negotiations</h4>
+                        <div id="pending-negotiations" class="space-y-2 max-h-96 overflow-y-auto">
+                            <p class="text-gray-300 text-center py-4">No pending negotiations</p>
                         </div>
                     </div>
-                    <div class="bg-slate-50 rounded-xl p-4 text-center border border-slate-200">
-                        <div id="solvent-count" class="text-3xl font-black text-slate-800">0</div>
-                        <div class="text-[10px] uppercase font-bold text-slate-400 mb-2">Drums Produced</div>
-                        <div id="production-status-solvent" class="text-xs font-medium text-slate-500 bg-slate-200 rounded-full px-3 py-1 inline-block">
-                            Waiting for production phase...
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <h4 class="font-bold text-lg mb-2 text-gray-400">Completed Negotiations</h4>
+                        <div id="completed-negotiations" class="space-y-2 max-h-96 overflow-y-auto">
+                            <p class="text-gray-300 text-center py-4">No completed negotiations</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Negotiation Detail View -->
+            <div id="negotiation-detail-view" class="hidden">
+                <button id="back-to-list-btn" class="mb-4 text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Back to list
+                </button>
+
+                <div class="bg-gray-700 rounded-lg p-6 mb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h4 class="text-xl font-bold" id="detail-chemical">Chemical C</h4>
+                            <p class="text-sm text-gray-300">
+                                <span id="detail-participants"></span>
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <span id="detail-status-badge" class="px-3 py-1 rounded-full text-sm font-semibold"></span>
+                        </div>
+                    </div>
+
+                    <!-- Offer History -->
+                    <div class="mb-4">
+                        <h5 class="font-bold mb-3 text-gray-300">Offer History</h5>
+                        <div id="offer-history" class="space-y-2 max-h-64 overflow-y-auto">
+                            <!-- Offers will be dynamically added here -->
+                        </div>
+                    </div>
+
+                    <!-- Counter-Offer Form (only shown when it's user's turn) -->
+                    <div id="counter-offer-form" class="hidden">
+                        <h5 class="font-bold mb-3 text-green-400">Make Counter-Offer</h5>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="counter-quantity" class="block text-sm font-semibold mb-2 text-gray-300">Quantity (gallons)</label>
+                                <input type="number" id="counter-quantity" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white">
+                            </div>
+                            <div>
+                                <label for="counter-price" class="block text-sm font-semibold mb-2 text-gray-300">Price per Gallon ($)</label>
+                                <input type="number" id="counter-price" min="0" step="0.01" class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-300 mb-4">Your Shadow Price: <span class="text-green-400 font-semibold">$<span id="counter-shadow-hint">0</span></span></p>
+                        <button id="submit-counter-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold transition">
+                            Send Counter-Offer
+                        </button>
+                    </div>
+
+                    <!-- Action Buttons (only shown when it's user's turn to respond) -->
+                    <div id="negotiation-actions" class="hidden flex gap-3">
+                        <button id="accept-offer-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold transition">
+                            Accept Offer
+                        </button>
+                        <button id="reject-offer-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded font-semibold transition">
+                            Reject / Cancel
+                        </button>
+                        <button id="show-counter-form-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-semibold transition">
+                            Counter-Offer
+                        </button>
+                    </div>
+
+                    <!-- Waiting message (shown when waiting for other team) -->
+                    <div id="waiting-message" class="hidden text-center p-4 bg-gray-600 rounded">
+                        <p class="text-gray-300">Waiting for other team to respond...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Start New Negotiation View -->
+            <div id="start-negotiation-view" class="hidden">
+                <button id="back-from-new-btn" class="mb-4 text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Back
+                </button>
+
+                <div class="bg-gray-700 rounded-lg p-6">
+                    <h4 class="text-xl font-bold mb-4 text-green-400">Start New Negotiation</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="new-neg-team" class="block text-sm font-semibold mb-2 text-gray-300">Select Team</label>
+                            <input type="text" id="new-neg-team" readonly class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label for="new-neg-chemical" class="block text-sm font-semibold mb-2 text-gray-300">Chemical</label>
+                            <input type="text" id="new-neg-chemical" readonly class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white cursor-not-allowed">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="new-neg-quantity" class="block text-sm font-semibold mb-2 text-gray-300">Quantity (gallons)</label>
+                                <input type="number" id="new-neg-quantity" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white">
+                            </div>
+                            <div>
+                                <label for="new-neg-price" class="block text-sm font-semibold mb-2 text-gray-300">Your Offer Price ($)</label>
+                                <input type="number" id="new-neg-price" min="0" step="0.01" class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white">
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-300">Your Shadow Price: <span class="text-green-400 font-semibold">$<span id="new-neg-shadow-hint">0</span></span></p>
+                        <button id="submit-new-negotiation-btn" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold transition">
+                            Send Initial Offer
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Summary Footer -->
-        <footer class="mt-12 p-6 bg-slate-900 rounded-2xl text-white shadow-xl">
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-center md:text-left">
-                <div>
-                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Production Volume</p>
-                    <p class="text-2xl font-bold"><span id="total-vol">0</span> <span class="text-sm font-normal">gal</span></p>
-                </div>
-                <div>
-                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Resource Utilization</p>
-                    <p class="text-2xl font-bold" id="utilization">0.0%</p>
-                </div>
-                <div class="col-span-2 md:col-span-1 flex flex-col items-center md:items-start">
-                    <p class="text-slate-400 text-xs uppercase font-bold mb-1">Session Status</p>
-                    <div class="flex items-center gap-2" id="sync-status">
-                        <div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
-                        <p class="text-sm font-medium">Initializing...</p>
-                    </div>
-                </div>
-            </div>
-        </footer>
     </div>
 
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+    <!-- Notifications Panel -->
+    <div id="notifications-panel" class="hidden fixed right-4 top-20 bg-gray-800 rounded-lg border-2 border-green-500 w-96 max-h-96 overflow-hidden z-50 shadow-2xl">
+        <div class="sticky top-0 bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-green-500">Notifications</h3>
+            <button id="close-notif-btn" class="text-gray-400 hover:text-white transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="notifications-list" class="p-4 space-y-2 max-h-80 overflow-y-auto scrollbar-thin">
+            <p class="text-gray-300 text-center py-8">No notifications</p>
+        </div>
+    </div>
 
-    <script type="module" src="js/app.js"></script>
+    <!-- Main JavaScript Application -->
+    <script src="js/marketplace.js"></script>
 </body>
 </html>

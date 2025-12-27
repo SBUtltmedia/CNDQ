@@ -1,190 +1,333 @@
 <?php
 /**
  * File-based JSON storage helpers with proper locking for concurrent access
- * NOW DECENTRALIZED: One folder per user
  */
 
-require_once 'userData.php';
-require_once 'productionLib.php';
+/**
+ * Update offers.json with atomic read-modify-write
+ * @param callable $callback Function that receives and modifies the offers data
+ * @return array The updated offers data
+ */
+function updateOffers($callback) {
+    $file = __DIR__ . '/data/offers.json';
 
-// --- Generic Helper for Locking & Updating JSON ---
-
-function updateJsonFile($filePath, $callback, $default = []) {
-    $dir = dirname($filePath);
-    if (!file_exists($dir)) mkdir($dir, 0755, true);
-
-    if (!file_exists($filePath)) {
-        file_put_contents($filePath, json_encode($default, JSON_PRETTY_PRINT));
+    // Ensure data directory exists
+    $dataDir = __DIR__ . '/data';
+    if (!file_exists($dataDir)) {
+        mkdir($dataDir, 0755, true);
     }
 
-    $fp = fopen($filePath, 'c+');
-    if (!$fp) return false;
+    // Create file if it doesn't exist
+    if (!file_exists($file)) {
+        file_put_contents($file, json_encode(['offers' => [], 'last_modified' => time()]));
+    }
 
-    $result = false;
+    $fp = fopen($file, 'c+');
+    if (!$fp) {
+        error_log("Failed to open offers.json");
+        return ['offers' => []];
+    }
+
     if (flock($fp, LOCK_EX)) {
-        $size = filesize($filePath);
+        $size = filesize($file);
         $content = $size > 0 ? fread($fp, $size) : '';
-        $data = json_decode($content, true) ?: $default;
+        $data = json_decode($content, true) ?: ['offers' => []];
 
-        $newData = $callback($data);
+        // Execute callback to modify data
+        $data = $callback($data);
+        $data['last_modified'] = time();
 
-        // If callback returns null/false, we might assume abort? 
-        // But for now let's assume it returns the data to write.
-        if ($newData !== null) {
-            ftruncate($fp, 0);
-            rewind($fp);
-            fwrite($fp, json_encode($newData, JSON_PRETTY_PRINT));
-            fflush($fp);
-            $result = $newData;
-        }
+        // Write back
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
+        fflush($fp);
         flock($fp, LOCK_UN);
+    } else {
+        error_log("Failed to lock offers.json");
+        $data = ['offers' => []];
     }
-    fclose($fp);
-    return $result;
-}
 
-function readJsonFile($filePath, $default = []) {
-    if (!file_exists($filePath)) return $default;
-    
-    $fp = fopen($filePath, 'r');
-    if (!$fp) return $default;
-
-    $data = $default;
-    if (flock($fp, LOCK_SH)) {
-        $size = filesize($filePath);
-        $content = $size > 0 ? fread($fp, $size) : '';
-        $data = json_decode($content, true) ?: $default;
-        flock($fp, LOCK_UN);
-    }
     fclose($fp);
     return $data;
 }
 
-// --- Specific Data Accessors ---
+/**
+ * Read offers.json
+ * @return array The offers data
+ */
+function getOffers() {
+    $file = __DIR__ . '/data/offers.json';
+    if (!file_exists($file)) {
+        return ['offers' => [], 'last_modified' => 0];
+    }
 
-function getUserData($email) {
-    return readJsonFile(getUserDataFilePath($email), []);
-}
+    $fp = fopen($file, 'r');
+    if (!$fp) {
+        return ['offers' => []];
+    }
 
-function updateUserData($email, $callback) {
-    return updateJsonFile(getUserDataFilePath($email), $callback, []);
-}
+    if (flock($fp, LOCK_SH)) {
+        $size = filesize($file);
+        $content = $size > 0 ? fread($fp, $size) : '';
+        $data = json_decode($content, true) ?: ['offers' => []];
+        flock($fp, LOCK_UN);
+    } else {
+        $data = ['offers' => []];
+    }
 
-function getUserOffers($email) {
-    return readJsonFile(getUserOffersFilePath($email), []);
-}
-
-function updateUserOffers($email, $callback) {
-    return updateJsonFile(getUserOffersFilePath($email), $callback, []);
-}
-
-function logUserTrade($email, $tradeData) {
-    return updateJsonFile(getUserTradesFilePath($email), function($trades) use ($tradeData) {
-        $trades[] = $tradeData;
-        return $trades;
-    }, []);
-}
-
-function sendNotification($recipientEmail, $notification) {
-    return updateUserData($recipientEmail, function($data) use ($notification) {
-        if (!isset($data['notifications'])) $data['notifications'] = [];
-        
-        $notification['id'] = 'notif_' . time() . '_' . bin2hex(random_bytes(4));
-        $notification['read'] = false;
-        $notification['timestamp'] = time();
-        
-        $data['notifications'][] = $notification;
-        return $data;
-    });
+    fclose($fp);
+    return $data;
 }
 
 /**
- * Execute a trade between two users.
- * Locks both users' data files to ensure atomicity.
- * Updates inventory/funds and logs the trade to BOTH users' trade files.
+ * Append a trade to the trades log
+ * @param array $tradeData The trade information to log
+ */
+function logTrade($tradeData) {
+    $file = __DIR__ . '/data/trades_log.json';
+
+    // Ensure data directory exists
+    $dataDir = __DIR__ . '/data';
+    if (!file_exists($dataDir)) {
+        mkdir($dataDir, 0755, true);
+    }
+
+    // Create file if it doesn't exist
+    if (!file_exists($file)) {
+        file_put_contents($file, json_encode(['trades' => []]));
+    }
+
+    $fp = fopen($file, 'c+');
+    if (!$fp) {
+        error_log("Failed to open trades_log.json");
+        return;
+    }
+
+    if (flock($fp, LOCK_EX)) {
+        $size = filesize($file);
+        $content = $size > 0 ? fread($fp, $size) : '';
+        $data = json_decode($content, true) ?: ['trades' => []];
+
+        $data['trades'][] = $tradeData;
+
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
+        fflush($fp);
+        flock($fp, LOCK_UN);
+    }
+
+    fclose($fp);
+}
+
+/**
+ * Send a notification to a user by appending to their notifications array
+ * @param string $recipientEmail The recipient's email
+ * @param array $notification The notification data
+ */
+function sendNotification($recipientEmail, $notification) {
+    $safeEmail = preg_replace('/[^a-zA-Z0-9_\-@.]/', '_', $recipientEmail);
+    $file = __DIR__ . "/data/user_{$safeEmail}.json";
+
+    if (!file_exists($file)) {
+        error_log("User file not found: $file");
+        return false;
+    }
+
+    $fp = fopen($file, 'c+');
+    if (!$fp) {
+        error_log("Failed to open user file: $file");
+        return false;
+    }
+
+    if (flock($fp, LOCK_EX)) {
+        $size = filesize($file);
+        $content = $size > 0 ? fread($fp, $size) : '';
+        $data = json_decode($content, true) ?: [];
+
+        if (!isset($data['notifications'])) {
+            $data['notifications'] = [];
+        }
+
+        $notification['id'] = 'notif_' . time() . '_' . bin2hex(random_bytes(4));
+        $notification['read'] = false;
+        $notification['timestamp'] = time();
+
+        $data['notifications'][] = $notification;
+
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
+        fflush($fp);
+        flock($fp, LOCK_UN);
+    }
+
+    fclose($fp);
+    return true;
+}
+
+/**
+ * Execute a trade between two users atomically
+ * @param string $sellerId Seller's email
+ * @param string $buyerId Buyer's email
+ * @param string $chemical Chemical being traded (C, N, D, or Q)
+ * @param float $quantity Quantity in gallons
+ * @param float $pricePerGallon Price per gallon
+ * @return array Success status and message
  */
 function executeTrade($sellerId, $buyerId, $chemical, $quantity, $pricePerGallon) {
-    $files = [
-        'seller' => getUserDataFilePath($sellerId),
-        'buyer' => getUserDataFilePath($buyerId)
-    ];
-    
-    // Sort keys to prevent deadlock if we were locking based on keys, 
-    // but here we lock based on file paths.
-    // Let's sort the paths.
-    $paths = array_values($files);
-    sort($paths);
-    
+    // Sanitize emails
+    $safeS = preg_replace('/[^a-zA-Z0-9_\-@.]/', '_', $sellerId);
+    $safeB = preg_replace('/[^a-zA-Z0-9_\-@.]/', '_', $buyerId);
+
+    // Lock files in alphabetical order to prevent deadlock
+    $files = [$safeS => $sellerId, $safeB => $buyerId];
+    ksort($files);
+
     $fps = [];
     $data = [];
 
     try {
-        // Lock both data files
-        foreach ($paths as $path) {
-            $fp = fopen($path, 'c+');
-            if (!$fp || !flock($fp, LOCK_EX)) {
-                throw new Exception("Failed to lock file: $path");
+        // Open and lock both files
+        foreach ($files as $safe => $email) {
+            $filePath = __DIR__ . "/data/user_{$safe}.json";
+            if (!file_exists($filePath)) {
+                throw new Exception("User file not found: $email");
             }
-            $fps[$path] = $fp;
+
+            $fp = fopen($filePath, 'c+');
+            if (!$fp) {
+                throw new Exception("Failed to open file for: $email");
+            }
+
+            if (!flock($fp, LOCK_EX)) {
+                throw new Exception("Failed to lock file for: $email");
+            }
+
+            $fps[$safe] = $fp;
+
+            $size = filesize($filePath);
+            $content = $size > 0 ? fread($fp, $size) : '';
+            $data[$email] = json_decode($content, true) ?: [];
         }
 
-        // Read Data
-        $sellerData = json_decode(file_get_contents($files['seller']), true) ?: [];
-        $buyerData = json_decode(file_get_contents($files['buyer']), true) ?: [];
-        
+        $sellerData = &$data[$sellerId];
+        $buyerData = &$data[$buyerId];
+
         $totalCost = $quantity * $pricePerGallon;
 
-        // Validation
-        if (!isset($sellerData['inventory'][$chemical]) || $sellerData['inventory'][$chemical] < $quantity) {
-            throw new Exception("Seller insufficient inventory");
-        }
-        if (($buyerData['startingFund'] ?? 0) < $totalCost) {
-            throw new Exception("Buyer insufficient funds");
+        // Validate
+        if (!isset($sellerData['inventory'][$chemical])) {
+            throw new Exception("Invalid chemical: $chemical");
         }
 
-        // Execute
+        if ($sellerData['inventory'][$chemical] < $quantity) {
+            throw new Exception("Seller has insufficient inventory");
+        }
+
+        if ($buyerData['startingFund'] < $totalCost) {
+            throw new Exception("Buyer has insufficient funds");
+        }
+
+        // Execute trade
         $sellerData['inventory'][$chemical] -= $quantity;
         $sellerData['startingFund'] += $totalCost;
-        
+
         $buyerData['inventory'][$chemical] += $quantity;
         $buyerData['startingFund'] -= $totalCost;
 
-        // Run Automatic Production for BOTH parties
-        // If they acquired useful materials (buyer) or freed up capacity? (seller mostly just loses stock)
-        // But running it ensures consistency.
-        calculateProduction($sellerData);
-        calculateProduction($buyerData);
+        // Write back
+        foreach ($files as $safe => $email) {
+            $fp = $fps[$safe];
+            ftruncate($fp, 0);
+            rewind($fp);
+            fwrite($fp, json_encode($data[$email], JSON_PRETTY_PRINT));
+            fflush($fp);
+        }
 
-        // Write Back Data
-        file_put_contents($files['seller'], json_encode($sellerData, JSON_PRETTY_PRINT));
-        file_put_contents($files['buyer'], json_encode($buyerData, JSON_PRETTY_PRINT));
-        
-        // Log Trade to both users (No need to lock strictly for append, but since we are here...)
-        // Actually logUserTrade opens its own lock. That's fine.
-        $tradeRecord = [
-            'timestamp' => time(),
-            'role' => 'seller',
-            'counterparty' => $buyerId,
-            'chemical' => $chemical,
-            'quantity' => $quantity,
-            'price' => $pricePerGallon,
-            'total' => $totalCost
-        ];
-        logUserTrade($sellerId, $tradeRecord);
-        
-        $tradeRecord['role'] = 'buyer';
-        $tradeRecord['counterparty'] = $sellerId;
-        $tradeRecord['total'] = -$totalCost;
-        logUserTrade($buyerId, $tradeRecord);
-
-        return ['success' => true];
+        // Success
+        $result = ['success' => true, 'message' => 'Trade executed successfully'];
 
     } catch (Exception $e) {
-        return ['success' => false, 'message' => $e->getMessage()];
+        $result = ['success' => false, 'message' => $e->getMessage()];
     } finally {
+        // Always unlock and close files
         foreach ($fps as $fp) {
             flock($fp, LOCK_UN);
             fclose($fp);
         }
     }
+
+    return $result;
+}
+
+/**
+ * Get user data by email
+ * @param string $email User's email
+ * @return array|null User data or null if not found
+ */
+function getUserData($email) {
+    $safeEmail = preg_replace('/[^a-zA-Z0-9_\-@.]/', '_', $email);
+    $file = __DIR__ . "/data/user_{$safeEmail}.json";
+
+    if (!file_exists($file)) {
+        return null;
+    }
+
+    $fp = fopen($file, 'r');
+    if (!$fp) {
+        return null;
+    }
+
+    if (flock($fp, LOCK_SH)) {
+        $size = filesize($file);
+        $content = $size > 0 ? fread($fp, $size) : '';
+        $data = json_decode($content, true);
+        flock($fp, LOCK_UN);
+    } else {
+        $data = null;
+    }
+
+    fclose($fp);
+    return $data;
+}
+
+/**
+ * Update user data
+ * @param string $email User's email
+ * @param callable $callback Function that receives and modifies user data
+ * @return bool Success
+ */
+function updateUserData($email, $callback) {
+    $safeEmail = preg_replace('/[^a-zA-Z0-9_\-@.]/', '_', $email);
+    $file = __DIR__ . "/data/user_{$safeEmail}.json";
+
+    if (!file_exists($file)) {
+        return false;
+    }
+
+    $fp = fopen($file, 'c+');
+    if (!$fp) {
+        return false;
+    }
+
+    $success = false;
+    if (flock($fp, LOCK_EX)) {
+        $size = filesize($file);
+        $content = $size > 0 ? fread($fp, $size) : '';
+        $data = json_decode($content, true) ?: [];
+
+        $data = $callback($data);
+
+        ftruncate($fp, 0);
+        rewind($fp);
+        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
+        fflush($fp);
+        flock($fp, LOCK_UN);
+        $success = true;
+    }
+
+    fclose($fp);
+    return $success;
 }

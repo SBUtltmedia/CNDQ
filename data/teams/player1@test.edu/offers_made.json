@@ -1,0 +1,25 @@
+{
+    "offers": [
+        {
+            "chemical": "D",
+            "quantity": 50,
+            "minPrice": 8,
+            "type": "sell",
+            "id": "offer_1766814247_b7b12100",
+            "sellerId": "player1@test.edu",
+            "createdAt": 1766814247,
+            "status": "active"
+        },
+        {
+            "chemical": "D",
+            "quantity": 75,
+            "minPrice": 8.5,
+            "type": "sell",
+            "id": "offer_1766814366_5cd3c403",
+            "sellerId": "player1@test.edu",
+            "createdAt": 1766814366,
+            "status": "active"
+        }
+    ],
+    "lastModified": 1766814366
+}

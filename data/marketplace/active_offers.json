@@ -1,0 +1,138 @@
+{
+    "offers": [
+        {
+            "chemical": "N",
+            "quantity": 100,
+            "minPrice": 2,
+            "type": "sell",
+            "id": "offer_1766814131_f084c11a",
+            "sellerId": "player3@test.edu",
+            "createdAt": 1766814131,
+            "status": "active",
+            "sellerName": "player3@test.edu"
+        },
+        {
+            "chemical": "D",
+            "quantity": 50,
+            "minPrice": 8,
+            "type": "sell",
+            "id": "offer_1766814247_b7b12100",
+            "sellerId": "player1@test.edu",
+            "createdAt": 1766814247,
+            "status": "active",
+            "sellerName": "player1@test.edu"
+        },
+        {
+            "chemical": "D",
+            "quantity": 75,
+            "minPrice": 8.5,
+            "type": "sell",
+            "id": "offer_1766814366_5cd3c403",
+            "sellerId": "player1@test.edu",
+            "createdAt": 1766814366,
+            "status": "active",
+            "sellerName": "player1@test.edu"
+        }
+    ],
+    "offersByChemical": {
+        "C": [],
+        "N": [
+            {
+                "chemical": "N",
+                "quantity": 100,
+                "minPrice": 2,
+                "type": "sell",
+                "id": "offer_1766814131_f084c11a",
+                "sellerId": "player3@test.edu",
+                "createdAt": 1766814131,
+                "status": "active",
+                "sellerName": "player3@test.edu"
+            }
+        ],
+        "D": [
+            {
+                "chemical": "D",
+                "quantity": 50,
+                "minPrice": 8,
+                "type": "sell",
+                "id": "offer_1766814247_b7b12100",
+                "sellerId": "player1@test.edu",
+                "createdAt": 1766814247,
+                "status": "active",
+                "sellerName": "player1@test.edu"
+            },
+            {
+                "chemical": "D",
+                "quantity": 75,
+                "minPrice": 8.5,
+                "type": "sell",
+                "id": "offer_1766814366_5cd3c403",
+                "sellerId": "player1@test.edu",
+                "createdAt": 1766814366,
+                "status": "active",
+                "sellerName": "player1@test.edu"
+            }
+        ],
+        "Q": []
+    },
+    "buyOrders": [
+        {
+            "chemical": "C",
+            "quantity": 100,
+            "maxPrice": 3,
+            "id": "buy_1766817827_85f11184",
+            "buyerId": "player1@test.edu",
+            "createdAt": 1766817827,
+            "status": "active",
+            "type": "buy",
+            "buyerName": "player1@test.edu"
+        }
+    ],
+    "buyOrdersByChemical": {
+        "C": [
+            {
+                "chemical": "C",
+                "quantity": 100,
+                "maxPrice": 3,
+                "id": "buy_1766817827_85f11184",
+                "buyerId": "player1@test.edu",
+                "createdAt": 1766817827,
+                "status": "active",
+                "type": "buy",
+                "buyerName": "player1@test.edu"
+            }
+        ],
+        "N": [],
+        "D": [],
+        "Q": []
+    },
+    "summary": {
+        "totalTeams": 9,
+        "activeOffers": 3,
+        "offersByChemical": {
+            "C": 0,
+            "N": 1,
+            "D": 2,
+            "Q": 0
+        },
+        "priceRanges": {
+            "C": {
+                "min": null,
+                "max": null
+            },
+            "N": {
+                "min": 2,
+                "max": 2
+            },
+            "D": {
+                "min": 8,
+                "max": 8.5
+            },
+            "Q": {
+                "min": null,
+                "max": null
+            }
+        }
+    },
+    "cachedAt": 1766819729
+}

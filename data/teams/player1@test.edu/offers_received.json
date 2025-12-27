@@ -1,0 +1,15 @@
+{
+    "interests": [
+        {
+            "chemical": "C",
+            "quantity": 100,
+            "maxPrice": 3,
+            "id": "buy_1766817827_85f11184",
+            "buyerId": "player1@test.edu",
+            "createdAt": 1766817827,
+            "status": "active",
+            "type": "buy"
+        }
+    ],
+    "lastModified": 1766817827
+}

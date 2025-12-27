@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNDQ Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-purple-400 mb-2">CNDQ Admin Dashboard</h1>
+            <p class="text-gray-400">Session & Market Control</p>
+        </header>
+
+        <!-- Session Status Card -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">Current Session</h2>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-700 p-4 rounded">
+                    <div class="text-gray-400 text-sm">Session Number</div>
+                    <div class="text-3xl font-bold text-purple-400" id="session-number">-</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded">
+                    <div class="text-gray-400 text-sm">Current Phase</div>
+                    <div class="text-3xl font-bold capitalize" id="current-phase">-</div>
+                </div>
+            </div>
+
+            <div class="bg-gray-700 p-4 rounded mb-4" id="timer-container">
+                <div class="text-gray-400 text-sm mb-2">Time Remaining</div>
+                <div class="text-2xl font-mono font-bold text-yellow-400" id="time-remaining">--:--</div>
+            </div>
+
+            <!-- Phase Controls -->
+            <div class="flex gap-3">
+                <button onclick="advancePhase()" class="flex-1 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
+                    Advance to Next Phase →
+                </button>
+                <button onclick="resetSession()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition">
+                    Reset to Session 1
+                </button>
+            </div>
+        </div>
+
+        <!-- Direct Phase Control -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">Direct Phase Control</h2>
+
+            <div class="flex gap-3">
+                <button onclick="setPhase('production')" class="flex-1 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-bold transition">
+                    Set: Production
+                </button>
+                <button onclick="setPhase('trading')" class="flex-1 bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-bold transition">
+                    Set: Trading
+                </button>
+                <button onclick="setPhase('closed')" class="flex-1 bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded font-bold transition">
+                    Set: Closed
+                </button>
+            </div>
+        </div>
+
+        <!-- Auto-Advance Settings -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">Auto-Advance Settings</h2>
+
+            <div class="flex items-center justify-between mb-4">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" id="auto-advance" onchange="toggleAutoAdvance()" class="w-6 h-6 rounded">
+                    <span class="text-lg">Enable Auto-Advance</span>
+                </label>
+            </div>
+
+            <div class="bg-blue-900/30 border border-blue-500/50 rounded p-4 mb-6">
+                <div class="text-sm text-blue-200 mb-2">
+                    <strong>Auto-Advance Cycle:</strong> Production (auto LP runs) → Trading → Closed (5s) → Production (next session)
+                </div>
+                <div class="text-xs text-blue-300">
+                    Production phase is automatic - the LP solver runs for all teams, manufactures products, and advances to trading.
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-300 mb-2">Production Pause (Auto LP runs)</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="production-duration-seconds" value="5" min="1" max="30" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-24 text-white">
+                        <span class="text-gray-400">seconds</span>
+                    </div>
+                    <button onclick="updateProductionDuration()" class="mt-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-bold transition w-full text-sm">
+                        Update Pause
+                    </button>
+                    <div class="text-xs text-gray-400 mt-1">Brief pause while production runs automatically</div>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-300 mb-2">Trading Duration</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="trading-duration-minutes" value="10" min="0" max="60" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white">
+                        <span class="text-gray-400">min</span>
+                        <input type="number" id="trading-duration-seconds" value="0" min="0" max="59" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white">
+                        <span class="text-gray-400">sec</span>
+                    </div>
+                    <button onclick="updateTradingDuration()" class="mt-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-bold transition w-full text-sm">
+                        Update Trading
+                    </button>
+                    <div class="text-xs text-gray-400 mt-1">Time for teams to buy/sell chemicals</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Overview -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">Team Overview</h2>
+            <div id="team-list" class="space-y-2">
+                <p class="text-gray-400">Loading teams...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionState = null;
+        let updateInterval = null;
+
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const bgColor = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+
+            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg min-w-[300px] max-w-md transform transition-all duration-300 ease-in-out`;
+            toast.innerHTML = `
+                <div class="flex items-center justify-between gap-3">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        async function loadSessionState() {
+            try {
+                const response = await fetch('/api/admin/session.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    sessionState = data.session;
+                    updateUI();
+                }
+            } catch (error) {
+                console.error('Failed to load session state:', error);
+            }
+        }
+
+        async function loadTeams() {
+            try {
+                const response = await fetch('/api/admin/list-teams.php');
+                const data = await response.json();
+
+                if (data.teams) {
+                    const teamList = document.getElementById('team-list');
+                    teamList.innerHTML = data.teams.map(team => `
+                        <div class="bg-gray-700 p-3 rounded flex justify-between items-center">
+                            <div>
+                                <div class="font-bold">${team.teamName}</div>
+                                <div class="text-sm text-gray-400">${team.email}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-green-400 font-bold">$${team.funds.toLocaleString()}</div>
+                                <div class="text-xs text-gray-400">${team.activeOffers} offers, ${team.totalTrades} trades</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load teams:', error);
+            }
+        }
+
+        function updateUI() {
+            if (!sessionState) return;
+
+            document.getElementById('session-number').textContent = sessionState.currentSession;
+            document.getElementById('current-phase').textContent = sessionState.phase;
+
+            const phaseEl = document.getElementById('current-phase');
+            phaseEl.className = 'text-3xl font-bold capitalize ';
+            if (sessionState.phase === 'trading') {
+                phaseEl.className += 'text-green-400';
+            } else if (sessionState.phase === 'production') {
+                phaseEl.className += 'text-blue-400';
+            } else {
+                phaseEl.className += 'text-gray-400';
+            }
+
+            document.getElementById('auto-advance').checked = sessionState.autoAdvance;
+
+            // Production duration
+            const prodDuration = sessionState.productionDuration || 5;
+            document.getElementById('production-duration-seconds').value = prodDuration;
+
+            // Trading duration
+            const tradeDuration = sessionState.tradingDuration || 600;
+            document.getElementById('trading-duration-minutes').value = Math.floor(tradeDuration / 60);
+            document.getElementById('trading-duration-seconds').value = tradeDuration % 60;
+
+            updateTimer();
+        }
+
+        function updateTimer() {
+            if (!sessionState) return;
+
+            const isTimedPhase = (sessionState.phase === 'trading' || sessionState.phase === 'production' || sessionState.phase === 'closed');
+
+            if (isTimedPhase && sessionState.timeRemaining !== undefined) {
+                const minutes = Math.floor(sessionState.timeRemaining / 60);
+                const seconds = sessionState.timeRemaining % 60;
+                document.getElementById('time-remaining').textContent =
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                document.getElementById('timer-container').style.display = 'block';
+            } else {
+                document.getElementById('timer-container').style.display = 'none';
+            }
+        }
+
+        async function advancePhase() {
+            try {
+                const response = await fetch('/api/admin/session.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'advance' })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(data.message);
+                    await loadSessionState();
+                }
+            } catch (error) {
+                showToast('Failed to advance phase', 'error');
+            }
+        }
+
+        async function setPhase(phase) {
+            try {
+                const response = await fetch('/api/admin/session.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'setPhase', phase })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    await loadSessionState();
+                }
+            } catch (error) {
+                showToast('Failed to set phase', 'error');
+            }
+        }
+
+        async function toggleAutoAdvance() {
+            const enabled = document.getElementById('auto-advance').checked;
+
+            try {
+                const response = await fetch('/api/admin/session.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'setAutoAdvance', enabled })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    await loadSessionState();
+                }
+            } catch (error) {
+                showToast('Failed to toggle auto-advance', 'error');
+            }
+        }
+
+        async function updateProductionDuration() {
+            const secs = parseInt(document.getElementById('production-duration-seconds').value) || 5;
+
+            try {
+                const response = await fetch('/api/admin/session.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'setProductionDuration', seconds: secs })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Production pause updated to ' + secs + ' seconds');
+                    await loadSessionState();
+                }
+            } catch (error) {
+                showToast('Failed to update production pause', 'error');
+            }
+        }
+
+        async function updateTradingDuration() {
+            const minutes = parseInt(document.getElementById('trading-duration-minutes').value) || 0;
+            const secs = parseInt(document.getElementById('trading-duration-seconds').value) || 0;
+            const totalSeconds = (minutes * 60) + secs;
+
+            try {
+                const response = await fetch('/api/admin/session.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'setTradingDuration', seconds: totalSeconds })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Trading duration updated to ' + minutes + 'm ' + secs + 's');
+                    await loadSessionState();
+                }
+            } catch (error) {
+                showToast('Failed to update trading duration', 'error');
+            }
+        }
+
+        async function resetSession() {
+            if (!confirm('Reset to Session 1? This will clear all session history.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/session.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'reset' })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Session reset to 1');
+                    await loadSessionState();
+                }
+            } catch (error) {
+                showToast('Failed to reset session', 'error');
+            }
+        }
+
+        // Initialize
+        loadSessionState();
+        loadTeams();
+
+        // Auto-refresh every 3 seconds
+        setInterval(() => {
+            loadSessionState();
+            if (sessionState && sessionState.timeRemaining) {
+                sessionState.timeRemaining = Math.max(0, sessionState.timeRemaining - 1);
+                updateTimer();
+            }
+        }, 1000);
+
+        setInterval(loadTeams, 5000);
+    </script>
+</body>
+</html>

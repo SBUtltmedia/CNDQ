@@ -1,5 +1,6 @@
-<If "env('ENVIRONMENT') == 'local'">
-    # Set env vars only if LOCAL=true
+# Auto-detect environment based on server name
+<If "%{HTTP_HOST} =~ /(localhost|127\.0\.0\.1|\.local|\.test|\.ddev\.site)/">
+    # Local development - set test user
     SetEnv cn test_cn
     SetEnv nickname test_nickname
     SetEnv givenName test_givenName
@@ -7,11 +8,10 @@
     SetEnv mail test_mail1@stonybrook.edu
 </If>
 <Else>
+    # Production - use Shibboleth authentication
     <IfModule mod_shib>
         AuthType shibboleth
         ShibRequestSetting requireSession true
-        #require valid-user
-        #ShibRequestSetting requireSession false
         require shibboleth
     </IfModule>
     SetEnv PHP_VALUE "session.save_path=/home/tltsecure/apache2/htdocs/userData/sessionData"
