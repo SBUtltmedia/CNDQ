@@ -525,7 +525,7 @@ curl -H "Cookie: mock_mail=team3@example.com" \
 - **Pros of Polling**:
   - Simple to implement and debug
   - No persistent server process required
-  - Works with standard Laragon/Apache setup
+  - Works with standard Herd/Apache setup
   - Configurable interval (default 3-5 seconds)
   - Easy to pause/resume
 - **Cons**:

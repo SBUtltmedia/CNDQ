@@ -1,18 +1,8 @@
-# Auto-detect environment based on server name
-<If "%{HTTP_HOST} =~ /(localhost|127\.0\.0\.1|\.local|\.test|\.ddev\.site)/">
-    # Local development - set test user
-    SetEnv cn test_cn
-    SetEnv nickname test_nickname
-    SetEnv givenName test_givenName
-    SetEnv sn test_sn
-    SetEnv mail test_mail1@stonybrook.edu
-</If>
-<Else>
-    # Production - use Shibboleth authentication
-    <IfModule mod_shib>
-        AuthType shibboleth
-        ShibRequestSetting requireSession true
-        require shibboleth
-    </IfModule>
-    SetEnv PHP_VALUE "session.save_path=/home/tltsecure/apache2/htdocs/userData/sessionData"
-</Else>
+# Production - use Shibboleth authentication
+# Note: Local development uses .env file instead (Herd uses Nginx, not Apache)
+<IfModule mod_shib>
+    AuthType shibboleth
+    ShibRequestSetting requireSession true
+    require shibboleth
+</IfModule>
+SetEnv PHP_VALUE "session.save_path=/home/tltsecure/apache2/htdocs/userData/sessionData"

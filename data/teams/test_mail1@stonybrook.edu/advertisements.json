@@ -1,0 +1,14 @@
+{
+    "ads": [
+        {
+            "id": "ad_1766865839_67143432",
+            "teamId": "test_mail1@stonybrook.edu",
+            "teamName": "test_mail1@stonybrook.edu",
+            "chemical": "C",
+            "type": "buy",
+            "status": "active",
+            "createdAt": 1766865839
+        }
+    ],
+    "lastModified": 1766865839
+}

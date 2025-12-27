@@ -12,7 +12,9 @@ header('Content-Type: application/json');
 
 $currentUserEmail = getCurrentUserEmail();
 
-if (!$currentUserEmail || $currentUserEmail === 'dev_user') {
+// Reject only truly empty/invalid emails
+// Note: dev_user@localhost is allowed for local development
+if (!$currentUserEmail || trim($currentUserEmail) === '') {
     http_response_code(401);
     echo json_encode(['error' => 'Not authenticated']);
     exit;

@@ -25,26 +25,16 @@ foreach ($testTeams as $email => $teamName) {
         // Set team name
         $storage->setTeamName($teamName);
 
-        // Set starting funds
-        $storage->setFunds(10000);
-
-        // Set inventory (varied amounts for testing)
-        $storage->updateInventory(function($inv) use ($email) {
-            // Give different teams different starting inventory
-            $multiplier = (int)substr($email, 4, 1); // Extract number from email
-            $inv['C'] = 800 + ($multiplier * 50);
-            $inv['N'] = 700 + ($multiplier * 40);
-            $inv['D'] = 600 + ($multiplier * 30);
-            $inv['Q'] = 500 + ($multiplier * 20);
-            $inv['transactionsSinceLastShadowCalc'] = 0;
-            return $inv;
-        });
+        // Note: Starting funds and inventory are automatically initialized
+        // First production runs automatically to generate initial trading capital
 
         echo "✓ SUCCESS\n";
 
-        // Show inventory
+        // Show results
+        $profile = $storage->getProfile();
         $inv = $storage->getInventory();
-        echo "  Inventory: C={$inv['C']}, N={$inv['N']}, D={$inv['D']}, Q={$inv['Q']}\n";
+        echo "  Starting Capital: \${$profile['currentFunds']}\n";
+        echo "  Remaining Inventory: C={$inv['C']}, N={$inv['N']}, D={$inv['D']}, Q={$inv['Q']}\n";
 
     } catch (Exception $e) {
         echo "✗ ERROR: " . $e->getMessage() . "\n";

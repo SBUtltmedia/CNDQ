@@ -58,9 +58,6 @@
                 <button onclick="setPhase('trading')" class="flex-1 bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-bold transition">
                     Set: Trading
                 </button>
-                <button onclick="setPhase('closed')" class="flex-1 bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded font-bold transition">
-                    Set: Closed
-                </button>
             </div>
         </div>
 
@@ -77,10 +74,17 @@
 
             <div class="bg-blue-900/30 border border-blue-500/50 rounded p-4 mb-6">
                 <div class="text-sm text-blue-200 mb-2">
-                    <strong>Auto-Advance Cycle:</strong> Production (auto LP runs) → Trading → Closed (5s) → Production (next session)
+                    <strong>Auto-Advance Cycle:</strong> Production (auto LP runs) → Trading → Production (next session)
                 </div>
-                <div class="text-xs text-blue-300">
-                    Production phase is automatic - the LP solver runs for all teams, manufactures products, and advances to trading.
+                <div class="text-xs text-blue-300 space-y-1">
+                    <p><strong>Production Phase:</strong> Automatic LP solver runs for all teams (once per session):</p>
+                    <ul class="list-disc ml-5">
+                        <li>Optimizes Deicer/Solvent production mix</li>
+                        <li>Consumes chemicals from inventory</li>
+                        <li>Credits revenue to team accounts</li>
+                        <li>Records production history with session number</li>
+                    </ul>
+                    <p class="mt-1"><strong>Trading Phase:</strong> Teams can buy/sell chemicals on the marketplace</p>
                 </div>
             </div>
 
@@ -122,9 +126,57 @@
         </div>
     </div>
 
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100] p-4">
+        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md border-2 border-purple-500 shadow-2xl">
+            <h3 class="text-2xl font-bold mb-4 text-purple-400" id="confirm-modal-title">Confirm Action</h3>
+            <p class="text-gray-300 mb-6" id="confirm-modal-message">Are you sure you want to proceed?</p>
+            
+            <div class="flex gap-3">
+                <button id="confirm-modal-yes" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded font-bold transition">Yes, Proceed</button>
+                <button id="confirm-modal-no" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded font-bold transition">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let sessionState = null;
         let updateInterval = null;
+
+        // Custom Confirm Modal
+        function showConfirm(message, title = 'Confirm Action') {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirm-modal');
+                const titleEl = document.getElementById('confirm-modal-title');
+                const messageEl = document.getElementById('confirm-modal-message');
+                const yesBtn = document.getElementById('confirm-modal-yes');
+                const noBtn = document.getElementById('confirm-modal-no');
+
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                modal.classList.remove('hidden');
+
+                const handleYes = () => {
+                    modal.classList.add('hidden');
+                    cleanup();
+                    resolve(true);
+                };
+
+                const handleNo = () => {
+                    modal.classList.add('hidden');
+                    cleanup();
+                    resolve(false);
+                };
+
+                const cleanup = () => {
+                    yesBtn.removeEventListener('click', handleYes);
+                    noBtn.removeEventListener('click', handleNo);
+                };
+
+                yesBtn.addEventListener('click', handleYes, { once: true });
+                noBtn.addEventListener('click', handleNo, { once: true });
+            });
+        }
 
         // Toast notification system
         function showToast(message, type = 'success') {
@@ -227,7 +279,7 @@
         function updateTimer() {
             if (!sessionState) return;
 
-            const isTimedPhase = (sessionState.phase === 'trading' || sessionState.phase === 'production' || sessionState.phase === 'closed');
+            const isTimedPhase = (sessionState.phase === 'trading' || sessionState.phase === 'production');
 
             if (isTimedPhase && sessionState.timeRemaining !== undefined) {
                 const minutes = Math.floor(sessionState.timeRemaining / 60);
@@ -338,7 +390,8 @@
         }
 
         async function resetSession() {
-            if (!confirm('Reset to Session 1? This will clear all session history.')) {
+            const confirmed = await showConfirm('Reset to Session 1? This will clear all session history.');
+            if (!confirmed) {
                 return;
             }
 

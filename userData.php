@@ -1,13 +1,36 @@
 <?php
 
+// Load environment variables for local development (Herd/PHP-FPM doesn't support .htaccess SetEnv)
+if (file_exists(__DIR__ . '/.env')) {
+    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0 || trim($line) === '') continue;
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = strtolower(trim($key));
+            $value = trim($value);
+            $_SERVER[$key] = $value;
+            putenv("$key=$value");
+        }
+    }
+}
+
 function getCurrentUserEmail() {
     // Check for cookie override (for local testing of multiple players)
-    if (isset($_COOKIE['mock_mail'])) {
+    if (isset($_COOKIE['mock_mail']) && !empty($_COOKIE['mock_mail'])) {
         return $_COOKIE['mock_mail'];
     }
-    
+
     // Fallback to server environment variable (Shibboleth via $_SERVER or .htaccess via getenv)
-    return $_SERVER['mail'] ?? $_SERVER['email'] ?? getenv('mail') ?? getenv('email') ?? 'dev_user';
+    // Note: Check for empty strings too, not just null
+    $mail = $_SERVER['mail'] ?? getenv('mail') ?? null;
+    if (!empty($mail)) return $mail;
+
+    $email = $_SERVER['email'] ?? getenv('email') ?? null;
+    if (!empty($email)) return $email;
+
+    // Default for local development (Herd/non-Shibboleth)
+    return 'dev_user@localhost';
 }
 
 function isAdmin() {

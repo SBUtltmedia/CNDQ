@@ -1,3 +1,20 @@
 {
-    "productions": []
+    "productions": [
+        {
+            "type": "automatic_session",
+            "sessionNumber": 10,
+            "deicer": 1818.18,
+            "solvent": 1818.18,
+            "revenue": 9090.91,
+            "chemicalsConsumed": {
+                "C": 909.09,
+                "N": 999.999,
+                "D": 999.999,
+                "Q": 727.272
+            },
+            "note": "Automatic production for session 10",
+            "timestamp": 1766865330
+        }
+    ],
+    "lastModified": 1766865330
 }

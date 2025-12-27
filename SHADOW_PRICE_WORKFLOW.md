@@ -108,7 +108,7 @@ Warning banner disappears
 
 ## 💻 Implementation Details
 
-### Backend Tracking ([api/team/profile.php](c:\laragon\www\CNDQ\api\team\profile.php))
+### Backend Tracking ([api/team/profile.php](api/team/profile.php))
 
 ```php
 // Inventory includes transaction counter
@@ -130,7 +130,7 @@ if ($count >= 2) {
 }
 ```
 
-### Frontend Display ([js/marketplace.js:117-141](c:\laragon\www\CNDQ\js\marketplace.js))
+### Frontend Display ([js/marketplace.js:117-141](js/marketplace.js))
 
 ```javascript
 updateStalenessIndicator(level, count) {
@@ -150,7 +150,7 @@ updateStalenessIndicator(level, count) {
 }
 ```
 
-### Counter Increment ([lib/TeamStorage.php:236-250](c:\laragon\www\CNDQ\lib\TeamStorage.php))
+### Counter Increment ([lib/TeamStorage.php:236-250](lib/TeamStorage.php))
 
 ```php
 public function adjustChemical($chemical, $amount) {
@@ -169,7 +169,7 @@ public function adjustChemical($chemical, $amount) {
 }
 ```
 
-### Counter Reset ([lib/TeamStorage.php:253-258](c:\laragon\www\CNDQ\lib\TeamStorage.php))
+### Counter Reset ([lib/TeamStorage.php:253-258](lib/TeamStorage.php))
 
 ```php
 public function resetShadowCalcCounter() {
@@ -180,7 +180,7 @@ public function resetShadowCalcCounter() {
 }
 ```
 
-Called from [api/production/shadow-prices.php:67](c:\laragon\www\CNDQ\api\production\shadow-prices.php) when recalculating.
+Called from [api/production/shadow-prices.php:67](api/production/shadow-prices.php) when recalculating.
 
 ---
 
@@ -300,7 +300,7 @@ Scenario: Student ignores warnings and trades with stale prices
 
 ### Staleness Thresholds
 
-Currently hardcoded in [api/team/profile.php](c:\laragon\www\CNDQ\api\team\profile.php):
+Currently hardcoded in [api/team/profile.php](api/team/profile.php):
 
 ```php
 $transactionsSinceCalc = $inventory['transactionsSinceLastShadowCalc'] ?? 0;

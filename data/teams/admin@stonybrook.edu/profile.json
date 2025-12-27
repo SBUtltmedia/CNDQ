@@ -2,11 +2,12 @@
     "email": "admin@stonybrook.edu",
     "teamName": "admin@stonybrook.edu",
     "startingFunds": 10000,
-    "currentFunds": 10000,
+    "currentFunds": 19090.91,
     "createdAt": 1766817464,
     "lastActive": 1766817464,
     "settings": {
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
-    }
+    },
+    "lastModified": 1766865330
 }

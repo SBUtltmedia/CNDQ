@@ -40,7 +40,9 @@ class TeamStorage {
      * Create team directory and all required JSON files
      */
     private function ensureDirectoryStructure() {
-        if (!is_dir($this->teamDir)) {
+        $isNewTeam = !is_dir($this->teamDir);
+
+        if ($isNewTeam) {
             if (!mkdir($this->teamDir, 0755, true)) {
                 throw new Exception("Failed to create team directory: {$this->teamDir}");
             }
@@ -51,8 +53,8 @@ class TeamStorage {
             'profile.json' => [
                 'email' => $this->teamEmail,
                 'teamName' => $this->teamEmail,
-                'startingFunds' => 10000,
-                'currentFunds' => 10000,
+                'startingFunds' => 0,
+                'currentFunds' => 0,
                 'createdAt' => time(),
                 'lastActive' => time(),
                 'settings' => [
@@ -61,10 +63,10 @@ class TeamStorage {
                 ]
             ],
             'inventory.json' => [
-                'C' => 1000,
-                'N' => 1000,
-                'D' => 1000,
-                'Q' => 1000,
+                'C' => rand(500, 2000),
+                'N' => rand(500, 2000),
+                'D' => rand(500, 2000),
+                'Q' => rand(500, 2000),
                 'updatedAt' => time(),
                 'transactionsSinceLastShadowCalc' => 0
             ],
@@ -100,6 +102,66 @@ class TeamStorage {
                 chmod($filepath, $filename === 'shadow_prices.json' ? 0600 : 0644);
             }
         }
+
+        // Run automatic first production for new teams
+        if ($isNewTeam) {
+            $this->runAutomaticFirstProduction();
+        }
+    }
+
+    /**
+     * Automatically run first production for new teams
+     * Converts initial random chemicals into products, generates starting capital
+     */
+    private function runAutomaticFirstProduction() {
+        require_once __DIR__ . '/LPSolver.php';
+
+        // Get current inventory
+        $inventory = $this->getInventory();
+
+        // Run LP solver to find optimal production
+        $solver = new LPSolver();
+        $result = $solver->solve($inventory);
+
+        $deicerGallons = $result['deicer'];
+        $solventGallons = $result['solvent'];
+        $revenue = $result['maxProfit'];
+
+        // Calculate chemicals consumed
+        $consumed = [
+            'C' => $deicerGallons * LPSolver::DEICER_C,
+            'N' => ($deicerGallons * LPSolver::DEICER_N) + ($solventGallons * LPSolver::SOLVENT_N),
+            'D' => ($deicerGallons * LPSolver::DEICER_D) + ($solventGallons * LPSolver::SOLVENT_D),
+            'Q' => $solventGallons * LPSolver::SOLVENT_Q
+        ];
+
+        // Update inventory (subtract consumed chemicals)
+        $this->updateInventory(function($inv) use ($consumed) {
+            $inv['C'] -= $consumed['C'];
+            $inv['N'] -= $consumed['N'];
+            $inv['D'] -= $consumed['D'];
+            $inv['Q'] -= $consumed['Q'];
+            $inv['updatedAt'] = time();
+            // Don't increment transaction counter for initial production
+            return $inv;
+        });
+
+        // Credit revenue to team
+        $this->updateProfile(function($profile) use ($revenue, $deicerGallons, $solventGallons) {
+            $profile['currentFunds'] = $revenue;
+            $profile['startingFunds'] = $revenue;  // This is now the "starting capital" for trading
+            return $profile;
+        });
+
+        // Record production in history
+        $this->addProduction([
+            'type' => 'automatic_initial',
+            'deicer' => $deicerGallons,
+            'solvent' => $solventGallons,
+            'revenue' => $revenue,
+            'chemicalsConsumed' => $consumed,
+            'note' => 'Automatic first production run to generate initial trading capital'
+        ]);
     }
 
     /**

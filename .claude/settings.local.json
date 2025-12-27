@@ -8,11 +8,9 @@
       "Bash(taskkill:*)",
       "Bash(dir:*)",
       "Bash(php init_test_teams.php:*)",
-      "Bash(\"c:/laragon/bin/php/php-8.2.0-nts-Win32-vs16-x64/php.exe\":*)",
-      "Bash(/c/laragon/bin/php/php-8.3.28-Win32-vs16-x64/php.exe:*)",
       "Bash(ls:*)",
       "Bash(php test_lp_solver.php:*)",
-      "Bash(c:/laragon/bin/php/php-8.3.13-Win32-vs16-x64/php.exe:*)",
+      "Bash(php:*)",
       "mcp__chrome-devtools__list_pages",
       "Bash(choco search:*)",
       "Bash(choco install:*)",
@@ -35,7 +33,8 @@
       "mcp__chrome-devtools__fill",
       "mcp__chrome-devtools__fill_form",
       "Bash(curl:*)",
-      "mcp__chrome-devtools__wait_for"
+      "mcp__chrome-devtools__wait_for",
+      "mcp__chrome-devtools__take_screenshot"
     ]
   }
 }

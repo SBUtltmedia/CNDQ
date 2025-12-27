@@ -3,9 +3,8 @@
  * Session Manager
  *
  * Manages game sessions (rounds) and phases:
- * - Production Phase: Teams manufacture products (NOT YET IMPLEMENTED)
+ * - Production Phase: Automatic LP production runs for all teams
  * - Trading Phase: Market is open for trades
- * - Closed Phase: No activity allowed
  */
 
 class SessionManager {
@@ -20,10 +19,10 @@ class SessionManager {
         if (!file_exists($this->sessionFile)) {
             $initialState = [
                 'currentSession' => 1,
-                'phase' => 'production', // 'production', 'trading', 'closed'
+                'phase' => 'production', // 'production' or 'trading'
                 'autoAdvance' => true, // DEFAULT: Auto-advance enabled for autonomous play
                 'productionDuration' => 5, // Brief pause (5s) while auto-production runs
-                'tradingDuration' => 600, // 10 minutes in seconds
+                'tradingDuration' => 60, // 1 minute for testing
                 'phaseStartedAt' => time(),
                 'history' => []
             ];
@@ -75,17 +74,6 @@ class SessionManager {
             }
         }
 
-        // Auto-advance from 'closed' phase immediately (just a transition state)
-        // This creates Production -> Trading -> Closed -> (new session) Production cycle
-        if ($data['phase'] === 'closed' && $data['autoAdvance']) {
-            $elapsed = time() - $data['phaseStartedAt'];
-            // Give 5 seconds pause between sessions, then auto-advance
-            if ($elapsed >= 5) {
-                return $this->advancePhase();
-            }
-            $data['timeRemaining'] = max(0, 5 - $elapsed);
-        }
-
         return $data;
     }
 
@@ -107,7 +95,7 @@ class SessionManager {
 
     /**
      * Advance to next phase
-     * Production -> Trading -> Closed -> (new session) Production
+     * Production -> Trading -> (new session) Production
      */
     public function advancePhase() {
         $fp = fopen($this->sessionFile, 'c+');
@@ -135,11 +123,7 @@ class SessionManager {
                 unset($data['productionRun']);
                 break;
             case 'trading':
-                // Trading -> Closed (brief pause before next session)
-                $data['phase'] = 'closed';
-                break;
-            case 'closed':
-                // Closed -> Next Session with Production phase
+                // Trading -> Next Session with Production phase
                 $data['currentSession']++;
                 $data['phase'] = 'production';
                 // Clear production run flag for new session
@@ -181,16 +165,99 @@ class SessionManager {
         flock($fp, LOCK_UN);
         fclose($fp);
 
-        // TODO: Scan all teams and run LP production for each
-        // This will be implemented when production logic is added
-        error_log("Auto-production triggered for session " . $data['currentSession']);
+        // Scan all team directories and run production for each
+        require_once __DIR__ . '/TeamStorage.php';
+        require_once __DIR__ . '/LPSolver.php';
+
+        $teamsDir = __DIR__ . '/../data/teams';
+        if (!is_dir($teamsDir)) {
+            error_log("Auto-production: teams directory not found");
+            return;
+        }
+
+        $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
+        $teamsProcessed = 0;
+        $totalRevenue = 0;
+        $sessionNumber = $data['currentSession'];
+
+        foreach ($teamDirs as $teamDir) {
+            $email = basename($teamDir);
+
+            try {
+                $storage = new TeamStorage($email);
+                $inventory = $storage->getInventory();
+
+                // Skip teams with no inventory
+                if (empty($inventory['C']) && empty($inventory['N']) &&
+                    empty($inventory['D']) && empty($inventory['Q'])) {
+                    continue;
+                }
+
+                // Run LP solver
+                $solver = new LPSolver();
+                $result = $solver->solve($inventory);
+
+                $deicerGallons = $result['deicer'];
+                $solventGallons = $result['solvent'];
+                $revenue = $result['maxProfit'];
+
+                // Skip if no production possible
+                if ($revenue <= 0) {
+                    continue;
+                }
+
+                // Calculate chemicals consumed
+                $consumed = [
+                    'C' => $deicerGallons * LPSolver::DEICER_C,
+                    'N' => ($deicerGallons * LPSolver::DEICER_N) + ($solventGallons * LPSolver::SOLVENT_N),
+                    'D' => ($deicerGallons * LPSolver::DEICER_D) + ($solventGallons * LPSolver::SOLVENT_D),
+                    'Q' => $solventGallons * LPSolver::SOLVENT_Q
+                ];
+
+                // Update inventory (subtract consumed chemicals)
+                $storage->updateInventory(function($inv) use ($consumed) {
+                    $inv['C'] = max(0, $inv['C'] - $consumed['C']);
+                    $inv['N'] = max(0, $inv['N'] - $consumed['N']);
+                    $inv['D'] = max(0, $inv['D'] - $consumed['D']);
+                    $inv['Q'] = max(0, $inv['Q'] - $consumed['Q']);
+                    $inv['updatedAt'] = time();
+                    // Don't increment transaction counter for automatic production
+                    return $inv;
+                });
+
+                // Credit revenue to team
+                $storage->updateProfile(function($profile) use ($revenue) {
+                    $profile['currentFunds'] += $revenue;
+                    return $profile;
+                });
+
+                // Record production in history
+                $storage->addProduction([
+                    'type' => 'automatic_session',
+                    'sessionNumber' => $sessionNumber,
+                    'deicer' => $deicerGallons,
+                    'solvent' => $solventGallons,
+                    'revenue' => $revenue,
+                    'chemicalsConsumed' => $consumed,
+                    'note' => "Automatic production for session $sessionNumber"
+                ]);
+
+                $teamsProcessed++;
+                $totalRevenue += $revenue;
+
+            } catch (Exception $e) {
+                error_log("Auto-production failed for team $email: " . $e->getMessage());
+            }
+        }
+
+        error_log("Auto-production completed for session $sessionNumber: $teamsProcessed teams, \$$totalRevenue total revenue");
     }
 
     /**
      * Set phase directly (admin override)
      */
     public function setPhase($phase) {
-        if (!in_array($phase, ['production', 'trading', 'closed'])) {
+        if (!in_array($phase, ['production', 'trading'])) {
             throw new Exception('Invalid phase');
         }
 
@@ -298,7 +365,7 @@ class SessionManager {
             'phase' => 'production',
             'autoAdvance' => false,
             'productionDuration' => 5,
-            'tradingDuration' => 600,
+            'tradingDuration' => 60,
             'phaseStartedAt' => time(),
             'history' => []
         ];
