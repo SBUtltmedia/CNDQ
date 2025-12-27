@@ -403,230 +403,375 @@ class MarketplaceApp {
     }
 
     /**
-     * Render a single offer
+     * Post advertisement (interest to buy or sell)
      */
-    renderOffer(offer, chemical) {
-        const price = offer.minPrice || offer.price;
-        const shadowPrice = this.shadowPrices[chemical] || 0;
-        const hints = this.settings.showTradingHints;
-
-        // Determine deal quality (for buying)
-        let dealClass = '';
-        let dealLabel = '';
-        if (hints && shadowPrice > 0) {
-            const diff = ((price - shadowPrice) / shadowPrice) * 100;
-            if (diff < -10) {
-                dealClass = 'good-deal';
-                dealLabel = '<span class="text-green-500 text-xs font-bold">Good Deal!</span>';
-            } else if (diff > 10) {
-                dealClass = 'bad-deal';
-                dealLabel = '<span class="text-red-500 text-xs font-bold">Too High</span>';
-            } else {
-                dealClass = 'fair-deal';
-                dealLabel = '<span class="text-orange-500 text-xs font-bold">Fair</span>';
-            }
-        }
-
-        return `
-            <div class="bg-gray-700 rounded p-3 ${dealClass}">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="text-sm font-semibold">${offer.sellerName || 'Team'}</div>
-                    ${dealLabel}
-                </div>
-                <div class="text-xs text-gray-300">
-                    ${offer.quantity} gal @ $${this.formatNumber(price)}/gal
-                </div>
-                <div class="text-sm font-bold text-green-400 mt-1">
-                    Total: $${this.formatNumber(price * offer.quantity)}
-                </div>
-                <button
-                    class="buy-now-btn mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded text-sm font-semibold transition"
-                    data-offer-id="${offer.id}"
-                    data-chemical="${chemical}"
-                    data-price="${price}"
-                    data-quantity="${offer.quantity}"
-                    data-seller="${offer.sellerName || 'Team'}">
-                    BUY NOW
-                </button>
-            </div>
-        `;
-    }
-
-    /**
-     * Render a single buy order
-     */
-    renderBuyOrder(buyOrder, chemical) {
-        const price = buyOrder.maxPrice || buyOrder.price;
-        const shadowPrice = this.shadowPrices[chemical] || 0;
-        const hints = this.settings.showTradingHints;
-
-        // Determine deal quality (for selling to them)
-        let dealClass = '';
-        let dealLabel = '';
-        if (hints && shadowPrice > 0) {
-            // If their max price is HIGHER than my shadow price, it's a good deal for me to sell
-            const diff = ((price - shadowPrice) / shadowPrice) * 100;
-            if (diff > 10) {
-                dealClass = 'good-deal';
-                dealLabel = '<span class="text-green-500 text-xs font-bold">Good Deal!</span>';
-            } else if (diff < -10) {
-                dealClass = 'bad-deal';
-                dealLabel = '<span class="text-red-500 text-xs font-bold">Too Low</span>';
-            } else {
-                dealClass = 'fair-deal';
-                dealLabel = '<span class="text-orange-500 text-xs font-bold">Fair</span>';
-            }
-        }
-
-        return `
-            <div class="bg-gray-700 rounded p-3 ${dealClass}">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="text-sm font-semibold">${buyOrder.buyerName || 'Team'}</div>
-                    ${dealLabel}
-                </div>
-                <div class="text-xs text-gray-300">
-                    Wants ${buyOrder.quantity} gal @ up to $${this.formatNumber(price)}/gal
-                </div>
-                <div class="text-sm font-bold text-blue-400 mt-1">
-                    Max Total: $${this.formatNumber(price * buyOrder.quantity)}
-                </div>
-                <button
-                    class="sell-to-btn mt-2 w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-semibold transition"
-                    data-offer-id="${buyOrder.id}"
-                    data-chemical="${chemical}"
-                    data-price="${price}"
-                    data-quantity="${buyOrder.quantity}"
-                    data-buyer="${buyOrder.buyerName || 'Team'}">
-                    SELL TO
-                </button>
-            </div>
-        `;
-    }
-
-    /**
-     * Load my active orders
-     */
-    async loadMyOrders() {
+    async postAdvertisement(chemical, type) {
         try {
-            const response = await fetch('/api/team/profile.php');
-            const data = await response.json();
-
-            if (data.success) {
-                // Get my offers from profile
-                const offersResponse = await fetch('/api/marketplace/offers.php');
-                const offersData = await offersResponse.json();
-
-                if (offersData.success) {
-                    // Find my sell offers in the marketplace
-                    this.myOrders = [];
-                    Object.values(offersData.offersByChemical).forEach(offers => {
-                        offers.forEach(offer => {
-                            if (offer.sellerId === this.currentUser) {
-                                this.myOrders.push(offer);
-                            }
-                        });
-                    });
-
-                    // Find my buy orders in the marketplace
-                    this.myBuyOrders = [];
-                    Object.values(offersData.buyOrdersByChemical || {}).forEach(buyOrders => {
-                        buyOrders.forEach(buyOrder => {
-                            if (buyOrder.buyerId === this.currentUser) {
-                                this.myBuyOrders.push(buyOrder);
-                            }
-                        });
-                    });
-
-                    this.renderMyOrders();
-                }
-            }
-        } catch (error) {
-            console.error('Failed to load my orders:', error);
-        }
-    }
-
-    /**
-     * Render my active orders
-     */
-    renderMyOrders() {
-        const container = document.getElementById('my-orders');
-
-        if (this.myOrders.length === 0 && this.myBuyOrders.length === 0) {
-            container.innerHTML = '<p class="text-gray-300 text-center py-8">You have no active orders</p>';
-            return;
-        }
-
-        const sellOrdersHTML = this.myOrders.map(order => `
-            <div class="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
-                <div class="flex-1">
-                    <div class="font-semibold text-green-400">
-                        SELL: ${order.quantity} gallons of Chemical ${order.chemical}
-                    </div>
-                    <div class="text-sm text-gray-300">
-                        @ $${this.formatNumber(order.minPrice || order.price)}/gal (min) = Total: $${this.formatNumber((order.minPrice || order.price) * order.quantity)}
-                    </div>
-                </div>
-                <button
-                    class="cancel-order-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold transition"
-                    data-offer-id="${order.id}">
-                    CANCEL
-                </button>
-            </div>
-        `).join('');
-
-        const buyOrdersHTML = this.myBuyOrders.map(order => `
-            <div class="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
-                <div class="flex-1">
-                    <div class="font-semibold text-blue-400">
-                        BUY: ${order.quantity} gallons of Chemical ${order.chemical}
-                    </div>
-                    <div class="text-sm text-gray-300">
-                        @ up to $${this.formatNumber(order.maxPrice || order.price)}/gal (max) = Total: $${this.formatNumber((order.maxPrice || order.price) * order.quantity)}
-                    </div>
-                </div>
-                <button
-                    class="cancel-order-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold transition"
-                    data-offer-id="${order.id}">
-                    CANCEL
-                </button>
-            </div>
-        `).join('');
-
-        container.innerHTML = sellOrdersHTML + buyOrdersHTML;
-
-        // Add event listeners to cancel buttons
-        document.querySelectorAll('.cancel-order-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.cancelOrder(e.target.dataset.offerId));
-        });
-    }
-
-    /**
-     * Cancel an order
-     */
-    async cancelOrder(offerId) {
-        const confirmed = await this.showConfirm('Are you sure you want to cancel this order?', 'Cancel Order');
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/offers/cancel.php', {
+            const response = await fetch('/api/advertisements/post.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ offerId })
+                body: JSON.stringify({ chemical, type })
             });
 
             const data = await response.json();
 
             if (data.success) {
-                this.showToast('Order cancelled successfully', 'success');
-                await this.loadMarketplace();
+                this.showToast(`Posted interest to ${type} ${chemical}`, 'success');
+                await this.loadAdvertisements();
             } else {
-                throw new Error(data.error);
+                throw new Error(data.error || 'Failed to post advertisement');
             }
         } catch (error) {
-            console.error('Failed to cancel order:', error);
-            this.showToast('Failed to cancel order: ' + error.message, 'error');
+            console.error('Failed to post advertisement:', error);
+            this.showToast('Failed to post advertisement: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Open negotiation modal
+     */
+    openNegotiationModal() {
+        const modal = document.getElementById('negotiation-modal');
+        modal.classList.remove('hidden');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+
+        // Show list view by default
+        this.showNegotiationListView();
+
+        // Render negotiations in modal
+        this.renderNegotiationsInModal();
+    }
+
+    /**
+     * Close negotiation modal
+     */
+    closeNegotiationModal() {
+        const modal = document.getElementById('negotiation-modal');
+        modal.classList.add('hidden');
+        modal.removeAttribute('role');
+        modal.removeAttribute('aria-modal');
+    }
+
+    /**
+     * Show negotiation list view in modal
+     */
+    showNegotiationListView() {
+        document.getElementById('negotiation-list-view').classList.remove('hidden');
+        document.getElementById('negotiation-detail-view').classList.add('hidden');
+        document.getElementById('start-negotiation-view').classList.add('hidden');
+    }
+
+    /**
+     * Render negotiations in modal
+     */
+    renderNegotiationsInModal() {
+        const pending = this.myNegotiations.filter(n => n.status === 'pending');
+        const completed = this.myNegotiations.filter(n => n.status !== 'pending');
+
+        // Render pending
+        const pendingContainer = document.getElementById('pending-negotiations');
+        if (pending.length === 0) {
+            pendingContainer.innerHTML = '<p class="text-gray-300 text-center py-4">No pending negotiations</p>';
+        } else {
+            pendingContainer.innerHTML = pending.map(neg => {
+                const otherTeam = neg.initiatorId === this.currentUser ? neg.responderName : neg.initiatorName;
+                const lastOffer = neg.offers[neg.offers.length - 1];
+                const isMyTurn = neg.lastOfferBy !== this.currentUser;
+
+                return `
+                    <div class="bg-gray-600 rounded p-3 cursor-pointer hover:bg-gray-550 transition"
+                         onclick="app.viewNegotiationDetail('${neg.id}')">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="font-semibold text-sm">Chemical ${neg.chemical}</div>
+                            ${isMyTurn ?
+                                '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Your Turn</span>' :
+                                '<span class="px-2 py-1 bg-gray-500 text-gray-200 rounded text-xs">Waiting</span>'
+                            }
+                        </div>
+                        <div class="text-xs text-gray-300">${otherTeam}</div>
+                        <div class="text-xs text-gray-300">Latest: ${lastOffer.quantity} gal @ $${lastOffer.price.toFixed(2)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render completed
+        const completedContainer = document.getElementById('completed-negotiations');
+        if (completed.length === 0) {
+            completedContainer.innerHTML = '<p class="text-gray-300 text-center py-4">No completed negotiations</p>';
+        } else {
+            completedContainer.innerHTML = completed.map(neg => {
+                const otherTeam = neg.initiatorId === this.currentUser ? neg.responderName : neg.initiatorName;
+                const lastOffer = neg.offers[neg.offers.length - 1];
+                const statusBadge = neg.status === 'accepted' ?
+                    '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Accepted</span>' :
+                    '<span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-semibold">Rejected</span>';
+
+                return `
+                    <div class="bg-gray-600 rounded p-3 cursor-pointer hover:bg-gray-550 transition"
+                         onclick="app.viewNegotiationDetail('${neg.id}')">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="font-semibold text-sm">Chemical ${neg.chemical}</div>
+                            ${statusBadge}
+                        </div>
+                        <div class="text-xs text-gray-300">${otherTeam}</div>
+                        <div class="text-xs text-gray-300">Final: ${lastOffer.quantity} gal @ $${lastOffer.price.toFixed(2)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    /**
+     * View negotiation detail
+     */
+    viewNegotiationDetail(negotiationId) {
+        const negotiation = this.myNegotiations.find(n => n.id === negotiationId);
+        if (!negotiation) return;
+
+        this.currentNegotiation = negotiation;
+
+        // Show detail view
+        document.getElementById('negotiation-list-view').classList.add('hidden');
+        document.getElementById('negotiation-detail-view').classList.remove('hidden');
+        document.getElementById('start-negotiation-view').classList.add('hidden');
+
+        // Set header
+        document.getElementById('detail-chemical').textContent = `Chemical ${negotiation.chemical}`;
+        const otherTeam = negotiation.initiatorId === this.currentUser ? negotiation.responderName : negotiation.initiatorName;
+        document.getElementById('detail-participants').textContent = `Negotiation with ${otherTeam}`;
+
+        // Set status badge
+        const statusBadge = document.getElementById('detail-status-badge');
+        if (negotiation.status === 'pending') {
+            statusBadge.textContent = 'Pending';
+            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-yellow-600 text-white';
+        } else if (negotiation.status === 'accepted') {
+            statusBadge.textContent = 'Accepted';
+            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-green-600 text-white';
+        } else {
+            statusBadge.textContent = 'Rejected';
+            statusBadge.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-red-600 text-white';
+        }
+
+        // Render offer history
+        const historyContainer = document.getElementById('offer-history');
+        historyContainer.innerHTML = negotiation.offers.map((offer, idx) => {
+            const isFromMe = offer.fromTeamId === this.currentUser;
+            const alignment = isFromMe ? 'ml-auto' : 'mr-auto';
+            const bgColor = isFromMe ? 'bg-blue-700' : 'bg-gray-600';
+
+            return `
+                <div class="max-w-xs ${alignment} ${bgColor} rounded-lg p-3">
+                    <div class="font-semibold text-sm">${offer.fromTeamName}</div>
+                    <div class="text-xs text-gray-200">
+                        ${offer.quantity} gal @ $${offer.price.toFixed(2)}/gal
+                    </div>
+                    <div class="text-xs font-bold text-green-400">
+                        Total: $${(offer.quantity * offer.price).toFixed(2)}
+                    </div>
+                    <div class="text-xs text-gray-300 mt-1">
+                        ${new Date(offer.createdAt * 1000).toLocaleString()}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Show/hide action buttons based on state
+        const isMyTurn = negotiation.lastOfferBy !== this.currentUser && negotiation.status === 'pending';
+        const counterForm = document.getElementById('counter-offer-form');
+        const actions = document.getElementById('negotiation-actions');
+        const waiting = document.getElementById('waiting-message');
+
+        counterForm.classList.add('hidden');
+
+        if (negotiation.status !== 'pending') {
+            // Negotiation is complete
+            actions.classList.add('hidden');
+            waiting.classList.add('hidden');
+        } else if (isMyTurn) {
+            // My turn to respond
+            actions.classList.remove('hidden');
+            waiting.classList.add('hidden');
+
+            // Set shadow price hint
+            const shadowHint = document.getElementById('counter-shadow-hint');
+            shadowHint.textContent = this.shadowPrices[negotiation.chemical].toFixed(2);
+        } else {
+            // Waiting for other team
+            actions.classList.add('hidden');
+            waiting.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * Start new negotiation with a team
+     */
+    startNewNegotiation(teamId, teamName, chemical, type) {
+        // Show start negotiation view
+        document.getElementById('negotiation-list-view').classList.add('hidden');
+        document.getElementById('negotiation-detail-view').classList.add('hidden');
+        document.getElementById('start-negotiation-view').classList.remove('hidden');
+
+        // Set fields
+        document.getElementById('new-neg-team').value = teamName;
+        document.getElementById('new-neg-chemical').value = chemical;
+        document.getElementById('new-neg-shadow-hint').textContent = this.shadowPrices[chemical].toFixed(2);
+
+        // Store in temp state
+        this.tempNegotiation = { teamId, teamName, chemical, type };
+    }
+
+    /**
+     * Submit new negotiation
+     */
+    async submitNewNegotiation() {
+        const quantity = parseFloat(document.getElementById('new-neg-quantity').value);
+        const price = parseFloat(document.getElementById('new-neg-price').value);
+
+        if (!quantity || quantity <= 0) {
+            this.showToast('Please enter a valid quantity', 'error');
+            return;
+        }
+
+        if (price === null || price < 0) {
+            this.showToast('Please enter a valid price', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/negotiations/initiate.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    responderId: this.tempNegotiation.teamId,
+                    chemical: this.tempNegotiation.chemical,
+                    quantity,
+                    price
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showToast('Negotiation started', 'success');
+                await this.loadNegotiations();
+                this.showNegotiationListView();
+                this.renderNegotiationsInModal();
+            } else {
+                throw new Error(data.error || 'Failed to start negotiation');
+            }
+        } catch (error) {
+            console.error('Failed to start negotiation:', error);
+            this.showToast('Failed to start negotiation: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Make counter-offer
+     */
+    async makeCounterOffer() {
+        const quantity = parseFloat(document.getElementById('counter-quantity').value);
+        const price = parseFloat(document.getElementById('counter-price').value);
+
+        if (!quantity || quantity <= 0) {
+            this.showToast('Please enter a valid quantity', 'error');
+            return;
+        }
+
+        if (price === null || price < 0) {
+            this.showToast('Please enter a valid price', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/negotiations/counter.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    negotiationId: this.currentNegotiation.id,
+                    quantity,
+                    price
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showToast('Counter-offer sent', 'success');
+                await this.loadNegotiations();
+                this.viewNegotiationDetail(this.currentNegotiation.id);
+            } else {
+                throw new Error(data.error || 'Failed to send counter-offer');
+            }
+        } catch (error) {
+            console.error('Failed to send counter-offer:', error);
+            this.showToast('Failed to send counter-offer: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Accept negotiation offer
+     */
+    async acceptNegotiation() {
+        const confirmed = await this.showConfirm('Accept this offer and execute the trade?', 'Accept Offer');
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch('/api/negotiations/accept.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    negotiationId: this.currentNegotiation.id
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showToast('Trade executed successfully!', 'success');
+                await this.loadNegotiations();
+                await this.loadProfile(); // Refresh inventory
+                this.closeNegotiationModal();
+            } else {
+                throw new Error(data.error || 'Failed to accept offer');
+            }
+        } catch (error) {
+            console.error('Failed to accept offer:', error);
+            this.showToast('Failed to accept offer: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Reject/cancel negotiation
+     */
+    async rejectNegotiation() {
+        const confirmed = await this.showConfirm('Cancel this negotiation?', 'Cancel Negotiation');
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch('/api/negotiations/reject.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    negotiationId: this.currentNegotiation.id
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showToast('Negotiation cancelled', 'success');
+                await this.loadNegotiations();
+                this.showNegotiationListView();
+                this.renderNegotiationsInModal();
+            } else {
+                throw new Error(data.error || 'Failed to cancel negotiation');
+            }
+        } catch (error) {
+            console.error('Failed to cancel negotiation:', error);
+            this.showToast('Failed to cancel negotiation: ' + error.message, 'error');
         }
     }
 
@@ -757,83 +902,70 @@ class MarketplaceApp {
             this.recalculateShadowPrices();
         });
 
-        // Create sell/buy buttons
-        document.querySelectorAll('.create-sell-btn').forEach(btn => {
+        // Post sell/buy interest buttons
+        document.querySelectorAll('.post-sell-interest-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const chemical = e.target.dataset.chemical;
-                this.openOfferModal(chemical, 'sell');
+                this.postAdvertisement(chemical, 'sell');
             });
         });
 
-        document.querySelectorAll('.create-buy-btn').forEach(btn => {
+        document.querySelectorAll('.post-buy-interest-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const chemical = e.target.dataset.chemical;
-                this.openOfferModal(chemical, 'buy');
+                this.postAdvertisement(chemical, 'buy');
             });
         });
 
-        // Buy now buttons (delegated)
+        // Negotiate buttons (delegated)
         document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('buy-now-btn')) {
-                const { offerId, chemical, price, quantity, seller } = e.target.dataset;
-                this.buyOffer(offerId, chemical, parseFloat(price), parseInt(quantity), seller);
-            }
-
-            // Sell to buttons (delegated)
-            if (e.target.classList.contains('sell-to-btn')) {
-                const { offerId, chemical, price, quantity, buyer } = e.target.dataset;
-                this.sellToBuyOrder(offerId, chemical, parseFloat(price), parseInt(quantity), buyer);
+            if (e.target.classList.contains('negotiate-btn')) {
+                const { teamId, teamName, chemical, type } = e.target.dataset;
+                this.openNegotiationModal();
+                setTimeout(() => this.startNewNegotiation(teamId, teamName, chemical, type), 100);
             }
         });
 
-        // Modal controls
-        document.getElementById('offer-cancel-btn').addEventListener('click', () => {
-            this.closeOfferModal();
+        // View all negotiations button
+        document.getElementById('view-all-negotiations-btn').addEventListener('click', () => {
+            this.openNegotiationModal();
         });
 
-        document.getElementById('offer-submit-btn').addEventListener('click', () => {
-            this.submitOffer();
+        // Negotiation modal controls
+        document.getElementById('negotiation-modal-close-btn').addEventListener('click', () => {
+            this.closeNegotiationModal();
         });
 
-        // Update total when quantity/price changes
-        document.getElementById('offer-quantity').addEventListener('input', () => this.updateOfferTotal());
-        document.getElementById('offer-price').addEventListener('input', () => this.updateOfferTotal());
-
-        // Spinner buttons for quantity
-        document.getElementById('quantity-minus').addEventListener('click', () => {
-            const input = document.getElementById('offer-quantity');
-            const current = parseInt(input.value) || 0;
-            if (current > 1) {
-                input.value = current - 1;
-                this.updateOfferTotal();
-            }
+        document.getElementById('back-to-list-btn').addEventListener('click', () => {
+            this.showNegotiationListView();
+            this.renderNegotiationsInModal();
         });
 
-        document.getElementById('quantity-plus').addEventListener('click', () => {
-            const input = document.getElementById('offer-quantity');
-            const current = parseInt(input.value) || 0;
-            const max = parseInt(document.getElementById('offer-available').textContent.replace(/,/g, '')) || 0;
-            if (current < max) {
-                input.value = current + 1;
-                this.updateOfferTotal();
-            }
+        document.getElementById('back-from-new-btn').addEventListener('click', () => {
+            this.showNegotiationListView();
+            this.renderNegotiationsInModal();
         });
 
-        // Spinner buttons for price
-        document.getElementById('price-minus').addEventListener('click', () => {
-            const input = document.getElementById('offer-price');
-            const current = parseFloat(input.value) || 0;
-            if (current > 0.01) {
-                input.value = Math.max(0, current - 0.50).toFixed(2);
-                this.updateOfferTotal();
-            }
+        // Negotiation actions
+        document.getElementById('submit-new-negotiation-btn').addEventListener('click', () => {
+            this.submitNewNegotiation();
         });
 
-        document.getElementById('price-plus').addEventListener('click', () => {
-            const input = document.getElementById('offer-price');
-            const current = parseFloat(input.value) || 0;
-            input.value = (current + 0.50).toFixed(2);
-            this.updateOfferTotal();
+        document.getElementById('show-counter-form-btn').addEventListener('click', () => {
+            document.getElementById('negotiation-actions').classList.add('hidden');
+            document.getElementById('counter-offer-form').classList.remove('hidden');
+        });
+
+        document.getElementById('submit-counter-btn').addEventListener('click', () => {
+            this.makeCounterOffer();
+        });
+
+        document.getElementById('accept-offer-btn').addEventListener('click', () => {
+            this.acceptNegotiation();
+        });
+
+        document.getElementById('reject-offer-btn').addEventListener('click', () => {
+            this.rejectNegotiation();
         });
 
         // Notifications
@@ -859,247 +991,14 @@ class MarketplaceApp {
         });
     }
 
-    /**
-     * Open offer modal
-     */
-    openOfferModal(chemical, type) {
-        this.currentOfferModal = { chemical, type };
-
-        const modal = document.getElementById('offer-modal');
-        const title = document.getElementById('offer-modal-title');
-        const chemicalInput = document.getElementById('offer-chemical');
-        const availableSpan = document.getElementById('offer-available');
-        const shadowHint = document.getElementById('offer-shadow-hint');
-        const priceLabel = document.getElementById('offer-price-label');
-
-        title.textContent = type === 'sell' ? 'Create Sell Order' : 'Create Buy Order';
-        chemicalInput.value = chemical;
-
-        if (type === 'sell') {
-            priceLabel.textContent = 'Minimum Price per Gallon ($)';
-            availableSpan.textContent = this.formatNumber(this.inventory[chemical] || 0);
-        } else {
-            priceLabel.textContent = 'Maximum Price per Gallon ($)';
-            availableSpan.textContent = this.formatNumber(this.profile.currentFunds || 0) + ' available funds';
-        }
-
-        shadowHint.textContent = this.formatNumber(this.shadowPrices[chemical] || 0);
-
-        // Clear inputs
-        document.getElementById('offer-quantity').value = '';
-        document.getElementById('offer-price').value = '';
-        document.getElementById('offer-total').textContent = '0.00';
-
-        // Add ARIA attributes
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-labelledby', 'offer-modal-title');
-
-        modal.classList.remove('hidden');
-
-        // Focus first input
-        setTimeout(() => {
-            document.getElementById('offer-quantity').focus();
-        }, 100);
-
-        // Add keyboard listener for Esc key
-        this.offerModalKeyHandler = (e) => {
-            if (e.key === 'Escape') {
-                this.closeOfferModal();
-            }
-        };
-        document.addEventListener('keydown', this.offerModalKeyHandler);
-    }
-
-    /**
-     * Close offer modal
-     */
-    closeOfferModal() {
-        const modal = document.getElementById('offer-modal');
-        modal.classList.add('hidden');
-        modal.removeAttribute('role');
-        modal.removeAttribute('aria-modal');
-        modal.removeAttribute('aria-labelledby');
-
-        // Remove keyboard listener
-        if (this.offerModalKeyHandler) {
-            document.removeEventListener('keydown', this.offerModalKeyHandler);
-            this.offerModalKeyHandler = null;
-        }
-
-        this.currentOfferModal = null;
-    }
-
-    /**
-     * Update offer total
-     */
-    updateOfferTotal() {
-        const quantity = parseFloat(document.getElementById('offer-quantity').value) || 0;
-        const price = parseFloat(document.getElementById('offer-price').value) || 0;
-        const total = quantity * price;
-
-        document.getElementById('offer-total').textContent = this.formatNumber(total);
-    }
-
-    /**
-     * Submit offer
-     */
-    async submitOffer() {
-        if (!this.currentOfferModal) return;
-
-        const chemical = this.currentOfferModal.chemical;
-        const type = this.currentOfferModal.type;
-        const quantity = parseFloat(document.getElementById('offer-quantity').value);
-        const price = parseFloat(document.getElementById('offer-price').value);
-
-        // Validation
-        if (!quantity || quantity <= 0) {
-            this.showToast('Please enter a valid quantity', 'error');
-            return;
-        }
-
-        if (price === null || price === undefined || price < 0) {
-            this.showToast('Please enter a valid price', 'error');
-            return;
-        }
-
-        if (type === 'sell') {
-            if (quantity > this.inventory[chemical]) {
-                this.showToast('Insufficient inventory', 'error');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/offers/create.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chemical, quantity, minPrice: price })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.showToast('Sell order created successfully!', 'success');
-                    this.closeOfferModal();
-                    await this.loadMarketplace();
-                } else {
-                    throw new Error(data.error);
-                }
-            } catch (error) {
-                console.error('Failed to create sell order:', error);
-                this.showToast('Failed to create sell order: ' + error.message, 'error');
-            }
-        } else {
-            // Buy order
-            const totalCost = quantity * price;
-            if (totalCost > this.profile.currentFunds) {
-                this.showToast('Insufficient funds', 'error');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/offers/bid.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chemical, quantity, maxPrice: price })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    this.showToast('Buy order created successfully!', 'success');
-                    this.closeOfferModal();
-                    await this.loadMarketplace();
-                } else {
-                    throw new Error(data.error);
-                }
-            } catch (error) {
-                console.error('Failed to create buy order:', error);
-                this.showToast('Failed to create buy order: ' + error.message, 'error');
-            }
-        }
-    }
-
-    /**
-     * Buy an offer
-     */
-    async buyOffer(offerId, chemical, price, quantity, seller) {
-        const total = price * quantity;
-
-        const confirmed = await this.showConfirm(
-            `Buy ${quantity} gallons of ${chemical} from ${seller} for $${this.formatNumber(total)}?`,
-            'Confirm Purchase'
-        );
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/trades/execute.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ offerId, quantity })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast('Trade executed successfully!', 'success');
-                await this.loadProfile();
-                await this.loadMarketplace();
-                await this.loadNotifications();
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            console.error('Failed to execute trade:', error);
-            this.showToast('Failed to execute trade: ' + error.message, 'error');
-        }
-    }
-
-    /**
-     * Sell to a buy order
-     */
-    async sellToBuyOrder(buyOrderId, chemical, price, quantity, buyer) {
-        const total = price * quantity;
-
-        const confirmed = await this.showConfirm(
-            `Sell ${quantity} gallons of ${chemical} to ${buyer} for $${this.formatNumber(total)}?`,
-            'Confirm Sale'
-        );
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/trades/execute.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ offerId: buyOrderId, quantity })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast('Trade executed successfully!', 'success');
-                await this.loadProfile();
-                await this.loadMarketplace();
-                await this.loadNotifications();
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            console.error('Failed to execute trade:', error);
-            this.showToast('Failed to execute trade: ' + error.message, 'error');
-        }
-    }
 
     /**
      * Start polling for updates
      */
     startPolling() {
         this.pollingInterval = setInterval(async () => {
-            await this.loadMarketplace();
+            await this.loadAdvertisements();
+            await this.loadNegotiations();
             await this.loadNotifications();
         }, this.pollingFrequency);
     }
