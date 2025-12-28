@@ -3,6 +3,15 @@
  * Single Page Application for Chemical Trading
  */
 
+// Import web components
+import './components/chemical-card.js';
+import './components/advertisement-item.js';
+import './components/negotiation-card.js';
+import './components/offer-bubble.js';
+
+// Import API client
+import { api } from './api.js';
+
 class MarketplaceApp {
     constructor() {
         // State
@@ -28,35 +37,64 @@ class MarketplaceApp {
      */
     async init() {
         try {
+            console.log('Initializing marketplace...');
+
+            // Wait for custom elements to be defined
+            await Promise.all([
+                customElements.whenDefined('chemical-card'),
+                customElements.whenDefined('advertisement-item'),
+                customElements.whenDefined('negotiation-card'),
+                customElements.whenDefined('offer-bubble')
+            ]);
+            console.log('✓ Web components defined');
+
             // Load team profile
+            console.log('Loading profile...');
             await this.loadProfile();
+            console.log('✓ Profile loaded');
 
             // Load shadow prices
+            console.log('Loading shadow prices...');
             await this.loadShadowPrices();
+            console.log('✓ Shadow prices loaded');
 
             // Load advertisements and negotiations
+            console.log('Loading advertisements...');
             await this.loadAdvertisements();
+            console.log('✓ Advertisements loaded');
+
+            console.log('Loading negotiations...');
             await this.loadNegotiations();
+            console.log('✓ Negotiations loaded');
 
             // Load notifications
+            console.log('Loading notifications...');
             await this.loadNotifications();
+            console.log('✓ Notifications loaded');
 
             // Load settings
+            console.log('Loading settings...');
             await this.loadSettings();
+            console.log('✓ Settings loaded');
 
             // Setup event listeners
+            console.log('Setting up event listeners...');
             this.setupEventListeners();
+            console.log('✓ Event listeners setup');
 
             // Start polling
             this.startPolling();
+            console.log('✓ Polling started');
 
             // Hide loading, show app
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('app').classList.remove('hidden');
+            console.log('✓ Marketplace initialized successfully');
 
         } catch (error) {
             console.error('Failed to initialize marketplace:', error);
-            alert('Failed to load marketplace. Please refresh the page.');
+            console.error('Error stack:', error.stack);
+            alert('Failed to load marketplace. Please refresh the page.\n\nError: ' + error.message);
         }
     }
 
@@ -158,12 +196,7 @@ class MarketplaceApp {
      * Load team profile and inventory
      */
     async loadProfile() {
-        const response = await fetch('/api/team/profile.php');
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to load profile');
-        }
+        const data = await api.team.getProfile();
 
         this.profile = data.profile;
         this.inventory = data.inventory;
@@ -173,10 +206,8 @@ class MarketplaceApp {
         document.getElementById('team-name').textContent = this.profile.teamName || this.profile.email;
         document.getElementById('current-funds').textContent = '$' + this.formatNumber(this.profile.currentFunds);
 
-        // Update inventory displays
-        ['C', 'N', 'D', 'Q'].forEach(chem => {
-            document.getElementById(`inv-${chem}`).textContent = this.formatNumber(this.inventory[chem]);
-        });
+        // Inventory is now displayed inside chemical-card components
+        // No need to update separate inv-* elements
 
         // Update staleness indicator
         this.updateStalenessIndicator(data.inventory.stalenessLevel, data.inventory.transactionsSinceLastShadowCalc);
@@ -187,15 +218,20 @@ class MarketplaceApp {
      */
     async loadShadowPrices() {
         try {
-            const response = await fetch('/api/production/shadow-prices.php');
-            const data = await response.json();
+            const data = await api.production.getShadowPrices();
+            console.log('Shadow prices API response:', data);
 
-            if (data.success) {
+            if (data && data.shadowPrices) {
                 this.shadowPrices = data.shadowPrices;
+                console.log('Shadow prices loaded:', this.shadowPrices);
                 this.updateShadowPricesUI();
+            } else {
+                console.warn('No shadow prices in API response:', data);
             }
         } catch (error) {
             console.error('Failed to load shadow prices:', error);
+            // Don't block on shadow price errors - use defaults
+            this.shadowPrices = { C: 0, N: 0, D: 0, Q: 0 };
         }
     }
 
@@ -205,8 +241,14 @@ class MarketplaceApp {
     updateShadowPricesUI() {
         ['C', 'N', 'D', 'Q'].forEach(chem => {
             const price = this.shadowPrices[chem] || 0;
+            // Update header shadow prices
             document.getElementById(`shadow-${chem}`).textContent = this.formatNumber(price);
-            document.getElementById(`your-shadow-${chem}`).textContent = this.formatNumber(price);
+
+            // Update chemical card shadow prices via component properties
+            const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+            if (card) {
+                card.shadowPrice = price;
+            }
         });
     }
 
@@ -242,20 +284,14 @@ class MarketplaceApp {
         btn.textContent = 'Calculating...';
 
         try {
-            const response = await fetch('/api/production/shadow-prices.php');
-            const data = await response.json();
+            const data = await api.production.getShadowPrices();
+            this.shadowPrices = data.shadowPrices;
+            this.updateShadowPricesUI();
 
-            if (data.success) {
-                this.shadowPrices = data.shadowPrices;
-                this.updateShadowPricesUI();
+            // Reload profile to get fresh staleness indicator
+            await this.loadProfile();
 
-                // Reload profile to get fresh staleness indicator
-                await this.loadProfile();
-
-                this.showToast('Shadow prices updated successfully', 'success');
-            } else {
-                throw new Error(data.message);
-            }
+            this.showToast('Shadow prices updated successfully', 'success');
         } catch (error) {
             console.error('Failed to recalculate shadow prices:', error);
             this.showToast('Failed to recalculate shadow prices', 'error');
@@ -273,13 +309,9 @@ class MarketplaceApp {
      */
     async loadAdvertisements() {
         try {
-            const response = await fetch('/api/advertisements/list.php');
-            const data = await response.json();
-
-            if (data.success) {
-                this.advertisements = data.advertisements;
-                this.renderAdvertisements();
-            }
+            const data = await api.advertisements.list();
+            this.advertisements = data.advertisements;
+            this.renderAdvertisements();
         } catch (error) {
             console.error('Failed to load advertisements:', error);
         }
@@ -290,13 +322,9 @@ class MarketplaceApp {
      */
     async loadNegotiations() {
         try {
-            const response = await fetch('/api/negotiations/list.php');
-            const data = await response.json();
-
-            if (data.success) {
-                this.myNegotiations = data.negotiations || [];
-                this.renderNegotiations();
-            }
+            const data = await api.negotiations.list();
+            this.myNegotiations = data.negotiations || [];
+            this.renderNegotiations();
         } catch (error) {
             console.error('Failed to load negotiations:', error);
         }
@@ -305,62 +333,24 @@ class MarketplaceApp {
     /**
      * Render advertisement board
      */
+    /**
+     * Render advertisement board using web components
+     */
     renderAdvertisements() {
         ['C', 'N', 'D', 'Q'].forEach(chemical => {
-            // Render sell advertisements
-            const sellContainer = document.getElementById(`sell-ads-${chemical}`);
-            const sellAds = this.advertisements[chemical]?.sell || [];
-
-            if (sellAds.length === 0) {
-                sellContainer.innerHTML = '<p class="text-xs text-gray-300 text-center py-4">No sellers</p>';
-            } else {
-                sellContainer.innerHTML = sellAds.map(ad => this.renderAdvertisement(ad, chemical, 'sell')).join('');
-            }
-
-            // Render buy advertisements
-            const buyContainer = document.getElementById(`buy-ads-${chemical}`);
-            const buyAds = this.advertisements[chemical]?.buy || [];
-
-            if (buyAds.length === 0) {
-                buyContainer.innerHTML = '<p class="text-xs text-gray-300 text-center py-4">No buyers</p>';
-            } else {
-                buyContainer.innerHTML = buyAds.map(ad => this.renderAdvertisement(ad, chemical, 'buy')).join('');
+            const card = document.querySelector(`chemical-card[chemical="${chemical}"]`);
+            if (card) {
+                card.currentUserId = this.currentUser;
+                card.inventory = this.inventory[chemical];
+                card.shadowPrice = this.shadowPrices[chemical];
+                card.sellAds = this.advertisements[chemical]?.sell || [];
+                card.buyAds = this.advertisements[chemical]?.buy || [];
             }
         });
     }
 
     /**
-     * Render a single advertisement
-     */
-    renderAdvertisement(ad, chemical, type) {
-        const isMyAd = ad.teamId === this.currentUser;
-        const buttonText = type === 'sell' ? 'Buy from' : 'Sell to';
-        const bgColor = type === 'sell' ? 'bg-green-700' : 'bg-blue-700';
-
-        return `
-            <div class="bg-gray-700 rounded p-3 border border-gray-600">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="font-semibold text-sm">${ad.teamName}</div>
-                        <div class="text-xs text-gray-300">Wants to ${type}</div>
-                    </div>
-                    ${!isMyAd ? `
-                        <button
-                            class="negotiate-btn ${bgColor} hover:opacity-90 text-white px-3 py-1 rounded text-xs font-semibold transition"
-                            data-team-id="${ad.teamId}"
-                            data-team-name="${ad.teamName}"
-                            data-chemical="${chemical}"
-                            data-type="${type}">
-                            ${buttonText}
-                        </button>
-                    ` : '<span class="text-xs text-gray-400 italic">Your ad</span>'}
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Render negotiations summary
+     * Render negotiations summary using web components
      */
     renderNegotiations() {
         const container = document.getElementById('my-negotiations');
@@ -376,29 +366,14 @@ class MarketplaceApp {
         if (pending.length === 0) {
             container.innerHTML = '<p class="text-gray-300 text-center py-8">No pending negotiations</p>';
         } else {
-            container.innerHTML = pending.map(neg => {
-                const otherTeam = neg.initiatorId === this.currentUser ? neg.responderName : neg.initiatorName;
-                const lastOffer = neg.offers[neg.offers.length - 1];
-                const isMyTurn = neg.lastOfferBy !== this.currentUser;
-
-                return `
-                    <div class="bg-gray-700 rounded p-4 border border-gray-600 cursor-pointer hover:bg-gray-650 transition"
-                         onclick="app.viewNegotiationDetail('${neg.id}')">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-semibold">Chemical ${neg.chemical} • ${otherTeam}</div>
-                                <div class="text-sm text-gray-300">
-                                    Latest: ${lastOffer.quantity} gal @ $${lastOffer.price.toFixed(2)}
-                                </div>
-                            </div>
-                            ${isMyTurn ?
-                                '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Your Turn</span>' :
-                                '<span class="px-2 py-1 bg-gray-600 text-gray-300 rounded text-xs">Waiting</span>'
-                            }
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = '';
+            pending.forEach(neg => {
+                const card = document.createElement('negotiation-card');
+                card.negotiation = neg;
+                card.currentUserId = this.currentUser;
+                card.context = 'summary';
+                container.appendChild(card);
+            });
         }
     }
 
@@ -407,20 +382,9 @@ class MarketplaceApp {
      */
     async postAdvertisement(chemical, type) {
         try {
-            const response = await fetch('/api/advertisements/post.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chemical, type })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast(`Posted interest to ${type} ${chemical}`, 'success');
-                await this.loadAdvertisements();
-            } else {
-                throw new Error(data.error || 'Failed to post advertisement');
-            }
+            await api.advertisements.post(chemical, type);
+            this.showToast(`Posted interest to ${type} ${chemical}`, 'success');
+            await this.loadAdvertisements();
         } catch (error) {
             console.error('Failed to post advertisement:', error);
             this.showToast('Failed to post advertisement: ' + error.message, 'error');
@@ -641,27 +605,16 @@ class MarketplaceApp {
         }
 
         try {
-            const response = await fetch('/api/negotiations/initiate.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    responderId: this.tempNegotiation.teamId,
-                    chemical: this.tempNegotiation.chemical,
-                    quantity,
-                    price
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast('Negotiation started', 'success');
-                await this.loadNegotiations();
-                this.showNegotiationListView();
-                this.renderNegotiationsInModal();
-            } else {
-                throw new Error(data.error || 'Failed to start negotiation');
-            }
+            await api.negotiations.initiate(
+                this.tempNegotiation.teamId,
+                this.tempNegotiation.chemical,
+                quantity,
+                price
+            );
+            this.showToast('Negotiation started', 'success');
+            await this.loadNegotiations();
+            this.showNegotiationListView();
+            this.renderNegotiationsInModal();
         } catch (error) {
             console.error('Failed to start negotiation:', error);
             this.showToast('Failed to start negotiation: ' + error.message, 'error');
@@ -686,25 +639,10 @@ class MarketplaceApp {
         }
 
         try {
-            const response = await fetch('/api/negotiations/counter.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    negotiationId: this.currentNegotiation.id,
-                    quantity,
-                    price
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast('Counter-offer sent', 'success');
-                await this.loadNegotiations();
-                this.viewNegotiationDetail(this.currentNegotiation.id);
-            } else {
-                throw new Error(data.error || 'Failed to send counter-offer');
-            }
+            await api.negotiations.counter(this.currentNegotiation.id, quantity, price);
+            this.showToast('Counter-offer sent', 'success');
+            await this.loadNegotiations();
+            this.viewNegotiationDetail(this.currentNegotiation.id);
         } catch (error) {
             console.error('Failed to send counter-offer:', error);
             this.showToast('Failed to send counter-offer: ' + error.message, 'error');
@@ -719,24 +657,11 @@ class MarketplaceApp {
         if (!confirmed) return;
 
         try {
-            const response = await fetch('/api/negotiations/accept.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    negotiationId: this.currentNegotiation.id
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast('Trade executed successfully!', 'success');
-                await this.loadNegotiations();
-                await this.loadProfile(); // Refresh inventory
-                this.closeNegotiationModal();
-            } else {
-                throw new Error(data.error || 'Failed to accept offer');
-            }
+            await api.negotiations.accept(this.currentNegotiation.id);
+            this.showToast('Trade executed successfully!', 'success');
+            await this.loadNegotiations();
+            await this.loadProfile(); // Refresh inventory
+            this.closeNegotiationModal();
         } catch (error) {
             console.error('Failed to accept offer:', error);
             this.showToast('Failed to accept offer: ' + error.message, 'error');
@@ -751,24 +676,11 @@ class MarketplaceApp {
         if (!confirmed) return;
 
         try {
-            const response = await fetch('/api/negotiations/reject.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    negotiationId: this.currentNegotiation.id
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast('Negotiation cancelled', 'success');
-                await this.loadNegotiations();
-                this.showNegotiationListView();
-                this.renderNegotiationsInModal();
-            } else {
-                throw new Error(data.error || 'Failed to cancel negotiation');
-            }
+            await api.negotiations.reject(this.currentNegotiation.id);
+            this.showToast('Negotiation cancelled', 'success');
+            await this.loadNegotiations();
+            this.showNegotiationListView();
+            this.renderNegotiationsInModal();
         } catch (error) {
             console.error('Failed to cancel negotiation:', error);
             this.showToast('Failed to cancel negotiation: ' + error.message, 'error');
@@ -780,21 +692,17 @@ class MarketplaceApp {
      */
     async loadNotifications() {
         try {
-            const response = await fetch('/api/notifications/list.php');
-            const data = await response.json();
+            const data = await api.notifications.list();
+            this.notifications = data.notifications;
+            this.renderNotifications();
 
-            if (data.success) {
-                this.notifications = data.notifications;
-                this.renderNotifications();
-
-                // Update badge
-                const badge = document.getElementById('notif-badge');
-                if (data.unreadCount > 0) {
-                    badge.textContent = data.unreadCount;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
+            // Update badge
+            const badge = document.getElementById('notif-badge');
+            if (data.unreadCount > 0) {
+                badge.textContent = data.unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
             }
         } catch (error) {
             console.error('Failed to load notifications:', error);
@@ -834,13 +742,9 @@ class MarketplaceApp {
      */
     async loadSettings() {
         try {
-            const response = await fetch('/api/team/settings.php');
-            const data = await response.json();
-
-            if (data.success) {
-                this.settings = data.settings;
-                this.updateSettingsUI();
-            }
+            const data = await api.team.getSettings();
+            this.settings = data.settings;
+            this.updateSettingsUI();
         } catch (error) {
             console.error('Failed to load settings:', error);
         }
@@ -872,21 +776,11 @@ class MarketplaceApp {
     async toggleTradingHints() {
         try {
             const newValue = !this.settings.showTradingHints;
-
-            const response = await fetch('/api/team/settings.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ showTradingHints: newValue })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.settings = data.settings;
-                this.updateSettingsUI();
-                this.renderMarketplace(); // Re-render to show/hide hints
-                this.showToast('Settings updated', 'success');
-            }
+            const data = await api.team.updateSettings({ showTradingHints: newValue });
+            this.settings = data.settings;
+            this.updateSettingsUI();
+            this.renderMarketplace(); // Re-render to show/hide hints
+            this.showToast('Settings updated', 'success');
         } catch (error) {
             console.error('Failed to update settings:', error);
             this.showToast('Failed to update settings', 'error');
@@ -902,28 +796,23 @@ class MarketplaceApp {
             this.recalculateShadowPrices();
         });
 
-        // Post sell/buy interest buttons
-        document.querySelectorAll('.post-sell-interest-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const chemical = e.target.dataset.chemical;
-                this.postAdvertisement(chemical, 'sell');
-            });
+        // Web Component Events: Post interest (from chemical-card)
+        document.addEventListener('post-interest', (e) => {
+            const { chemical, type } = e.detail;
+            this.postAdvertisement(chemical, type);
         });
 
-        document.querySelectorAll('.post-buy-interest-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const chemical = e.target.dataset.chemical;
-                this.postAdvertisement(chemical, 'buy');
-            });
+        // Web Component Events: Negotiate (from advertisement-item)
+        document.addEventListener('negotiate', (e) => {
+            const { teamId, teamName, chemical, type } = e.detail;
+            this.openNegotiationModal();
+            setTimeout(() => this.startNewNegotiation(teamId, teamName, chemical, type), 100);
         });
 
-        // Negotiate buttons (delegated)
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('negotiate-btn')) {
-                const { teamId, teamName, chemical, type } = e.target.dataset;
-                this.openNegotiationModal();
-                setTimeout(() => this.startNewNegotiation(teamId, teamName, chemical, type), 100);
-            }
+        // Web Component Events: View negotiation detail (from negotiation-card)
+        document.addEventListener('view-detail', (e) => {
+            const { negotiationId } = e.detail;
+            this.viewNegotiationDetail(negotiationId);
         });
 
         // View all negotiations button
@@ -1030,13 +919,10 @@ class MarketplaceApp {
      */
     async checkSessionPhase() {
         try {
-            const response = await fetch('/api/admin/session.php');
-            if (response.ok) {
-                const data = await response.json();
-                // Session state checked - auto-advance will trigger if time expired
-                // We don't need to do anything with the response, just calling
-                // SessionManager::getState() is enough to trigger auto-advance
-            }
+            await api.admin.getSession();
+            // Session state checked - auto-advance will trigger if time expired
+            // We don't need to do anything with the response, just calling
+            // SessionManager::getState() is enough to trigger auto-advance
         } catch (error) {
             // Silently fail - this is a background check
             // If the user isn't admin, they'll get 403 which is fine
@@ -1066,12 +952,7 @@ class MarketplaceApp {
         leaderboardBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Loading...</td></tr>';
 
         try {
-            const response = await fetch('/api/leaderboard/standings.php');
-            const data = await response.json();
-
-            if (!data.success) {
-                throw new Error(data.message || 'Failed to load leaderboard');
-            }
+            const data = await api.leaderboard.getStandings();
 
             // Update session info
             document.getElementById('leaderboard-session').textContent = data.session;
@@ -1179,6 +1060,6 @@ class MarketplaceApp {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new MarketplaceApp();
-    app.init();
+    window.app = new MarketplaceApp();
+    window.app.init();
 });

@@ -1,13 +1,13 @@
 {
     "email": "test_mail2@stonybrook.edu",
     "teamName": "Daring Rhino",
-    "startingFunds": 10000,
-    "currentFunds": 19093.919999999518,
+    "startingFunds": 0,
+    "currentFunds": 6117.370000000005,
     "createdAt": 1766821213,
-    "lastActive": 1766821213,
+    "lastActive": 1766898201,
     "settings": {
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
     },
-    "lastModified": 1766886641
+    "lastModified": 1766899816
 }

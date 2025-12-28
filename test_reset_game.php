@@ -1,31 +1,16 @@
 <?php
 /**
- * Admin Reset Game API
- *
- * POST: Reset all game data while keeping team registrations
- * This allows the same players to start fresh from scratch
+ * Test script to reset the game via command line
  */
 
-header('Content-Type: application/json');
-require_once __DIR__ . '/../../userData.php';
-require_once __DIR__ . '/../../lib/SessionManager.php';
-require_once __DIR__ . '/../../lib/TeamStorage.php';
+require_once __DIR__ . '/userData.php';
+require_once __DIR__ . '/lib/SessionManager.php';
+require_once __DIR__ . '/lib/TeamStorage.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit;
-}
-
-// ADMIN ONLY
-if (!isAdmin()) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Admin privileges required']);
-    exit;
-}
+echo "🎮 Resetting CNDQ Game...\n\n";
 
 try {
-    $teamsDir = __DIR__ . '/../../data/teams';
+    $teamsDir = __DIR__ . '/data/teams';
     $resetCount = 0;
     $errors = [];
 
@@ -34,14 +19,17 @@ try {
     }
 
     $teamDirs = glob($teamsDir . '/*', GLOB_ONLYDIR);
+    echo "Found " . count($teamDirs) . " teams to reset\n\n";
 
     foreach ($teamDirs as $teamDir) {
         $teamEmail = basename($teamDir);
+        echo "Resetting: $teamEmail\n";
 
         try {
             // Read current profile to keep email and teamName
             $profileFile = $teamDir . '/profile.json';
             if (!file_exists($profileFile)) {
+                echo "  ⚠️  No profile found, skipping\n";
                 continue;
             }
 
@@ -75,6 +63,7 @@ try {
                 'lastModified' => time()
             ];
             file_put_contents($inventoryFile, json_encode($resetInventory, JSON_PRETTY_PRINT));
+            echo "  ✓ Inventory: C={$resetInventory['C']}, N={$resetInventory['N']}, D={$resetInventory['D']}, Q={$resetInventory['Q']}\n";
 
             // Clear production history
             $productionFile = $teamDir . '/production_history.json';
@@ -114,27 +103,32 @@ try {
             }
 
             $resetCount++;
+            echo "  ✓ Reset complete\n\n";
 
         } catch (Exception $e) {
             $errors[] = "$teamEmail: " . $e->getMessage();
+            echo "  ❌ Error: " . $e->getMessage() . "\n\n";
         }
     }
 
     // Reset session to session 1, production phase
+    echo "Resetting session state...\n";
     $sessionManager = new SessionManager();
     $sessionManager->reset();
+    echo "✓ Session reset to session 1\n\n";
 
-    echo json_encode([
-        'success' => true,
-        'message' => 'Game reset complete. All teams can start fresh!',
-        'teamsReset' => $resetCount,
-        'errors' => $errors
-    ]);
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    echo "✅ Game reset complete!\n";
+    echo "   Teams reset: $resetCount\n";
+    if (!empty($errors)) {
+        echo "   Errors: " . count($errors) . "\n";
+        foreach ($errors as $error) {
+            echo "     - $error\n";
+        }
+    }
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Server error',
-        'message' => $e->getMessage()
-    ]);
+    echo "❌ Fatal error: " . $e->getMessage() . "\n";
+    exit(1);
 }

@@ -18,7 +18,7 @@ const TEAMS = [
 ];
 
 const CHEMICALS = ['C', 'N', 'D', 'Q'];
-const TARGET_SESSIONS = 10;
+const TARGET_SESSIONS = 3;
 const TRADING_PHASE_DURATION = 60; // seconds
 
 /**
@@ -133,6 +133,10 @@ async function allTeamsAdvertise(browser) {
     for (const teamEmail of TEAMS) {
         const page = await browser.newPage();
 
+        // Listen for console messages and errors
+        page.on('console', msg => console.log(`   [Browser ${msg.type()}]:`, msg.text()));
+        page.on('pageerror', err => console.error(`   [Page Error]:`, err.message));
+
         try {
             // Login as team
             await page.goto(`${BASE_URL}/dev_login.php?user=${teamEmail}`);
@@ -177,6 +181,10 @@ async function allTeamsNegotiate(browser) {
 
     for (const teamEmail of TEAMS) {
         const page = await browser.newPage();
+
+        // Listen for console messages and errors
+        page.on('console', msg => console.log(`   [Browser ${msg.type()}]:`, msg.text()));
+        page.on('pageerror', err => console.error(`   [Page Error]:`, err.message));
 
         try {
             // Login as team
@@ -228,8 +236,14 @@ async function getShadowPrices(page) {
     return await page.evaluate(() => {
         const prices = {};
         ['C', 'N', 'D', 'Q'].forEach(chem => {
-            const el = document.getElementById(`shadow-${chem}`);
-            prices[chem] = parseFloat(el?.textContent || '0');
+            // Access light DOM of chemical-card component (no shadow DOM)
+            const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+            if (card) {
+                const el = card.querySelector('#shadow-price');
+                prices[chem] = parseFloat(el?.textContent || '0');
+            } else {
+                prices[chem] = 0;
+            }
         });
         return prices;
     });
@@ -239,12 +253,17 @@ async function getShadowPrices(page) {
  * Post advertisement for a chemical
  */
 async function postAdvertisement(page, chemical, type) {
-    const buttonSelector = `.post-${type}-interest-btn[data-chemical="${chemical}"]`;
-    const button = await page.$(buttonSelector);
-    if (button) {
-        await button.click();
-        await sleep(500);
-    }
+    // Access button in light DOM of chemical-card component
+    await page.evaluate((chem, adType) => {
+        const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+        if (card) {
+            const button = card.querySelector(`#post-${adType}-btn`);
+            if (button) {
+                button.click();
+            }
+        }
+    }, chemical, type);
+    await sleep(500);
 }
 
 /**
@@ -252,14 +271,22 @@ async function postAdvertisement(page, chemical, type) {
  */
 async function findSeller(page, chemical) {
     return await page.evaluate((chem) => {
-        const sellSection = document.querySelector(`#chemical-${chem} .sell-offers`);
-        const sellerCard = sellSection?.querySelector('.negotiate-btn');
-        if (sellerCard) {
-            return {
-                teamId: sellerCard.dataset.teamId,
-                teamName: sellerCard.dataset.teamName,
-                chemical: chem
-            };
+        // Access light DOM of chemical-card component
+        const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+        if (!card) return null;
+
+        // Find all advertisement-item elements in light DOM
+        const adItems = card.querySelectorAll('advertisement-item');
+
+        // Look for a sell advertisement that's not my own
+        for (const item of adItems) {
+            if (item.type === 'sell' && !item.isMyAd) {
+                return {
+                    teamId: item.teamId,
+                    teamName: item.teamName,
+                    chemical: chem
+                };
+            }
         }
         return null;
     }, chemical);
@@ -270,14 +297,22 @@ async function findSeller(page, chemical) {
  */
 async function findBuyer(page, chemical) {
     return await page.evaluate((chem) => {
-        const buySection = document.querySelector(`#chemical-${chem} .buy-offers`);
-        const buyerCard = buySection?.querySelector('.negotiate-btn');
-        if (buyerCard) {
-            return {
-                teamId: buyerCard.dataset.teamId,
-                teamName: buyerCard.dataset.teamName,
-                chemical: chem
-            };
+        // Access light DOM of chemical-card component
+        const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+        if (!card) return null;
+
+        // Find all advertisement-item elements in light DOM
+        const adItems = card.querySelectorAll('advertisement-item');
+
+        // Look for a buy advertisement that's not my own
+        for (const item of adItems) {
+            if (item.type === 'buy' && !item.isMyAd) {
+                return {
+                    teamId: item.teamId,
+                    teamName: item.teamName,
+                    chemical: chem
+                };
+            }
         }
         return null;
     }, chemical);
@@ -288,17 +323,25 @@ async function findBuyer(page, chemical) {
  */
 async function initiateNegotiation(page, counterparty, chemical, type, myShadowPrice) {
     try {
-        // Click negotiate button
-        const negotiateBtn = await page.evaluateHandle((teamId, chem) => {
-            const buttons = Array.from(document.querySelectorAll('.negotiate-btn'));
-            return buttons.find(btn =>
-                btn.dataset.teamId === teamId &&
-                btn.dataset.chemical === chem
-            );
+        // Click negotiate button in light DOM
+        const clicked = await page.evaluate((teamId, chem) => {
+            const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+            if (!card) return false;
+
+            const adItems = card.querySelectorAll('advertisement-item');
+            for (const item of adItems) {
+                if (item.teamId === teamId) {
+                    const btn = item.querySelector('.negotiate-btn');
+                    if (btn) {
+                        btn.click();
+                        return true;
+                    }
+                }
+            }
+            return false;
         }, counterparty.teamId, chemical);
 
-        if (negotiateBtn) {
-            await negotiateBtn.click();
+        if (clicked) {
             await sleep(1000);
 
             // Fill in negotiation form

@@ -1,563 +1,59 @@
 {
     "ads": [
         {
-            "id": "ad_1766865839_67143432",
+            "id": "ad_1766898224_e57c5200",
             "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "test_mail1@stonybrook.edu",
+            "teamName": "Crafty Otter",
             "chemical": "C",
+            "type": "sell",
+            "status": "active",
+            "createdAt": 1766898224
+        },
+        {
+            "id": "ad_1766898224_b9e72421",
+            "teamId": "test_mail1@stonybrook.edu",
+            "teamName": "Crafty Otter",
+            "chemical": "N",
+            "type": "sell",
+            "status": "active",
+            "createdAt": 1766898224
+        },
+        {
+            "id": "ad_1766898225_d6c28eb6",
+            "teamId": "test_mail1@stonybrook.edu",
+            "teamName": "Crafty Otter",
+            "chemical": "D",
             "type": "buy",
             "status": "active",
-            "createdAt": 1766865839
+            "createdAt": 1766898225
         },
         {
-            "id": "ad_1766886062_f7272286",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886062
-        },
-        {
-            "id": "ad_1766886127_6ab8812a",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886127
-        },
-        {
-            "id": "ad_1766886128_f2256b41",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886128
-        },
-        {
-            "id": "ad_1766886128_52c7e4af",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886128
-        },
-        {
-            "id": "ad_1766886129_5f65a91b",
+            "id": "ad_1766898225_36574f4a",
             "teamId": "test_mail1@stonybrook.edu",
             "teamName": "Crafty Otter",
             "chemical": "Q",
             "type": "sell",
             "status": "active",
-            "createdAt": 1766886129
+            "createdAt": 1766898225
         },
         {
-            "id": "ad_1766886149_2a5f57a7",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886149
-        },
-        {
-            "id": "ad_1766886150_6a78c656",
+            "id": "ad_1766898661_9eb5a4d0",
             "teamId": "test_mail1@stonybrook.edu",
             "teamName": "Crafty Otter",
             "chemical": "N",
-            "type": "sell",
+            "type": "buy",
             "status": "active",
-            "createdAt": 1766886150
+            "createdAt": 1766898661
         },
         {
-            "id": "ad_1766886150_d1573807",
+            "id": "ad_1766898671_681d23b2",
             "teamId": "test_mail1@stonybrook.edu",
             "teamName": "Crafty Otter",
             "chemical": "D",
             "type": "sell",
             "status": "active",
-            "createdAt": 1766886150
-        },
-        {
-            "id": "ad_1766886151_2a9e641d",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886151
-        },
-        {
-            "id": "ad_1766886193_2135d132",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886193
-        },
-        {
-            "id": "ad_1766886194_c524ad33",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886194
-        },
-        {
-            "id": "ad_1766886195_d349e1f8",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886195
-        },
-        {
-            "id": "ad_1766886195_305a750f",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886195
-        },
-        {
-            "id": "ad_1766886258_1e42e99f",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886258
-        },
-        {
-            "id": "ad_1766886259_3da33f41",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886259
-        },
-        {
-            "id": "ad_1766886259_b186e000",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886259
-        },
-        {
-            "id": "ad_1766886259_2862e826",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886259
-        },
-        {
-            "id": "ad_1766886259_dfbb8845",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886259
-        },
-        {
-            "id": "ad_1766886260_a5405565",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886260
-        },
-        {
-            "id": "ad_1766886260_b3304923",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886260
-        },
-        {
-            "id": "ad_1766886260_ef9db084",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886260
-        },
-        {
-            "id": "ad_1766886322_03324f28",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886322
-        },
-        {
-            "id": "ad_1766886323_19674f3b",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886323
-        },
-        {
-            "id": "ad_1766886323_2eeff8c9",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886323
-        },
-        {
-            "id": "ad_1766886323_5630832c",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886323
-        },
-        {
-            "id": "ad_1766886324_961cfe43",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886324
-        },
-        {
-            "id": "ad_1766886324_5ab159b3",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886324
-        },
-        {
-            "id": "ad_1766886325_707b5ee8",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886325
-        },
-        {
-            "id": "ad_1766886325_6bc4794e",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886325
-        },
-        {
-            "id": "ad_1766886386_6295f61c",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886386
-        },
-        {
-            "id": "ad_1766886387_7d407cc8",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886387
-        },
-        {
-            "id": "ad_1766886387_4496d6b6",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886387
-        },
-        {
-            "id": "ad_1766886388_618fa090",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886388
-        },
-        {
-            "id": "ad_1766886388_8d37d98f",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886388
-        },
-        {
-            "id": "ad_1766886388_a4d11047",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886388
-        },
-        {
-            "id": "ad_1766886388_3bc35e37",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886388
-        },
-        {
-            "id": "ad_1766886389_c3f7ed14",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886389
-        },
-        {
-            "id": "ad_1766886452_e510e16d",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886452
-        },
-        {
-            "id": "ad_1766886453_ebd69dcf",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886453
-        },
-        {
-            "id": "ad_1766886453_8333b6c1",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886453
-        },
-        {
-            "id": "ad_1766886453_3e539593",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886453
-        },
-        {
-            "id": "ad_1766886454_4c7758be",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886454
-        },
-        {
-            "id": "ad_1766886454_6d88db06",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886454
-        },
-        {
-            "id": "ad_1766886454_ca2e11f7",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886454
-        },
-        {
-            "id": "ad_1766886455_7d86b712",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886455
-        },
-        {
-            "id": "ad_1766886518_7995b4c7",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886518
-        },
-        {
-            "id": "ad_1766886519_1695471f",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886519
-        },
-        {
-            "id": "ad_1766886519_1d6b25cf",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886519
-        },
-        {
-            "id": "ad_1766886520_b23cffc8",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886520
-        },
-        {
-            "id": "ad_1766886520_7e99186b",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886520
-        },
-        {
-            "id": "ad_1766886520_1805384a",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886520
-        },
-        {
-            "id": "ad_1766886520_a636e4dc",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886520
-        },
-        {
-            "id": "ad_1766886521_bdf12754",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886521
-        },
-        {
-            "id": "ad_1766886585_fb462d3e",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886585
-        },
-        {
-            "id": "ad_1766886585_d36c3378",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886585
-        },
-        {
-            "id": "ad_1766886586_c44ee232",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886586
-        },
-        {
-            "id": "ad_1766886586_05ece318",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886586
-        },
-        {
-            "id": "ad_1766886586_0ca14dcc",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886586
-        },
-        {
-            "id": "ad_1766886586_cb5578bd",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886586
-        },
-        {
-            "id": "ad_1766886587_40375c4e",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886587
-        },
-        {
-            "id": "ad_1766886587_d05cbc4c",
-            "teamId": "test_mail1@stonybrook.edu",
-            "teamName": "Crafty Otter",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766886587
+            "createdAt": 1766898671
         }
     ],
-    "lastModified": 1766886587
+    "lastModified": 1766898671
 }

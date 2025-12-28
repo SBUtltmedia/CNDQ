@@ -1,13 +1,13 @@
 {
     "email": "test_mail3@stonybrook.edu",
     "teamName": "Lucky Hawk",
-    "startingFunds": 9055.5,
-    "currentFunds": 9055.5,
+    "startingFunds": 0,
+    "currentFunds": 10965.71,
     "createdAt": 1766866728,
-    "lastActive": 1766866728,
+    "lastActive": 1766898201,
     "settings": {
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
     },
-    "lastModified": 1766883613
+    "lastModified": 1766898220
 }

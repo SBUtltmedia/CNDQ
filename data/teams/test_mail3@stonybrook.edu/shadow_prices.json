@@ -1,9 +1,9 @@
 {
-    "C": 4,
+    "C": 0.01,
     "N": 0,
-    "D": 0,
-    "Q": 7.5,
-    "calculatedAt": 1766886626,
-    "transactionsAtCalculation": 0,
-    "lastModified": 1766886626
+    "D": 8.58,
+    "Q": 0,
+    "calculatedAt": 1766899600,
+    "lastModified": 1766899600,
+    "transactionsAtCalculation": 0
 }

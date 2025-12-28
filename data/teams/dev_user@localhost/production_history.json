@@ -1,19 +1,21 @@
 {
+    "history": [],
+    "lastModified": 1766898220,
     "productions": [
         {
-            "type": "automatic_initial",
-            "deicer": 0,
-            "solvent": 2768,
-            "revenue": 8304,
+            "type": "automatic_session",
+            "sessionNumber": 1,
+            "deicer": 320.91,
+            "solvent": 2150.91,
+            "revenue": 7094.55,
             "chemicalsConsumed": {
-                "C": 0,
-                "N": 692,
-                "D": 968.8,
-                "Q": 1107.2
+                "C": 160.455,
+                "N": 634.0005,
+                "D": 817.0004999999999,
+                "Q": 860.364
             },
-            "note": "Automatic first production run to generate initial trading capital",
-            "timestamp": 1766864084
+            "note": "Automatic production for session 1",
+            "timestamp": 1766898220
         }
-    ],
-    "lastModified": 1766864084
+    ]
 }

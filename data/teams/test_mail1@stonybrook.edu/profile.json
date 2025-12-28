@@ -1,13 +1,13 @@
 {
     "email": "test_mail1@stonybrook.edu",
     "teamName": "Crafty Otter",
-    "startingFunds": 10000,
-    "currentFunds": 19093.919999999518,
+    "startingFunds": 0,
+    "currentFunds": 7789.71,
     "createdAt": 1766821211,
-    "lastActive": 1766821211,
+    "lastActive": 1766898201,
     "settings": {
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
     },
-    "lastModified": 1766886641
+    "lastModified": 1766898220
 }
