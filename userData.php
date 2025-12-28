@@ -21,8 +21,16 @@ function getCurrentUserEmail() {
         return $_COOKIE['mock_mail'];
     }
 
-    // Fallback to server environment variable (Shibboleth via $_SERVER or .htaccess via getenv)
-    // Note: Check for empty strings too, not just null
+    // Prefer non-identifying Shibboleth attributes for privacy
+    // persistent-id is a random opaque identifier that doesn't reveal identity
+    $persistentId = $_SERVER['persistent-id'] ?? getenv('persistent-id') ?? null;
+    if (!empty($persistentId)) return $persistentId;
+
+    // eppn (eduPersonPrincipalName) is less identifying than email
+    $eppn = $_SERVER['eppn'] ?? getenv('eppn') ?? null;
+    if (!empty($eppn)) return $eppn;
+
+    // Fallback to email for backwards compatibility
     $mail = $_SERVER['mail'] ?? getenv('mail') ?? null;
     if (!empty($mail)) return $mail;
 

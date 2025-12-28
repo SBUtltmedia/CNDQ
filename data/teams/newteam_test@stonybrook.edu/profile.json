@@ -1,13 +1,13 @@
 {
     "email": "newteam_test@stonybrook.edu",
-    "teamName": "newteam_test@stonybrook.edu",
+    "teamName": "Wild Eagle",
     "startingFunds": 9603.43,
-    "currentFunds": 9603.700000000006,
+    "currentFunds": 9606.450000000066,
     "createdAt": 1766863595,
     "lastActive": 1766863595,
     "settings": {
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
     },
-    "lastModified": 1766868505
+    "lastModified": 1766886641
 }

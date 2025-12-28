@@ -1,6 +1,6 @@
 {
     "email": "dev_user@localhost",
-    "teamName": "dev_user@localhost",
+    "teamName": "Strong Leopard",
     "startingFunds": 8304,
     "currentFunds": 8304,
     "createdAt": 1766864084,
@@ -9,5 +9,5 @@
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
     },
-    "lastModified": 1766864084
+    "lastModified": 1766883622
 }

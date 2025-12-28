@@ -989,6 +989,15 @@ class MarketplaceApp {
         document.getElementById('toggle-hints-btn').addEventListener('click', () => {
             this.toggleTradingHints();
         });
+
+        // Leaderboard
+        document.getElementById('leaderboard-btn').addEventListener('click', () => {
+            this.openLeaderboard();
+        });
+
+        document.getElementById('leaderboard-modal-close-btn').addEventListener('click', () => {
+            this.closeLeaderboard();
+        });
     }
 
 
@@ -1031,6 +1040,76 @@ class MarketplaceApp {
         } catch (error) {
             // Silently fail - this is a background check
             // If the user isn't admin, they'll get 403 which is fine
+        }
+    }
+
+    /**
+     * Open leaderboard modal
+     */
+    async openLeaderboard() {
+        document.getElementById('leaderboard-modal').classList.remove('hidden');
+        await this.loadLeaderboard();
+    }
+
+    /**
+     * Close leaderboard modal
+     */
+    closeLeaderboard() {
+        document.getElementById('leaderboard-modal').classList.add('hidden');
+    }
+
+    /**
+     * Load and display leaderboard
+     */
+    async loadLeaderboard() {
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        leaderboardBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Loading...</td></tr>';
+
+        try {
+            const response = await fetch('/api/leaderboard/standings.php');
+            const data = await response.json();
+
+            if (!data.success) {
+                throw new Error(data.message || 'Failed to load leaderboard');
+            }
+
+            // Update session info
+            document.getElementById('leaderboard-session').textContent = data.session;
+            document.getElementById('leaderboard-phase').textContent = data.phase;
+
+            // Render standings
+            if (data.standings.length === 0) {
+                leaderboardBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No teams yet</td></tr>';
+                return;
+            }
+
+            leaderboardBody.innerHTML = data.standings.map(team => {
+                const isCurrentTeam = team.teamName === this.profile.teamName;
+                const profitClass = team.profit >= 0 ? 'text-green-400' : 'text-red-400';
+                const roiClass = team.roi >= 0 ? 'text-green-400' : 'text-red-400';
+                const rowClass = isCurrentTeam ? 'bg-yellow-900 bg-opacity-30 border-l-4 border-yellow-500' : '';
+
+                // Medal emoji for top 3
+                let rankDisplay = team.rank;
+                if (team.rank === 1) rankDisplay = '🥇 1';
+                else if (team.rank === 2) rankDisplay = '🥈 2';
+                else if (team.rank === 3) rankDisplay = '🥉 3';
+
+                return `
+                    <tr class="${rowClass}">
+                        <td class="px-4 py-3 font-bold text-xl">${rankDisplay}</td>
+                        <td class="px-4 py-3 font-semibold ${isCurrentTeam ? 'text-yellow-300' : 'text-white'}">${team.teamName}${isCurrentTeam ? ' (You)' : ''}</td>
+                        <td class="px-4 py-3 text-right text-gray-300">$${this.formatNumber(team.startingFunds)}</td>
+                        <td class="px-4 py-3 text-right font-semibold">$${this.formatNumber(team.currentFunds)}</td>
+                        <td class="px-4 py-3 text-right font-semibold ${profitClass}">${team.profit >= 0 ? '+' : ''}$${this.formatNumber(team.profit)}</td>
+                        <td class="px-4 py-3 text-right font-bold text-lg ${roiClass}">${team.roi >= 0 ? '+' : ''}${this.formatNumber(team.roi)}%</td>
+                    </tr>
+                `;
+            }).join('');
+
+        } catch (error) {
+            console.error('Failed to load leaderboard:', error);
+            leaderboardBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load leaderboard</td></tr>';
         }
     }
 

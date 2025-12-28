@@ -117,6 +117,19 @@
             </div>
         </div>
 
+        <!-- Danger Zone -->
+        <div class="bg-red-900/20 border-2 border-red-600 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-2 text-red-400">⚠️ Danger Zone</h2>
+            <p class="text-gray-300 text-sm mb-4">Irreversible actions that reset ALL game data</p>
+
+            <button onclick="resetGameData()" class="w-full bg-red-700 hover:bg-red-800 px-6 py-4 rounded font-bold transition border-2 border-red-500">
+                🗑️ RESET ALL GAME DATA
+            </button>
+            <p class="text-xs text-gray-400 mt-2">
+                Clears all inventories, funds, trades, and advertisements. Teams keep their names and can play again from scratch.
+            </p>
+        </div>
+
         <!-- Team Overview -->
         <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h2 class="text-xl font-bold mb-4">Team Overview</h2>
@@ -409,6 +422,44 @@
                 }
             } catch (error) {
                 showToast('Failed to reset session', 'error');
+            }
+        }
+
+        async function resetGameData() {
+            const confirmed = await showConfirm(
+                'RESET ALL GAME DATA? This will wipe inventories, funds, trades, advertisements, and production history for all teams. Teams will keep their names but everything else will be cleared. This cannot be undone!',
+                '⚠️ DANGER: Reset All Game Data'
+            );
+            if (!confirmed) {
+                return;
+            }
+
+            // Second confirmation for safety
+            const doubleConfirmed = await showConfirm(
+                'Are you ABSOLUTELY sure? This will delete ALL game progress!',
+                '⚠️ Final Confirmation'
+            );
+            if (!doubleConfirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/reset-game.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Game reset complete! ${data.teamsReset} teams cleared.`, 'success');
+                    await loadSessionState();
+                    await loadTeams();
+                } else {
+                    showToast('Failed to reset game: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('Reset error:', error);
+                showToast('Failed to reset game data', 'error');
             }
         }
 

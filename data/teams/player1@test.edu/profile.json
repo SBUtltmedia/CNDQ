@@ -1,13 +1,13 @@
 {
     "email": "player1@test.edu",
-    "teamName": "player1@test.edu",
+    "teamName": "Elite Tiger",
     "startingFunds": 10000,
-    "currentFunds": 19091.16999999996,
+    "currentFunds": 19093.919999999518,
     "createdAt": 1766813933,
     "lastActive": 1766813933,
     "settings": {
         "showTradingHints": false,
         "hasSeenShadowPriceTip": false
     },
-    "lastModified": 1766868505
+    "lastModified": 1766886641
 }

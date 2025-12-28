@@ -48,11 +48,15 @@ class TeamStorage {
             }
         }
 
+        // Generate a fun, anonymous team name
+        require_once __DIR__ . '/TeamNameGenerator.php';
+        $generatedName = TeamNameGenerator::generate($this->teamEmail);
+
         // Initialize files with default data if they don't exist
         $defaults = [
             'profile.json' => [
-                'email' => $this->teamEmail,
-                'teamName' => $this->teamEmail,
+                'email' => $this->teamEmail, // User ID (persistent-id, eppn, or email)
+                'teamName' => $generatedName, // Auto-generated adjective-animal name
                 'startingFunds' => 0,
                 'currentFunds' => 0,
                 'createdAt' => time(),
@@ -100,6 +104,17 @@ class TeamStorage {
             if (!file_exists($filepath)) {
                 file_put_contents($filepath, json_encode($defaultData, JSON_PRETTY_PRINT));
                 chmod($filepath, $filename === 'shadow_prices.json' ? 0600 : 0644);
+            }
+        }
+
+        // Migrate old profiles: if teamName equals email, regenerate it
+        $profileFile = $this->teamDir . '/profile.json';
+        if (file_exists($profileFile)) {
+            $profile = json_decode(file_get_contents($profileFile), true);
+            if ($profile && isset($profile['teamName']) && $profile['teamName'] === $profile['email']) {
+                $profile['teamName'] = $generatedName;
+                $profile['lastModified'] = time();
+                file_put_contents($profileFile, json_encode($profile, JSON_PRETTY_PRINT));
             }
         }
 

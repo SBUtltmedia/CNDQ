@@ -55,6 +55,17 @@ class AdvertisementManager {
             ? json_decode(file_get_contents($filePath), true)
             : ['ads' => []];
 
+        // Check if an active advertisement already exists for this team/chemical/type
+        foreach ($data['ads'] as $existingAd) {
+            if ($existingAd['status'] === 'active'
+                && $existingAd['chemical'] === $chemical
+                && $existingAd['type'] === $type
+                && $existingAd['teamId'] === $this->teamEmail) {
+                // Already exists, return the existing one
+                return $existingAd;
+            }
+        }
+
         $ad = [
             'id' => 'ad_' . time() . '_' . bin2hex(random_bytes(4)),
             'teamId' => $this->teamEmail,
@@ -115,8 +126,21 @@ class AdvertisementManager {
             if (file_exists($adFile)) {
                 $data = json_decode(file_get_contents($adFile), true);
 
+                // Get team name from profile.json for accurate display
+                $profileFile = $teamDir . '/profile.json';
+                $teamName = null;
+                if (file_exists($profileFile)) {
+                    $profile = json_decode(file_get_contents($profileFile), true);
+                    $teamName = $profile['teamName'] ?? null;
+                }
+
                 foreach ($data['ads'] ?? [] as $ad) {
                     if ($ad['status'] === 'active') {
+                        // Override teamName with current value from profile
+                        if ($teamName) {
+                            $ad['teamName'] = $teamName;
+                        }
+
                         $type = $ad['type'];
                         if (isset($allAds[$type])) {
                             $allAds[$type][] = $ad;

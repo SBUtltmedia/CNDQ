@@ -1,0 +1,14 @@
+{
+  "name": "cndq-game-simulation",
+  "version": "1.0.0",
+  "description": "Automated testing for CNDQ Chemical Trading Game",
+  "scripts": {
+    "simulate": "node test_game_simulation.js"
+  },
+  "dependencies": {
+    "puppeteer": "^24.1.0"
+  },
+  "devDependencies": {},
+  "author": "",
+  "license": "ISC"
+}
