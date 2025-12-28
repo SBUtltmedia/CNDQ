@@ -949,7 +949,7 @@ class MarketplaceApp {
      */
     async loadLeaderboard() {
         const leaderboardBody = document.getElementById('leaderboard-body');
-        leaderboardBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Loading...</td></tr>';
+        leaderboardBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">Loading...</td></tr>';
 
         try {
             const data = await api.leaderboard.getStandings();
@@ -960,7 +960,7 @@ class MarketplaceApp {
 
             // Render standings
             if (data.standings.length === 0) {
-                leaderboardBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">No teams yet</td></tr>';
+                leaderboardBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-400">No teams yet</td></tr>';
                 return;
             }
 
@@ -980,7 +980,6 @@ class MarketplaceApp {
                     <tr class="${rowClass}">
                         <td class="px-4 py-3 font-bold text-xl">${rankDisplay}</td>
                         <td class="px-4 py-3 font-semibold ${isCurrentTeam ? 'text-yellow-300' : 'text-white'}">${team.teamName}${isCurrentTeam ? ' (You)' : ''}</td>
-                        <td class="px-4 py-3 text-right text-gray-300">$${this.formatNumber(team.startingFunds)}</td>
                         <td class="px-4 py-3 text-right font-semibold">$${this.formatNumber(team.currentFunds)}</td>
                         <td class="px-4 py-3 text-right font-semibold ${profitClass}">${team.profit >= 0 ? '+' : ''}$${this.formatNumber(team.profit)}</td>
                         <td class="px-4 py-3 text-right font-bold text-lg ${roiClass}">${team.roi >= 0 ? '+' : ''}${this.formatNumber(team.roi)}%</td>
@@ -990,7 +989,7 @@ class MarketplaceApp {
 
         } catch (error) {
             console.error('Failed to load leaderboard:', error);
-            leaderboardBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-400">Failed to load leaderboard</td></tr>';
+            leaderboardBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-red-400">Failed to load leaderboard</td></tr>';
         }
     }
 

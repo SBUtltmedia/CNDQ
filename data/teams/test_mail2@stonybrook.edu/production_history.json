@@ -1,6 +1,6 @@
 {
     "history": [],
-    "lastModified": 1766899816,
+    "lastModified": 1766901401,
     "productions": [
         {
             "type": "automatic_session",
@@ -361,6 +361,366 @@
             },
             "note": "Automatic production for session 24",
             "timestamp": 1766899816
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 25,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 25",
+            "timestamp": 1766899882
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 26,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 26",
+            "timestamp": 1766899948
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 27,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 27",
+            "timestamp": 1766900014
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 28,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 28",
+            "timestamp": 1766900080
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 29,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 29",
+            "timestamp": 1766900146
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 30,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 30",
+            "timestamp": 1766900212
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 31,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 31",
+            "timestamp": 1766900278
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 32,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 32",
+            "timestamp": 1766900344
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 33,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 33",
+            "timestamp": 1766900410
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 34,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 34",
+            "timestamp": 1766900476
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 35,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 35",
+            "timestamp": 1766900543
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 36,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 36",
+            "timestamp": 1766900608
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 37,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 37",
+            "timestamp": 1766900674
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 38,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 38",
+            "timestamp": 1766900740
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 39,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 39",
+            "timestamp": 1766900806
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 40,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 40",
+            "timestamp": 1766900872
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 41,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 41",
+            "timestamp": 1766900938
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 42,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 42",
+            "timestamp": 1766901004
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 43,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 43",
+            "timestamp": 1766901070
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 44,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 44",
+            "timestamp": 1766901136
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 45,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 45",
+            "timestamp": 1766901203
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 46,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 46",
+            "timestamp": 1766901269
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 47,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 47",
+            "timestamp": 1766901335
+        },
+        {
+            "type": "automatic_session",
+            "sessionNumber": 48,
+            "deicer": 0,
+            "solvent": 0,
+            "revenue": 0.01,
+            "chemicalsConsumed": {
+                "C": 0,
+                "N": 0,
+                "D": 0,
+                "Q": 0
+            },
+            "note": "Automatic production for session 48",
+            "timestamp": 1766901401
         }
     ]
 }

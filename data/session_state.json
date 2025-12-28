@@ -1,10 +1,10 @@
 {
-    "currentSession": 24,
-    "phase": "trading",
+    "currentSession": 48,
+    "phase": "production",
     "autoAdvance": true,
     "productionDuration": 5,
     "tradingDuration": 60,
-    "phaseStartedAt": 1766899821,
+    "phaseStartedAt": 1766901400,
     "history": [
         {
             "session": 1,
@@ -287,6 +287,289 @@
             "phase": "production",
             "endedAt": 1766899821,
             "duration": 6
+        },
+        {
+            "session": 24,
+            "phase": "trading",
+            "endedAt": 1766899881,
+            "duration": 60
+        },
+        {
+            "session": 25,
+            "phase": "production",
+            "endedAt": 1766899887,
+            "duration": 6
+        },
+        {
+            "session": 25,
+            "phase": "trading",
+            "endedAt": 1766899947,
+            "duration": 60
+        },
+        {
+            "session": 26,
+            "phase": "production",
+            "endedAt": 1766899953,
+            "duration": 6
+        },
+        {
+            "session": 26,
+            "phase": "trading",
+            "endedAt": 1766900013,
+            "duration": 60
+        },
+        {
+            "session": 27,
+            "phase": "production",
+            "endedAt": 1766900019,
+            "duration": 6
+        },
+        {
+            "session": 27,
+            "phase": "trading",
+            "endedAt": 1766900079,
+            "duration": 60
+        },
+        {
+            "session": 28,
+            "phase": "production",
+            "endedAt": 1766900085,
+            "duration": 6
+        },
+        {
+            "session": 28,
+            "phase": "trading",
+            "endedAt": 1766900145,
+            "duration": 60
+        },
+        {
+            "session": 29,
+            "phase": "production",
+            "endedAt": 1766900151,
+            "duration": 6
+        },
+        {
+            "session": 29,
+            "phase": "trading",
+            "endedAt": 1766900211,
+            "duration": 60
+        },
+        {
+            "session": 30,
+            "phase": "production",
+            "endedAt": 1766900217,
+            "duration": 6
+        },
+        {
+            "session": 30,
+            "phase": "trading",
+            "endedAt": 1766900277,
+            "duration": 60
+        },
+        {
+            "session": 31,
+            "phase": "production",
+            "endedAt": 1766900283,
+            "duration": 6
+        },
+        {
+            "session": 31,
+            "phase": "trading",
+            "endedAt": 1766900343,
+            "duration": 60
+        },
+        {
+            "session": 32,
+            "phase": "production",
+            "endedAt": 1766900349,
+            "duration": 6
+        },
+        {
+            "session": 32,
+            "phase": "trading",
+            "endedAt": 1766900409,
+            "duration": 60
+        },
+        {
+            "session": 33,
+            "phase": "production",
+            "endedAt": 1766900415,
+            "duration": 6
+        },
+        {
+            "session": 33,
+            "phase": "trading",
+            "endedAt": 1766900475,
+            "duration": 60
+        },
+        {
+            "session": 34,
+            "phase": "production",
+            "endedAt": 1766900481,
+            "duration": 6
+        },
+        {
+            "session": 34,
+            "phase": "trading",
+            "endedAt": 1766900542,
+            "duration": 61
+        },
+        {
+            "session": 35,
+            "phase": "production",
+            "endedAt": 1766900548,
+            "duration": 6
+        },
+        {
+            "session": 35,
+            "phase": "trading",
+            "endedAt": 1766900608,
+            "duration": 60
+        },
+        {
+            "session": 36,
+            "phase": "production",
+            "endedAt": 1766900614,
+            "duration": 6
+        },
+        {
+            "session": 36,
+            "phase": "trading",
+            "endedAt": 1766900674,
+            "duration": 60
+        },
+        {
+            "session": 37,
+            "phase": "production",
+            "endedAt": 1766900680,
+            "duration": 6
+        },
+        {
+            "session": 37,
+            "phase": "trading",
+            "endedAt": 1766900740,
+            "duration": 60
+        },
+        {
+            "session": 38,
+            "phase": "production",
+            "endedAt": 1766900746,
+            "duration": 6
+        },
+        {
+            "session": 38,
+            "phase": "trading",
+            "endedAt": 1766900806,
+            "duration": 60
+        },
+        {
+            "session": 39,
+            "phase": "production",
+            "endedAt": 1766900812,
+            "duration": 6
+        },
+        {
+            "session": 39,
+            "phase": "trading",
+            "endedAt": 1766900872,
+            "duration": 60
+        },
+        {
+            "session": 40,
+            "phase": "production",
+            "endedAt": 1766900878,
+            "duration": 6
+        },
+        {
+            "session": 40,
+            "phase": "trading",
+            "endedAt": 1766900938,
+            "duration": 60
+        },
+        {
+            "session": 41,
+            "phase": "production",
+            "endedAt": 1766900944,
+            "duration": 6
+        },
+        {
+            "session": 41,
+            "phase": "trading",
+            "endedAt": 1766901004,
+            "duration": 60
+        },
+        {
+            "session": 42,
+            "phase": "production",
+            "endedAt": 1766901010,
+            "duration": 6
+        },
+        {
+            "session": 42,
+            "phase": "trading",
+            "endedAt": 1766901070,
+            "duration": 60
+        },
+        {
+            "session": 43,
+            "phase": "production",
+            "endedAt": 1766901076,
+            "duration": 6
+        },
+        {
+            "session": 43,
+            "phase": "trading",
+            "endedAt": 1766901136,
+            "duration": 60
+        },
+        {
+            "session": 44,
+            "phase": "production",
+            "endedAt": 1766901142,
+            "duration": 6
+        },
+        {
+            "session": 44,
+            "phase": "trading",
+            "endedAt": 1766901202,
+            "duration": 60
+        },
+        {
+            "session": 45,
+            "phase": "production",
+            "endedAt": 1766901208,
+            "duration": 6
+        },
+        {
+            "session": 45,
+            "phase": "trading",
+            "endedAt": 1766901268,
+            "duration": 60
+        },
+        {
+            "session": 46,
+            "phase": "production",
+            "endedAt": 1766901274,
+            "duration": 6
+        },
+        {
+            "session": 46,
+            "phase": "trading",
+            "endedAt": 1766901334,
+            "duration": 60
+        },
+        {
+            "session": 47,
+            "phase": "production",
+            "endedAt": 1766901340,
+            "duration": 6
+        },
+        {
+            "session": 47,
+            "phase": "trading",
+            "endedAt": 1766901400,
+            "duration": 60
         }
-    ]
+    ],
+    "productionRun": 1766901401
 }

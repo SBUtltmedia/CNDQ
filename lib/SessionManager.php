@@ -226,8 +226,14 @@ class SessionManager {
                 });
 
                 // Credit revenue to team
-                $storage->updateProfile(function($profile) use ($revenue) {
+                $storage->updateProfile(function($profile) use ($revenue, $sessionNumber) {
                     $profile['currentFunds'] += $revenue;
+
+                    // Set starting funds on first production (Session 1)
+                    if ($sessionNumber == 1 && $profile['startingFunds'] == 0) {
+                        $profile['startingFunds'] = $revenue;
+                    }
+
                     return $profile;
                 });
 
