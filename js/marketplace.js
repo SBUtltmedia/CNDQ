@@ -30,6 +30,8 @@ class MarketplaceApp {
 
         // Modal state
         this.currentNegotiation = null;
+        this.focusBeforeModal = null;
+        this.currentModal = null;
     }
 
     /**
@@ -868,11 +870,11 @@ class MarketplaceApp {
 
         // Settings
         document.getElementById('settings-btn').addEventListener('click', () => {
-            document.getElementById('settings-modal').classList.remove('hidden');
+            this.openSettings();
         });
 
         document.getElementById('settings-close-btn').addEventListener('click', () => {
-            document.getElementById('settings-modal').classList.add('hidden');
+            this.closeSettings();
         });
 
         document.getElementById('toggle-hints-btn').addEventListener('click', () => {
@@ -886,6 +888,19 @@ class MarketplaceApp {
 
         document.getElementById('leaderboard-modal-close-btn').addEventListener('click', () => {
             this.closeLeaderboard();
+        });
+
+        // Production Guide
+        document.getElementById('production-guide-btn').addEventListener('click', () => {
+            this.openProductionGuide();
+        });
+
+        document.getElementById('production-guide-close-btn').addEventListener('click', () => {
+            this.closeProductionGuide();
+        });
+
+        document.getElementById('production-guide-ok-btn').addEventListener('click', () => {
+            this.closeProductionGuide();
         });
     }
 
@@ -930,10 +945,24 @@ class MarketplaceApp {
     }
 
     /**
+     * Open settings modal
+     */
+    openSettings() {
+        this.openModalAccessible('settings-modal');
+    }
+
+    /**
+     * Close settings modal
+     */
+    closeSettings() {
+        this.closeModalAccessible('settings-modal');
+    }
+
+    /**
      * Open leaderboard modal
      */
     async openLeaderboard() {
-        document.getElementById('leaderboard-modal').classList.remove('hidden');
+        this.openModalAccessible('leaderboard-modal');
         await this.loadLeaderboard();
     }
 
@@ -941,7 +970,21 @@ class MarketplaceApp {
      * Close leaderboard modal
      */
     closeLeaderboard() {
-        document.getElementById('leaderboard-modal').classList.add('hidden');
+        this.closeModalAccessible('leaderboard-modal');
+    }
+
+    /**
+     * Open production guide modal
+     */
+    openProductionGuide() {
+        this.openModalAccessible('production-guide-modal');
+    }
+
+    /**
+     * Close production guide modal
+     */
+    closeProductionGuide() {
+        this.closeModalAccessible('production-guide-modal');
     }
 
     /**
@@ -1032,6 +1075,81 @@ class MarketplaceApp {
                 toast.remove();
             }, 300);
         }, 3000);
+    }
+
+    /**
+     * Trap focus inside modal for accessibility
+     */
+    trapFocus(modalElement) {
+        const focusableElements = modalElement.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        const handleTab = (e) => {
+            if (e.key === 'Tab') {
+                if (e.shiftKey && document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                } else if (!e.shiftKey && document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            } else if (e.key === 'Escape') {
+                this.closeCurrentModal();
+            }
+        };
+
+        modalElement.addEventListener('keydown', handleTab);
+
+        // Focus first element
+        if (firstElement) {
+            firstElement.focus();
+        }
+
+        return () => modalElement.removeEventListener('keydown', handleTab);
+    }
+
+    /**
+     * Open modal with focus management
+     */
+    openModalAccessible(modalId) {
+        this.focusBeforeModal = document.activeElement;
+        const modal = document.getElementById(modalId);
+        this.currentModal = modal;
+        modal.classList.remove('hidden');
+        this.trapFocus(modal);
+    }
+
+    /**
+     * Close modal and restore focus
+     */
+    closeModalAccessible(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.add('hidden');
+        this.currentModal = null;
+
+        if (this.focusBeforeModal) {
+            this.focusBeforeModal.focus();
+            this.focusBeforeModal = null;
+        }
+    }
+
+    /**
+     * Close currently open modal (for ESC key)
+     */
+    closeCurrentModal() {
+        if (this.currentModal) {
+            const modalId = this.currentModal.id;
+
+            // Call appropriate close method
+            if (modalId === 'settings-modal') this.closeSettings();
+            else if (modalId === 'leaderboard-modal') this.closeLeaderboard();
+            else if (modalId === 'production-guide-modal') this.closeProductionGuide();
+            else if (modalId === 'negotiation-modal') this.closeNegotiationModal();
+            else if (modalId === 'offer-modal') this.closeOfferModal();
+        }
     }
 
     /**
