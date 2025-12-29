@@ -2,7 +2,7 @@
 data
 node_modules
 package-lock.json
-
+vendor
 # Windows reserved filenames (can cause issues with Git)
 nul
 con
