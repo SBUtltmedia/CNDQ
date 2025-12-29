@@ -1,41 +1,4 @@
 {
-    "ads": [
-        {
-            "id": "ad_1766898234_8a1cacec",
-            "teamId": "test_mail3@stonybrook.edu",
-            "teamName": "Lucky Hawk",
-            "chemical": "C",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766898234
-        },
-        {
-            "id": "ad_1766898235_904ee590",
-            "teamId": "test_mail3@stonybrook.edu",
-            "teamName": "Lucky Hawk",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766898235
-        },
-        {
-            "id": "ad_1766898235_ecdfa313",
-            "teamId": "test_mail3@stonybrook.edu",
-            "teamName": "Lucky Hawk",
-            "chemical": "D",
-            "type": "buy",
-            "status": "active",
-            "createdAt": 1766898235
-        },
-        {
-            "id": "ad_1766898236_f017d67e",
-            "teamId": "test_mail3@stonybrook.edu",
-            "teamName": "Lucky Hawk",
-            "chemical": "Q",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766898236
-        }
-    ],
-    "lastModified": 1766898236
+    "ads": [],
+    "lastModified": 1766969549
 }

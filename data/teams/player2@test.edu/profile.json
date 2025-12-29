@@ -1,13 +1,10 @@
 {
     "email": "player2@test.edu",
     "teamName": "Calm Raven",
-    "startingFunds": 0,
-    "currentFunds": 12056,
+    "startingFunds": 14406.67,
+    "currentFunds": 14406.820000000003,
     "createdAt": 1766813964,
-    "lastActive": 1766898201,
-    "settings": {
-        "showTradingHints": false,
-        "hasSeenShadowPriceTip": false
-    },
-    "lastModified": 1766898220
+    "lastActive": 1766969549,
+    "settings": [],
+    "lastModified": 1766973655
 }

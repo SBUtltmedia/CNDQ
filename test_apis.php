@@ -84,7 +84,6 @@
     <div class="test-section">
         <h2>6. Settings</h2>
         <button onclick="testAPI('GET', '/api/team/settings.php', null, 'settings-result')">Get Settings</button>
-        <button onclick="toggleHints()">Toggle Hints</button>
         <pre id="settings-result">Click button to test...</pre>
     </div>
 
@@ -128,19 +127,6 @@
                 quantity: 100,
                 minPrice: 10.00
             }, 'offer-result');
-        }
-
-        async function toggleHints() {
-            // Get current settings first
-            const response = await fetch('/api/team/settings.php');
-            const data = await response.json();
-
-            const currentValue = data.settings?.showTradingHints || false;
-
-            // Toggle
-            testAPI('POST', '/api/team/settings.php', {
-                showTradingHints: !currentValue
-            }, 'settings-result');
         }
     </script>
 

@@ -33,7 +33,7 @@ try {
         $input = json_decode(file_get_contents('php://input'), true);
 
         // Allowed settings to update
-        $allowedSettings = ['showTradingHints', 'hasSeenShadowPriceTip', 'pollingInterval', 'notifications'];
+        $allowedSettings = ['pollingInterval', 'notifications'];
         $updates = [];
 
         foreach ($allowedSettings as $key) {

@@ -43,10 +43,7 @@ try {
                 'currentFunds' => 0,
                 'createdAt' => $profile['createdAt'] ?? time(),
                 'lastActive' => time(),
-                'settings' => [
-                    'showTradingHints' => false,
-                    'hasSeenShadowPriceTip' => false
-                ],
+                'settings' => [],
                 'lastModified' => time()
             ];
             file_put_contents($profileFile, json_encode($resetProfile, JSON_PRETTY_PRINT));

@@ -38,7 +38,25 @@
       "mcp__chrome-devtools__close_page",
       "mcp__chrome-devtools__press_key",
       "Bash(npm install:*)",
-      "Bash(npm run simulate:*)"
+      "Bash(npm run simulate:*)",
+      "WebSearch",
+      "Bash(npm test:*)",
+      "Bash(npm run test:components:*)",
+      "Bash(npm run test:a11y:*)",
+      "Bash(npm run test:game:*)",
+      "Bash(node -e:*)",
+      "Bash(node test/color-harmony-test.js:*)",
+      "Bash(node test/comprehensive-color-test.js:*)",
+      "Bash(node test/test-all-themes.js:*)",
+      "Bash(del /F \"\\\\?\\\\C:\\\\Users\\\\pauls\\\\Herd\\\\CNDQ\\\\nul\")",
+      "Bash(cmd /c 'del /F \"\"\\\\\\\\?\\\\C:\\\\Users\\\\pauls\\\\Herd\\\\CNDQ\\\\nul\"\"')",
+      "Bash(powershell -Command \"Remove-Item -Path ''\\\\?\\\\C:\\\\Users\\\\pauls\\\\Herd\\\\CNDQ\\\\nul'' -Force\")",
+      "Bash(powershell -Command \"Remove-Item -Path ''.\\\\nul'' -Force\")",
+      "Bash(git clean:*)",
+      "Bash(cmd /c \"del /F /Q \\\\\\\\?\\\\C:\\\\Users\\\\pauls\\\\Herd\\\\CNDQ\\\\nul\")",
+      "Bash(powershell -Command \"Remove-Item -LiteralPath ''\\\\?\\\\C:\\\\Users\\\\pauls\\\\Herd\\\\CNDQ\\\\nul'' -Force\")",
+      "Bash(cmd /c \"attrib -r -s -h nul && del /F /Q nul\")",
+      "Bash(node test/test-duplicate-ads.js:*)"
     ]
   }
 }

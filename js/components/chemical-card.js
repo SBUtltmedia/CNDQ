@@ -107,7 +107,7 @@ class ChemicalCard extends HTMLElement {
                         <div class="text-2xl font-bold text-white" id="inventory">0</div>
                         <div class="text-xs text-gray-300 mt-1">
                             Shadow Price:
-                            <span class="text-green-400 font-bold">
+                            <span class="text-success font-bold" id="shadow-price-container">
                                 $<span id="shadow-price">0</span>
                             </span>
                         </div>

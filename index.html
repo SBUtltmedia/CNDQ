@@ -4,8 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Marketplace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
     <style>
+        /* Page-specific animations */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
         @keyframes pulse-green {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -13,50 +20,34 @@
         .pulse-green {
             animation: pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
-        .good-deal {
-            background-color: rgba(34, 197, 94, 0.2);
-            border-left: 4px solid #22c55e;
-        }
-        .bad-deal {
-            background-color: rgba(239, 68, 68, 0.2);
-            border-left: 4px solid #ef4444;
-        }
-        .fair-deal {
-            background-color: rgba(251, 146, 60, 0.2);
-            border-left: 4px solid #fb923c;
-        }
+        /* Scrollbar */
         .scrollbar-thin::-webkit-scrollbar {
             width: 8px;
         }
         .scrollbar-thin::-webkit-scrollbar-track {
-            background: #1f2937;
+            background: var(--color-bg-secondary);
         }
         .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: #6b7280;
+            background: var(--color-border);
             border-radius: 4px;
         }
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: #9ca3af;
+            background: var(--color-border-light);
         }
-        /* Skip link styles */
-        .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 0;
-            background: #10b981;
-            color: white;
-            padding: 8px;
-            text-decoration: none;
-            z-index: 100;
-        }
-        .skip-link:focus {
-            top: 0;
-        }
-        /* Focus visible styles */
+        /* Focus styles */
         *:focus-visible {
-            outline: 2px solid #10b981;
+            outline: 2px solid var(--color-brand-primary);
             outline-offset: 2px;
         }
+        /* Loading spinner colors */
+        .border-r-transparent {
+            border-right-color: transparent;
+        }
+        .h-16 { height: 4rem; }
+        .w-16 { width: 4rem; }
+        .border-4 { border-width: 4px; }
+        .border-solid { border-style: solid; }
+        .min-h-screen { min-height: 100vh; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
@@ -107,7 +98,7 @@
                         <!-- Funds Display -->
                         <div class="bg-gray-700 px-3 py-2 md:px-6 md:py-3 rounded-lg border border-gray-600">
                             <span class="text-gray-300 text-xs md:text-sm block">Current Funds</span>
-                            <span class="text-green-400 font-bold text-lg md:text-2xl" id="current-funds">$0</span>
+                            <span class="text-success font-bold text-lg md:text-2xl" id="current-funds">$0</span>
                         </div>
 
                         <!-- Notifications -->
@@ -247,20 +238,17 @@
             <h3 class="text-xl md:text-2xl font-bold mb-4 text-green-500" id="settings-modal-title">Settings</h3>
 
             <div class="space-y-6">
+                <!-- Theme Selector -->
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex-1">
-                        <label class="block text-sm font-semibold mb-1">Show Trading Hints</label>
-                        <p class="text-xs text-gray-300">Display color-coded indicators comparing market prices to your shadow prices</p>
+                        <label for="theme-selector" class="block text-sm font-semibold mb-1">Color Theme</label>
+                        <p class="text-xs text-gray-300">Choose your preferred color scheme</p>
                     </div>
-                    <button id="toggle-hints-btn" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none bg-gray-600">
-                        <span id="toggle-hints-dot" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1"></span>
-                    </button>
-                </div>
-
-                <div class="bg-yellow-900 bg-opacity-30 border border-yellow-600 rounded p-3">
-                    <p class="text-xs text-yellow-300">
-                        <strong>Note:</strong> Trading hints are a learning aid. Try trading without hints to better understand shadow prices!
-                    </p>
+                    <select id="theme-selector" class="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="high-contrast">High Contrast</option>
+                    </select>
                 </div>
             </div>
 
@@ -455,13 +443,13 @@
                     </thead>
                     <tbody id="leaderboard-body" class="divide-y divide-gray-700">
                         <tr>
-                            <td colspan="5" class="text-center py-8 text-gray-400">Loading...</td>
+                            <td colspan="5" class="text-center py-8 text-gray-300">Loading...</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="mt-6 text-sm text-gray-400 bg-gray-700 p-4 rounded">
+            <div class="mt-6 text-sm text-gray-300 bg-gray-700 p-4 rounded">
                 <strong class="text-yellow-400">How scoring works:</strong> Teams are ranked by <strong>Return on Investment (ROI %)</strong> — percentage gain or loss relative to initial production revenue. This ensures fair competition regardless of starting inventory.
             </div>
         </div>
@@ -485,7 +473,7 @@
                     <h4 class="text-lg font-bold text-blue-400 mb-3">Deicer Production</h4>
                     <div class="grid grid-cols-2 gap-4 mb-3">
                         <div>
-                            <p class="text-sm text-gray-400 mb-2">Chemicals Required (per gallon):</p>
+                            <p class="text-sm text-gray-300 mb-2">Chemicals Required (per gallon):</p>
                             <div class="space-y-1 font-mono">
                                 <div class="flex justify-between text-white">
                                     <span class="text-blue-400">Chemical C:</span>
@@ -502,9 +490,9 @@
                             </div>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-400 mb-2">Revenue:</p>
+                            <p class="text-sm text-gray-300 mb-2">Revenue:</p>
                             <div class="font-mono text-green-400 font-bold text-2xl">$2.00/gal</div>
-                            <p class="text-xs text-gray-400 mt-1">($100 per 50-gal drum)</p>
+                            <p class="text-xs text-gray-300 mt-1">($100 per 50-gal drum)</p>
                         </div>
                     </div>
                 </div>
@@ -514,7 +502,7 @@
                     <h4 class="text-lg font-bold text-purple-400 mb-3">Solvent Production</h4>
                     <div class="grid grid-cols-2 gap-4 mb-3">
                         <div>
-                            <p class="text-sm text-gray-400 mb-2">Chemicals Required (per gallon):</p>
+                            <p class="text-sm text-gray-300 mb-2">Chemicals Required (per gallon):</p>
                             <div class="space-y-1 font-mono">
                                 <div class="flex justify-between text-white">
                                     <span class="text-purple-400">Chemical N:</span>
@@ -531,9 +519,9 @@
                             </div>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-400 mb-2">Revenue:</p>
+                            <p class="text-sm text-gray-300 mb-2">Revenue:</p>
                             <div class="font-mono text-green-400 font-bold text-2xl">$3.00/gal</div>
-                            <p class="text-xs text-gray-400 mt-1">($60 per 20-gal drum)</p>
+                            <p class="text-xs text-gray-300 mt-1">($60 per 20-gal drum)</p>
                         </div>
                     </div>
                 </div>

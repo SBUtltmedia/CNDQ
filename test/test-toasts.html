@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toast Feature Demo</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        body {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .demo-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+        }
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .btn-success { background-color: #10b981; color: white; }
+        .btn-error { background-color: #dc2626; color: white; }
+        .btn-warning { background-color: #f59e0b; color: white; }
+        .btn-info { background-color: #2563eb; color: white; }
+        .btn-excellent { background: linear-gradient(to right, #10b981, #059669); color: white; }
+        .btn-bad { background: linear-gradient(to right, #ef4444, #e11d48); color: white; }
+    </style>
+</head>
+<body>
+    <h1 class="text-3xl font-bold mb-4">CNDQ Toast Feature Demo</h1>
+
+    <div class="demo-section">
+        <h2 class="text-xl font-bold mb-2">1. Standard Toast Types</h2>
+        <p class="text-gray-300 mb-4">Click buttons to test different toast types:</p>
+        <div class="button-grid">
+            <button class="btn-success" onclick="showToast('Operation successful!', 'success')">
+                ✓ Success Toast
+            </button>
+            <button class="btn-error" onclick="showToast('Something went wrong', 'error')">
+                ✗ Error Toast
+            </button>
+            <button class="btn-info" onclick="showToast('Here is some information', 'info')">
+                ℹ Info Toast
+            </button>
+            <button class="btn-warning" onclick="showToast('Please be careful', 'warning')">
+                ⚠ Warning Toast
+            </button>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2 class="text-xl font-bold mb-2">2. Trade Quality Toasts</h2>
+        <p class="text-gray-300 mb-4">Simulates trade quality feedback:</p>
+        <div class="button-grid">
+            <button class="btn-excellent" onclick="showToast('Excellent sale! 32% above optimal value ($15.00 vs $11.36 shadow price)', 'excellent', 5000)">
+                🎉 Excellent Sale
+            </button>
+            <button class="btn-success" onclick="showToast('Good purchase! 15% below shadow price ($12.00 vs $14.12)', 'success', 4000)">
+                ✓ Good Purchase
+            </button>
+            <button class="btn-warning" onclick="showToast('Below-market sale: 18% under shadow price ($9.50 vs $11.59)', 'warning', 4000)">
+                ⚠ Below-Market
+            </button>
+            <button class="btn-bad" onclick="showToast('Overpaid! 28% above optimal value ($18.50 vs $14.45 shadow price)', 'bad', 5000)">
+                ⚠️ Bad Purchase
+            </button>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2 class="text-xl font-bold mb-2">3. Duplicate Advertisement Prevention</h2>
+        <p class="text-gray-300 mb-4">Click repeatedly to test duplicate prevention:</p>
+        <div class="button-grid">
+            <button class="btn-info" onclick="testDuplicateAd('C', 'sell')">
+                Test: Post Sell for C
+            </button>
+            <button class="btn-success" onclick="clearAd('C', 'sell')">
+                Clear Sell Ad (Simulate Trade)
+            </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">
+            Try clicking "Post Sell for C" multiple times. You'll get a warning if you already have an active ad.
+            Click "Clear Sell Ad" to simulate completing a trade, then you can post again.
+        </p>
+    </div>
+
+    <div class="demo-section">
+        <h2 class="text-xl font-bold mb-2">4. Multiple Toasts</h2>
+        <p class="text-gray-300 mb-4">Show multiple toasts at once:</p>
+        <button class="btn-info" onclick="showMultiple()">
+            Show Multiple Toasts
+        </button>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" style="position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+
+    <script>
+        // Simulate active advertisements
+        const activeAds = {};
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const colors = {
+                success: 'bg-green-600',
+                error: 'bg-red-600',
+                info: 'bg-blue-600',
+                warning: 'bg-yellow-600',
+                excellent: 'bg-gradient-to-r from-green-500 to-emerald-600',
+                bad: 'bg-gradient-to-r from-red-500 to-rose-600'
+            };
+
+            const icons = {
+                success: '✓',
+                error: '✗',
+                info: 'ℹ',
+                warning: '⚠',
+                excellent: '🎉',
+                bad: '⚠️'
+            };
+
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center gap-2`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+
+            if (icons[type]) {
+                const iconSpan = document.createElement('span');
+                iconSpan.textContent = icons[type];
+                iconSpan.className = 'text-xl';
+                toast.appendChild(iconSpan);
+            }
+
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = message;
+            toast.appendChild(messageSpan);
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                requestAnimationFrame(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateX(0)';
+                });
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+        }
+
+        function testDuplicateAd(chemical, type) {
+            const key = `${chemical}-${type}`;
+
+            // Check if already has active ad
+            if (activeAds[key]) {
+                showToast(`You already have an active ${type} advertisement for Chemical ${chemical}`, 'warning');
+                return;
+            }
+
+            // Post the ad
+            activeAds[key] = true;
+            showToast(`Posted interest to ${type} ${chemical}`, 'success');
+        }
+
+        function clearAd(chemical, type) {
+            const key = `${chemical}-${type}`;
+
+            if (!activeAds[key]) {
+                showToast(`No active ${type} ad for Chemical ${chemical} to clear`, 'info');
+                return;
+            }
+
+            delete activeAds[key];
+            showToast(`Removed ${type} ad for Chemical ${chemical} (trade completed)`, 'success');
+        }
+
+        function showMultiple() {
+            setTimeout(() => showToast('First toast - Success', 'success'), 0);
+            setTimeout(() => showToast('Second toast - Info', 'info'), 300);
+            setTimeout(() => showToast('Third toast - Warning', 'warning'), 600);
+            setTimeout(() => showToast('Excellent trade!', 'excellent', 5000), 900);
+        }
+    </script>
+</body>
+</html>

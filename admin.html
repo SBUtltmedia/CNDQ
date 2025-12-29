@@ -4,7 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Focus styles */
+        *:focus-visible {
+            outline: 2px solid var(--color-brand-primary);
+            outline-offset: 2px;
+        }
+        .min-h-screen { min-height: 100vh; }
+        .p-8 { padding: 2rem; }
+    </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen p-8">
     <!-- Toast Container -->
@@ -13,7 +22,7 @@
     <div class="max-w-4xl mx-auto">
         <header class="mb-8">
             <h1 class="text-3xl font-bold text-purple-400 mb-2">CNDQ Admin Dashboard</h1>
-            <p class="text-gray-400">Session & Market Control</p>
+            <p class="text-gray-300">Session & Market Control</p>
         </header>
 
         <!-- Session Status Card -->
@@ -22,17 +31,17 @@
 
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="bg-gray-700 p-4 rounded">
-                    <div class="text-gray-400 text-sm">Session Number</div>
+                    <div class="text-gray-300 text-sm">Session Number</div>
                     <div class="text-3xl font-bold text-purple-400" id="session-number">-</div>
                 </div>
                 <div class="bg-gray-700 p-4 rounded">
-                    <div class="text-gray-400 text-sm">Current Phase</div>
+                    <div class="text-gray-300 text-sm">Current Phase</div>
                     <div class="text-3xl font-bold capitalize" id="current-phase">-</div>
                 </div>
             </div>
 
             <div class="bg-gray-700 p-4 rounded mb-4" id="timer-container">
-                <div class="text-gray-400 text-sm mb-2">Time Remaining</div>
+                <div class="text-gray-300 text-sm mb-2">Time Remaining</div>
                 <div class="text-2xl font-mono font-bold text-yellow-400" id="time-remaining">--:--</div>
             </div>
 
@@ -55,7 +64,7 @@
                 <button onclick="setPhase('production')" class="flex-1 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-bold transition">
                     Set: Production
                 </button>
-                <button onclick="setPhase('trading')" class="flex-1 bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-bold transition">
+                <button onclick="setPhase('trading')" class="flex-1 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition">
                     Set: Trading
                 </button>
             </div>
@@ -90,29 +99,29 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm text-gray-300 mb-2">Production Pause (Auto LP runs)</label>
+                    <label for="production-duration-seconds" class="block text-sm text-gray-300 mb-2">Production Pause (Auto LP runs)</label>
                     <div class="flex items-center gap-2">
-                        <input type="number" id="production-duration-seconds" value="5" min="1" max="30" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-24 text-white">
-                        <span class="text-gray-400">seconds</span>
+                        <input type="number" id="production-duration-seconds" value="5" min="1" max="30" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-24 text-white" aria-label="Production pause duration in seconds">
+                        <span class="text-gray-300">seconds</span>
                     </div>
                     <button onclick="updateProductionDuration()" class="mt-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-bold transition w-full text-sm">
                         Update Pause
                     </button>
-                    <div class="text-xs text-gray-400 mt-1">Brief pause while production runs automatically</div>
+                    <div class="text-xs text-gray-300 mt-1">Brief pause while production runs automatically</div>
                 </div>
 
                 <div>
-                    <label class="block text-sm text-gray-300 mb-2">Trading Duration</label>
+                    <label for="trading-duration-minutes" class="block text-sm text-gray-300 mb-2">Trading Duration</label>
                     <div class="flex items-center gap-2">
-                        <input type="number" id="trading-duration-minutes" value="10" min="0" max="60" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white">
-                        <span class="text-gray-400">min</span>
-                        <input type="number" id="trading-duration-seconds" value="0" min="0" max="59" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white">
-                        <span class="text-gray-400">sec</span>
+                        <input type="number" id="trading-duration-minutes" value="10" min="0" max="60" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration minutes">
+                        <span class="text-gray-300">min</span>
+                        <input type="number" id="trading-duration-seconds" value="0" min="0" max="59" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration seconds">
+                        <span class="text-gray-300">sec</span>
                     </div>
-                    <button onclick="updateTradingDuration()" class="mt-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-bold transition w-full text-sm">
+                    <button onclick="updateTradingDuration()" class="mt-2 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition w-full text-sm">
                         Update Trading
                     </button>
-                    <div class="text-xs text-gray-400 mt-1">Time for teams to buy/sell chemicals</div>
+                    <div class="text-xs text-gray-300 mt-1">Time for teams to buy/sell chemicals</div>
                 </div>
             </div>
         </div>
@@ -125,7 +134,7 @@
             <button onclick="resetGameData()" class="w-full bg-red-700 hover:bg-red-800 px-6 py-4 rounded font-bold transition border-2 border-red-500">
                 🗑️ RESET ALL GAME DATA
             </button>
-            <p class="text-xs text-gray-400 mt-2">
+            <p class="text-xs text-gray-300 mt-2">
                 Clears all inventories, funds, trades, and advertisements. Teams keep their names and can play again from scratch.
             </p>
         </div>
@@ -134,7 +143,7 @@
         <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
             <h2 class="text-xl font-bold mb-4">Team Overview</h2>
             <div id="team-list" class="space-y-2">
-                <p class="text-gray-400">Loading teams...</p>
+                <p class="text-gray-300">Loading teams...</p>
             </div>
         </div>
     </div>
@@ -245,11 +254,11 @@
                         <div class="bg-gray-700 p-3 rounded flex justify-between items-center">
                             <div>
                                 <div class="font-bold">${team.teamName}</div>
-                                <div class="text-sm text-gray-400">${team.email}</div>
+                                <div class="text-sm text-gray-300">${team.email}</div>
                             </div>
                             <div class="text-right">
                                 <div class="text-green-400 font-bold">$${team.funds.toLocaleString()}</div>
-                                <div class="text-xs text-gray-400">${team.activeOffers} offers, ${team.totalTrades} trades</div>
+                                <div class="text-xs text-gray-300">${team.activeOffers} offers, ${team.totalTrades} trades</div>
                             </div>
                         </div>
                     `).join('');
@@ -272,7 +281,7 @@
             } else if (sessionState.phase === 'production') {
                 phaseEl.className += 'text-blue-400';
             } else {
-                phaseEl.className += 'text-gray-400';
+                phaseEl.className += 'text-gray-300';
             }
 
             document.getElementById('auto-advance').checked = sessionState.autoAdvance;

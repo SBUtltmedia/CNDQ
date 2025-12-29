@@ -32,6 +32,9 @@ class MarketplaceApp {
         this.currentNegotiation = null;
         this.focusBeforeModal = null;
         this.currentModal = null;
+
+        // Track pending ad posts to prevent race conditions
+        this.pendingAdPosts = new Set();
     }
 
     /**
@@ -83,6 +86,11 @@ class MarketplaceApp {
             console.log('Setting up event listeners...');
             this.setupEventListeners();
             console.log('✓ Event listeners setup');
+
+            // Load saved theme
+            console.log('Loading saved theme...');
+            this.loadSavedTheme();
+            console.log('✓ Theme loaded');
 
             // Start polling
             this.startPolling();
@@ -206,7 +214,7 @@ class MarketplaceApp {
 
         // Update UI
         document.getElementById('team-name').textContent = this.profile.teamName || this.profile.email;
-        document.getElementById('current-funds').textContent = '$' + this.formatNumber(this.profile.currentFunds);
+        this.renderFunds();
 
         // Inventory is now displayed inside chemical-card components
         // No need to update separate inv-* elements
@@ -261,18 +269,22 @@ class MarketplaceApp {
         const indicator = document.getElementById('staleness-indicator');
         const warning = document.getElementById('staleness-warning');
 
+        // Store for theme changes
+        this.lastStalenessLevel = level;
+        this.lastStalenessCount = count;
+
         if (level === 'fresh') {
-            indicator.innerHTML = '<span class="text-green-500">✓ Fresh</span>';
+            indicator.innerHTML = '<span class="staleness-fresh">✓ Fresh</span>';
             warning.classList.add('hidden');
         } else if (level === 'warning') {
-            indicator.innerHTML = '<span class="text-yellow-500">⚠ Stale (1 trade ago)</span>';
+            indicator.innerHTML = '<span class="staleness-warning">⚠ Stale (1 trade ago)</span>';
             warning.classList.remove('hidden');
-            warning.className = 'mt-3 p-3 rounded text-sm bg-yellow-900 bg-opacity-30 border border-yellow-600 text-yellow-300';
+            warning.className = 'mt-3 p-3 rounded text-sm badge-warning';
             warning.textContent = '💡 Tip: Your inventory changed! Shadow prices may be outdated. Click [Recalculate] to update them.';
         } else if (level === 'stale') {
-            indicator.innerHTML = `<span class="text-red-500">⚠ Very Stale (${count} trades ago)</span>`;
+            indicator.innerHTML = `<span class="staleness-stale">✗ Very Stale (${count} trades ago)</span>`;
             warning.classList.remove('hidden');
-            warning.className = 'mt-3 p-3 rounded text-sm bg-red-900 bg-opacity-30 border border-red-600 text-red-300';
+            warning.className = 'mt-3 p-3 rounded text-sm badge-error';
             warning.textContent = `⚠️ Warning: Shadow prices are very stale (last calculated before ${count} transactions). Your valuations may be inaccurate!`;
         }
     }
@@ -383,13 +395,47 @@ class MarketplaceApp {
      * Post advertisement (interest to buy or sell)
      */
     async postAdvertisement(chemical, type) {
+        const adKey = `${chemical}-${type}`;
+
+        // Check if already posting this ad (prevent race condition)
+        if (this.pendingAdPosts.has(adKey)) {
+            this.showToast(`Already posting ${type} advertisement for Chemical ${chemical}...`, 'warning');
+            return;
+        }
+
+        // Check if user already has an active advertisement for this chemical/type
+        const existingAds = this.advertisements[chemical]?.[type] || [];
+        const hasActiveAd = existingAds.some(ad => ad.teamId === this.currentUser);
+
+        if (hasActiveAd) {
+            this.showToast(`You already have an active ${type} advertisement for Chemical ${chemical}`, 'warning');
+            return;
+        }
+
         try {
-            await api.advertisements.post(chemical, type);
-            this.showToast(`Posted interest to ${type} ${chemical}`, 'success');
+            // Mark as pending to prevent duplicate clicks
+            this.pendingAdPosts.add(adKey);
+
+            const response = await api.advertisements.post(chemical, type);
+
+            // Check if the returned ad was just created or already existed
+            const returnedAd = response.advertisement;
+            const isNewAd = returnedAd && (Date.now() - returnedAd.createdAt * 1000) < 2000; // Created within last 2 seconds
+
+            if (isNewAd) {
+                this.showToast(`Posted interest to ${type} ${chemical}`, 'success');
+            } else {
+                this.showToast(`You already have an active ${type} advertisement for Chemical ${chemical}`, 'warning');
+            }
+
+            // Wait for advertisements to reload so duplicate check works on next click
             await this.loadAdvertisements();
         } catch (error) {
             console.error('Failed to post advertisement:', error);
             this.showToast('Failed to post advertisement: ' + error.message, 'error');
+        } finally {
+            // Always remove pending flag
+            this.pendingAdPosts.delete(adKey);
         }
     }
 
@@ -652,6 +698,64 @@ class MarketplaceApp {
     }
 
     /**
+     * Analyze trade quality based on shadow prices
+     */
+    analyzeTradeQuality(negotiation) {
+        const chemical = negotiation.chemical;
+        const shadowPrice = this.shadowPrices[chemical];
+        const lastOffer = negotiation.offers[negotiation.offers.length - 1];
+        const tradePrice = lastOffer.price;
+        const quantity = lastOffer.quantity;
+
+        // Determine if current user is buying or selling
+        const isSelling = negotiation.type === 'sell' ||
+            (negotiation.initiatorId !== this.currentUser && negotiation.type === 'buy');
+
+        // Calculate percentage difference from shadow price
+        const priceDiff = ((tradePrice - shadowPrice) / shadowPrice) * 100;
+
+        let quality = 'neutral';
+        let message = '';
+
+        // Only show special toasts if shadow price is meaningful (> 0)
+        if (shadowPrice > 0) {
+            if (isSelling) {
+                // Selling: Good if price > shadow price
+                if (priceDiff >= 25) {
+                    quality = 'excellent';
+                    message = `Excellent sale! ${priceDiff.toFixed(0)}% above optimal value ($${tradePrice.toFixed(2)} vs $${shadowPrice.toFixed(2)} shadow price)`;
+                } else if (priceDiff >= 10) {
+                    quality = 'good';
+                    message = `Good sale! ${priceDiff.toFixed(0)}% above shadow price ($${tradePrice.toFixed(2)} vs $${shadowPrice.toFixed(2)})`;
+                } else if (priceDiff <= -25) {
+                    quality = 'bad';
+                    message = `Poor sale! ${Math.abs(priceDiff).toFixed(0)}% below optimal value ($${tradePrice.toFixed(2)} vs $${shadowPrice.toFixed(2)} shadow price)`;
+                } else if (priceDiff <= -10) {
+                    quality = 'warning';
+                    message = `Below-market sale: ${Math.abs(priceDiff).toFixed(0)}% under shadow price ($${tradePrice.toFixed(2)} vs $${shadowPrice.toFixed(2)})`;
+                }
+            } else {
+                // Buying: Good if price < shadow price
+                if (priceDiff <= -25) {
+                    quality = 'excellent';
+                    message = `Excellent purchase! ${Math.abs(priceDiff).toFixed(0)}% below optimal value ($${tradePrice.toFixed(2)} vs $${shadowPrice.toFixed(2)} shadow price)`;
+                } else if (priceDiff <= -10) {
+                    quality = 'good';
+                    message = `Good purchase! ${Math.abs(priceDiff).toFixed(0)}% below shadow price ($${tradePrice.toFixed(2)} vs $${shadowPrice.toFixed(2)})`;
+                } else if (priceDiff >= 25) {
+                    quality = 'bad';
+                    message = `Overpaid! ${priceDiff.toFixed(0)}% above optimal value ($${tradePrice.toFixed(2)} vs $${shadowPrice.toFixed(2)} shadow price)`;
+                } else if (priceDiff >= 10) {
+                    quality = 'warning';
+                    message = `Above-market purchase: ${priceDiff.toFixed(0)}% over shadow price ($${tradePrice.toFixed(2)} vs $${shadowPrice.toFixed(2)})`;
+                }
+            }
+        }
+
+        return { quality, message, priceDiff, isSelling };
+    }
+
+    /**
      * Accept negotiation offer
      */
     async acceptNegotiation() {
@@ -659,10 +763,27 @@ class MarketplaceApp {
         if (!confirmed) return;
 
         try {
+            // Analyze trade quality before executing
+            const tradeAnalysis = this.analyzeTradeQuality(this.currentNegotiation);
+
             await api.negotiations.accept(this.currentNegotiation.id);
-            this.showToast('Trade executed successfully!', 'success');
+
+            // Show appropriate toast based on trade quality
+            if (tradeAnalysis.quality === 'excellent') {
+                this.showToast(tradeAnalysis.message, 'excellent', 5000);
+            } else if (tradeAnalysis.quality === 'good') {
+                this.showToast(tradeAnalysis.message, 'success', 4000);
+            } else if (tradeAnalysis.quality === 'bad') {
+                this.showToast(tradeAnalysis.message, 'bad', 5000);
+            } else if (tradeAnalysis.quality === 'warning') {
+                this.showToast(tradeAnalysis.message, 'warning', 4000);
+            } else {
+                this.showToast('Trade executed successfully!', 'success');
+            }
+
             await this.loadNegotiations();
             await this.loadProfile(); // Refresh inventory
+            await this.loadShadowPrices(); // Refresh shadow prices
             this.closeNegotiationModal();
         } catch (error) {
             console.error('Failed to accept offer:', error);
@@ -752,42 +873,6 @@ class MarketplaceApp {
         }
     }
 
-    /**
-     * Update settings UI
-     */
-    updateSettingsUI() {
-        const toggle = document.getElementById('toggle-hints-btn');
-        const dot = document.getElementById('toggle-hints-dot');
-
-        if (this.settings.showTradingHints) {
-            toggle.classList.remove('bg-gray-600');
-            toggle.classList.add('bg-green-600');
-            dot.classList.remove('translate-x-1');
-            dot.classList.add('translate-x-6');
-        } else {
-            toggle.classList.add('bg-gray-600');
-            toggle.classList.remove('bg-green-600');
-            dot.classList.add('translate-x-1');
-            dot.classList.remove('translate-x-6');
-        }
-    }
-
-    /**
-     * Toggle trading hints
-     */
-    async toggleTradingHints() {
-        try {
-            const newValue = !this.settings.showTradingHints;
-            const data = await api.team.updateSettings({ showTradingHints: newValue });
-            this.settings = data.settings;
-            this.updateSettingsUI();
-            this.renderMarketplace(); // Re-render to show/hide hints
-            this.showToast('Settings updated', 'success');
-        } catch (error) {
-            console.error('Failed to update settings:', error);
-            this.showToast('Failed to update settings', 'error');
-        }
-    }
 
     /**
      * Setup event listeners
@@ -877,8 +962,8 @@ class MarketplaceApp {
             this.closeSettings();
         });
 
-        document.getElementById('toggle-hints-btn').addEventListener('click', () => {
-            this.toggleTradingHints();
+        document.getElementById('theme-selector').addEventListener('change', (e) => {
+            this.setTheme(e.target.value);
         });
 
         // Leaderboard
@@ -956,6 +1041,33 @@ class MarketplaceApp {
      */
     closeSettings() {
         this.closeModalAccessible('settings-modal');
+    }
+
+    /**
+     * Render current funds
+     */
+    renderFunds() {
+        const fundsEl = document.getElementById('current-funds');
+        if (fundsEl && this.profile) {
+            fundsEl.textContent = '$' + this.formatNumber(this.profile.currentFunds);
+        }
+    }
+
+    /**
+     * Set and persist theme
+     */
+    setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('cndq-theme', theme);
+    }
+
+    /**
+     * Load saved theme from localStorage
+     */
+    loadSavedTheme() {
+        const savedTheme = localStorage.getItem('cndq-theme') || 'dark';
+        this.setTheme(savedTheme);
+        document.getElementById('theme-selector').value = savedTheme;
     }
 
     /**
@@ -1039,21 +1151,44 @@ class MarketplaceApp {
     /**
      * Show toast notification
      */
-    showToast(message, type = 'info') {
+    showToast(message, type = 'info', duration = 3000) {
         const colors = {
             success: 'bg-green-600',
             error: 'bg-red-600',
-            info: 'bg-blue-600'
+            info: 'bg-blue-600',
+            warning: 'bg-yellow-600',
+            excellent: 'bg-gradient-to-r from-green-500 to-emerald-600',
+            bad: 'bg-gradient-to-r from-red-500 to-rose-600'
+        };
+
+        const icons = {
+            success: '✓',
+            error: '✗',
+            info: 'ℹ',
+            warning: '⚠',
+            excellent: '🎉',
+            bad: '⚠️'
         };
 
         const container = document.getElementById('toast-container');
         if (!container) return;
 
         const toast = document.createElement('div');
-        toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out`;
+        toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center gap-2`;
         toast.setAttribute('role', 'alert');
         toast.setAttribute('aria-live', 'assertive');
-        toast.textContent = message;
+
+        // Add icon if special type
+        if (icons[type]) {
+            const iconSpan = document.createElement('span');
+            iconSpan.textContent = icons[type];
+            iconSpan.className = 'text-xl';
+            toast.appendChild(iconSpan);
+        }
+
+        const messageSpan = document.createElement('span');
+        messageSpan.textContent = message;
+        toast.appendChild(messageSpan);
 
         container.appendChild(toast);
 
@@ -1067,14 +1202,14 @@ class MarketplaceApp {
             });
         });
 
-        // Remove after 3 seconds
+        // Remove after specified duration
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateX(100%)';
             setTimeout(() => {
                 toast.remove();
             }, 300);
-        }, 3000);
+        }, duration);
     }
 
     /**

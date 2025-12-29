@@ -1,41 +1,4 @@
 {
-    "ads": [
-        {
-            "id": "ad_1766898250_1457cc7a",
-            "teamId": "player2@test.edu",
-            "teamName": "Calm Raven",
-            "chemical": "C",
-            "type": "buy",
-            "status": "active",
-            "createdAt": 1766898250
-        },
-        {
-            "id": "ad_1766898251_71fd5615",
-            "teamId": "player2@test.edu",
-            "teamName": "Calm Raven",
-            "chemical": "N",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766898251
-        },
-        {
-            "id": "ad_1766898251_18fdd99d",
-            "teamId": "player2@test.edu",
-            "teamName": "Calm Raven",
-            "chemical": "D",
-            "type": "sell",
-            "status": "active",
-            "createdAt": 1766898251
-        },
-        {
-            "id": "ad_1766898252_fee159ba",
-            "teamId": "player2@test.edu",
-            "teamName": "Calm Raven",
-            "chemical": "Q",
-            "type": "buy",
-            "status": "active",
-            "createdAt": 1766898252
-        }
-    ],
-    "lastModified": 1766898252
+    "ads": [],
+    "lastModified": 1766969549
 }

@@ -62,8 +62,7 @@ class TeamStorage {
                 'createdAt' => time(),
                 'lastActive' => time(),
                 'settings' => [
-                    'showTradingHints' => false,
-                    'hasSeenShadowPriceTip' => false
+                    // Settings for user preferences (notifications, polling intervals, etc.)
                 ]
             ],
             'inventory.json' => [
@@ -508,10 +507,7 @@ class TeamStorage {
 
     public function getSettings() {
         $profile = $this->getProfile();
-        return $profile['settings'] ?? [
-            'showTradingHints' => false,
-            'hasSeenShadowPriceTip' => false
-        ];
+        return $profile['settings'] ?? [];
     }
 
     public function updateSettings($newSettings) {

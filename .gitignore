@@ -2,3 +2,16 @@
 data
 node_modules
 package-lock.json
+
+# Windows reserved filenames (can cause issues with Git)
+nul
+con
+prn
+aux
+com1
+com2
+com3
+com4
+lpt1
+lpt2
+lpt3
