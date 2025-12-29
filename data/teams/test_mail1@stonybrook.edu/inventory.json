@@ -1,9 +1,9 @@
 {
-    "C": 576,
-    "N": 0,
-    "D": 200.80000000000007,
-    "Q": 1046.1999999999998,
+    "C": 0,
+    "N": 140.54250000000002,
+    "D": 0,
+    "Q": 427.028,
     "transactionsSinceLastShadowCalc": 0,
-    "lastModified": 1766973652,
-    "updatedAt": 1766969553
+    "lastModified": 1767039961,
+    "updatedAt": 1767032051
 }

@@ -1,10 +1,10 @@
 {
     "email": "player3@test.edu",
     "teamName": "Clever Penguin",
-    "startingFunds": 6360,
-    "currentFunds": 6360,
+    "startingFunds": 7552.57,
+    "currentFunds": 7552.57,
     "createdAt": 1766813968,
-    "lastActive": 1766969549,
+    "lastActive": 1767032046,
     "settings": [],
-    "lastModified": 1766969553
+    "lastModified": 1767032051
 }

@@ -36,7 +36,26 @@ class TeamHelper {
     }
 
     /**
-     * Post advertisement for a chemical
+     * Get inventory from page
+     */
+    async getInventory(page) {
+        return await page.evaluate(() => {
+            const inventory = {};
+            ['C', 'N', 'D', 'Q'].forEach(chem => {
+                const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+                if (card) {
+                    const el = card.querySelector('#inventory');
+                    inventory[chem] = parseFloat(el?.textContent.replace(/,/g, '') || '0');
+                } else {
+                    inventory[chem] = 0;
+                }
+            });
+            return inventory;
+        });
+    }
+
+    /**
+     * Post advertisement for a chemical (legacy method)
      */
     async postAdvertisement(page, chemical, type) {
         await page.evaluate((chem, adType) => {
@@ -49,6 +68,94 @@ class TeamHelper {
             }
         }, chemical, type);
         await this.browser.sleep(500);
+    }
+
+    /**
+     * Post buy request using the new modal interface
+     */
+    async postBuyRequest(page, chemical, shadowPrice) {
+        // Click the buy button to open modal
+        await page.evaluate((chem) => {
+            const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+            if (card) {
+                const button = card.querySelector('#post-buy-btn');
+                if (button) {
+                    button.click();
+                }
+            }
+        }, chemical);
+
+        await this.browser.sleep(500);
+
+        // Fill in the modal with reasonable values
+        await page.evaluate((maxPrice) => {
+            const quantity = 100; // Request 100 gallons
+            const price = Math.max(1, maxPrice * 1.2); // Willing to pay 20% above shadow price
+
+            // Set quantity
+            document.getElementById('offer-quantity').value = quantity;
+            document.getElementById('offer-quantity-slider').value = quantity;
+
+            // Set max price
+            document.getElementById('offer-price').value = price.toFixed(2);
+
+            // Trigger update
+            const event = new Event('input', { bubbles: true });
+            document.getElementById('offer-quantity').dispatchEvent(event);
+        }, shadowPrice);
+
+        await this.browser.sleep(300);
+
+        // Submit the buy request
+        await page.click('#offer-submit-btn');
+        await this.browser.sleep(1000);
+    }
+
+    /**
+     * Respond to a buy request using the respond modal
+     */
+    async respondToBuyRequest(page, buyRequest, chemical, shadowPrice, inventory) {
+        // Click the "Sell to" button on the buy request
+        await page.evaluate((chem, teamId) => {
+            const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+            if (!card) return;
+
+            const adItems = card.querySelectorAll('advertisement-item');
+            for (const item of adItems) {
+                if (item.type === 'buy' && item.teamId === teamId && !item.isMyAd) {
+                    const button = item.querySelector('.negotiate-btn');
+                    if (button) {
+                        button.click();
+                        return;
+                    }
+                }
+            }
+        }, chemical, buyRequest.teamId);
+
+        await this.browser.sleep(500);
+
+        // Fill in the respond modal
+        await page.evaluate((inv, sp) => {
+            const quantity = Math.min(80, inv); // Sell up to 80 gallons
+            const price = Math.max(1, sp * 1.1); // Price slightly above shadow price
+
+            // Set quantity
+            document.getElementById('respond-quantity').value = quantity;
+            document.getElementById('respond-quantity-slider').value = quantity;
+
+            // Set price
+            document.getElementById('respond-price').value = price.toFixed(2);
+
+            // Trigger update
+            const event = new Event('input', { bubbles: true });
+            document.getElementById('respond-quantity').dispatchEvent(event);
+        }, inventory, shadowPrice);
+
+        await this.browser.sleep(300);
+
+        // Submit the response
+        await page.click('#respond-submit-btn');
+        await this.browser.sleep(1000);
     }
 
     /**
@@ -260,9 +367,9 @@ class TeamHelper {
     async getLeaderboard() {
         const page = await this.browser.newPage();
         try {
-            const response = await page.goto(`${this.browser.config.baseUrl}/api/team/leaderboard.php`);
+            const response = await page.goto(`${this.browser.config.baseUrl}/api/leaderboard/standings.php`);
             const data = await response.json();
-            return data.success ? data.teams : [];
+            return data.success ? data.standings : [];
         } finally {
             await page.close();
         }

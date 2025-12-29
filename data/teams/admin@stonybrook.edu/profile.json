@@ -1,10 +1,10 @@
 {
     "email": "admin@stonybrook.edu",
     "teamName": "Bold Lynx",
-    "startingFunds": 9223.33,
-    "currentFunds": 9223.33,
+    "startingFunds": 8760,
+    "currentFunds": 8760,
     "createdAt": 1766817464,
-    "lastActive": 1766969549,
+    "lastActive": 1767032046,
     "settings": [],
-    "lastModified": 1766969553
+    "lastModified": 1767032051
 }

@@ -65,6 +65,52 @@ class AccessibilityTest {
         }
     }
 
+    async testModals(page) {
+        const modalButtons = [
+            '#production-guide-btn',
+            '#leaderboard-btn',
+            '#settings-btn'
+        ];
+
+        let allViolations = [];
+        let allPasses = [];
+        let allIncomplete = [];
+
+        for (const buttonSelector of modalButtons) {
+            try {
+                // Check if button exists
+                const buttonExists = await page.$(buttonSelector);
+                if (!buttonExists) continue;
+
+                // Open modal
+                await page.click(buttonSelector);
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Test modal
+                const modalResults = await new AxeBuilder(page)
+                    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+                    .analyze();
+
+                allViolations = [...allViolations, ...modalResults.violations];
+                allPasses = [...allPasses, ...modalResults.passes];
+                allIncomplete = [...allIncomplete, ...modalResults.incomplete];
+
+                // Close modal (ESC key)
+                await page.keyboard.press('Escape');
+                await new Promise(resolve => setTimeout(resolve, 300));
+            } catch (error) {
+                // Continue testing other modals even if one fails
+                console.error(`Error testing modal ${buttonSelector}:`, error.message);
+            }
+        }
+
+        return {
+            violations: allViolations,
+            passes: allPasses,
+            incomplete: allIncomplete
+        };
+    }
+
     async testPage(page, url, pageName, theme) {
         try {
             const fullUrl = `${this.config.baseUrl}${url}`;
@@ -80,9 +126,20 @@ class AccessibilityTest {
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
-            const results = await new AxeBuilder(page)
+            // First test: Initial page state
+            const initialResults = await new AxeBuilder(page)
                 .withTags(this.config.standards || ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
                 .analyze();
+
+            // Second test: Open modals and test them
+            const modalResults = await this.testModals(page);
+
+            // Combine results
+            const results = {
+                violations: [...initialResults.violations, ...modalResults.violations],
+                passes: [...initialResults.passes, ...modalResults.passes],
+                incomplete: [...initialResults.incomplete, ...modalResults.incomplete]
+            };
 
             return {
                 pageName,

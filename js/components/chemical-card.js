@@ -113,44 +113,29 @@ class ChemicalCard extends HTMLElement {
                         </div>
                     </div>
 
-                    <!-- Post Interest Buttons -->
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <button class="bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold transition text-sm"
-                                id="post-sell-btn">
-                            Post Sell Interest
-                        </button>
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold transition text-sm"
-                                id="post-buy-btn">
-                            Post Buy Interest
-                        </button>
-                    </div>
-
-                    <!-- Teams Wanting to Sell -->
+                    <!-- Post Buy Request Button -->
                     <div class="mb-4">
-                        <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">
-                            Teams Wanting to Sell
-                        </h4>
-                        <div id="sell-ads" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
-                            <p class="text-xs text-gray-300 text-center py-4">No sellers</p>
-                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition shadow-lg text-sm"
+                                id="post-buy-btn">
+                            📋 Post Buy Request
+                        </button>
+                        <p class="text-xs text-gray-400 mt-2 text-center">Post what you need, teams will offer to sell</p>
                     </div>
 
                     <!-- Teams Wanting to Buy -->
                     <div>
                         <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">
-                            Teams Wanting to Buy
+                            Buy Requests
                         </h4>
-                        <div id="buy-ads" class="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
-                            <p class="text-xs text-gray-300 text-center py-4">No buyers</p>
+                        <div id="buy-ads" class="space-y-2 max-h-96 overflow-y-auto scrollbar-thin">
+                            <p class="text-xs text-gray-300 text-center py-4">No buy requests yet</p>
                         </div>
                     </div>
                 </div>
             </div>
         `;
 
-        // Setup event listeners
-        this.querySelector('#post-sell-btn')
-            .addEventListener('click', () => this.handlePostInterest('sell'));
+        // Setup event listener
         this.querySelector('#post-buy-btn')
             .addEventListener('click', () => this.handlePostInterest('buy'));
 
@@ -173,28 +158,11 @@ class ChemicalCard extends HTMLElement {
     renderAdvertisements() {
         if (!this.firstChild) return;
 
-        const sellContainer = this.querySelector('#sell-ads');
         const buyContainer = this.querySelector('#buy-ads');
 
-        // Render sell advertisements
-        if (this.sellAds.length === 0) {
-            sellContainer.innerHTML = '<p class="text-xs text-gray-300 text-center py-4">No sellers</p>';
-        } else {
-            sellContainer.innerHTML = '';
-            this.sellAds.forEach(ad => {
-                const item = document.createElement('advertisement-item');
-                item.teamName = ad.teamName;
-                item.teamId = ad.teamId;
-                item.type = 'sell';
-                item.chemical = this.chemical;
-                item.isMyAd = ad.teamId === this.currentUserId;
-                sellContainer.appendChild(item);
-            });
-        }
-
-        // Render buy advertisements
+        // Render buy requests only
         if (this.buyAds.length === 0) {
-            buyContainer.innerHTML = '<p class="text-xs text-gray-300 text-center py-4">No buyers</p>';
+            buyContainer.innerHTML = '<p class="text-xs text-gray-300 text-center py-4">No buy requests yet</p>';
         } else {
             buyContainer.innerHTML = '';
             this.buyAds.forEach(ad => {

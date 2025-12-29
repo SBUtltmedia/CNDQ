@@ -39,13 +39,13 @@ npm run simulate          # Run game simulation with browser visible
 ### 1. Game Simulation (`game-simulation.js`)
 
 Full end-to-end testing of complete game flow:
-- 2 teams playing through 3 sessions
-- Trading phase: advertisements, negotiations, responses
+- 3 teams playing through 2 sessions
+- Trading phase: buy requests, responses, negotiations
 - Production phase: automatic production
 - Session transitions and leaderboard updates
 
-**Duration**: ~5-10 minutes
-**Teams**: test_mail1@stonybrook.edu, test_mail2@stonybrook.edu
+**Duration**: ~2-3 minutes
+**Teams**: test_mail1@stonybrook.edu, test_mail2@stonybrook.edu, test_mail3@stonybrook.edu
 
 ### 2. Component Test (`components.js`)
 
@@ -101,9 +101,19 @@ Team actions and trading operations:
 ```javascript
 const team = new TeamHelper(browser);
 const shadowPrices = await team.getShadowPrices(page);
-await team.postAdvertisement(page, 'C', 'sell');
-const seller = await team.findSeller(page, 'N');
-await team.initiateNegotiation(page, seller, 'N', shadowPrice);
+const inventory = await team.getInventory(page);
+
+// Post buy request
+await team.postBuyRequest(page, 'N', shadowPrices['N']);
+
+// Find buyers/sellers
+const buyRequest = await team.findBuyer(page, 'C');
+
+// Respond to buy request
+await team.respondToBuyRequest(page, buyRequest, 'C', shadowPrices['C'], inventory['C']);
+
+// Respond to negotiations
+await team.respondToNegotiations(page, shadowPrices, 0.7);
 ```
 
 ### ReportingHelper (`helpers/reporting.js`)
@@ -126,11 +136,14 @@ const CONFIG = {
     baseUrl: 'http://cndq.test',
     teams: [
         'test_mail1@stonybrook.edu',
-        'test_mail2@stonybrook.edu'
+        'test_mail2@stonybrook.edu',
+        'test_mail3@stonybrook.edu'
     ],
-    targetSessions: 3,
+    targetSessions: 2,
     headless: false,
     verbose: false,
+    keepOpen: false,
+    skipReset: false,
 
     // Accessibility settings
     wcagLevel: 'AA',
@@ -155,6 +168,7 @@ node tests/run-tests.js accessibility # Accessibility only
 node tests/run-tests.js --headless   # Run headless (faster)
 node tests/run-tests.js --keep-open  # Keep browser open after tests
 node tests/run-tests.js --verbose    # Show detailed browser logs
+node tests/run-tests.js --skip-reset # Skip game reset (continue from current state)
 ```
 
 ## Adding New Tests

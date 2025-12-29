@@ -1,10 +1,10 @@
 {
     "email": "test_mail1@stonybrook.edu",
     "teamName": "Crafty Otter",
-    "startingFunds": 6816,
-    "currentFunds": 6816,
+    "startingFunds": 12786.29,
+    "currentFunds": 12786.29,
     "createdAt": 1766821211,
-    "lastActive": 1766969549,
+    "lastActive": 1767032046,
     "settings": [],
-    "lastModified": 1766969553
+    "lastModified": 1767032051
 }

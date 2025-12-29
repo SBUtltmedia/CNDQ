@@ -78,6 +78,10 @@ try {
     $responderStorage = new TeamStorage($responderId);
     $responderProfile = $responderStorage->getProfile();
 
+    // Get current session number
+    $sessionState = $sessionManager->getState();
+    $currentSession = $sessionState['currentSession'];
+
     $negotiationManager = new NegotiationManager();
 
     $negotiation = $negotiationManager->createNegotiation(
@@ -89,7 +93,8 @@ try {
         [
             'quantity' => $quantity,
             'price' => $price
-        ]
+        ],
+        $currentSession
     );
 
     echo json_encode([

@@ -78,11 +78,16 @@ try {
         exit;
     }
 
+    // Get current session number
+    $sessionState = $sessionManager->getState();
+    $currentSession = $sessionState['currentSession'];
+
     // Create buy order
     $buyOrderData = [
         'chemical' => $chemical,
         'quantity' => $quantity,
-        'maxPrice' => $maxPrice
+        'maxPrice' => $maxPrice,
+        'sessionNumber' => $currentSession
     ];
 
     $result = $storage->addBuyOrder($buyOrderData);

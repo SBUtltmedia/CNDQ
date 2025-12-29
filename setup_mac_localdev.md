@@ -1,5 +1,14 @@
 # macOS Local Development Setup
 
+> **Status**: ✅ Currently configured and tested on macOS with Laravel Valet
+>
+> **Test Environment**: http://cndq.test (via Valet)
+> **PHP Version**: 8.5.1
+> **Composer Version**: 2.9.2
+> **Last Verified**: December 2024
+
+---
+
 ## Prerequisites
 
 - **macOS** (any recent version)

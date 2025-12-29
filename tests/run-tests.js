@@ -8,7 +8,8 @@
  *   node tests/run-tests.js                    # Run all tests
  *   node tests/run-tests.js game               # Game simulation only
  *   node tests/run-tests.js components         # Components only
- *   node tests/run-tests.js accessibility      # Accessibility only
+ *   node tests/run-tests.js accessibility      # Accessibility only (axe-core)
+ *   node tests/run-tests.js lighthouse         # Lighthouse audit
  *
  * Options:
  *   --headless         # Run headless (faster)
@@ -20,6 +21,7 @@
 const GameSimulation = require('./game-simulation');
 const ComponentTest = require('./components');
 const AccessibilityTest = require('./accessibility');
+const LighthouseTest = require('./lighthouse');
 const BrowserHelper = require('./helpers/browser');
 const ReportingHelper = require('./helpers/reporting');
 
@@ -28,9 +30,10 @@ const CONFIG = {
     baseUrl: 'http://cndq.test',
     teams: [
         'test_mail1@stonybrook.edu',
-        'test_mail2@stonybrook.edu'
+        'test_mail2@stonybrook.edu',
+        'test_mail3@stonybrook.edu'
     ],
-    targetSessions: 3,
+    targetSessions: 2,
     headless: process.argv.includes('--headless'),
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
     keepOpen: process.argv.includes('--keep-open'),
@@ -79,6 +82,10 @@ class TestRunner {
                 case 'accessibility':
                 case 'a11y':
                     await this.runAccessibilityTest();
+                    break;
+
+                case 'lighthouse':
+                    await this.runLighthouseTest();
                     break;
 
                 case 'all':
@@ -153,6 +160,25 @@ class TestRunner {
         }
     }
 
+    async runLighthouseTest() {
+        ReportingHelper.printSection('🏠', 'Running Lighthouse Test');
+
+        const browserHelper = new BrowserHelper({ ...this.config, headless: 'new' });
+        await browserHelper.launch();
+
+        try {
+            const lighthouseConfig = {
+                ...this.config,
+                outputDir: './lighthouse-reports',
+                minAccessibilityScore: 90
+            };
+            const test = new LighthouseTest(lighthouseConfig, browserHelper);
+            this.results.lighthouse = await test.run();
+        } finally {
+            await browserHelper.close();
+        }
+    }
+
     async runAllTests() {
         ReportingHelper.printInfo('Running all tests in sequence...\n');
 
@@ -160,11 +186,15 @@ class TestRunner {
         await this.runComponentTest();
         console.log('\n');
 
-        // 2. Accessibility test (medium)
+        // 2. Accessibility test with modals (medium)
         await this.runAccessibilityTest();
         console.log('\n');
 
-        // 3. Game simulation (slow)
+        // 3. Lighthouse audit (medium-slow)
+        await this.runLighthouseTest();
+        console.log('\n');
+
+        // 4. Game simulation (slow)
         await this.runGameSimulation();
     }
 

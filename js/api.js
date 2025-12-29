@@ -157,6 +157,27 @@ class ApiClient {
     };
 
     // ==========================================
+    // Offers APIs (Buy Requests)
+    // ==========================================
+
+    offers = {
+        /**
+         * Create a buy order (bid)
+         * @param {string} chemical - Chemical type (C, N, D, Q)
+         * @param {number} quantity - Quantity desired
+         * @param {number} maxPrice - Maximum price willing to pay per gallon
+         * @returns {Promise<{success: boolean, buyOrder: Object}>}
+         */
+        bid: async (chemical, quantity, maxPrice) => {
+            return this.post('/api/offers/bid.php', {
+                chemical,
+                quantity,
+                maxPrice
+            });
+        }
+    };
+
+    // ==========================================
     // Negotiation APIs
     // ==========================================
 

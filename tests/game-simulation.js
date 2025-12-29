@@ -115,12 +115,13 @@ class GameSimulation {
                 for (const chemical of CHEMICALS) {
                     const shadowPrice = shadowPrices[chemical];
 
+                    // Only post BUY requests (selling happens via responding to buy requests)
                     if (shadowPrice > 2) {
-                        await this.team.postAdvertisement(page, chemical, 'buy');
-                        console.log(`      📥 Wants to BUY ${chemical} (shadow: $${shadowPrice})`);
+                        await this.team.postBuyRequest(page, chemical, shadowPrice);
+                        console.log(`      📥 Wants to BUY ${chemical} (shadow: $${shadowPrice.toFixed(2)})`);
                     } else if (shadowPrice < 1) {
-                        await this.team.postAdvertisement(page, chemical, 'sell');
-                        console.log(`      📤 Wants to SELL ${chemical} (shadow: $${shadowPrice})`);
+                        // Don't post sell ads - teams will respond to buy requests instead
+                        console.log(`      💰 Ready to SELL ${chemical} (shadow: $${shadowPrice.toFixed(2)})`);
                     }
                 }
             } catch (error) {
@@ -132,7 +133,7 @@ class GameSimulation {
     }
 
     async allTeamsNegotiate() {
-        ReportingHelper.printSection('💼', 'Teams initiating negotiations...');
+        ReportingHelper.printSection('💼', 'Teams responding to buy requests...');
 
         for (const teamEmail of this.config.teams) {
             const page = await this.browser.loginAndNavigate(teamEmail, '/index.html');
@@ -140,24 +141,18 @@ class GameSimulation {
             try {
                 const teamName = await this.team.getTeamName(page);
                 const shadowPrices = await this.team.getShadowPrices(page);
+                const inventory = await this.team.getInventory(page);
 
                 for (const chemical of CHEMICALS) {
                     const myShadowPrice = shadowPrices[chemical];
+                    const myInventory = inventory[chemical];
 
-                    if (myShadowPrice > 2) {
-                        const seller = await this.team.findSeller(page, chemical);
-                        if (seller) {
-                            await this.team.initiateNegotiation(page, seller, chemical, myShadowPrice);
-                            console.log(`   ${teamName} → Negotiating to BUY ${chemical} from ${seller.teamName}`);
-                            break;
-                        }
-                    }
-
-                    if (myShadowPrice < 1) {
-                        const buyer = await this.team.findBuyer(page, chemical);
-                        if (buyer) {
-                            await this.team.initiateNegotiation(page, buyer, chemical, myShadowPrice);
-                            console.log(`   ${teamName} → Negotiating to SELL ${chemical} to ${buyer.teamName}`);
+                    // If shadow price is low and we have inventory, look for buy requests to fulfill
+                    if (myShadowPrice < 1 && myInventory > 50) {
+                        const buyRequest = await this.team.findBuyer(page, chemical);
+                        if (buyRequest) {
+                            await this.team.respondToBuyRequest(page, buyRequest, chemical, myShadowPrice, myInventory);
+                            console.log(`   ${teamName} → Offering to SELL ${chemical} to ${buyRequest.teamName}`);
                             break;
                         }
                     }

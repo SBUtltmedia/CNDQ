@@ -1,21 +1,21 @@
 {
     "history": [],
-    "lastModified": 1766969553,
+    "lastModified": 1767032051,
     "productions": [
         {
             "type": "automatic_session",
             "sessionNumber": 1,
-            "deicer": 1397.92,
-            "solvent": 2142.5,
-            "revenue": 9223.33,
+            "deicer": 0,
+            "solvent": 2920,
+            "revenue": 8760,
             "chemicalsConsumed": {
-                "C": 698.96,
-                "N": 955.001,
-                "D": 1029.459,
-                "Q": 857
+                "C": 0,
+                "N": 730,
+                "D": 1021.9999999999999,
+                "Q": 1168
             },
             "note": "Automatic production for session 1",
-            "timestamp": 1766969553
+            "timestamp": 1767032051
         }
     ]
 }

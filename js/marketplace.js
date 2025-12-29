@@ -440,6 +440,213 @@ class MarketplaceApp {
     }
 
     /**
+     * Open buy request modal
+     */
+    openBuyRequestModal(chemical) {
+        const modal = document.getElementById('offer-modal');
+        document.getElementById('offer-chemical').value = `Chemical ${chemical}`;
+        document.getElementById('offer-shadow-hint').textContent = this.shadowPrices[chemical].toFixed(2);
+        document.getElementById('offer-quantity').value = 100;
+        document.getElementById('offer-quantity-slider').value = 100;
+        document.getElementById('offer-price').value = '5.00';
+
+        // Store current chemical for later
+        this.currentOfferChemical = chemical;
+
+        // Update funds and total
+        this.updateBuyRequestTotal();
+
+        modal.classList.remove('hidden');
+    }
+
+    /**
+     * Update buy request total and validate funds
+     */
+    updateBuyRequestTotal() {
+        const quantity = parseInt(document.getElementById('offer-quantity').value) || 0;
+        const price = parseFloat(document.getElementById('offer-price').value) || 0;
+        const total = quantity * price;
+
+        document.getElementById('offer-total').textContent = total.toFixed(2);
+        document.getElementById('offer-current-funds').textContent = '$' + this.profile.currentFunds.toFixed(2);
+
+        const submitBtn = document.getElementById('offer-submit-btn');
+        const warning = document.getElementById('insufficient-funds-warning');
+
+        if (total > this.profile.currentFunds) {
+            warning.classList.remove('hidden');
+            submitBtn.disabled = true;
+        } else {
+            warning.classList.add('hidden');
+            submitBtn.disabled = false;
+        }
+    }
+
+    /**
+     * Submit buy request
+     */
+    async submitBuyRequest() {
+        const chemical = this.currentOfferChemical;
+        const quantity = parseInt(document.getElementById('offer-quantity').value);
+        const maxPrice = parseFloat(document.getElementById('offer-price').value);
+
+        if (!chemical || quantity <= 0 || maxPrice < 0) {
+            this.showToast('Invalid input', 'error');
+            return;
+        }
+
+        const total = quantity * maxPrice;
+        if (total > this.profile.currentFunds) {
+            this.showToast('Insufficient funds', 'error');
+            return;
+        }
+
+        try {
+            const response = await api.offers.bid(chemical, quantity, maxPrice);
+
+            if (response.success) {
+                this.showToast(`Buy request posted for ${quantity} gallons of ${chemical}`, 'success');
+                this.closeOfferModal();
+                await this.loadAdvertisements();
+            } else {
+                this.showToast(response.message || 'Failed to post buy request', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to submit buy request:', error);
+            this.showToast('Failed to post buy request: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Close offer modal
+     */
+    closeOfferModal() {
+        document.getElementById('offer-modal').classList.add('hidden');
+        this.currentOfferChemical = null;
+    }
+
+    /**
+     * Open respond to buy request modal
+     */
+    openRespondModal(buyerTeamId, buyerTeamName, chemical) {
+        const modal = document.getElementById('respond-modal');
+
+        // Store context for later
+        this.currentRespondContext = {
+            buyerTeamId,
+            buyerTeamName,
+            chemical
+        };
+
+        // Set buyer info
+        document.getElementById('respond-buyer-name').textContent = buyerTeamName;
+        document.getElementById('respond-chemical').textContent = `Chemical ${chemical}`;
+
+        // Get buy request details from advertisements
+        const buyAds = this.advertisements[chemical]?.buy || [];
+        const buyRequest = buyAds.find(ad => ad.teamId === buyerTeamId);
+
+        // Set request details (if we have them - otherwise use defaults)
+        // Note: Current advertisement system doesn't store quantity/price, so we'll use defaults
+        document.getElementById('respond-requested-qty').textContent = '?';
+        document.getElementById('respond-max-price').textContent = '?';
+
+        // Set your inventory and shadow price
+        const yourInventory = this.inventory[chemical] || 0;
+        const yourShadowPrice = this.shadowPrices[chemical] || 0;
+
+        document.getElementById('respond-your-inventory').textContent = yourInventory.toLocaleString();
+        document.getElementById('respond-shadow-price').textContent = yourShadowPrice.toFixed(2);
+
+        // Set slider max to inventory
+        document.getElementById('respond-quantity-slider').max = yourInventory;
+        document.getElementById('respond-quantity').max = yourInventory;
+
+        // Initialize with reasonable defaults
+        const defaultQty = Math.min(100, yourInventory);
+        document.getElementById('respond-quantity').value = defaultQty;
+        document.getElementById('respond-quantity-slider').value = defaultQty;
+        document.getElementById('respond-price').value = Math.max(yourShadowPrice, 1).toFixed(2);
+
+        // Update total
+        this.updateRespondTotal();
+
+        modal.classList.remove('hidden');
+    }
+
+    /**
+     * Update respond modal total and validate inventory
+     */
+    updateRespondTotal() {
+        const quantity = parseInt(document.getElementById('respond-quantity').value) || 0;
+        const price = parseFloat(document.getElementById('respond-price').value) || 0;
+        const total = quantity * price;
+
+        document.getElementById('respond-total').textContent = total.toFixed(2);
+
+        const submitBtn = document.getElementById('respond-submit-btn');
+        const warning = document.getElementById('insufficient-inventory-warning');
+
+        const chemical = this.currentRespondContext?.chemical;
+        const yourInventory = this.inventory[chemical] || 0;
+
+        if (quantity > yourInventory) {
+            warning.classList.remove('hidden');
+            submitBtn.disabled = true;
+        } else {
+            warning.classList.add('hidden');
+            submitBtn.disabled = false;
+        }
+    }
+
+    /**
+     * Submit response to buy request (initiate negotiation)
+     */
+    async submitRespondOffer() {
+        if (!this.currentRespondContext) return;
+
+        const { buyerTeamId, buyerTeamName, chemical } = this.currentRespondContext;
+        const quantity = parseInt(document.getElementById('respond-quantity').value);
+        const price = parseFloat(document.getElementById('respond-price').value);
+
+        const yourInventory = this.inventory[chemical] || 0;
+
+        if (quantity <= 0 || price < 0) {
+            this.showToast('Invalid quantity or price', 'error');
+            return;
+        }
+
+        if (quantity > yourInventory) {
+            this.showToast('Insufficient inventory', 'error');
+            return;
+        }
+
+        try {
+            // Initiate negotiation with the buyer
+            const response = await api.negotiations.initiate(buyerTeamId, chemical, quantity, price);
+
+            if (response.success) {
+                this.showToast(`Offer sent to ${buyerTeamName} for ${quantity} gallons of ${chemical}`, 'success');
+                this.closeRespondModal();
+                await this.loadNegotiations();
+            } else {
+                this.showToast(response.message || 'Failed to send offer', 'error');
+            }
+        } catch (error) {
+            console.error('Failed to submit respond offer:', error);
+            this.showToast('Failed to send offer: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Close respond modal
+     */
+    closeRespondModal() {
+        document.getElementById('respond-modal').classList.add('hidden');
+        this.currentRespondContext = null;
+    }
+
+    /**
      * Open negotiation modal
      */
     openNegotiationModal() {
@@ -886,14 +1093,128 @@ class MarketplaceApp {
         // Web Component Events: Post interest (from chemical-card)
         document.addEventListener('post-interest', (e) => {
             const { chemical, type } = e.detail;
-            this.postAdvertisement(chemical, type);
+            if (type === 'buy') {
+                this.openBuyRequestModal(chemical);
+            } else {
+                // Sell is disabled in simplified version
+                this.showToast('Selling is disabled. Only buy requests are supported.', 'info');
+            }
+        });
+
+        // Buy Request Modal event listeners
+        document.getElementById('offer-cancel-btn').addEventListener('click', () => {
+            this.closeOfferModal();
+        });
+
+        document.getElementById('offer-submit-btn').addEventListener('click', () => {
+            this.submitBuyRequest();
+        });
+
+        // Sync slider and number input
+        document.getElementById('offer-quantity-slider').addEventListener('input', (e) => {
+            document.getElementById('offer-quantity').value = e.target.value;
+            this.updateBuyRequestTotal();
+        });
+
+        document.getElementById('offer-quantity').addEventListener('input', (e) => {
+            document.getElementById('offer-quantity-slider').value = e.target.value;
+            this.updateBuyRequestTotal();
+        });
+
+        document.getElementById('offer-price').addEventListener('input', () => {
+            this.updateBuyRequestTotal();
+        });
+
+        // +/- buttons
+        document.getElementById('quantity-plus').addEventListener('click', () => {
+            const input = document.getElementById('offer-quantity');
+            input.value = parseInt(input.value) + 10;
+            document.getElementById('offer-quantity-slider').value = input.value;
+            this.updateBuyRequestTotal();
+        });
+
+        document.getElementById('quantity-minus').addEventListener('click', () => {
+            const input = document.getElementById('offer-quantity');
+            input.value = Math.max(1, parseInt(input.value) - 10);
+            document.getElementById('offer-quantity-slider').value = input.value;
+            this.updateBuyRequestTotal();
+        });
+
+        document.getElementById('price-plus').addEventListener('click', () => {
+            const input = document.getElementById('offer-price');
+            input.value = (parseFloat(input.value) + 0.5).toFixed(2);
+            this.updateBuyRequestTotal();
+        });
+
+        document.getElementById('price-minus').addEventListener('click', () => {
+            const input = document.getElementById('offer-price');
+            input.value = Math.max(0, parseFloat(input.value) - 0.5).toFixed(2);
+            this.updateBuyRequestTotal();
         });
 
         // Web Component Events: Negotiate (from advertisement-item)
         document.addEventListener('negotiate', (e) => {
             const { teamId, teamName, chemical, type } = e.detail;
-            this.openNegotiationModal();
-            setTimeout(() => this.startNewNegotiation(teamId, teamName, chemical, type), 100);
+
+            // If responding to a buy request, use special respond modal
+            if (type === 'buy') {
+                this.openRespondModal(teamId, teamName, chemical);
+            } else {
+                // Original flow for sell ads (though sell is disabled now)
+                this.openNegotiationModal();
+                setTimeout(() => this.startNewNegotiation(teamId, teamName, chemical, type), 100);
+            }
+        });
+
+        // Respond Modal event listeners
+        document.getElementById('respond-cancel-btn').addEventListener('click', () => {
+            this.closeRespondModal();
+        });
+
+        document.getElementById('respond-submit-btn').addEventListener('click', () => {
+            this.submitRespondOffer();
+        });
+
+        // Sync slider and number input for respond modal
+        document.getElementById('respond-quantity-slider').addEventListener('input', (e) => {
+            document.getElementById('respond-quantity').value = e.target.value;
+            this.updateRespondTotal();
+        });
+
+        document.getElementById('respond-quantity').addEventListener('input', (e) => {
+            document.getElementById('respond-quantity-slider').value = e.target.value;
+            this.updateRespondTotal();
+        });
+
+        document.getElementById('respond-price').addEventListener('input', () => {
+            this.updateRespondTotal();
+        });
+
+        // +/- buttons for respond modal
+        document.getElementById('respond-qty-plus').addEventListener('click', () => {
+            const input = document.getElementById('respond-quantity');
+            input.value = parseInt(input.value) + 10;
+            document.getElementById('respond-quantity-slider').value = input.value;
+            this.updateRespondTotal();
+        });
+
+        document.getElementById('respond-qty-minus').addEventListener('click', () => {
+            const input = document.getElementById('respond-quantity');
+            input.value = Math.max(1, parseInt(input.value) - 10);
+            document.getElementById('respond-quantity-slider').value = input.value;
+            this.updateRespondTotal();
+        });
+
+        document.getElementById('respond-price-plus').addEventListener('click', () => {
+            const input = document.getElementById('respond-price');
+            input.value = (parseFloat(input.value) + 0.5).toFixed(2);
+            this.updateRespondTotal();
+        });
+
+        document.getElementById('respond-price-minus').addEventListener('click', () => {
+            const input = document.getElementById('respond-price');
+            input.value = Math.max(0, parseFloat(input.value) - 0.5).toFixed(2);
+            this.updateRespondTotal();
         });
 
         // Web Component Events: View negotiation detail (from negotiation-card)
@@ -1121,9 +1442,10 @@ class MarketplaceApp {
 
             leaderboardBody.innerHTML = data.standings.map(team => {
                 const isCurrentTeam = team.teamName === this.profile.teamName;
-                const profitClass = team.profit >= 0 ? 'text-green-400' : 'text-red-400';
-                const roiClass = team.roi >= 0 ? 'text-green-400' : 'text-red-400';
-                const rowClass = isCurrentTeam ? 'bg-yellow-900 bg-opacity-30 border-l-4 border-yellow-500' : '';
+                const profitClass = team.profit >= 0 ? (isCurrentTeam ? 'text-green-light' : 'text-green-400') : (isCurrentTeam ? 'text-red-light' : 'text-red-400');
+                const roiClass = team.roi >= 0 ? (isCurrentTeam ? 'text-green-light' : 'text-green-400') : (isCurrentTeam ? 'text-red-light' : 'text-red-400');
+                const rowClass = isCurrentTeam ? 'bg-yellow-900 bg-opacity-20 border-l-4 border-yellow-500' : '';
+                const textClass = isCurrentTeam ? 'text-white-always' : 'text-white';
 
                 // Medal emoji for top 3
                 let rankDisplay = team.rank;
@@ -1133,9 +1455,9 @@ class MarketplaceApp {
 
                 return `
                     <tr class="${rowClass}">
-                        <td class="px-4 py-3 font-bold text-xl">${rankDisplay}</td>
-                        <td class="px-4 py-3 font-semibold ${isCurrentTeam ? 'text-yellow-300' : 'text-white'}">${team.teamName}${isCurrentTeam ? ' (You)' : ''}</td>
-                        <td class="px-4 py-3 text-right font-semibold">$${this.formatNumber(team.currentFunds)}</td>
+                        <td class="px-4 py-3 font-bold text-xl ${textClass}">${rankDisplay}</td>
+                        <td class="px-4 py-3 font-semibold ${isCurrentTeam ? 'text-white-always' : 'text-white'}">${team.teamName}${isCurrentTeam ? ' (You)' : ''}</td>
+                        <td class="px-4 py-3 text-right font-semibold ${textClass}">$${this.formatNumber(team.currentFunds)}</td>
                         <td class="px-4 py-3 text-right font-semibold ${profitClass}">${team.profit >= 0 ? '+' : ''}$${this.formatNumber(team.profit)}</td>
                         <td class="px-4 py-3 text-right font-bold text-lg ${roiClass}">${team.roi >= 0 ? '+' : ''}${this.formatNumber(team.roi)}%</td>
                     </tr>
@@ -1255,6 +1577,20 @@ class MarketplaceApp {
         this.currentModal = modal;
         modal.classList.remove('hidden');
         this.trapFocus(modal);
+
+        // Add active state to the button that opened this modal
+        const buttonMap = {
+            'settings-modal': 'settings-btn',
+            'leaderboard-modal': 'leaderboard-btn',
+            'production-guide-modal': 'production-guide-btn'
+        };
+
+        const buttonId = buttonMap[modalId];
+        if (buttonId) {
+            const button = document.getElementById(buttonId);
+            button.classList.add('ring-2', 'ring-white', 'ring-opacity-50');
+            button.setAttribute('aria-pressed', 'true');
+        }
     }
 
     /**
@@ -1264,6 +1600,20 @@ class MarketplaceApp {
         const modal = document.getElementById(modalId);
         modal.classList.add('hidden');
         this.currentModal = null;
+
+        // Remove active state from the button
+        const buttonMap = {
+            'settings-modal': 'settings-btn',
+            'leaderboard-modal': 'leaderboard-btn',
+            'production-guide-modal': 'production-guide-btn'
+        };
+
+        const buttonId = buttonMap[modalId];
+        if (buttonId) {
+            const button = document.getElementById(buttonId);
+            button.classList.remove('ring-2', 'ring-white', 'ring-opacity-50');
+            button.setAttribute('aria-pressed', 'false');
+        }
 
         if (this.focusBeforeModal) {
             this.focusBeforeModal.focus();

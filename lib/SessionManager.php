@@ -78,6 +78,52 @@ class SessionManager {
     }
 
     /**
+     * Check if any trading activity occurred in the given session
+     */
+    private function hasTradingActivity($sessionNumber) {
+        // Check for buy requests (offers)
+        $offersFile = __DIR__ . '/../data/advertisements.json';
+        if (file_exists($offersFile)) {
+            $offers = json_decode(file_get_contents($offersFile), true);
+            foreach ($offers as $offer) {
+                if (isset($offer['sessionNumber']) && $offer['sessionNumber'] == $sessionNumber) {
+                    return true;
+                }
+            }
+        }
+
+        // Check for negotiations
+        $negotiationsFile = __DIR__ . '/../data/negotiations.json';
+        if (file_exists($negotiationsFile)) {
+            $negotiations = json_decode(file_get_contents($negotiationsFile), true);
+            foreach ($negotiations as $negotiation) {
+                if (isset($negotiation['sessionNumber']) && $negotiation['sessionNumber'] == $sessionNumber) {
+                    return true;
+                }
+            }
+        }
+
+        // Check for accepted trades in team histories
+        $teamsDir = __DIR__ . '/../data/teams';
+        if (is_dir($teamsDir)) {
+            $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
+            foreach ($teamDirs as $teamDir) {
+                $historyFile = $teamDir . '/trade_history.json';
+                if (file_exists($historyFile)) {
+                    $trades = json_decode(file_get_contents($historyFile), true) ?: [];
+                    foreach ($trades as $trade) {
+                        if (isset($trade['sessionNumber']) && $trade['sessionNumber'] == $sessionNumber) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Check if trading is currently allowed
      */
     public function isTradingAllowed() {
@@ -105,6 +151,26 @@ class SessionManager {
         }
 
         $data = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
+
+        // Check for trading activity before advancing from trading phase
+        if ($data['phase'] === 'trading' && $data['autoAdvance']) {
+            $hasActivity = $this->hasTradingActivity($data['currentSession']);
+
+            if (!$hasActivity) {
+                // No trading activity - disable auto-advance to prevent infinite empty sessions
+                $data['autoAdvance'] = false;
+                error_log("Auto-advance disabled: No trading activity in session {$data['currentSession']}");
+
+                ftruncate($fp, 0);
+                rewind($fp);
+                fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
+                fflush($fp);
+                flock($fp, LOCK_UN);
+                fclose($fp);
+
+                return $data;
+            }
+        }
 
         // Record history
         $data['history'][] = [

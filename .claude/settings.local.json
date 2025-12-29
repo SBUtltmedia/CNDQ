@@ -56,7 +56,26 @@
       "Bash(cmd /c \"del /F /Q \\\\\\\\?\\\\C:\\\\Users\\\\pauls\\\\Herd\\\\CNDQ\\\\nul\")",
       "Bash(powershell -Command \"Remove-Item -LiteralPath ''\\\\?\\\\C:\\\\Users\\\\pauls\\\\Herd\\\\CNDQ\\\\nul'' -Force\")",
       "Bash(cmd /c \"attrib -r -s -h nul && del /F /Q nul\")",
-      "Bash(node test/test-duplicate-ads.js:*)"
+      "Bash(node test/test-duplicate-ads.js:*)",
+      "Bash(brew install:*)",
+      "Bash(composer --version:*)",
+      "Bash(composer global require:*)",
+      "Bash(echo:*)",
+      "Bash(~/.zshrc)",
+      "Bash(source ~/.zshrc)",
+      "Bash($HOME/.composer/vendor/bin/valet install)",
+      "Bash(cp:*)",
+      "Bash(chmod:*)",
+      "Bash($HOME/.composer/vendor/bin/valet link:*)",
+      "Bash(brew services:*)",
+      "Bash($HOME/.composer/vendor/bin/valet links:*)",
+      "Bash(node tests/run-tests.js:*)",
+      "Bash(node tests/accessibility.js:*)",
+      "Bash(node /tmp/check-close-button.js:*)",
+      "Bash(node check-close-button.js:*)",
+      "Bash(node /tmp/analyze-contrast.js:*)",
+      "Bash(node analyze-contrast.js:*)",
+      "Bash(node analyze-contrast-report.js:*)"
     ]
   }
 }

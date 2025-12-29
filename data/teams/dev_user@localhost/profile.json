@@ -1,10 +1,10 @@
 {
     "email": "dev_user@localhost",
     "teamName": "Strong Leopard",
-    "startingFunds": 6347.43,
-    "currentFunds": 6347.580000000004,
+    "startingFunds": 6144,
+    "currentFunds": 6144,
     "createdAt": 1766864084,
-    "lastActive": 1766969549,
+    "lastActive": 1767032046,
     "settings": [],
-    "lastModified": 1766973655
+    "lastModified": 1767032051
 }
