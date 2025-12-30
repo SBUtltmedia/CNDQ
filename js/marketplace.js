@@ -1074,7 +1074,7 @@ class MarketplaceApp {
         try {
             const data = await api.team.getSettings();
             this.settings = data.settings;
-            this.updateSettingsUI();
+            // Settings UI update not needed for marketplace view
         } catch (error) {
             console.error('Failed to load settings:', error);
         }
