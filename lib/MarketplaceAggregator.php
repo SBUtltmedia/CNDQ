@@ -75,6 +75,11 @@ class MarketplaceAggregator {
                 $storage = new TeamStorage($teamInfo['email']);
                 $offerData = $storage->getOffersMade();
 
+                // Check if offers key exists and is an array
+                if (!isset($offerData['offers']) || !is_array($offerData['offers'])) {
+                    continue;
+                }
+
                 foreach ($offerData['offers'] as $offer) {
                     // Only include active offers
                     if ($offer['status'] !== 'active') {
@@ -114,6 +119,11 @@ class MarketplaceAggregator {
             try {
                 $storage = new TeamStorage($teamInfo['email']);
                 $buyOrderData = $storage->getBuyOrders();
+
+                // Check if interests key exists and is an array
+                if (!isset($buyOrderData['interests']) || !is_array($buyOrderData['interests'])) {
+                    continue;
+                }
 
                 foreach ($buyOrderData['interests'] as $buyOrder) {
                     // Only include active buy orders

@@ -1,3 +1,47 @@
 {
-    "notifications": []
+    "notifications": [
+        {
+            "type": "trade_completed",
+            "message": "Bought 59.25 gallons of N from Shaky Walrus for $853.20",
+            "details": {
+                "transactionId": "trade_1767115952_54039a5f",
+                "chemical": "N",
+                "quantity": 59.25,
+                "totalAmount": 853.2,
+                "counterparty": "npc_69540901ddf47@system"
+            },
+            "id": "notif_1767115952_d3958e2c",
+            "timestamp": 1767115952,
+            "read": false
+        },
+        {
+            "type": "trade_completed",
+            "message": "Bought 35.55 gallons of N from Shaky Walrus for $511.92",
+            "details": {
+                "transactionId": "trade_1767115952_dbb65894",
+                "chemical": "N",
+                "quantity": 35.550000000000004,
+                "totalAmount": 511.9200000000001,
+                "counterparty": "npc_69540901ddf47@system"
+            },
+            "id": "notif_1767115952_07e2e961",
+            "timestamp": 1767115952,
+            "read": false
+        },
+        {
+            "type": "trade_completed",
+            "message": "Bought 44.25 gallons of D from Shaky Walrus for $454.89",
+            "details": {
+                "transactionId": "trade_1767115952_5a9a2dcf",
+                "chemical": "D",
+                "quantity": 44.25,
+                "totalAmount": 454.89,
+                "counterparty": "npc_69540901ddf47@system"
+            },
+            "id": "notif_1767115952_f2c20f31",
+            "timestamp": 1767115952,
+            "read": false
+        }
+    ],
+    "lastModified": 1767115952
 }

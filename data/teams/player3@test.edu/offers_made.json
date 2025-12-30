@@ -8,8 +8,9 @@
             "id": "offer_1766814131_f084c11a",
             "sellerId": "player3@test.edu",
             "createdAt": 1766814131,
-            "status": "active"
+            "status": "completed",
+            "updatedAt": 1767115958
         }
     ],
-    "lastModified": 1766814131
+    "lastModified": 1767115958
 }

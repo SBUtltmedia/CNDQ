@@ -1,0 +1,536 @@
+<?php
+/**
+ * NPC Manager - Central orchestrator for NPC operations
+ *
+ * Manages NPC configuration, trading cycles, and prevents NPC-to-NPC trading
+ */
+
+require_once __DIR__ . '/TeamStorage.php';
+require_once __DIR__ . '/TeamNameGenerator.php';
+require_once __DIR__ . '/MarketplaceAggregator.php';
+require_once __DIR__ . '/SessionManager.php';
+
+class NPCManager
+{
+    private $configFile;
+
+    public function __construct()
+    {
+        $this->configFile = __DIR__ . '/../data/npc_config.json';
+    }
+
+    /**
+     * Check if NPC system is enabled globally
+     */
+    public function isEnabled()
+    {
+        if (!file_exists($this->configFile)) {
+            return false;
+        }
+
+        $config = $this->loadConfig();
+        return $config['enabled'] ?? false;
+    }
+
+    /**
+     * Check if an email belongs to an NPC
+     */
+    public function isNPC($email)
+    {
+        return strpos($email, 'npc_') === 0;
+    }
+
+    /**
+     * Check if two parties can trade (prevents NPC-to-NPC trading)
+     */
+    public function canTradeWith($email1, $email2)
+    {
+        if ($this->isNPC($email1) && $this->isNPC($email2)) {
+            return false; // Block NPC-to-NPC trades
+        }
+        return true;
+    }
+
+    /**
+     * Load NPC configuration from JSON file
+     */
+    public function loadConfig()
+    {
+        if (!file_exists($this->configFile)) {
+            return $this->getDefaultConfig();
+        }
+
+        $content = file_get_contents($this->configFile);
+        $config = json_decode($content, true);
+
+        if ($config === null) {
+            error_log("Failed to parse NPC config JSON");
+            return $this->getDefaultConfig();
+        }
+
+        return $config;
+    }
+
+    /**
+     * Save NPC configuration to JSON file with atomic write
+     */
+    public function saveConfig($config)
+    {
+        $dir = dirname($this->configFile);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        $json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        // Atomic write using temp file + rename
+        $tempFile = $this->configFile . '.tmp';
+        file_put_contents($tempFile, $json);
+        rename($tempFile, $this->configFile);
+
+        return true;
+    }
+
+    /**
+     * Get default configuration structure
+     */
+    private function getDefaultConfig()
+    {
+        return [
+            'enabled' => false,
+            'npcs' => []
+        ];
+    }
+
+    /**
+     * Create new NPC(s)
+     *
+     * @param string $skillLevel beginner, novice, or expert
+     * @param int $count Number of NPCs to create
+     * @return array Created NPC IDs
+     */
+    public function createNPCs($skillLevel, $count = 1)
+    {
+        if (!in_array($skillLevel, ['beginner', 'novice', 'expert'])) {
+            throw new Exception("Invalid skill level: $skillLevel");
+        }
+
+        if ($count < 1 || $count > 10) {
+            throw new Exception("Count must be between 1 and 10");
+        }
+
+        $config = $this->loadConfig();
+        $createdIds = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            // Generate unique NPC ID
+            $npcId = 'npc_' . uniqid();
+            $email = $npcId . '@system';
+
+            // Generate humorous name based on skill level
+            $teamName = TeamNameGenerator::generateNPCName($skillLevel);
+
+            // Ensure name is unique among all NPCs
+            $existingNames = array_column($config['npcs'], 'teamName');
+            $teamName = TeamNameGenerator::generateUnique($email, $existingNames, $skillLevel);
+
+            // Create team directory and initialize via TeamStorage
+            $storage = new TeamStorage($email);
+
+            // Update profile with generated name
+            $storage->updateProfile(function($profile) use ($teamName) {
+                $profile['teamName'] = $teamName;
+                return $profile;
+            });
+
+            // Add to NPC config
+            $npc = [
+                'id' => $npcId,
+                'email' => $email,
+                'teamName' => $teamName,
+                'skillLevel' => $skillLevel,
+                'active' => true,
+                'createdAt' => time(),
+                'tradeThresholds' => [
+                    'lowInventory' => 300,
+                    'excessInventory' => 1800
+                ],
+                'stats' => [
+                    'totalTrades' => 0,
+                    'totalProfit' => 0,
+                    'lastTradeAt' => 0
+                ]
+            ];
+
+            $config['npcs'][] = $npc;
+            $createdIds[] = $npcId;
+        }
+
+        $this->saveConfig($config);
+
+        return $createdIds;
+    }
+
+    /**
+     * Delete an NPC
+     *
+     * @param string $npcId NPC ID to delete
+     * @param bool $deleteTeamData Whether to delete team directory (default: false)
+     */
+    public function deleteNPC($npcId, $deleteTeamData = false)
+    {
+        $config = $this->loadConfig();
+
+        // Find NPC
+        $npcIndex = null;
+        $npcEmail = null;
+        foreach ($config['npcs'] as $index => $npc) {
+            if ($npc['id'] === $npcId) {
+                $npcIndex = $index;
+                $npcEmail = $npc['email'];
+                break;
+            }
+        }
+
+        if ($npcIndex === null) {
+            throw new Exception("NPC not found: $npcId");
+        }
+
+        // Remove from config
+        array_splice($config['npcs'], $npcIndex, 1);
+        $this->saveConfig($config);
+
+        // Optionally delete team directory
+        if ($deleteTeamData && $npcEmail) {
+            $teamDir = __DIR__ . '/../data/teams/' . TeamStorage::sanitizeEmail($npcEmail);
+            if (is_dir($teamDir)) {
+                $this->deleteDirectory($teamDir);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Toggle NPC active state
+     */
+    public function toggleNPC($npcId, $active)
+    {
+        $config = $this->loadConfig();
+
+        foreach ($config['npcs'] as &$npc) {
+            if ($npc['id'] === $npcId) {
+                $npc['active'] = (bool)$active;
+                $this->saveConfig($config);
+                return true;
+            }
+        }
+
+        throw new Exception("NPC not found: $npcId");
+    }
+
+    /**
+     * Toggle global NPC system
+     */
+    public function toggleSystem($enabled)
+    {
+        $config = $this->loadConfig();
+        $config['enabled'] = (bool)$enabled;
+        $this->saveConfig($config);
+        return true;
+    }
+
+    /**
+     * Get all NPCs with their stats
+     */
+    public function listNPCs()
+    {
+        $config = $this->loadConfig();
+
+        // Enrich with current team data
+        foreach ($config['npcs'] as &$npc) {
+            try {
+                $storage = new TeamStorage($npc['email']);
+                $profile = $storage->getProfile();
+                $inventory = $storage->getInventory();
+
+                $npc['currentFunds'] = $profile['currentFunds'] ?? 0;
+                $npc['inventory'] = $inventory;
+            } catch (Exception $e) {
+                error_log("Failed to load NPC data for {$npc['email']}: " . $e->getMessage());
+            }
+        }
+
+        return [
+            'enabled' => $config['enabled'],
+            'npcs' => $config['npcs']
+        ];
+    }
+
+    /**
+     * Update NPC stats after a trade
+     */
+    public function updateNPCStats($npcId, $profit)
+    {
+        $config = $this->loadConfig();
+
+        foreach ($config['npcs'] as &$npc) {
+            if ($npc['id'] === $npcId) {
+                $npc['stats']['totalTrades']++;
+                $npc['stats']['totalProfit'] += $profit;
+                $npc['stats']['lastTradeAt'] = time();
+                $this->saveConfig($config);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Run trading cycle for all active NPCs
+     * Called by SessionManager during trading phase
+     *
+     * NOTE: This method assumes it's only called during trading phase.
+     * SessionManager handles the phase check before calling this.
+     */
+    public function runTradingCycle($currentSession = null)
+    {
+        if (!$this->isEnabled()) {
+            return;
+        }
+
+        // Get session from data/session_state.json directly without calling getState()
+        if ($currentSession === null) {
+            $sessionFile = __DIR__ . '/../data/session_state.json';
+            if (file_exists($sessionFile)) {
+                $sessionData = json_decode(file_get_contents($sessionFile), true);
+                $currentSession = $sessionData['currentSession'] ?? 1;
+            } else {
+                $currentSession = 1;
+            }
+        }
+
+        $config = $this->loadConfig();
+
+        foreach ($config['npcs'] as $npc) {
+            if (!$npc['active']) {
+                continue;
+            }
+
+            try {
+                $this->runNPCTrade($npc, $currentSession);
+            } catch (Exception $e) {
+                error_log("NPC trading error for {$npc['email']}: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Run trading logic for a single NPC
+     */
+    private function runNPCTrade($npc, $currentSession = null)
+    {
+        // Load appropriate strategy based on skill level
+        $strategyClass = $this->getStrategyClass($npc['skillLevel']);
+
+        if (!class_exists($strategyClass)) {
+            require_once $this->getStrategyFile($npc['skillLevel']);
+        }
+
+        $storage = new TeamStorage($npc['email']);
+        $strategy = new $strategyClass($storage, $npc, $this);
+
+        // Decide what trade action to take
+        $action = $strategy->decideTrade();
+
+        if ($action) {
+            $this->executeNPCAction($npc, $action, $currentSession);
+        }
+    }
+
+    /**
+     * Get strategy class name for skill level
+     */
+    private function getStrategyClass($skillLevel)
+    {
+        $classMap = [
+            'beginner' => 'BeginnerStrategy',
+            'novice' => 'NoviceStrategy',
+            'expert' => 'ExpertStrategy'
+        ];
+
+        return $classMap[$skillLevel] ?? 'BeginnerStrategy';
+    }
+
+    /**
+     * Get strategy file path for skill level
+     */
+    private function getStrategyFile($skillLevel)
+    {
+        $classMap = [
+            'beginner' => __DIR__ . '/strategies/BeginnerStrategy.php',
+            'novice' => __DIR__ . '/strategies/NoviceStrategy.php',
+            'expert' => __DIR__ . '/strategies/ExpertStrategy.php'
+        ];
+
+        return $classMap[$skillLevel] ?? __DIR__ . '/strategies/BeginnerStrategy.php';
+    }
+
+    /**
+     * Execute NPC trade action
+     */
+    private function executeNPCAction($npc, $action, $currentSession = 1)
+    {
+        if (!$action || !isset($action['type'])) {
+            return;
+        }
+
+        require_once __DIR__ . '/TradeExecutor.php';
+        require_once __DIR__ . '/MarketplaceAggregator.php';
+
+        try {
+            $storage = new TeamStorage($npc['email']);
+
+            switch ($action['type']) {
+                case 'accept_offer':
+                    // NPC is buyer, accepting a sell offer
+                    $this->executeAcceptOffer($npc, $action, $storage);
+                    break;
+
+                case 'create_buy_order':
+                    // NPC is posting a buy order
+                    $this->executeCreateBuyOrder($npc, $action, $storage, $currentSession);
+                    break;
+
+                case 'accept_buy_order':
+                    // NPC is seller, accepting a buy order
+                    $this->executeAcceptBuyOrder($npc, $action, $storage);
+                    break;
+
+                case 'create_sell_offer':
+                    // NPC is posting a sell offer
+                    $this->executeCreateSellOffer($npc, $action, $storage);
+                    break;
+
+                default:
+                    error_log("Unknown NPC action type: {$action['type']}");
+            }
+
+        } catch (Exception $e) {
+            error_log("Failed to execute NPC action for {$npc['email']}: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Execute accept_offer action (NPC buying)
+     */
+    private function executeAcceptOffer($npc, $action, $storage)
+    {
+        // Verify seller is not an NPC
+        if (!$this->canTradeWith($npc['email'], $action['sellerId'])) {
+            error_log("Blocked NPC-to-NPC trade attempt: {$npc['email']} -> {$action['sellerId']}");
+            return;
+        }
+
+        $executor = new TradeExecutor();
+        $result = $executor->executeTrade(
+            $action['sellerId'],    // seller
+            $npc['email'],          // buyer (NPC)
+            $action['chemical'],
+            $action['quantity'],
+            $action['price'],
+            $action['offerId'] ?? null
+        );
+
+        if ($result['success']) {
+            // Calculate profit (negative for buying)
+            $cost = $action['quantity'] * $action['price'];
+            $this->updateNPCStats($npc['id'], -$cost);
+
+            error_log("NPC {$npc['teamName']} bought {$action['quantity']} gal of {$action['chemical']} at \${$action['price']}/gal");
+        }
+    }
+
+    /**
+     * Execute create_buy_order action (NPC posting buy order)
+     */
+    private function executeCreateBuyOrder($npc, $action, $storage, $currentSession = 1)
+    {
+        $buyOrderData = [
+            'chemical' => $action['chemical'],
+            'quantity' => $action['quantity'],
+            'maxPrice' => $action['maxPrice'],
+            'sessionNumber' => $currentSession
+        ];
+
+        $storage->addBuyOrder($buyOrderData);
+
+        error_log("NPC {$npc['teamName']} posted buy order: {$action['quantity']} gal of {$action['chemical']} at \${$action['maxPrice']}/gal max");
+    }
+
+    /**
+     * Execute accept_buy_order action (NPC selling)
+     */
+    private function executeAcceptBuyOrder($npc, $action, $storage)
+    {
+        // Verify buyer is not an NPC
+        if (!$this->canTradeWith($npc['email'], $action['buyerId'])) {
+            error_log("Blocked NPC-to-NPC trade attempt: {$npc['email']} -> {$action['buyerId']}");
+            return;
+        }
+
+        $executor = new TradeExecutor();
+        $result = $executor->executeTrade(
+            $npc['email'],          // seller (NPC)
+            $action['buyerId'],     // buyer
+            $action['chemical'],
+            $action['quantity'],
+            $action['price'],
+            $action['buyOrderId'] ?? null
+        );
+
+        if ($result['success']) {
+            // Calculate profit (positive for selling)
+            $revenue = $action['quantity'] * $action['price'];
+            $this->updateNPCStats($npc['id'], $revenue);
+
+            error_log("NPC {$npc['teamName']} sold {$action['quantity']} gal of {$action['chemical']} at \${$action['price']}/gal");
+        }
+    }
+
+    /**
+     * Execute create_sell_offer action (NPC posting sell offer)
+     */
+    private function executeCreateSellOffer($npc, $action, $storage)
+    {
+        $offerData = [
+            'chemical' => $action['chemical'],
+            'quantity' => $action['quantity'],
+            'minPrice' => $action['minPrice'],
+            'type' => 'sell'
+        ];
+
+        $storage->addOffer($offerData);
+
+        error_log("NPC {$npc['teamName']} posted sell offer: {$action['quantity']} gal of {$action['chemical']} at \${$action['minPrice']}/gal min");
+    }
+
+    /**
+     * Recursively delete directory
+     */
+    private function deleteDirectory($dir)
+    {
+        if (!is_dir($dir)) {
+            return false;
+        }
+
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            $path = $dir . '/' . $file;
+            is_dir($path) ? $this->deleteDirectory($path) : unlink($path);
+        }
+
+        return rmdir($dir);
+    }
+}

@@ -1,3 +1,57 @@
 {
-    "transactions": []
+    "transactions": [
+        {
+            "transactionId": "trade_1767115952_87029fa4",
+            "role": "buyer",
+            "chemical": "D",
+            "quantity": 100,
+            "pricePerGallon": 10.28,
+            "totalAmount": 1028,
+            "counterparty": "npc_69540901ddf47@system",
+            "counterpartyName": "Shaky Walrus",
+            "offerId": "buy_1767032056_68a7cc43",
+            "id": "txn_1767115952_61fe7fe0",
+            "timestamp": 1767115952
+        },
+        {
+            "transactionId": "trade_1767115952_ecd46f7c",
+            "role": "buyer",
+            "chemical": "D",
+            "quantity": 73.75,
+            "pricePerGallon": 10.28,
+            "totalAmount": 758.15,
+            "counterparty": "npc_69540901ddf47@system",
+            "counterpartyName": "Shaky Walrus",
+            "offerId": "buy_1767032122_1cce64ff",
+            "id": "txn_1767115952_7571adb3",
+            "timestamp": 1767115952
+        },
+        {
+            "transactionId": "trade_1767115952_122898a5",
+            "role": "buyer",
+            "chemical": "C",
+            "quantity": 40,
+            "pricePerGallon": 4.8,
+            "totalAmount": 192,
+            "counterparty": "npc_69540901ddf47@system",
+            "counterpartyName": "Shaky Walrus",
+            "offerId": "buy_1767031604_0fc2e170",
+            "id": "txn_1767115952_1a2cabc6",
+            "timestamp": 1767115952
+        },
+        {
+            "transactionId": "trade_1767115953_3731c1bf",
+            "role": "buyer",
+            "chemical": "C",
+            "quantity": 24,
+            "pricePerGallon": 4,
+            "totalAmount": 96,
+            "counterparty": "npc_69540901ddf47@system",
+            "counterpartyName": "Shaky Walrus",
+            "offerId": "buy_1767030832_0230219f",
+            "id": "txn_1767115953_d159e58a",
+            "timestamp": 1767115953
+        }
+    ],
+    "lastModified": 1767115953
 }

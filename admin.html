@@ -140,10 +140,65 @@
         </div>
 
         <!-- Team Overview -->
-        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
             <h2 class="text-xl font-bold mb-4">Team Overview</h2>
             <div id="team-list" class="space-y-2">
                 <p class="text-gray-300">Loading teams...</p>
+            </div>
+        </div>
+
+        <!-- NPC Management -->
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">NPC Management</h2>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <span class="text-sm text-gray-300">Enable NPCs</span>
+                    <input type="checkbox" id="npc-system-enabled" onchange="toggleNPCSystem()" class="w-5 h-5 rounded">
+                </label>
+            </div>
+
+            <!-- NPC Stats Dashboard -->
+            <div class="grid grid-cols-4 gap-4 mb-6" id="npc-stats">
+                <div class="bg-gray-700 p-4 rounded">
+                    <div class="text-gray-300 text-sm">Total NPCs</div>
+                    <div class="text-2xl font-bold text-purple-400" id="npc-total">0</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded">
+                    <div class="text-gray-300 text-sm">Active NPCs</div>
+                    <div class="text-2xl font-bold text-green-400" id="npc-active">0</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded">
+                    <div class="text-gray-300 text-sm">Total Trades</div>
+                    <div class="text-2xl font-bold text-blue-400" id="npc-trades">0</div>
+                </div>
+                <div class="bg-gray-700 p-4 rounded">
+                    <div class="text-gray-300 text-sm">Net Profit</div>
+                    <div class="text-2xl font-bold text-yellow-400" id="npc-profit">$0</div>
+                </div>
+            </div>
+
+            <!-- Add NPC Form -->
+            <div class="bg-gray-700 p-4 rounded mb-6">
+                <h3 class="font-bold mb-3 text-purple-300">Add New NPC</h3>
+                <div class="flex gap-3">
+                    <select id="npc-skill-level" class="bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white flex-1">
+                        <option value="beginner">Beginner (Random trades, safety limits)</option>
+                        <option value="novice">Novice (Threshold-based, methodical)</option>
+                        <option value="expert">Expert (Shadow price-based, strategic)</option>
+                    </select>
+                    <input type="number" id="npc-count" value="1" min="1" max="10" class="bg-gray-600 border border-gray-500 rounded px-4 py-2 w-20 text-white text-center">
+                    <button onclick="createNPC()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded font-bold transition">
+                        Add NPC
+                    </button>
+                </div>
+            </div>
+
+            <!-- NPC List -->
+            <div>
+                <h3 class="font-bold mb-3 text-purple-300">NPC Teams</h3>
+                <div id="npc-list" class="space-y-2">
+                    <p class="text-gray-400 text-sm">Loading NPCs...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -472,9 +527,184 @@
             }
         }
 
+        // ========== NPC Management Functions ==========
+
+        async function loadNPCs() {
+            try {
+                const response = await fetch('/api/admin/npc/list.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update system toggle
+                    document.getElementById('npc-system-enabled').checked = data.enabled;
+
+                    // Update stats
+                    const npcs = data.npcs || [];
+                    const activeNPCs = npcs.filter(n => n.active).length;
+                    const totalTrades = npcs.reduce((sum, n) => sum + (n.stats?.totalTrades || 0), 0);
+                    const totalProfit = npcs.reduce((sum, n) => sum + (n.stats?.totalProfit || 0), 0);
+
+                    document.getElementById('npc-total').textContent = npcs.length;
+                    document.getElementById('npc-active').textContent = activeNPCs;
+                    document.getElementById('npc-trades').textContent = totalTrades;
+                    document.getElementById('npc-profit').textContent = '$' + totalProfit.toFixed(2);
+
+                    // Render NPC list
+                    const npcListEl = document.getElementById('npc-list');
+                    if (npcs.length === 0) {
+                        npcListEl.innerHTML = '<p class="text-gray-400 text-sm">No NPCs created yet. Use the form above to add NPCs.</p>';
+                    } else {
+                        npcListEl.innerHTML = npcs.map(npc => `
+                            <div class="bg-gray-700 p-4 rounded flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <span class="font-bold text-lg">${npc.teamName}</span>
+                                        <span class="text-xs px-2 py-1 rounded ${
+                                            npc.skillLevel === 'beginner' ? 'bg-gray-600 text-gray-300' :
+                                            npc.skillLevel === 'novice' ? 'bg-blue-600 text-white' :
+                                            'bg-purple-600 text-white'
+                                        }">${npc.skillLevel.toUpperCase()}</span>
+                                        <span class="text-xs px-2 py-1 rounded ${npc.active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}">
+                                            ${npc.active ? 'ACTIVE' : 'INACTIVE'}
+                                        </span>
+                                    </div>
+                                    <div class="text-sm text-gray-300 flex gap-4">
+                                        <span>Funds: $${((npc.currentFunds || 0)).toFixed(2)}</span>
+                                        <span>Trades: ${npc.stats?.totalTrades || 0}</span>
+                                        <span>Profit: $${((npc.stats?.totalProfit || 0)).toFixed(2)}</span>
+                                    </div>
+                                    <div class="text-xs text-gray-400 mt-1">
+                                        Inventory: C=${Math.round(npc.inventory?.C || 0)} N=${Math.round(npc.inventory?.N || 0)}
+                                        D=${Math.round(npc.inventory?.D || 0)} Q=${Math.round(npc.inventory?.Q || 0)}
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleNPC('${npc.id}', ${!npc.active})"
+                                            class="px-4 py-2 rounded font-bold transition ${
+                                                npc.active ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'
+                                            }">
+                                        ${npc.active ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                    <button onclick="deleteNPC('${npc.id}')"
+                                            class="px-4 py-2 rounded font-bold transition bg-red-600 hover:bg-red-700">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load NPCs:', error);
+                document.getElementById('npc-list').innerHTML = '<p class="text-red-400 text-sm">Failed to load NPCs</p>';
+            }
+        }
+
+        async function toggleNPCSystem() {
+            const enabled = document.getElementById('npc-system-enabled').checked;
+
+            try {
+                const response = await fetch('/api/admin/npc/toggle-system.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('NPC system ' + (enabled ? 'enabled' : 'disabled'));
+                    await loadNPCs();
+                } else {
+                    showToast('Failed to toggle NPC system', 'error');
+                    // Revert checkbox
+                    document.getElementById('npc-system-enabled').checked = !enabled;
+                }
+            } catch (error) {
+                showToast('Failed to toggle NPC system', 'error');
+                document.getElementById('npc-system-enabled').checked = !enabled;
+            }
+        }
+
+        async function createNPC() {
+            const skillLevel = document.getElementById('npc-skill-level').value;
+            const count = parseInt(document.getElementById('npc-count').value);
+
+            if (count < 1 || count > 10) {
+                showToast('Count must be between 1 and 10', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/npc/create.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ skillLevel, count })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Created ${count} ${skillLevel} NPC(s)`);
+                    await loadNPCs();
+                } else {
+                    showToast('Failed to create NPC: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showToast('Failed to create NPC', 'error');
+            }
+        }
+
+        async function toggleNPC(npcId, active) {
+            try {
+                const response = await fetch('/api/admin/npc/toggle.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ npcId, active })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('NPC ' + (active ? 'activated' : 'deactivated'));
+                    await loadNPCs();
+                } else {
+                    showToast('Failed to toggle NPC', 'error');
+                }
+            } catch (error) {
+                showToast('Failed to toggle NPC', 'error');
+            }
+        }
+
+        async function deleteNPC(npcId) {
+            const confirmed = await showConfirm(
+                'Delete this NPC? This will remove it from the config but keep its team data. You can optionally delete team data in the confirmation.',
+                'Delete NPC'
+            );
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/admin/npc/delete.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ npcId, deleteTeamData: false })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('NPC deleted');
+                    await loadNPCs();
+                } else {
+                    showToast('Failed to delete NPC: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showToast('Failed to delete NPC', 'error');
+            }
+        }
+
+        // ========== End NPC Management Functions ==========
+
         // Initialize
         loadSessionState();
         loadTeams();
+        loadNPCs(); // Load NPCs on page load
 
         // Auto-refresh every 3 seconds
         setInterval(() => {
@@ -486,6 +716,7 @@
         }, 1000);
 
         setInterval(loadTeams, 5000);
+        setInterval(loadNPCs, 5000); // Refresh NPCs every 5 seconds
     </script>
 </body>
 </html>

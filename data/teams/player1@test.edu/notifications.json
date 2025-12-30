@@ -1,3 +1,19 @@
 {
-    "notifications": []
+    "notifications": [
+        {
+            "type": "trade_completed",
+            "message": "Bought 14.4 gallons of C from Shaky Walrus for $43.20",
+            "details": {
+                "transactionId": "trade_1767115953_27835a32",
+                "chemical": "C",
+                "quantity": 14.4,
+                "totalAmount": 43.2,
+                "counterparty": "npc_69540901ddf47@system"
+            },
+            "id": "notif_1767115953_c7e4c8ae",
+            "timestamp": 1767115953,
+            "read": false
+        }
+    ],
+    "lastModified": 1767115953
 }

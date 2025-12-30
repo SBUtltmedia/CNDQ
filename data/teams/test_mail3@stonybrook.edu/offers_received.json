@@ -1,35 +1,4 @@
 {
-    "interests": [
-        {
-            "chemical": "D",
-            "quantity": 100,
-            "maxPrice": 10.28,
-            "id": "buy_1767031618_36974c8f",
-            "buyerId": "test_mail3@stonybrook.edu",
-            "createdAt": 1767031618,
-            "status": "active",
-            "type": "buy"
-        },
-        {
-            "chemical": "D",
-            "quantity": 100,
-            "maxPrice": 10.28,
-            "id": "buy_1767032069_9c370388",
-            "buyerId": "test_mail3@stonybrook.edu",
-            "createdAt": 1767032069,
-            "status": "active",
-            "type": "buy"
-        },
-        {
-            "chemical": "D",
-            "quantity": 100,
-            "maxPrice": 10.28,
-            "id": "buy_1767032134_cbaa16ee",
-            "buyerId": "test_mail3@stonybrook.edu",
-            "createdAt": 1767032134,
-            "status": "active",
-            "type": "buy"
-        }
-    ],
-    "lastModified": 1767032134
+    "interests": [],
+    "lastModified": 1767115952
 }

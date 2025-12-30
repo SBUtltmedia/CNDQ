@@ -68,6 +68,43 @@ class SessionManager {
             $elapsed = time() - $data['phaseStartedAt'];
             $data['timeRemaining'] = max(0, $data['tradingDuration'] - $elapsed);
 
+            // Run NPC trading cycle every 10 seconds (if enabled and auto-advance is on)
+            if ($data['autoAdvance']) {
+                $npcLastRun = $data['npcLastRun'] ?? 0;
+                $timeSinceNPCRun = time() - $npcLastRun;
+
+                if ($timeSinceNPCRun >= 10) {
+                    // Check if NPC system is enabled
+                    require_once __DIR__ . '/NPCManager.php';
+                    $npcManager = new NPCManager();
+
+                    if ($npcManager->isEnabled()) {
+                        try {
+                            $npcManager->runTradingCycle();
+
+                            // Update npcLastRun timestamp
+                            $fp = fopen($this->sessionFile, 'c+');
+                            if ($fp && flock($fp, LOCK_EX)) {
+                                $tempData = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
+                                $tempData['npcLastRun'] = time();
+
+                                ftruncate($fp, 0);
+                                rewind($fp);
+                                fwrite($fp, json_encode($tempData, JSON_PRETTY_PRINT));
+                                fflush($fp);
+                                flock($fp, LOCK_UN);
+                                fclose($fp);
+
+                                // Update local data to reflect change
+                                $data['npcLastRun'] = $tempData['npcLastRun'];
+                            }
+                        } catch (Exception $e) {
+                            error_log("NPC trading cycle error: " . $e->getMessage());
+                        }
+                    }
+                }
+            }
+
             // Auto-advance if time expired and auto-advance is enabled
             if ($data['autoAdvance'] && $data['timeRemaining'] === 0) {
                 return $this->advancePhase();

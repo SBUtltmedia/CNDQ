@@ -1,3 +1,61 @@
 {
-    "notifications": []
+    "notifications": [
+        {
+            "type": "trade_completed",
+            "message": "Bought 100 gallons of D from Shaky Walrus for $1,028.00",
+            "details": {
+                "transactionId": "trade_1767115952_87029fa4",
+                "chemical": "D",
+                "quantity": 100,
+                "totalAmount": 1028,
+                "counterparty": "npc_69540901ddf47@system"
+            },
+            "id": "notif_1767115952_f7135c00",
+            "timestamp": 1767115952,
+            "read": false
+        },
+        {
+            "type": "trade_completed",
+            "message": "Bought 73.75 gallons of D from Shaky Walrus for $758.15",
+            "details": {
+                "transactionId": "trade_1767115952_ecd46f7c",
+                "chemical": "D",
+                "quantity": 73.75,
+                "totalAmount": 758.15,
+                "counterparty": "npc_69540901ddf47@system"
+            },
+            "id": "notif_1767115952_30a34df8",
+            "timestamp": 1767115952,
+            "read": false
+        },
+        {
+            "type": "trade_completed",
+            "message": "Bought 40 gallons of C from Shaky Walrus for $192.00",
+            "details": {
+                "transactionId": "trade_1767115952_122898a5",
+                "chemical": "C",
+                "quantity": 40,
+                "totalAmount": 192,
+                "counterparty": "npc_69540901ddf47@system"
+            },
+            "id": "notif_1767115952_70f4e487",
+            "timestamp": 1767115952,
+            "read": false
+        },
+        {
+            "type": "trade_completed",
+            "message": "Bought 24 gallons of C from Shaky Walrus for $96.00",
+            "details": {
+                "transactionId": "trade_1767115953_3731c1bf",
+                "chemical": "C",
+                "quantity": 24,
+                "totalAmount": 96,
+                "counterparty": "npc_69540901ddf47@system"
+            },
+            "id": "notif_1767115953_823f46e1",
+            "timestamp": 1767115953,
+            "read": false
+        }
+    ],
+    "lastModified": 1767115953
 }
