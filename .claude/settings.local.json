@@ -75,7 +75,8 @@
       "Bash(node check-close-button.js:*)",
       "Bash(node /tmp/analyze-contrast.js:*)",
       "Bash(node analyze-contrast.js:*)",
-      "Bash(node analyze-contrast-report.js:*)"
+      "Bash(node analyze-contrast-report.js:*)",
+      "Bash(node test_base_path.js:*)"
     ]
   }
 }
