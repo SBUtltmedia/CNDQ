@@ -1,5 +1,17 @@
 <?php
 
+function isAdmin() {
+    // Admin allowlist - users with special privileges
+    $adminEmails = [
+        'admin@stonybrook.edu',
+        'pstdenis@stonybrook.edu',
+        'instructor1@stonybrook.edu',
+        'instructor2@stonybrook.edu'
+    ];
+
+    $currentEmail = getCurrentUserEmail();
+    return in_array($currentEmail, $adminEmails);
+}
 // Load environment variables for local development (Herd/PHP-FPM doesn't support .htaccess SetEnv)
 if (file_exists(__DIR__ . '/.env')) {
     $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -41,18 +53,6 @@ function getCurrentUserEmail() {
     return 'dev_user@localhost';
 }
 
-function isAdmin() {
-    // Admin allowlist - users with special privileges
-    $adminEmails = [
-        'admin@stonybrook.edu',
-        'instructor@stonybrook.edu',
-        'instructor1@stonybrook.edu',
-        'instructor2@stonybrook.edu'
-    ];
-
-    $currentEmail = getCurrentUserEmail();
-    return in_array($currentEmail, $adminEmails);
-}
 
 function getUserDataFilePath() {
     $email = getCurrentUserEmail();
