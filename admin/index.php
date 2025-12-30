@@ -1,10 +1,52 @@
+<?php
+/**
+ * Admin Dashboard - Access Control
+ * Only authorized administrators can access this page
+ */
+
+require_once __DIR__ . '/../userData.php';
+
+// Check if user is admin
+if (!isAdmin()) {
+    http_response_code(403);
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Access Denied - CNDQ Admin</title>
+        <link rel="stylesheet" href="../css/styles.css">
+    </head>
+    <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-gray-800 rounded-lg p-8 border-2 border-red-600 text-center">
+            <div class="text-6xl mb-4">🚫</div>
+            <h1 class="text-3xl font-bold text-red-400 mb-4">Access Denied</h1>
+            <p class="text-gray-300 mb-6">
+                You do not have permission to access the admin dashboard.
+            </p>
+            <p class="text-sm text-gray-400 mb-6">
+                Current user: <span class="font-mono text-gray-200"><?php echo htmlspecialchars(getCurrentUserEmail()); ?></span>
+            </p>
+            <a href="../" class="inline-block bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
+                Return to Marketplace
+            </a>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+// User is authorized, show admin dashboard
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Admin Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="../css/styles.css">
     <style>
         /* Focus styles */
         *:focus-visible {
@@ -208,7 +250,7 @@
         <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md border-2 border-purple-500 shadow-2xl">
             <h3 class="text-2xl font-bold mb-4 text-purple-400" id="confirm-modal-title">Confirm Action</h3>
             <p class="text-gray-300 mb-6" id="confirm-modal-message">Are you sure you want to proceed?</p>
-            
+
             <div class="flex gap-3">
                 <button id="confirm-modal-yes" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded font-bold transition">Yes, Proceed</button>
                 <button id="confirm-modal-no" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded font-bold transition">Cancel</button>
@@ -222,11 +264,16 @@
 
         // Auto-detect base path for subdirectory deployments
         function getBasePath() {
-            // Get current page path and remove admin.html
+            // Get current page path and remove /admin/index.php or /admin/
             const path = window.location.pathname;
-            const pathParts = path.split('/');
-            pathParts.pop(); // Remove 'admin.html' or empty string
-            return pathParts.join('/') || '';
+            const pathParts = path.split('/').filter(p => p);
+
+            // Remove 'admin' and 'index.php' if present
+            while (pathParts.length > 0 && (pathParts[pathParts.length - 1] === 'admin' || pathParts[pathParts.length - 1].includes('.php'))) {
+                pathParts.pop();
+            }
+
+            return '/' + pathParts.join('/');
         }
 
         // Helper to construct API URLs with correct base path
@@ -234,7 +281,8 @@
             const base = getBasePath();
             // Remove leading slash from endpoint if present
             const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-            return base ? `${base}/${cleanEndpoint}` : `/${cleanEndpoint}`;
+            const fullPath = base === '/' ? `/${cleanEndpoint}` : `${base}/${cleanEndpoint}`;
+            return fullPath;
         }
 
         // Custom Confirm Modal

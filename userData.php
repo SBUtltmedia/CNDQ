@@ -6,7 +6,8 @@ function isAdmin() {
         'admin@stonybrook.edu',
         'pstdenis@stonybrook.edu',
         'instructor1@stonybrook.edu',
-        'instructor2@stonybrook.edu'
+        'instructor2@stonybrook.edu',
+        'dev_user@localhost' // Local development default user
     ];
 
     $currentEmail = getCurrentUserEmail();
