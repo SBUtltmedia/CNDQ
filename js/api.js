@@ -310,8 +310,27 @@ class ApiClient {
     };
 }
 
-// Export singleton instance
-export const api = new ApiClient();
+/**
+ * Auto-detect base path from current script location
+ * Handles deployment in subdirectories (e.g., /cndq/)
+ */
+function getBasePath() {
+    // Get the current script's URL
+    const scriptUrl = new URL(import.meta.url);
+
+    // Remove /js/api.js to get the base path
+    // Example: https://apps.tlt.stonybrook.edu/cndq/js/api.js
+    //       -> https://apps.tlt.stonybrook.edu/cndq
+    const pathParts = scriptUrl.pathname.split('/');
+    pathParts.pop(); // Remove 'api.js'
+    pathParts.pop(); // Remove 'js'
+
+    // Reconstruct base URL (protocol + host + base path)
+    return `${scriptUrl.protocol}//${scriptUrl.host}${pathParts.join('/')}`;
+}
+
+// Export singleton instance with auto-detected base path
+export const api = new ApiClient(getBasePath());
 
 // Also export class for testing/mocking
 export { ApiClient };

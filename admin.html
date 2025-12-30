@@ -220,6 +220,23 @@
         let sessionState = null;
         let updateInterval = null;
 
+        // Auto-detect base path for subdirectory deployments
+        function getBasePath() {
+            // Get current page path and remove admin.html
+            const path = window.location.pathname;
+            const pathParts = path.split('/');
+            pathParts.pop(); // Remove 'admin.html' or empty string
+            return pathParts.join('/') || '';
+        }
+
+        // Helper to construct API URLs with correct base path
+        function apiUrl(endpoint) {
+            const base = getBasePath();
+            // Remove leading slash from endpoint if present
+            const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+            return base ? `${base}/${cleanEndpoint}` : `/${cleanEndpoint}`;
+        }
+
         // Custom Confirm Modal
         function showConfirm(message, title = 'Confirm Action') {
             return new Promise((resolve) => {
@@ -286,7 +303,7 @@
 
         async function loadSessionState() {
             try {
-                const response = await fetch('/api/admin/session.php');
+                const response = await fetch(apiUrl('/api/admin/session.php'));
                 const data = await response.json();
 
                 if (data.success) {
@@ -300,7 +317,7 @@
 
         async function loadTeams() {
             try {
-                const response = await fetch('/api/admin/list-teams.php');
+                const response = await fetch(apiUrl('/api/admin/list-teams.php'));
                 const data = await response.json();
 
                 if (data.teams) {
@@ -372,7 +389,7 @@
 
         async function advancePhase() {
             try {
-                const response = await fetch('/api/admin/session.php', {
+                const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'advance' })
@@ -390,7 +407,7 @@
 
         async function setPhase(phase) {
             try {
-                const response = await fetch('/api/admin/session.php', {
+                const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'setPhase', phase })
@@ -409,7 +426,7 @@
             const enabled = document.getElementById('auto-advance').checked;
 
             try {
-                const response = await fetch('/api/admin/session.php', {
+                const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'setAutoAdvance', enabled })
@@ -428,7 +445,7 @@
             const secs = parseInt(document.getElementById('production-duration-seconds').value) || 5;
 
             try {
-                const response = await fetch('/api/admin/session.php', {
+                const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'setProductionDuration', seconds: secs })
@@ -450,7 +467,7 @@
             const totalSeconds = (minutes * 60) + secs;
 
             try {
-                const response = await fetch('/api/admin/session.php', {
+                const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'setTradingDuration', seconds: totalSeconds })
@@ -473,7 +490,7 @@
             }
 
             try {
-                const response = await fetch('/api/admin/session.php', {
+                const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'reset' })
@@ -508,7 +525,7 @@
             }
 
             try {
-                const response = await fetch('/api/admin/reset-game.php', {
+                const response = await fetch(apiUrl('/api/admin/reset-game.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -531,7 +548,7 @@
 
         async function loadNPCs() {
             try {
-                const response = await fetch('/api/admin/npc/list.php');
+                const response = await fetch(apiUrl('/api/admin/npc/list.php'));
                 const data = await response.json();
 
                 if (data.success) {
@@ -604,7 +621,7 @@
             const enabled = document.getElementById('npc-system-enabled').checked;
 
             try {
-                const response = await fetch('/api/admin/npc/toggle-system.php', {
+                const response = await fetch(apiUrl('/api/admin/npc/toggle-system.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ enabled })
@@ -635,7 +652,7 @@
             }
 
             try {
-                const response = await fetch('/api/admin/npc/create.php', {
+                const response = await fetch(apiUrl('/api/admin/npc/create.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ skillLevel, count })
@@ -655,7 +672,7 @@
 
         async function toggleNPC(npcId, active) {
             try {
-                const response = await fetch('/api/admin/npc/toggle.php', {
+                const response = await fetch(apiUrl('/api/admin/npc/toggle.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ npcId, active })
@@ -681,7 +698,7 @@
             if (!confirmed) return;
 
             try {
-                const response = await fetch('/api/admin/npc/delete.php', {
+                const response = await fetch(apiUrl('/api/admin/npc/delete.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ npcId, deleteTeamData: false })
