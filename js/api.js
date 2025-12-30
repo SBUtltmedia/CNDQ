@@ -19,7 +19,10 @@ class ApiClient {
      * Generic fetch wrapper with error handling
      */
     async request(endpoint, options = {}) {
-        const url = `${this.baseUrl}${endpoint}`;
+        // Ensure baseUrl doesn't end with / and endpoint starts with /
+        const base = this.baseUrl.replace(/\/$/, '');
+        const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        const url = `${base}${path}`;
 
         const defaultOptions = {
             headers: {
