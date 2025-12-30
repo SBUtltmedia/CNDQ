@@ -1,9 +1,0 @@
-{
-    "currentSession": 1,
-    "phase": "trading",
-    "phaseStartedAt": 1767119086,
-    "tradingDuration": 30,
-    "productionDuration": 3,
-    "autoAdvance": false,
-    "npcLastRun": 1767119107
-}
