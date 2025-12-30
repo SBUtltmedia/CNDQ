@@ -73,6 +73,42 @@ try {
             ];
             file_put_contents($inventoryFile, json_encode($resetInventory, JSON_PRETTY_PRINT));
 
+            // Run automatic first production to generate starting capital
+            // This converts initial random inventory into products and sets starting funds
+            $storage = new TeamStorage($profile['email']);
+            require_once __DIR__ . '/../../lib/LPSolver.php';
+
+            $solver = new LPSolver();
+            $result = $solver->solve($resetInventory);
+
+            $deicerGallons = $result['deicer'];
+            $solventGallons = $result['solvent'];
+            $revenue = $result['maxProfit'];
+
+            // Calculate chemicals consumed
+            $consumed = [
+                'C' => $deicerGallons * LPSolver::DEICER_C,
+                'N' => ($deicerGallons * LPSolver::DEICER_N) + ($solventGallons * LPSolver::SOLVENT_N),
+                'D' => ($deicerGallons * LPSolver::DEICER_D) + ($solventGallons * LPSolver::SOLVENT_D),
+                'Q' => $solventGallons * LPSolver::SOLVENT_Q
+            ];
+
+            // Update inventory (subtract consumed chemicals)
+            $finalInventory = [
+                'C' => $resetInventory['C'] - $consumed['C'],
+                'N' => $resetInventory['N'] - $consumed['N'],
+                'D' => $resetInventory['D'] - $consumed['D'],
+                'Q' => $resetInventory['Q'] - $consumed['Q'],
+                'transactionsSinceLastShadowCalc' => 0,
+                'lastModified' => time()
+            ];
+            file_put_contents($inventoryFile, json_encode($finalInventory, JSON_PRETTY_PRINT));
+
+            // Update profile with starting funds from production
+            $resetProfile['startingFunds'] = $revenue;
+            $resetProfile['currentFunds'] = $revenue;
+            file_put_contents($profileFile, json_encode($resetProfile, JSON_PRETTY_PRINT));
+
             // Clear production history
             $productionFile = $teamDir . '/production_history.json';
             $resetProduction = [
