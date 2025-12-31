@@ -15,3 +15,12 @@ com4
 lpt1
 lpt2
 lpt3
+
+accessibility-reports/
+extracted_vba_strings.txt
+vba_extracted.txt
+excel_report.md
+hung.txt
+*.log
+.DS_Store
+Thumbs.db
