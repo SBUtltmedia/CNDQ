@@ -171,13 +171,13 @@ if (!isAdmin()) {
         <!-- Danger Zone -->
         <div class="bg-red-900/20 border-2 border-red-600 rounded-lg p-6 mb-6">
             <h2 class="text-xl font-bold mb-2 text-red-400">⚠️ Danger Zone</h2>
-            <p class="text-gray-300 text-sm mb-4">Irreversible actions that reset ALL game data</p>
+            <p class="text-gray-300 text-sm mb-4">Irreversible action that completely wipes everything</p>
 
             <button onclick="resetGameData()" class="w-full bg-red-700 hover:bg-red-800 px-6 py-4 rounded font-bold transition border-2 border-red-500">
-                🗑️ RESET ALL GAME DATA
+                🗑️ RESET GAME & TEAM DATA
             </button>
             <p class="text-xs text-gray-300 mt-2">
-                Clears all inventories, funds, trades, and advertisements. Teams keep their names and can play again from scratch.
+                <strong>Deletes ALL teams and game data.</strong> Connected players will automatically get new random team names when they refresh.
             </p>
         </div>
 
@@ -556,8 +556,8 @@ if (!isAdmin()) {
 
         async function resetGameData() {
             const confirmed = await showConfirm(
-                'RESET ALL GAME DATA? This will wipe inventories, funds, trades, advertisements, and production history for all teams. Teams will keep their names but everything else will be cleared. This cannot be undone!',
-                '⚠️ DANGER: Reset All Game Data'
+                'RESET GAME & TEAM DATA? This will COMPLETELY DELETE all teams, inventories, funds, trades, and advertisements. Connected players will be assigned NEW random team names when they refresh. This cannot be undone!',
+                '⚠️ DANGER: Delete Everything'
             );
             if (!confirmed) {
                 return;
@@ -565,7 +565,7 @@ if (!isAdmin()) {
 
             // Second confirmation for safety
             const doubleConfirmed = await showConfirm(
-                'Are you ABSOLUTELY sure? This will delete ALL game progress!',
+                'Are you ABSOLUTELY sure? This DELETES ALL TEAMS. Everyone gets a fresh start with new team names!',
                 '⚠️ Final Confirmation'
             );
             if (!doubleConfirmed) {
@@ -580,11 +580,11 @@ if (!isAdmin()) {
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast(`Game reset complete! ${data.teamsReset} teams cleared.`, 'success');
+                    showToast(`Complete reset! ${data.teamsDeleted} teams deleted. Players will get new teams on refresh.`, 'success');
                     await loadSessionState();
                     await loadTeams();
                 } else {
-                    showToast('Failed to reset game: ' + (data.message || 'Unknown error'), 'error');
+                    showToast('Failed to reset: ' + (data.message || 'Unknown error'), 'error');
                 }
             } catch (error) {
                 console.error('Reset error:', error);

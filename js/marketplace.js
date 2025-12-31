@@ -1664,4 +1664,25 @@ class MarketplaceApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new MarketplaceApp();
     window.app.init();
+
+    // Auto-detect if admin deleted teams - reload to get new team
+    setInterval(async () => {
+        try {
+            await api.team.getProfile();
+        } catch (error) {
+            // If team deleted, force reload to create new team
+            console.log('⚠️ Team deleted by admin - reloading to get new team...');
+            window.location.reload();
+        }
+    }, 5000); // Check every 5 seconds
+
+    // Poll session state to trigger NPCs (they run every 10s when trading phase is active)
+    // This ensures NPCs work even when admin panel isn't open
+    setInterval(async () => {
+        try {
+            await api.admin.getSession();
+        } catch (error) {
+            // Silently ignore - user might not be admin, but the call still triggers NPCs server-side
+        }
+    }, 5000); // Poll every 5 seconds
 });

@@ -26,7 +26,7 @@ if (!isAdmin()) {
 
 try {
     $teamsDir = __DIR__ . '/../../data/teams';
-    $resetCount = 0;
+    $deletedCount = 0;
     $errors = [];
 
     if (!is_dir($teamsDir)) {
@@ -35,121 +35,45 @@ try {
 
     $teamDirs = glob($teamsDir . '/*', GLOB_ONLYDIR);
 
+    // Delete all team directories completely
     foreach ($teamDirs as $teamDir) {
         $teamEmail = basename($teamDir);
 
         try {
-            // Read current profile to keep email and teamName
-            $profileFile = $teamDir . '/profile.json';
-            if (!file_exists($profileFile)) {
-                continue;
+            // Recursively delete team directory
+            $files = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($teamDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+
+            foreach ($files as $fileinfo) {
+                $deleteFunc = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
+                $deleteFunc($fileinfo->getRealPath());
             }
 
-            $profile = json_decode(file_get_contents($profileFile), true);
-
-            // Reset profile but keep identity
-            $resetProfile = [
-                'email' => $profile['email'],
-                'teamName' => $profile['teamName'] ?? $profile['email'],
-                'startingFunds' => 0, // Will be set on first production
-                'currentFunds' => 0,
-                'createdAt' => $profile['createdAt'] ?? time(),
-                'lastActive' => time(),
-                'settings' => [],
-                'lastModified' => time()
-            ];
-            file_put_contents($profileFile, json_encode($resetProfile, JSON_PRETTY_PRINT));
-
-            // Reset inventory with random starting amounts (500-2000 gallons each)
-            // Matches Excel template: =RANDBETWEEN(5,20) * 100
-            $inventoryFile = $teamDir . '/inventory.json';
-            $resetInventory = [
-                'C' => rand(500, 2000),
-                'N' => rand(500, 2000),
-                'D' => rand(500, 2000),
-                'Q' => rand(500, 2000),
-                'transactionsSinceLastShadowCalc' => 0,
-                'lastModified' => time()
-            ];
-            file_put_contents($inventoryFile, json_encode($resetInventory, JSON_PRETTY_PRINT));
-
-            // Run automatic first production to generate starting capital
-            // This converts initial random inventory into products and sets starting funds
-            $storage = new TeamStorage($profile['email']);
-            require_once __DIR__ . '/../../lib/LPSolver.php';
-
-            $solver = new LPSolver();
-            $result = $solver->solve($resetInventory);
-
-            $deicerGallons = $result['deicer'];
-            $solventGallons = $result['solvent'];
-            $revenue = $result['maxProfit'];
-
-            // Calculate chemicals consumed
-            $consumed = [
-                'C' => $deicerGallons * LPSolver::DEICER_C,
-                'N' => ($deicerGallons * LPSolver::DEICER_N) + ($solventGallons * LPSolver::SOLVENT_N),
-                'D' => ($deicerGallons * LPSolver::DEICER_D) + ($solventGallons * LPSolver::SOLVENT_D),
-                'Q' => $solventGallons * LPSolver::SOLVENT_Q
-            ];
-
-            // Update inventory (subtract consumed chemicals)
-            $finalInventory = [
-                'C' => $resetInventory['C'] - $consumed['C'],
-                'N' => $resetInventory['N'] - $consumed['N'],
-                'D' => $resetInventory['D'] - $consumed['D'],
-                'Q' => $resetInventory['Q'] - $consumed['Q'],
-                'transactionsSinceLastShadowCalc' => 0,
-                'lastModified' => time()
-            ];
-            file_put_contents($inventoryFile, json_encode($finalInventory, JSON_PRETTY_PRINT));
-
-            // Update profile with starting funds from production
-            $resetProfile['startingFunds'] = $revenue;
-            $resetProfile['currentFunds'] = $revenue;
-            file_put_contents($profileFile, json_encode($resetProfile, JSON_PRETTY_PRINT));
-
-            // Clear production history
-            $productionFile = $teamDir . '/production_history.json';
-            $resetProduction = [
-                'history' => [],
-                'lastModified' => time()
-            ];
-            file_put_contents($productionFile, json_encode($resetProduction, JSON_PRETTY_PRINT));
-
-            // Clear advertisements
-            $adsFile = $teamDir . '/advertisements.json';
-            $resetAds = [
-                'ads' => [],
-                'lastModified' => time()
-            ];
-            file_put_contents($adsFile, json_encode($resetAds, JSON_PRETTY_PRINT));
-
-            // Clear shadow prices (use direct properties, not nested structure)
-            $shadowFile = $teamDir . '/shadow_prices.json';
-            $resetShadow = [
-                'C' => 0,
-                'N' => 0,
-                'D' => 0,
-                'Q' => 0,
-                'calculatedAt' => time(),
-                'lastModified' => time()
-            ];
-            file_put_contents($shadowFile, json_encode($resetShadow, JSON_PRETTY_PRINT));
-
-            // Clear negotiations (if exists)
-            $negotiationsDir = $teamDir . '/negotiations';
-            if (is_dir($negotiationsDir)) {
-                $files = glob($negotiationsDir . '/*.json');
-                foreach ($files as $file) {
-                    unlink($file);
-                }
-            }
-
-            $resetCount++;
+            rmdir($teamDir);
+            $deletedCount++;
 
         } catch (Exception $e) {
             $errors[] = "$teamEmail: " . $e->getMessage();
+        }
+    }
+
+    // Delete global marketplace files
+    $marketplaceDir = __DIR__ . '/../../data/marketplace';
+    if (is_dir($marketplaceDir)) {
+        $files = glob($marketplaceDir . '/*.json');
+        foreach ($files as $file) {
+            unlink($file);
+        }
+    }
+
+    // Delete negotiations
+    $negotiationsDir = __DIR__ . '/../../data/negotiations';
+    if (is_dir($negotiationsDir)) {
+        $files = glob($negotiationsDir . '/*.json');
+        foreach ($files as $file) {
+            unlink($file);
         }
     }
 
@@ -159,8 +83,8 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => 'Game reset complete. All teams can start fresh!',
-        'teamsReset' => $resetCount,
+        'message' => 'Game and team data completely reset! Players will get new team names when they refresh.',
+        'teamsDeleted' => $deletedCount,
         'errors' => $errors
     ]);
 
