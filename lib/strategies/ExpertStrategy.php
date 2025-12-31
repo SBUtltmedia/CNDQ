@@ -42,14 +42,13 @@ class ExpertStrategy extends NPCTradingStrategy
             }
         }
 
-        // Look for buy opportunities (market price below shadow price)
-        $buyAction = $this->findBuyOpportunity();
-        if ($buyAction) {
-            $this->tradesSinceRecalc++;
-            return $buyAction;
+        // Look for human buy requests (advertisements) to sell into
+        $adAction = $this->respondToMarketAds();
+        if ($adAction) {
+            return $adAction;
         }
 
-        // Look for sell opportunities (market price above shadow price)
+        // Look for sell opportunities (direct market buy orders - non-negotiation)
         $sellAction = $this->findSellOpportunity();
         if ($sellAction) {
             $this->tradesSinceRecalc++;
@@ -60,65 +59,58 @@ class ExpertStrategy extends NPCTradingStrategy
     }
 
     /**
-     * Find buy opportunity where market price < shadow price
+     * Scan the marketplace for human buy requests and initiate negotiations
      */
-    private function findBuyOpportunity()
+    private function respondToMarketAds()
     {
-        $offers = $this->getMarketOffers();
+        $aggregator = new MarketplaceAggregator();
+        $buyAds = $aggregator->getActiveBuyOrders(); 
 
-        // Check each chemical for underpriced offers
-        foreach (['C', 'N', 'D', 'Q'] as $chemical) {
-            $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
-            if ($shadowPrice <= 0) {
-                continue; // Invalid shadow price
+        error_log("NPC {$this->npc['teamName']} checking " . count($buyAds) . " buy ads");
+
+        // Ensure we have shadow prices
+        if ($this->shadowPrices === null) {
+            $this->shadowPrices = $this->calculateShadowPrices();
+        }
+
+        if (!$this->shadowPrices) {
+            error_log("NPC {$this->npc['teamName']} has NO shadow prices");
+            return null;
+        }
+
+        foreach ($buyAds as $ad) {
+            // Skip if it's an NPC
+            if ($this->npcManager->isNPC($ad['buyerId'])) {
+                continue;
             }
 
-            $targetPrice = $shadowPrice * self::BUY_MARGIN;
-            $cheapestOffer = $this->findCheapestOffer($chemical, $offers);
+            $chemical = $ad['chemical'];
+            $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
+            
+            // NPCs only sell if price > shadow price
+            $minSellPrice = $shadowPrice * self::SELL_MARGIN;
+            $targetPrice = $ad['maxPrice'] ?? 0;
 
-            if ($cheapestOffer && $cheapestOffer['minPrice'] < $targetPrice) {
-                // Found underpriced offer - calculate optimal quantity
-                $currentAmount = $this->inventory[$chemical] ?? 0;
+            error_log("NPC {$this->npc['teamName']} evaluating ad from {$ad['buyerName']} for {$chemical}: target \${$targetPrice} vs min \${$minSellPrice} (shadow \${$shadowPrice})");
 
-                // Experts trade larger quantities
-                $quantity = $this->calculateBuyQuantity($chemical, $currentAmount);
+            if ($targetPrice >= $minSellPrice && $this->hasSufficientInventory($chemical, 100)) {
+                // Found a good buyer! Initiate negotiation
+                $offerPrice = round(max($minSellPrice, $targetPrice * 0.98), 2);
+                $offerQty = min($ad['quantity'], $this->calculateSellQuantity($chemical, $this->inventory[$chemical]));
 
-                // Don't buy more than available
-                $quantity = min($quantity, $cheapestOffer['quantity']);
-
-                // Check if we can afford it
-                $totalCost = $quantity * $cheapestOffer['minPrice'];
-                if (!$this->hasSufficientFunds($totalCost)) {
-                    // Try to afford smaller quantity
-                    $quantity = floor($this->profile['currentFunds'] * 0.7 / $cheapestOffer['minPrice']);
-                    if ($quantity < 100) {
-                        continue; // Too small
-                    }
-                }
+                error_log("NPC {$this->npc['teamName']} DECIDED to initiate negotiation with {$ad['buyerName']} for {$chemical}");
 
                 return [
-                    'type' => 'accept_offer',
-                    'offerId' => $cheapestOffer['id'],
-                    'sellerId' => $cheapestOffer['sellerId'],
+                    'type' => 'initiate_negotiation',
+                    'responderId' => $ad['buyerId'],
+                    'responderName' => $ad['buyerName'],
                     'chemical' => $chemical,
-                    'quantity' => $quantity,
-                    'price' => $cheapestOffer['minPrice']
+                    'quantity' => $offerQty,
+                    'price' => $offerPrice
                 ];
-            }
-
-            // No cheap offer found - post strategic buy order
-            if ($shadowPrice > 0 && $currentAmount < 1500) {
-                $quantity = $this->calculateBuyQuantity($chemical, $currentAmount);
-                $bidPrice = $shadowPrice * self::BUY_MARGIN;
-
-                if ($this->hasSufficientFunds($quantity * $bidPrice)) {
-                    return [
-                        'type' => 'create_buy_order',
-                        'chemical' => $chemical,
-                        'quantity' => $quantity,
-                        'maxPrice' => round($bidPrice, 2)
-                    ];
-                }
+            } else {
+                if ($targetPrice < $minSellPrice) error_log("NPC {$this->npc['teamName']} pass: price too low");
+                if (!$this->hasSufficientInventory($chemical, 100)) error_log("NPC {$this->npc['teamName']} pass: low inventory (" . ($this->inventory[$chemical] ?? 0) . ")");
             }
         }
 

@@ -32,70 +32,59 @@ class BeginnerStrategy extends NPCTradingStrategy
             return null; // Don't trade this cycle
         }
 
-        // Randomly decide to buy or sell
-        $action = (mt_rand(0, 1) === 0) ? 'buy' : 'sell';
+        // Randomly decide to respond to an ad or sell directly to a buy order
+        $choice = mt_rand(0, 1);
 
-        if ($action === 'buy') {
-            return $this->decideBuy();
+        if ($choice === 0) {
+            return $this->respondToMarketAds();
         } else {
             return $this->decideSell();
         }
     }
 
     /**
-     * Decide to buy a chemical
+     * Scan marketplace for human ads and initiate negotiation
      */
-    private function decideBuy()
+    private function respondToMarketAds()
     {
-        // Pick random chemical
-        $chemical = $this->randomChemical();
+        $aggregator = new MarketplaceAggregator();
+        $buyAds = $aggregator->getActiveBuyOrders();
 
-        // Random quantity between 50-200 gallons
-        $quantity = mt_rand(50, 200);
-
-        // Random price willing to pay
-        $maxPrice = $this->randomFloat(self::MIN_PRICE, self::MAX_PRICE);
-
-        $totalCost = $quantity * $maxPrice;
-
-        // Safety check: Don't spend more than 30% of funds
-        $maxAffordable = $this->profile['currentFunds'] * self::MAX_FUNDS_PERCENT;
-        if ($totalCost > $maxAffordable) {
-            $quantity = floor($maxAffordable / $maxPrice);
-            if ($quantity < 10) {
-                return null; // Too small, skip
-            }
+        if (empty($buyAds)) {
+            return null;
         }
 
-        // Check if there are affordable offers
-        $offers = $this->getMarketOffers();
-        $cheapestOffer = $this->findCheapestOffer($chemical, $offers);
+        // Shuffle to be random
+        shuffle($buyAds);
 
-        if ($cheapestOffer && $cheapestOffer['minPrice'] <= $maxPrice) {
-            // Accept existing offer
-            $acceptQuantity = min($quantity, $cheapestOffer['quantity']);
-
-            if (!$this->hasSufficientFunds($acceptQuantity * $cheapestOffer['minPrice'])) {
-                return null;
+        foreach ($buyAds as $ad) {
+            // Skip NPCs
+            if ($this->npcManager->isNPC($ad['buyerId'])) {
+                continue;
             }
 
-            return [
-                'type' => 'accept_offer',
-                'offerId' => $cheapestOffer['id'],
-                'sellerId' => $cheapestOffer['sellerId'],
-                'chemical' => $chemical,
-                'quantity' => $acceptQuantity,
-                'price' => $cheapestOffer['minPrice']
-            ];
-        }
+            $chemical = $ad['chemical'];
+            $available = $this->inventory[$chemical] ?? 0;
 
-        // Post buy order if can't find offer
-        if ($this->hasSufficientFunds($quantity * $maxPrice)) {
+            if ($available < 50) {
+                continue;
+            }
+
+            // Random price between MIN and their MAX
+            $targetPrice = $ad['maxPrice'] ?? self::MAX_PRICE;
+            $offerPrice = $this->randomFloat(self::MIN_PRICE, max(self::MIN_PRICE, $targetPrice));
+            
+            $offerQty = min($ad['quantity'], floor($available * self::MAX_INVENTORY_PERCENT));
+
+            if ($offerQty < 10) continue;
+
             return [
-                'type' => 'create_buy_order',
+                'type' => 'initiate_negotiation',
+                'responderId' => $ad['buyerId'],
+                'responderName' => $ad['buyerName'],
                 'chemical' => $chemical,
-                'quantity' => $quantity,
-                'maxPrice' => $maxPrice
+                'quantity' => $offerQty,
+                'price' => round($offerPrice, 2)
             ];
         }
 

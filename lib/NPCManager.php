@@ -359,12 +359,26 @@ class NPCManager
         $negotiationAction = $strategy->respondToNegotiations();
 
         if ($negotiationAction) {
+            file_put_contents(__DIR__ . '/../data/npc_last_action.json', json_encode(['npc' => $npc['teamName'], 'action' => $negotiationAction, 'time' => time()], JSON_PRETTY_PRINT));
             $this->executeNPCAction($npc, $negotiationAction, $currentSession);
             return; // Prioritize negotiation responses over new trades
         }
 
         // If no negotiations to respond to, decide on regular trade action
         $action = $strategy->decideTrade();
+
+        // LOG EVERYTHING for debugging
+        $debug = [
+            'npc' => $npc['teamName'],
+            'skill' => $npc['skillLevel'],
+            'time' => date('Y-m-d H:i:s'),
+            'action' => $action ?: 'no_action'
+        ];
+        $existingDebug = file_exists(__DIR__ . '/../data/npc_debug.json') ? json_decode(file_get_contents(__DIR__ . '/../data/npc_debug.json'), true) : [];
+        if (!is_array($existingDebug)) $existingDebug = [];
+        $existingDebug[] = $debug;
+        if (count($existingDebug) > 20) array_shift($existingDebug);
+        file_put_contents(__DIR__ . '/../data/npc_debug.json', json_encode($existingDebug, JSON_PRETTY_PRINT));
 
         if ($action) {
             $this->executeNPCAction($npc, $action, $currentSession);
@@ -450,6 +464,11 @@ class NPCManager
                     $this->executeRejectNegotiation($npc, $action, $storage);
                     break;
 
+                case 'initiate_negotiation':
+                    // NPC is initiating a negotiation (as a seller responding to an ad)
+                    $this->executeInitiateNegotiation($npc, $action, $storage, $currentSession);
+                    break;
+
                 default:
                     error_log("Unknown NPC action type: {$action['type']}");
             }
@@ -457,6 +476,32 @@ class NPCManager
         } catch (Exception $e) {
             error_log("Failed to execute NPC action for {$npc['email']}: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Execute initiate_negotiation action (NPC starting a negotiation as seller)
+     */
+    private function executeInitiateNegotiation($npc, $action, $storage, $currentSession = 1)
+    {
+        $negotiationManager = $this->getNegotiationManager();
+        
+        // NPC is the initiator, but since it's responding to a BUY ad, 
+        // the NPC's perspective is 'sell'.
+        $negotiationManager->createNegotiation(
+            $npc['email'],
+            $npc['teamName'],
+            $action['responderId'],
+            $action['responderName'],
+            $action['chemical'],
+            [
+                'quantity' => $action['quantity'],
+                'price' => $action['price']
+            ],
+            $currentSession,
+            'sell' // NPC is initiating a SELL negotiation
+        );
+
+        error_log("NPC {$npc['teamName']} initiated sell negotiation with {$action['responderName']} for {$action['quantity']} gal of {$action['chemical']} at \${$action['price']}/gal");
     }
 
     /**

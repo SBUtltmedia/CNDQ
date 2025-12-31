@@ -30,17 +30,17 @@ class NoviceStrategy extends NPCTradingStrategy
      */
     public function decideTrade()
     {
-        // Check each chemical for low inventory or excess
+        // First, look for human buy requests (advertisements) to sell into
+        $adAction = $this->respondToMarketAds();
+        if ($adAction) {
+            return $adAction;
+        }
+
+        // Check each chemical for excess to sell directly to market buy orders
         foreach (['C', 'N', 'D', 'Q'] as $chemical) {
             $amount = $this->inventory[$chemical] ?? 0;
 
-            if ($amount < self::LOW_INVENTORY) {
-                // Low inventory - try to buy
-                $action = $this->tryToBuy($chemical);
-                if ($action) {
-                    return $action;
-                }
-            } elseif ($amount > self::EXCESS_INVENTORY) {
+            if ($amount > self::EXCESS_INVENTORY) {
                 // Excess inventory - try to sell
                 $action = $this->tryToSell($chemical);
                 if ($action) {
@@ -53,57 +53,41 @@ class NoviceStrategy extends NPCTradingStrategy
     }
 
     /**
-     * Try to buy a chemical at or below threshold price
+     * Scan the marketplace for human buy requests and initiate negotiations
      */
-    private function tryToBuy($chemical)
+    private function respondToMarketAds()
     {
-        $offers = $this->getMarketOffers();
-        $cheapestOffer = $this->findCheapestOffer($chemical, $offers);
+        $aggregator = new MarketplaceAggregator();
+        $buyAds = $aggregator->getActiveBuyOrders();
 
-        // Check if there's an offer at or below our buy threshold
-        if ($cheapestOffer && $cheapestOffer['minPrice'] <= self::BUY_THRESHOLD) {
-            // Determine quantity - buy enough to reach reasonable level
-            $currentAmount = $this->inventory[$chemical] ?? 0;
-            $targetAmount = (self::LOW_INVENTORY + self::EXCESS_INVENTORY) / 2; // Mid-range
-            $desiredQuantity = min(
-                self::BUY_QUANTITY_MAX,
-                max(self::BUY_QUANTITY_MIN, $targetAmount - $currentAmount)
-            );
-
-            // Don't buy more than available
-            $quantity = min($desiredQuantity, $cheapestOffer['quantity']);
-
-            // Check if we can afford it
-            $totalCost = $quantity * $cheapestOffer['minPrice'];
-            if (!$this->hasSufficientFunds($totalCost)) {
-                // Reduce quantity to what we can afford
-                $quantity = floor($this->profile['currentFunds'] * 0.8 / $cheapestOffer['minPrice']);
-                if ($quantity < 50) {
-                    return null; // Too small
-                }
+        foreach ($buyAds as $ad) {
+            // Skip if it's an NPC
+            if ($this->npcManager->isNPC($ad['buyerId'])) {
+                continue;
             }
 
-            return [
-                'type' => 'accept_offer',
-                'offerId' => $cheapestOffer['id'],
-                'sellerId' => $cheapestOffer['sellerId'],
-                'chemical' => $chemical,
-                'quantity' => $quantity,
-                'price' => $cheapestOffer['minPrice']
-            ];
-        }
+            $chemical = $ad['chemical'];
+            $amount = $this->inventory[$chemical] ?? 0;
 
-        // No suitable offer - post buy order at threshold price
-        $quantity = mt_rand(self::BUY_QUANTITY_MIN, self::BUY_QUANTITY_MAX);
-        $totalCost = $quantity * self::BUY_THRESHOLD;
-
-        if ($this->hasSufficientFunds($totalCost)) {
-            return [
-                'type' => 'create_buy_order',
-                'chemical' => $chemical,
-                'quantity' => $quantity,
-                'maxPrice' => self::BUY_THRESHOLD
-            ];
+            // Novices only sell if they have excess
+            if ($amount > self::EXCESS_INVENTORY) {
+                // Evaluation: Price is at or above threshold
+                $targetPrice = $ad['maxPrice'] ?? 0;
+                
+                if ($targetPrice >= self::SELL_THRESHOLD) {
+                    // Initiate negotiation
+                    $qty = min($ad['quantity'], $amount - self::LOW_INVENTORY);
+                    
+                    return [
+                        'type' => 'initiate_negotiation',
+                        'responderId' => $ad['buyerId'],
+                        'responderName' => $ad['buyerName'],
+                        'chemical' => $chemical,
+                        'quantity' => $qty,
+                        'price' => self::SELL_THRESHOLD
+                    ];
+                }
+            }
         }
 
         return null;
