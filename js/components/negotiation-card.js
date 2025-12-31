@@ -32,6 +32,9 @@ class NegotiationCard extends HTMLElement {
     get negotiation() { return this._negotiation; }
     set negotiation(val) {
         this._negotiation = val;
+        if (val && val.id) {
+            this.setAttribute('negotiation-id', val.id);
+        }
         if (this.firstChild) this.render();
     }
 
@@ -71,6 +74,15 @@ class NegotiationCard extends HTMLElement {
         const lastOffer = neg.offers[neg.offers.length - 1];
         const isMyTurn = neg.lastOfferBy !== this.currentUserId;
 
+        // Determine if user is buying or selling
+        const type = neg.type || 'buy';
+        const isBuyer = (neg.initiatorId === this.currentUserId && type === 'buy') || 
+                        (neg.responderId === this.currentUserId && type === 'sell');
+        
+        const roleBadge = isBuyer ? 
+            '<span class="text-[10px] uppercase font-bold text-blue-400 bg-blue-900 bg-opacity-30 px-1.5 py-0.5 rounded border border-blue-800">Buying</span>' : 
+            '<span class="text-[10px] uppercase font-bold text-green-400 bg-green-900 bg-opacity-30 px-1.5 py-0.5 rounded border border-green-800">Selling</span>';
+
         let statusBadge = '';
         if (neg.status === 'pending') {
             statusBadge = isMyTurn ?
@@ -90,7 +102,10 @@ class NegotiationCard extends HTMLElement {
                  role="button" tabindex="0">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="font-semibold">Chemical ${neg.chemical} • ${otherTeam}</div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="font-semibold text-sm">Chemical ${neg.chemical} • ${otherTeam}</div>
+                            ${roleBadge}
+                        </div>
                         <div class="text-sm text-gray-300">
                             Latest: ${lastOffer.quantity} gal @ $${lastOffer.price.toFixed(2)}
                         </div>

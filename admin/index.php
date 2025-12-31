@@ -583,6 +583,7 @@ if (!isAdmin()) {
                     showToast(`Complete reset! ${data.teamsDeleted} teams deleted. Players will get new teams on refresh.`, 'success');
                     await loadSessionState();
                     await loadTeams();
+                    await loadNPCs();
                 } else {
                     showToast('Failed to reset: ' + (data.message || 'Unknown error'), 'error');
                 }

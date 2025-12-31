@@ -58,18 +58,18 @@ try {
     // Get the final offer
     $finalOffer = end($negotiation['offers']);
 
-    // Determine buyer and seller based on who made the last offer
-    // The person who made the offer is selling TO the acceptor
-    $lastOfferBy = $negotiation['lastOfferBy'];
+    // Determine buyer and seller based on negotiation type
+    // type is from the perspective of the initiator
+    $type = $negotiation['type'] ?? 'buy';
 
-    if ($lastOfferBy === $negotiation['initiatorId']) {
-        // Initiator made the offer, responder is accepting
-        $sellerId = $negotiation['initiatorId'];
-        $buyerId = $negotiation['responderId'];
-    } else {
-        // Responder made the offer, initiator is accepting
-        $sellerId = $negotiation['responderId'];
+    if ($type === 'buy') {
+        // Initiator is the buyer, Responder is the seller
         $buyerId = $negotiation['initiatorId'];
+        $sellerId = $negotiation['responderId'];
+    } else {
+        // Initiator is the seller, Responder is the buyer
+        $buyerId = $negotiation['responderId'];
+        $sellerId = $negotiation['initiatorId'];
     }
 
     // Execute the trade

@@ -59,15 +59,17 @@ class AdvertisementItem extends HTMLElement {
     }
 
     render() {
-        const buttonText = this.type === 'sell' ? 'Buy from' : 'Sell to';
-        const bgColor = this.type === 'sell' ? 'bg-green-700' : 'bg-blue-700';
+        // In the simplified model, all advertisements are BUY requests
+        // So we always want to "Sell to" them.
+        const buttonText = 'Sell to';
+        const bgColor = 'bg-blue-700';
 
         this.innerHTML = `
             <div class="bg-gray-700 rounded p-3 border border-gray-600">
                 <div class="flex items-center justify-between">
                     <div>
                         <div class="font-semibold text-sm text-white">${this.teamName}</div>
-                        <div class="text-xs text-gray-300">Wants to ${this.type}</div>
+                        <div class="text-xs text-gray-300">Wants to buy</div>
                     </div>
                     ${!this.isMyAd ? `
                         <button

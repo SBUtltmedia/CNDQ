@@ -43,6 +43,14 @@ abstract class NPCTradingStrategy
     abstract public function decideTrade();
 
     /**
+     * Respond to incoming negotiations
+     * Must be implemented by concrete strategies
+     *
+     * @return array|null Negotiation response action or null
+     */
+    abstract public function respondToNegotiations();
+
+    /**
      * Check if NPC should trade based on inventory levels
      *
      * @return bool
@@ -262,5 +270,21 @@ abstract class NPCTradingStrategy
     {
         $chemicals = ['C', 'N', 'D', 'Q'];
         return $chemicals[array_rand($chemicals)];
+    }
+
+    /**
+     * Get pending negotiations where NPC is the responder
+     *
+     * @return array Pending negotiations
+     */
+    protected function getPendingNegotiations()
+    {
+        $negotiationManager = $this->npcManager->getNegotiationManager();
+        $allNegotiations = $negotiationManager->getTeamNegotiations($this->npc['email']);
+
+        // Filter to only those where NPC is the responder
+        return array_filter($allNegotiations, function($neg) {
+            return $neg['responderId'] === $this->npc['email'];
+        });
     }
 }

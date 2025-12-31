@@ -9,14 +9,28 @@ require_once __DIR__ . '/TeamStorage.php';
 require_once __DIR__ . '/TeamNameGenerator.php';
 require_once __DIR__ . '/MarketplaceAggregator.php';
 require_once __DIR__ . '/SessionManager.php';
+require_once __DIR__ . '/NegotiationManager.php';
 
 class NPCManager
 {
     private $configFile;
+    private $negotiationManager;
 
     public function __construct()
     {
         $this->configFile = __DIR__ . '/../data/npc_config.json';
+        $this->negotiationManager = null;
+    }
+
+    /**
+     * Get NegotiationManager instance (lazy loading)
+     */
+    public function getNegotiationManager()
+    {
+        if ($this->negotiationManager === null) {
+            $this->negotiationManager = new NegotiationManager();
+        }
+        return $this->negotiationManager;
     }
 
     /**
@@ -341,7 +355,15 @@ class NPCManager
         $storage = new TeamStorage($npc['email']);
         $strategy = new $strategyClass($storage, $npc, $this);
 
-        // Decide what trade action to take
+        // First, check for and respond to pending negotiations
+        $negotiationAction = $strategy->respondToNegotiations();
+
+        if ($negotiationAction) {
+            $this->executeNPCAction($npc, $negotiationAction, $currentSession);
+            return; // Prioritize negotiation responses over new trades
+        }
+
+        // If no negotiations to respond to, decide on regular trade action
         $action = $strategy->decideTrade();
 
         if ($action) {
@@ -413,6 +435,21 @@ class NPCManager
                     $this->executeCreateSellOffer($npc, $action, $storage);
                     break;
 
+                case 'accept_negotiation':
+                    // NPC is accepting a negotiation
+                    $this->executeAcceptNegotiation($npc, $action, $storage);
+                    break;
+
+                case 'counter_negotiation':
+                    // NPC is countering a negotiation
+                    $this->executeCounterNegotiation($npc, $action, $storage);
+                    break;
+
+                case 'reject_negotiation':
+                    // NPC is rejecting a negotiation
+                    $this->executeRejectNegotiation($npc, $action, $storage);
+                    break;
+
                 default:
                     error_log("Unknown NPC action type: {$action['type']}");
             }
@@ -466,6 +503,11 @@ class NPCManager
 
         $storage->addBuyOrder($buyOrderData);
 
+        // ALSO post advertisement so it shows up in marketplace
+        require_once __DIR__ . '/AdvertisementManager.php';
+        $adManager = new AdvertisementManager($npc['email'], $npc['teamName']);
+        $adManager->postAdvertisement($action['chemical'], 'buy');
+
         error_log("NPC {$npc['teamName']} posted buy order: {$action['quantity']} gal of {$action['chemical']} at \${$action['maxPrice']}/gal max");
     }
 
@@ -501,19 +543,117 @@ class NPCManager
 
     /**
      * Execute create_sell_offer action (NPC posting sell offer)
+     * REMOVED: In the simplified model, NPCs don't post sell offers.
+     * They only respond to player buy requests.
      */
     private function executeCreateSellOffer($npc, $action, $storage)
     {
-        $offerData = [
-            'chemical' => $action['chemical'],
-            'quantity' => $action['quantity'],
-            'minPrice' => $action['minPrice'],
-            'type' => 'sell'
-        ];
+        // No longer used
+        return;
+    }
 
-        $storage->addOffer($offerData);
+    /**
+     * Execute accept_negotiation action (NPC accepting negotiation)
+     */
+    private function executeAcceptNegotiation($npc, $action, $storage)
+    {
+        $negotiationManager = $this->getNegotiationManager();
+        $negotiation = $negotiationManager->getNegotiation($action['negotiationId']);
 
-        error_log("NPC {$npc['teamName']} posted sell offer: {$action['quantity']} gal of {$action['chemical']} at \${$action['minPrice']}/gal min");
+        if (!$negotiation) {
+            error_log("NPC {$npc['teamName']} tried to accept non-existent negotiation: {$action['negotiationId']}");
+            return;
+        }
+
+        // Accept the negotiation
+        $negotiationManager->acceptNegotiation($action['negotiationId'], $npc['email']);
+
+        // Execute the trade
+        $latestOffer = end($negotiation['offers']);
+        $executor = new TradeExecutor();
+
+        // Determine buyer and seller based on negotiation type
+        $type = $negotiation['type'] ?? 'buy';
+
+        if ($type === 'buy') {
+            // Initiator is buying, NPC is selling
+            $sellerId = $npc['email'];
+            $buyerId = $negotiation['initiatorId'];
+        } else {
+            // Initiator is selling, NPC is buying
+            $sellerId = $negotiation['initiatorId'];
+            $buyerId = $npc['email'];
+        }
+
+        $result = $executor->executeTrade(
+            $sellerId,
+            $buyerId,
+            $negotiation['chemical'],
+            $latestOffer['quantity'],
+            $latestOffer['price'],
+            null  // No offerId for negotiations
+        );
+
+        if ($result['success']) {
+            $revenue = $latestOffer['quantity'] * $latestOffer['price'];
+            // If NPC was buyer, profit is negative
+            $profit = ($buyerId === $npc['email']) ? -$revenue : $revenue;
+            $this->updateNPCStats($npc['id'], $profit);
+
+            $actionWord = ($buyerId === $npc['email']) ? "bought" : "sold";
+            $otherParty = ($buyerId === $npc['email']) ? "from" : "to";
+
+            error_log("NPC {$npc['teamName']} accepted negotiation: {$actionWord} {$latestOffer['quantity']} gal of {$negotiation['chemical']} at \${$latestOffer['price']}/gal {$otherParty} {$negotiation['initiatorName']}");
+        } else {
+            error_log("NPC {$npc['teamName']} failed to execute negotiation trade: " . ($result['error'] ?? 'Unknown error'));
+        }
+    }
+
+    /**
+     * Execute counter_negotiation action (NPC countering negotiation)
+     */
+    private function executeCounterNegotiation($npc, $action, $storage)
+    {
+        $negotiationManager = $this->getNegotiationManager();
+        $negotiation = $negotiationManager->getNegotiation($action['negotiationId']);
+
+        if (!$negotiation) {
+            error_log("NPC {$npc['teamName']} tried to counter non-existent negotiation: {$action['negotiationId']}");
+            return;
+        }
+
+        // Get NPC profile for team name
+        $profile = $storage->getProfile();
+
+        // Add counter offer
+        $negotiationManager->addCounterOffer(
+            $action['negotiationId'],
+            $npc['email'],
+            $profile['teamName'] ?? $npc['teamName'],
+            $action['quantity'],
+            $action['price']
+        );
+
+        error_log("NPC {$npc['teamName']} countered negotiation: {$action['quantity']} gal of {$negotiation['chemical']} at \${$action['price']}/gal");
+    }
+
+    /**
+     * Execute reject_negotiation action (NPC rejecting negotiation)
+     */
+    private function executeRejectNegotiation($npc, $action, $storage)
+    {
+        $negotiationManager = $this->getNegotiationManager();
+        $negotiation = $negotiationManager->getNegotiation($action['negotiationId']);
+
+        if (!$negotiation) {
+            error_log("NPC {$npc['teamName']} tried to reject non-existent negotiation: {$action['negotiationId']}");
+            return;
+        }
+
+        // Reject the negotiation
+        $negotiationManager->rejectNegotiation($action['negotiationId'], $npc['email']);
+
+        error_log("NPC {$npc['teamName']} rejected negotiation for {$negotiation['chemical']} from {$negotiation['initiatorName']}");
     }
 
     /**

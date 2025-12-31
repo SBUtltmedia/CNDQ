@@ -392,23 +392,23 @@ class MarketplaceApp {
     }
 
     /**
-     * Post advertisement (interest to buy or sell)
+     * Post advertisement (interest to buy)
      */
-    async postAdvertisement(chemical, type) {
-        const adKey = `${chemical}-${type}`;
+    async postAdvertisement(chemical, type = 'buy') {
+        const adKey = `${chemical}-buy`;
 
         // Check if already posting this ad (prevent race condition)
         if (this.pendingAdPosts.has(adKey)) {
-            this.showToast(`Already posting ${type} advertisement for Chemical ${chemical}...`, 'warning');
+            this.showToast(`Already posting buy advertisement for Chemical ${chemical}...`, 'warning');
             return;
         }
 
-        // Check if user already has an active advertisement for this chemical/type
-        const existingAds = this.advertisements[chemical]?.[type] || [];
+        // Check if user already has an active advertisement for this chemical
+        const existingAds = this.advertisements[chemical]?.['buy'] || [];
         const hasActiveAd = existingAds.some(ad => ad.teamId === this.currentUser);
 
         if (hasActiveAd) {
-            this.showToast(`You already have an active ${type} advertisement for Chemical ${chemical}`, 'warning');
+            this.showToast(`You already have an active buy advertisement for Chemical ${chemical}`, 'warning');
             return;
         }
 
@@ -416,16 +416,16 @@ class MarketplaceApp {
             // Mark as pending to prevent duplicate clicks
             this.pendingAdPosts.add(adKey);
 
-            const response = await api.advertisements.post(chemical, type);
+            const response = await api.advertisements.post(chemical, 'buy');
 
             // Check if the returned ad was just created or already existed
             const returnedAd = response.advertisement;
             const isNewAd = returnedAd && (Date.now() - returnedAd.createdAt * 1000) < 2000; // Created within last 2 seconds
 
             if (isNewAd) {
-                this.showToast(`Posted interest to ${type} ${chemical}`, 'success');
+                this.showToast(`Posted interest to buy ${chemical}`, 'success');
             } else {
-                this.showToast(`You already have an active ${type} advertisement for Chemical ${chemical}`, 'warning');
+                this.showToast(`You already have an active buy advertisement for Chemical ${chemical}`, 'warning');
             }
 
             // Wait for advertisements to reload so duplicate check works on next click
@@ -622,8 +622,9 @@ class MarketplaceApp {
         }
 
         try {
-            // Initiate negotiation with the buyer
-            const response = await api.negotiations.initiate(buyerTeamId, chemical, quantity, price);
+            // Initiate negotiation with the buyer. User is responding to a buy request,
+            // so from the user's perspective (the initiator of this negotiation), it's a 'sell'.
+            const response = await api.negotiations.initiate(buyerTeamId, chemical, quantity, price, 'sell');
 
             if (response.success) {
                 this.showToast(`Offer sent to ${buyerTeamName} for ${quantity} gallons of ${chemical}`, 'success');
@@ -759,7 +760,14 @@ class MarketplaceApp {
         // Set header
         document.getElementById('detail-chemical').textContent = `Chemical ${negotiation.chemical}`;
         const otherTeam = negotiation.initiatorId === this.currentUser ? negotiation.responderName : negotiation.initiatorName;
-        document.getElementById('detail-participants').textContent = `Negotiation with ${otherTeam}`;
+        
+        // Determine if user is buying or selling
+        const type = negotiation.type || 'buy';
+        const isBuyer = (negotiation.initiatorId === this.currentUser && type === 'buy') || 
+                        (negotiation.responderId === this.currentUser && type === 'sell');
+        const roleText = isBuyer ? '<span class="text-blue-400 font-bold ml-2">BUYING</span>' : '<span class="text-green-400 font-bold ml-2">SELLING</span>';
+        
+        document.getElementById('detail-participants').innerHTML = `Negotiation with ${otherTeam} • ${roleText}`;
 
         // Set status badge
         const statusBadge = document.getElementById('detail-status-badge');
@@ -816,7 +824,9 @@ class MarketplaceApp {
 
             // Set shadow price hint
             const shadowHint = document.getElementById('counter-shadow-hint');
-            shadowHint.textContent = this.shadowPrices[negotiation.chemical].toFixed(2);
+            const shadowVal = this.shadowPrices[negotiation.chemical];
+            const contextText = isBuyer ? '(Max to buy)' : '(Min to sell)';
+            shadowHint.innerHTML = `${shadowVal.toFixed(2)} <span class="text-gray-400 font-normal text-[10px] ml-1">${contextText}</span>`;
         } else {
             // Waiting for other team
             actions.classList.add('hidden');
@@ -864,7 +874,8 @@ class MarketplaceApp {
                 this.tempNegotiation.teamId,
                 this.tempNegotiation.chemical,
                 quantity,
-                price
+                price,
+                this.tempNegotiation.type || 'buy'
             );
             this.showToast('Negotiation started', 'success');
             await this.loadNegotiations();
@@ -915,8 +926,10 @@ class MarketplaceApp {
         const quantity = lastOffer.quantity;
 
         // Determine if current user is buying or selling
-        const isSelling = negotiation.type === 'sell' ||
-            (negotiation.initiatorId !== this.currentUser && negotiation.type === 'buy');
+        // type is from initiator's perspective
+        const type = negotiation.type || 'buy';
+        const isSelling = (negotiation.initiatorId === this.currentUser && type === 'sell') || 
+                          (negotiation.responderId === this.currentUser && type === 'buy');
 
         // Calculate percentage difference from shadow price
         const priceDiff = ((tradePrice - shadowPrice) / shadowPrice) * 100;

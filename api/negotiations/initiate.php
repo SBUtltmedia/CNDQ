@@ -45,10 +45,17 @@ $responderId = $input['responderId'] ?? null;
 $chemical = $input['chemical'] ?? null;
 $quantity = $input['quantity'] ?? null;
 $price = $input['price'] ?? null;
+$type = $input['type'] ?? 'buy'; // 'buy' or 'sell' from initiator perspective
 
 if (!$responderId || !$chemical || !$quantity || $price === null) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing required fields']);
+    exit;
+}
+
+if (!in_array($type, ['buy', 'sell'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid type']);
     exit;
 }
 
@@ -94,7 +101,8 @@ try {
             'quantity' => $quantity,
             'price' => $price
         ],
-        $currentSession
+        $currentSession,
+        $type
     );
 
     echo json_encode([

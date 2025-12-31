@@ -77,6 +77,16 @@ try {
         }
     }
 
+    // Reset NPC configuration
+    $npcConfigFile = __DIR__ . '/../../data/npc_config.json';
+    if (file_exists($npcConfigFile)) {
+        $defaultNPCConfig = [
+            'enabled' => false,
+            'npcs' => []
+        ];
+        file_put_contents($npcConfigFile, json_encode($defaultNPCConfig, JSON_PRETTY_PRINT));
+    }
+
     // Reset session to session 1, production phase
     $sessionManager = new SessionManager();
     $sessionManager->reset();

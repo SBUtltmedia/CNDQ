@@ -41,12 +41,13 @@ class NegotiationManager {
     /**
      * Create new negotiation
      */
-    public function createNegotiation($initiatorId, $initiatorName, $responderId, $responderName, $chemical, $initialOffer, $sessionNumber = null) {
+    public function createNegotiation($initiatorId, $initiatorName, $responderId, $responderName, $chemical, $initialOffer, $sessionNumber = null, $type = 'buy') {
         $negotiationId = 'neg_' . time() . '_' . bin2hex(random_bytes(4));
 
         $negotiation = [
             'id' => $negotiationId,
             'chemical' => $chemical,
+            'type' => $type, // 'buy' or 'sell' from initiator perspective
             'initiatorId' => $initiatorId,
             'initiatorName' => $initiatorName,
             'responderId' => $responderId,

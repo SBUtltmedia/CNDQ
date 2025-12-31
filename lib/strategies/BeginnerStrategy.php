@@ -150,16 +150,116 @@ class BeginnerStrategy extends NPCTradingStrategy
             ];
         }
 
-        // Post sell offer if can't find buy order
-        if ($this->hasSufficientInventory($chemical, $quantity)) {
-            return [
-                'type' => 'create_sell_offer',
-                'chemical' => $chemical,
-                'quantity' => $quantity,
-                'minPrice' => $minPrice
-            ];
+        return null;
+    }
+
+    /**
+     * Respond to incoming negotiations
+     * Beginners respond randomly
+     */
+    public function respondToNegotiations()
+    {
+        $pendingNegotiations = $this->getPendingNegotiations();
+
+        if (empty($pendingNegotiations)) {
+            return null;
         }
 
-        return null;
+        // Only respond to the first pending negotiation
+        $negotiation = array_values($pendingNegotiations)[0];
+        $latestOffer = end($negotiation['offers']);
+
+        // Random chance to respond (30%)
+        if ($this->randomFloat(0, 1) > self::TRADE_PROBABILITY) {
+            return null; // Don't respond this cycle
+        }
+
+        // Random decision: 40% accept, 40% counter, 20% reject
+        $decision = $this->randomFloat(0, 1);
+        $type = $negotiation['type'] ?? 'buy';
+
+        if ($decision < 0.2) {
+            // Reject
+            return [
+                'type' => 'reject_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
+        } else if ($decision < 0.6) {
+            // Accept if we can afford it or have inventory
+            $chemical = $negotiation['chemical'];
+            $quantity = $latestOffer['quantity'];
+            $price = $latestOffer['price'];
+
+            if ($type === 'buy') {
+                // Initiator is buying, NPC is selling
+                if ($this->hasSufficientInventory($chemical, $quantity)) {
+                    return [
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
+                    ];
+                }
+            } else {
+                // Initiator is selling, NPC is buying
+                if ($this->hasSufficientFunds($quantity * $price)) {
+                    return [
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
+                    ];
+                }
+            }
+
+            // Can't fulfill/afford, reject
+            return [
+                'type' => 'reject_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
+        } else {
+            // Counter offer with random adjustments
+            $chemical = $negotiation['chemical'];
+            $currentQuantity = $latestOffer['quantity'];
+            $currentPrice = $latestOffer['price'];
+
+            // Adjust quantity ±20%
+            $newQuantity = round($currentQuantity * $this->randomFloat(0.8, 1.2));
+            $newQuantity = max(10, $newQuantity);
+
+            // Adjust price ±15%
+            $newPrice = round($currentPrice * $this->randomFloat(0.85, 1.15), 2);
+            $newPrice = max(self::MIN_PRICE, min(self::MAX_PRICE, $newPrice));
+
+            if ($type === 'buy') {
+                // Check if we can fulfill
+                if (!$this->hasSufficientInventory($chemical, $newQuantity)) {
+                    // Counter with what we have
+                    $available = $this->inventory[$chemical] ?? 0;
+                    if ($available < 10) {
+                        return [
+                            'type' => 'reject_negotiation',
+                            'negotiationId' => $negotiation['id']
+                        ];
+                    }
+                    $newQuantity = min($newQuantity, floor($available * self::MAX_INVENTORY_PERCENT));
+                }
+            } else {
+                // Check if we can afford
+                if (!$this->hasSufficientFunds($newQuantity * $newPrice)) {
+                    $maxAffordable = floor($this->profile['currentFunds'] * self::MAX_FUNDS_PERCENT / $newPrice);
+                    $newQuantity = min($newQuantity, $maxAffordable);
+                    if ($newQuantity < 10) {
+                        return [
+                            'type' => 'reject_negotiation',
+                            'negotiationId' => $negotiation['id']
+                        ];
+                    }
+                }
+            }
+
+            return [
+                'type' => 'counter_negotiation',
+                'negotiationId' => $negotiation['id'],
+                'quantity' => $newQuantity,
+                'price' => $newPrice
+            ];
+        }
     }
 }
