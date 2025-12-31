@@ -66,10 +66,10 @@ class TeamStorage {
                 ]
             ],
             'inventory.json' => [
-                'C' => rand(500, 2000),
-                'N' => rand(500, 2000),
-                'D' => rand(500, 2000),
-                'Q' => rand(500, 2000),
+                'C' => round(rand(500, 2000), 4),
+                'N' => round(rand(500, 2000), 4),
+                'D' => round(rand(500, 2000), 4),
+                'Q' => round(rand(500, 2000), 4),
                 'updatedAt' => time(),
                 'transactionsSinceLastShadowCalc' => 0
             ],
@@ -151,10 +151,10 @@ class TeamStorage {
 
         // Update inventory (subtract consumed chemicals)
         $this->updateInventory(function($inv) use ($consumed) {
-            $inv['C'] -= $consumed['C'];
-            $inv['N'] -= $consumed['N'];
-            $inv['D'] -= $consumed['D'];
-            $inv['Q'] -= $consumed['Q'];
+            $inv['C'] = max(0, round($inv['C'] - $consumed['C'], 4));
+            $inv['N'] = max(0, round($inv['N'] - $consumed['N'], 4));
+            $inv['D'] = max(0, round($inv['D'] - $consumed['D'], 4));
+            $inv['Q'] = max(0, round($inv['Q'] - $consumed['Q'], 4));
             $inv['updatedAt'] = time();
             // Don't increment transaction counter for initial production
             return $inv;
@@ -313,7 +313,9 @@ class TeamStorage {
             if (!isset($data[$chemical])) {
                 throw new Exception("Invalid chemical: $chemical");
             }
-            $data[$chemical] += $amount;
+            $newAmount = ($data[$chemical] ?? 0) + $amount;
+            // Round to prevent float precision issues and ensure it's never negative
+            $data[$chemical] = max(0, round($newAmount, 4));
             $data['updatedAt'] = time();
 
             // Increment transaction counter

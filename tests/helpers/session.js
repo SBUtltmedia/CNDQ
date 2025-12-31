@@ -127,21 +127,16 @@ class SessionHelper {
     /**
      * Set phase manually (admin only)
      */
-    async setPhase(phase) {
-        const page = await this.browser.loginAndNavigate(
-            'admin@stonybrook.edu',
-            '/admin.html'
-        );
-
-        try {
-            const buttonId = `#set-${phase}-btn`;
-            await page.waitForSelector(buttonId, { timeout: 5000 });
-            await page.click(buttonId);
-            await this.browser.sleep(1000);
-            console.log(`   ✓ Phase set to ${phase}`);
-        } finally {
-            await page.close();
+    async setPhase(adminPage, phase) {
+        if (!['production', 'trading'].includes(phase)) {
+            throw new Error(`Invalid phase "${phase}" specified.`);
         }
+        
+        const buttonSelector = `button[onclick="setPhase('${phase}')"]`;
+        await adminPage.waitForSelector(buttonSelector, { timeout: 10000 });
+        await adminPage.click(buttonSelector);
+        await this.browser.sleep(500); // Wait for API call to likely complete
+        console.log(`   - Phase set to ${phase}`);
     }
 }
 

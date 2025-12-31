@@ -374,6 +374,16 @@ class TeamHelper {
             await page.close();
         }
     }
+    async getLeaderboard() {
+        const page = await this.browser.newPage();
+        try {
+            const response = await page.goto(`${this.browser.config.baseUrl}/api/leaderboard/standings.php`);
+            const data = await response.json();
+            return data.success ? data.standings : [];
+        } finally {
+            await page.close();
+        }
+    }
 }
 
 module.exports = TeamHelper;

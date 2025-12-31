@@ -317,10 +317,10 @@ class SessionManager {
 
                 // Update inventory (subtract consumed chemicals)
                 $storage->updateInventory(function($inv) use ($consumed) {
-                    $inv['C'] = max(0, $inv['C'] - $consumed['C']);
-                    $inv['N'] = max(0, $inv['N'] - $consumed['N']);
-                    $inv['D'] = max(0, $inv['D'] - $consumed['D']);
-                    $inv['Q'] = max(0, $inv['Q'] - $consumed['Q']);
+                    $inv['C'] = max(0, round(($inv['C'] ?? 0) - $consumed['C'], 4));
+                    $inv['N'] = max(0, round(($inv['N'] ?? 0) - $consumed['N'], 4));
+                    $inv['D'] = max(0, round(($inv['D'] ?? 0) - $consumed['D'], 4));
+                    $inv['Q'] = max(0, round(($inv['Q'] ?? 0) - $consumed['Q'], 4));
                     $inv['updatedAt'] = time();
                     // Don't increment transaction counter for automatic production
                     return $inv;

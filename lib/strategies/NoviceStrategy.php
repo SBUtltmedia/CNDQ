@@ -47,9 +47,36 @@ class NoviceStrategy extends NPCTradingStrategy
                     return $action;
                 }
             }
+            
+            // If inventory is low, try to buy
+            if ($amount < self::LOW_INVENTORY) {
+                $action = $this->tryToBuy($chemical);
+                if ($action) {
+                    return $action;
+                }
+            }
         }
 
         return null; // No action needed
+    }
+
+    /**
+     * Try to buy a chemical when inventory is low
+     */
+    private function tryToBuy($chemical) {
+        // Post a buy order with a maximum price
+        $quantity = mt_rand(self::BUY_QUANTITY_MIN, self::BUY_QUANTITY_MAX);
+        $maxPrice = self::BUY_THRESHOLD;
+
+        if ($this->hasSufficientFunds($quantity * $maxPrice)) {
+            return [
+                'type' => 'create_buy_order',
+                'chemical' => $chemical,
+                'quantity' => $quantity,
+                'maxPrice' => $maxPrice
+            ];
+        }
+        return null;
     }
 
     /**
@@ -69,23 +96,25 @@ class NoviceStrategy extends NPCTradingStrategy
             $chemical = $ad['chemical'];
             $amount = $this->inventory[$chemical] ?? 0;
 
-            // Novices only sell if they have excess
+            // Novices only sell if they have excess and the price is good
             if ($amount > self::EXCESS_INVENTORY) {
-                // Evaluation: Price is at or above threshold
                 $targetPrice = $ad['maxPrice'] ?? 0;
                 
                 if ($targetPrice >= self::SELL_THRESHOLD) {
                     // Initiate negotiation
-                    $qty = min($ad['quantity'], $amount - self::LOW_INVENTORY);
+                    $qty = min($ad['quantity'], $amount - self::LOW_INVENTORY); // Sell down to LOW_INVENTORY
+                    $qty = max(self::SELL_QUANTITY_MIN, min(self::SELL_QUANTITY_MAX, $qty));
                     
-                    return [
-                        'type' => 'initiate_negotiation',
-                        'responderId' => $ad['buyerId'],
-                        'responderName' => $ad['buyerName'],
-                        'chemical' => $chemical,
-                        'quantity' => $qty,
-                        'price' => self::SELL_THRESHOLD
-                    ];
+                    if ($qty > 0 && $this->hasSufficientInventory($chemical, $qty)) {
+                        return [
+                            'type' => 'initiate_negotiation',
+                            'responderId' => $ad['buyerId'],
+                            'responderName' => $ad['buyerName'],
+                            'chemical' => $chemical,
+                            'quantity' => $qty,
+                            'price' => self::SELL_THRESHOLD
+                        ];
+                    }
                 }
             }
         }
@@ -117,21 +146,16 @@ class NoviceStrategy extends NPCTradingStrategy
             $quantity = min($desiredQuantity, $highestBuyOrder['quantity']);
 
             // Check if we have enough inventory
-            if (!$this->hasSufficientInventory($chemical, $quantity)) {
-                $quantity = $this->inventory[$chemical] * 0.5; // Sell half
-                if ($quantity < 50) {
-                    return null; // Too small
-                }
+            if ($quantity > 0 && $this->hasSufficientInventory($chemical, $quantity)) {
+                return [
+                    'type' => 'accept_buy_order',
+                    'buyOrderId' => $highestBuyOrder['id'],
+                    'buyerId' => $highestBuyOrder['buyerId'],
+                    'chemical' => $chemical,
+                    'quantity' => $quantity,
+                    'price' => $highestBuyOrder['maxPrice']
+                ];
             }
-
-            return [
-                'type' => 'accept_buy_order',
-                'buyOrderId' => $highestBuyOrder['id'],
-                'buyerId' => $highestBuyOrder['buyerId'],
-                'chemical' => $chemical,
-                'quantity' => $quantity,
-                'price' => $highestBuyOrder['maxPrice']
-            ];
         }
 
         return null;
@@ -149,7 +173,6 @@ class NoviceStrategy extends NPCTradingStrategy
             return null;
         }
 
-        // Only respond to the first pending negotiation
         $negotiation = array_values($pendingNegotiations)[0];
         $latestOffer = end($negotiation['offers']);
 
@@ -159,112 +182,69 @@ class NoviceStrategy extends NPCTradingStrategy
         $currentInventory = $this->inventory[$chemical] ?? 0;
         $type = $negotiation['type'] ?? 'buy';
 
-        if ($type === 'buy') {
-            // Initiator is buying, so NPC is selling
-            // Accept if:
-            // 1. We have excess inventory (>1800)
-            // 2. Price is at or above our sell threshold ($3.00)
-            // 3. We can fulfill the order
-
-            if ($currentInventory > self::EXCESS_INVENTORY &&
-                $price >= self::SELL_THRESHOLD &&
-                $this->hasSufficientInventory($chemical, $quantity)) {
-
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
-            }
-
-            // Counter offer if we have excess inventory but price is below threshold
-            if ($currentInventory > self::EXCESS_INVENTORY) {
-                // We have excess to sell, but price needs to be higher
-
-                // Determine quantity we're willing to sell
-                $targetAmount = (self::LOW_INVENTORY + self::EXCESS_INVENTORY) / 2;
-                $excessAmount = $currentInventory - $targetAmount;
-                $counterQuantity = min(
-                    self::SELL_QUANTITY_MAX,
-                    max(self::SELL_QUANTITY_MIN, $excessAmount, $quantity)
-                );
-
-                // Counter with our threshold price
-                $counterPrice = self::SELL_THRESHOLD;
-
-                if ($this->hasSufficientInventory($chemical, $counterQuantity)) {
+        // NPC is the initiator of a sell negotiation (RPC posted buy ad, NPC responded with sell offer)
+        if ($negotiation['initiatorId'] === $this->npc['email'] && $type === 'sell') {
+            // NPC is seller, RPC is buyer. RPC countered our sell offer.
+            if ($price >= self::SELL_THRESHOLD * 0.9) { // Accept if price is close to our threshold
+                if ($this->hasSufficientInventory($chemical, $quantity)) {
                     return [
-                        'type' => 'counter_negotiation',
-                        'negotiationId' => $negotiation['id'],
-                        'quantity' => $counterQuantity,
-                        'price' => $counterPrice
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
                     ];
                 }
             }
-
-            // If we don't have excess inventory or can't fulfill, reject
-            if (!$this->hasSufficientInventory($chemical, $quantity) ||
-                $currentInventory < self::EXCESS_INVENTORY) {
-
-                return [
-                    'type' => 'reject_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
-            }
-        } else {
-            // Initiator is selling, so NPC is buying
-            // Accept if:
-            // 1. We have low inventory (<300)
-            // 2. Price is at or below our buy threshold ($2.50)
-            // 3. We have sufficient funds
-
-            if ($currentInventory < self::LOW_INVENTORY &&
-                $price <= self::BUY_THRESHOLD &&
-                $this->hasSufficientFunds($quantity * $price)) {
-
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
-            }
-
-            // Counter if price is too high but we need inventory
-            if ($currentInventory < self::LOW_INVENTORY) {
-                $counterPrice = self::BUY_THRESHOLD;
-                $targetAmount = (self::LOW_INVENTORY + self::EXCESS_INVENTORY) / 2;
-                $counterQuantity = min(self::BUY_QUANTITY_MAX, $targetAmount - $currentInventory);
-
-                if ($this->hasSufficientFunds($counterQuantity * $counterPrice)) {
-                    return [
-                        'type' => 'counter_negotiation',
-                        'negotiationId' => $negotiation['id'],
-                        'quantity' => $counterQuantity,
-                        'price' => $counterPrice
-                    ];
-                }
-            }
-            
-            return [
-                'type' => 'reject_negotiation',
-                'negotiationId' => $negotiation['id']
-            ];
-        }
-
-        // Counter with adjusted terms if price is close but not quite there
-        if ($type === 'buy' && $price >= self::SELL_THRESHOLD * 0.9) {
-            $counterQuantity = min($quantity, floor($currentInventory * 0.3));
-            $counterPrice = self::SELL_THRESHOLD;
-
-            if ($counterQuantity >= 50) {
-                return [
+            // Counter if still have excess and price is below threshold
+            if ($currentInventory > self::EXCESS_INVENTORY && $price < self::SELL_THRESHOLD) {
+                 return [
                     'type' => 'counter_negotiation',
                     'negotiationId' => $negotiation['id'],
-                    'quantity' => $counterQuantity,
-                    'price' => $counterPrice
+                    'quantity' => $quantity,
+                    'price' => self::SELL_THRESHOLD
                 ];
             }
-        }
 
-        // Reject if offer is not favorable
+        }
+        // NPC is the responder in a negotiation where RPC is offering to sell to NPC or buy from NPC
+        else {
+            // RPC wants to buy from NPC (NPC is seller)
+            if ($type === 'buy') {
+                if ($this->hasSufficientInventory($chemical, $quantity) && $price >= self::SELL_THRESHOLD) {
+                    return [
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
+                    ];
+                }
+                // Counter if we have excess and price is too low, but within a reasonable range
+                if ($currentInventory > self::EXCESS_INVENTORY && $price >= self::SELL_THRESHOLD * 0.8) {
+                    return [
+                        'type' => 'counter_negotiation',
+                        'negotiationId' => $negotiation['id'],
+                        'quantity' => $quantity,
+                        'price' => self::SELL_THRESHOLD
+                    ];
+                }
+            }
+            // RPC wants to sell to NPC (NPC is buyer)
+            else {
+                if ($this->hasSufficientFunds($quantity * $price) && $currentInventory < self::LOW_INVENTORY && $price <= self::BUY_THRESHOLD) {
+                    return [
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
+                    ];
+                }
+                // Counter if we need it but price is a bit high
+                if ($currentInventory < self::LOW_INVENTORY && $price <= self::BUY_THRESHOLD * 1.2) {
+                    return [
+                        'type' => 'counter_negotiation',
+                        'negotiationId' => $negotiation['id'],
+                        'quantity' => $quantity,
+                        'price' => self::BUY_THRESHOLD
+                    ];
+                }
+            }
+        }
+        
+        // Default to reject
         return [
             'type' => 'reject_negotiation',
             'negotiationId' => $negotiation['id']

@@ -15,6 +15,10 @@ async function testAdminPaths() {
         path: '/'
     });
 
+    page.on('requestfailed', request => {
+        console.log('❌ Request Failed:', request.url(), request.failure().errorText);
+    });
+
     const apiRequests = [];
     page.on('request', request => {
         if (request.url().includes('/api/')) {

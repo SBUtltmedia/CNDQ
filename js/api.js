@@ -11,19 +11,35 @@
  */
 
 class ApiClient {
-    constructor(baseUrl = '') {
-        this.baseUrl = baseUrl;
+    constructor() {
+        // Priority 1: Global variable injected by PHP
+        if (typeof window.APP_BASE_PATH !== 'undefined') {
+            this.basePath = window.APP_BASE_PATH;
+        } else {
+            // Priority 2: Data attribute on script tag
+            const scriptTag = document.getElementById('main-app-script');
+            this.basePath = scriptTag ? scriptTag.getAttribute('data-base-path') : '';
+        }
+
+        // Handle null/undefined
+        if (!this.basePath) {
+            this.basePath = '';
+        }
+
+        // Ensure no trailing slash
+        if (this.basePath.endsWith('/')) {
+            this.basePath = this.basePath.slice(0, -1);
+        }
+        
+        console.log('API Client initialized with basePath:', this.basePath);
     }
 
     /**
      * Generic fetch wrapper with error handling
      */
     async request(endpoint, options = {}) {
-        // Ensure baseUrl doesn't end with / and endpoint starts with /
-        const base = this.baseUrl.replace(/\/$/, '');
-        const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-        const url = `${base}${path}`;
-
+        const url = `${this.basePath}${endpoint}`;
+        
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
@@ -35,13 +51,33 @@ class ApiClient {
 
         try {
             const response = await fetch(url, config);
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || data.message || `HTTP ${response.status}`);
+            
+            // specific handling for 204 No Content
+            if (response.status === 204) {
+                return null;
             }
 
-            return data;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || `HTTP ${response.status}`);
+                }
+
+                return data;
+            } else {
+                // Handle non-JSON response (likely HTML error page from server)
+                const text = await response.text();
+                // Extract title from HTML if possible for better error message
+                const titleMatch = text.match(/<title>(.*?)<\/title>/i);
+                const title = titleMatch ? titleMatch[1] : 'Unknown Error';
+                
+                console.error(`API Error: Expected JSON but got ${contentType || 'unknown type'} from ${url}`);
+                console.error('Response preview:', text.substring(0, 500));
+                
+                throw new Error(`Server returned non-JSON response: ${title} (HTTP ${response.status})`);
+            }
         } catch (error) {
             console.error(`API Error [${endpoint}]:`, error);
             throw error;
@@ -313,30 +349,5 @@ class ApiClient {
     };
 }
 
-/**
- * Auto-detect base path from current page location
- * Handles deployment in subdirectories (e.g., /cndq/)
- */
-function getBasePath() {
-    // Use document.baseURI or window.location to get the actual page URL
-    // This works correctly with symlinks, unlike import.meta.url
-    const pageUrl = new URL(document.baseURI || window.location.href);
-
-    // Remove index.html or trailing slash to get the base directory
-    // Example: https://apps.tlt.stonybrook.edu/cndq/index.html
-    //       -> https://apps.tlt.stonybrook.edu/cndq
-    const pathParts = pageUrl.pathname.split('/').filter(p => p);
-
-    // Remove the last part if it's a file (has extension)
-    if (pathParts.length > 0 && pathParts[pathParts.length - 1].includes('.')) {
-        pathParts.pop();
-    }
-
-    return `${pageUrl.protocol}//${pageUrl.host}/${pathParts.join('/')}`;
-}
-
-// Export singleton instance with auto-detected base path
-export const api = new ApiClient(getBasePath());
-
-// Also export class for testing/mocking
-export { ApiClient };
+// Export singleton instance
+export const api = new ApiClient();

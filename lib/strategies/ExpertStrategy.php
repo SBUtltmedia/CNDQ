@@ -37,19 +37,27 @@ class ExpertStrategy extends NPCTradingStrategy
             $this->tradesSinceRecalc = 0;
 
             if (!$this->shadowPrices) {
-                // LP solver failed, fall back to simple logic
-                return $this->fallbackTrade();
+                // If LP solver fails, Expert cannot operate
+                return null;
             }
         }
 
-        // Look for human buy requests (advertisements) to sell into
+        // 1. Look for human buy requests (advertisements) to sell into
         $adAction = $this->respondToMarketAds();
         if ($adAction) {
+            $this->tradesSinceRecalc++;
             return $adAction;
         }
 
-        // Look for sell opportunities (direct market buy orders - non-negotiation)
-        $sellAction = $this->findSellOpportunity();
+        // 2. Look for opportunities to buy needed chemicals (high shadow price)
+        $buyAction = $this->tryToBuy();
+        if ($buyAction) {
+            $this->tradesSinceRecalc++;
+            return $buyAction;
+        }
+
+        // 3. Look for opportunities to sell excess chemicals (low shadow price)
+        $sellAction = $this->tryToSell();
         if ($sellAction) {
             $this->tradesSinceRecalc++;
             return $sellAction;
@@ -64,9 +72,7 @@ class ExpertStrategy extends NPCTradingStrategy
     private function respondToMarketAds()
     {
         $aggregator = new MarketplaceAggregator();
-        $buyAds = $aggregator->getActiveBuyOrders(); 
-
-        error_log("NPC {$this->npc['teamName']} checking " . count($buyAds) . " buy ads");
+        $buyOrders = $aggregator->getActiveBuyOrders(); 
 
         // Ensure we have shadow prices
         if ($this->shadowPrices === null) {
@@ -74,11 +80,10 @@ class ExpertStrategy extends NPCTradingStrategy
         }
 
         if (!$this->shadowPrices) {
-            error_log("NPC {$this->npc['teamName']} has NO shadow prices");
             return null;
         }
 
-        foreach ($buyAds as $ad) {
+        foreach ($buyOrders as $ad) {
             // Skip if it's an NPC
             if ($this->npcManager->isNPC($ad['buyerId'])) {
                 continue;
@@ -87,30 +92,25 @@ class ExpertStrategy extends NPCTradingStrategy
             $chemical = $ad['chemical'];
             $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
             
-            // NPCs only sell if price > shadow price
+            // Experts only sell if price > shadow price and have sufficient inventory
             $minSellPrice = $shadowPrice * self::SELL_MARGIN;
             $targetPrice = $ad['maxPrice'] ?? 0;
 
-            error_log("NPC {$this->npc['teamName']} evaluating ad from {$ad['buyerName']} for {$chemical}: target \${$targetPrice} vs min \${$minSellPrice} (shadow \${$shadowPrice})");
-
-            if ($targetPrice >= $minSellPrice && $this->hasSufficientInventory($chemical, 100)) {
+            if ($targetPrice >= $minSellPrice && $this->hasSufficientInventory($chemical, self::MIN_QUANTITY)) {
                 // Found a good buyer! Initiate negotiation
-                $offerPrice = round(max($minSellPrice, $targetPrice * 0.98), 2);
+                $offerPrice = round(max($minSellPrice, $targetPrice * 0.98), 2); // Offer slightly below buyer's max, but above our min
                 $offerQty = min($ad['quantity'], $this->calculateSellQuantity($chemical, $this->inventory[$chemical]));
 
-                error_log("NPC {$this->npc['teamName']} DECIDED to initiate negotiation with {$ad['buyerName']} for {$chemical}");
-
-                return [
-                    'type' => 'initiate_negotiation',
-                    'responderId' => $ad['buyerId'],
-                    'responderName' => $ad['buyerName'],
-                    'chemical' => $chemical,
-                    'quantity' => $offerQty,
-                    'price' => $offerPrice
-                ];
-            } else {
-                if ($targetPrice < $minSellPrice) error_log("NPC {$this->npc['teamName']} pass: price too low");
-                if (!$this->hasSufficientInventory($chemical, 100)) error_log("NPC {$this->npc['teamName']} pass: low inventory (" . ($this->inventory[$chemical] ?? 0) . ")");
+                if ($offerQty >= self::MIN_QUANTITY) {
+                    return [
+                        'type' => 'initiate_negotiation',
+                        'responderId' => $ad['buyerId'],
+                        'responderName' => $ad['buyerName'],
+                        'chemical' => $chemical,
+                        'quantity' => $offerQty,
+                        'price' => $offerPrice
+                    ];
+                }
             }
         }
 
@@ -118,57 +118,87 @@ class ExpertStrategy extends NPCTradingStrategy
     }
 
     /**
-     * Find sell opportunity where market price > shadow price
+     * Try to buy a chemical when shadow price is high
      */
-    private function findSellOpportunity()
-    {
-        $buyOrders = $this->getMarketBuyOrders();
-
-        // Check each chemical for overpriced buy orders
-        foreach (['C', 'N', 'D', 'Q'] as $chemical) {
-            $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
-            if ($shadowPrice <= 0) {
-                continue; // Invalid shadow price
-            }
-
-            $targetPrice = $shadowPrice * self::SELL_MARGIN;
-            $highestBuyOrder = $this->findHighestBuyOrder($chemical, $buyOrders);
-
-            if ($highestBuyOrder && $highestBuyOrder['maxPrice'] > $targetPrice) {
-                // Found overpriced buy order - calculate optimal quantity
-                $currentAmount = $this->inventory[$chemical] ?? 0;
-
-                if ($currentAmount < 100) {
-                    continue; // Not enough to sell
-                }
-
-                // Experts sell strategically
-                $quantity = $this->calculateSellQuantity($chemical, $currentAmount);
-
-                // Don't sell more than buyer wants
-                $quantity = min($quantity, $highestBuyOrder['quantity']);
-
-                // Check if we have enough inventory
-                if (!$this->hasSufficientInventory($chemical, $quantity)) {
-                    $quantity = floor($currentAmount * 0.6); // Sell 60%
-                    if ($quantity < 100) {
-                        continue; // Too small
-                    }
-                }
-
-                return [
-                    'type' => 'accept_buy_order',
-                    'buyOrderId' => $highestBuyOrder['id'],
-                    'buyerId' => $highestBuyOrder['buyerId'],
-                    'chemical' => $chemical,
-                    'quantity' => $quantity,
-                    'price' => $highestBuyOrder['maxPrice']
-                ];
-            }
+    private function tryToBuy() {
+        if ($this->shadowPrices === null) {
+            $this->shadowPrices = $this->calculateShadowPrices();
+        }
+        if (!$this->shadowPrices) {
+            return null;
         }
 
+        foreach (['C', 'N', 'D', 'Q'] as $chemical) {
+            $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
+            $currentAmount = $this->inventory[$chemical] ?? 0;
+
+            // Only buy if shadow price is high and inventory is relatively low
+            if ($shadowPrice > 5.0 && $currentAmount < 800) { // Threshold for "high" shadow price
+                $maxBuyPrice = $shadowPrice * self::BUY_MARGIN;
+                
+                // Look for sellers
+                $offers = $this->getMarketOffers();
+                $cheapestOffer = $this->findCheapestOffer($chemical, $offers);
+
+                if ($cheapestOffer && $cheapestOffer['minPrice'] <= $maxBuyPrice) {
+                    $quantity = min(self::MAX_QUANTITY, $cheapestOffer['quantity'], $this->calculateBuyQuantity($chemical, $currentAmount));
+                    if ($quantity >= self::MIN_QUANTITY && $this->hasSufficientFunds($quantity * $cheapestOffer['minPrice'])) {
+                        return [
+                            'type' => 'accept_offer',
+                            'offerId' => $cheapestOffer['id'],
+                            'sellerId' => $cheapestOffer['sellerId'],
+                            'chemical' => $chemical,
+                            'quantity' => $quantity,
+                            'price' => $cheapestOffer['minPrice']
+                        ];
+                    }
+                }
+            }
+        }
         return null;
     }
+
+    /**
+     * Try to sell a chemical when shadow price is low
+     */
+    private function tryToSell() {
+        if ($this->shadowPrices === null) {
+            $this->shadowPrices = $this->calculateShadowPrices();
+        }
+        if (!$this->shadowPrices) {
+            return null;
+        }
+
+        foreach (['C', 'N', 'D', 'Q'] as $chemical) {
+            $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
+            $currentAmount = $this->inventory[$chemical] ?? 0;
+
+            // Only sell if shadow price is low and we have excess inventory
+            if ($shadowPrice < 2.0 && $currentAmount > 1200) { // Threshold for "low" shadow price
+                $minSellPrice = $shadowPrice * self::SELL_MARGIN;
+                
+                // Look for buyers (buy orders)
+                $buyOrders = $this->getMarketBuyOrders();
+                $highestBuyOrder = $this->findHighestBuyOrder($chemical, $buyOrders);
+
+                if ($highestBuyOrder && $highestBuyOrder['maxPrice'] >= $minSellPrice) {
+                    $quantity = min(self::MAX_QUANTITY, $highestBuyOrder['quantity'], $this->calculateSellQuantity($chemical, $currentAmount));
+                    if ($quantity >= self::MIN_QUANTITY && $this->hasSufficientInventory($chemical, $quantity)) {
+                        return [
+                            'type' => 'accept_buy_order',
+                            'buyOrderId' => $highestBuyOrder['id'],
+                            'buyerId' => $highestBuyOrder['buyerId'],
+                            'chemical' => $chemical,
+                            'quantity' => $quantity,
+                            'price' => $highestBuyOrder['maxPrice']
+                        ];
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Calculate optimal buy quantity based on shadow price and inventory
@@ -217,59 +247,6 @@ class ExpertStrategy extends NPCTradingStrategy
     }
 
     /**
-     * Fallback trading logic when LP solver fails
-     */
-    private function fallbackTrade()
-    {
-        // Use simple logic based on inventory levels
-        foreach (['C', 'N', 'D', 'Q'] as $chemical) {
-            $amount = $this->inventory[$chemical] ?? 0;
-
-            // Buy if low
-            if ($amount < 400) {
-                $offers = $this->getMarketOffers();
-                $cheapestOffer = $this->findCheapestOffer($chemical, $offers);
-
-                if ($cheapestOffer && $cheapestOffer['minPrice'] <= 3.50) {
-                    $quantity = min(500, $cheapestOffer['quantity']);
-                    if ($this->hasSufficientFunds($quantity * $cheapestOffer['minPrice'])) {
-                        return [
-                            'type' => 'accept_offer',
-                            'offerId' => $cheapestOffer['id'],
-                            'sellerId' => $cheapestOffer['sellerId'],
-                            'chemical' => $chemical,
-                            'quantity' => $quantity,
-                            'price' => $cheapestOffer['minPrice']
-                        ];
-                    }
-                }
-            }
-
-            // Sell if excess
-            if ($amount > 1500) {
-                $buyOrders = $this->getMarketBuyOrders();
-                $highestBuyOrder = $this->findHighestBuyOrder($chemical, $buyOrders);
-
-                if ($highestBuyOrder && $highestBuyOrder['maxPrice'] >= 2.50) {
-                    $quantity = min(500, $highestBuyOrder['quantity'], $amount * 0.4);
-                    if ($this->hasSufficientInventory($chemical, $quantity)) {
-                        return [
-                            'type' => 'accept_buy_order',
-                            'buyOrderId' => $highestBuyOrder['id'],
-                            'buyerId' => $highestBuyOrder['buyerId'],
-                            'chemical' => $chemical,
-                            'quantity' => $quantity,
-                            'price' => $highestBuyOrder['maxPrice']
-                        ];
-                    }
-                }
-            }
-        }
-
-        return null; // No action
-    }
-
-    /**
      * Respond to incoming negotiations
      * Experts use shadow price analysis to make optimal decisions
      */
@@ -285,8 +262,8 @@ class ExpertStrategy extends NPCTradingStrategy
         if ($this->shadowPrices === null) {
             $this->shadowPrices = $this->calculateShadowPrices();
             if (!$this->shadowPrices) {
-                // LP solver failed, use fallback logic
-                return $this->respondWithFallback(array_values($pendingNegotiations)[0]);
+                // LP solver failed, Expert cannot operate
+                return null;
             }
         }
 
@@ -297,147 +274,82 @@ class ExpertStrategy extends NPCTradingStrategy
         $chemical = $negotiation['chemical'];
         $quantity = $latestOffer['quantity'];
         $price = $latestOffer['price'];
-        $currentInventory = $this->inventory[$chemical] ?? 0;
-        $type = $negotiation['type'] ?? 'buy';
+        $type = $negotiation['type'] ?? 'buy'; // From initiator's perspective
 
         $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
 
         if ($shadowPrice <= 0) {
-            // Invalid shadow price, use fallback
-            return $this->respondWithFallback($negotiation);
+            // Invalid shadow price, Expert cannot operate
+            return null;
         }
 
-        if ($type === 'buy') {
-            // Initiator is buying, so NPC is selling
-            // Calculate optimal sell price (shadow price × 1.05)
+        // NPC is the initiator of a sell negotiation (RPC posted buy ad, NPC responded with sell offer)
+        if ($negotiation['initiatorId'] === $this->npc['email'] && $type === 'sell') {
+            // NPC is seller, RPC is buyer. RPC countered our sell offer.
             $optimalSellPrice = $shadowPrice * self::SELL_MARGIN;
-
-            // Accept if:
-            // 1. Price is at or above optimal sell price
-            // 2. We have sufficient inventory
-            if ($price >= $optimalSellPrice && $this->hasSufficientInventory($chemical, $quantity)) {
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
-            }
-
-            // Counter if price is close (within 10% of optimal) and we have inventory
-            if ($price >= $optimalSellPrice * 0.9 && $currentInventory >= 100) {
-                // Calculate optimal sell quantity
-                $counterQuantity = $this->calculateSellQuantity($chemical, $currentInventory);
-                $counterQuantity = max($quantity, $counterQuantity); // At least what they want
-
-                // Counter at our optimal price
-                $counterPrice = round($optimalSellPrice, 2);
-
-                if ($this->hasSufficientInventory($chemical, $counterQuantity)) {
+            if ($price >= $optimalSellPrice * 0.95) { // Accept if price is close to our optimal
+                if ($this->hasSufficientInventory($chemical, $quantity)) {
                     return [
-                        'type' => 'counter_negotiation',
-                        'negotiationId' => $negotiation['id'],
-                        'quantity' => $counterQuantity,
-                        'price' => $counterPrice
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
                     ];
                 }
             }
-
-            // Counter if we have excess inventory (>500) even if price is lower
-            // But still demand a price above shadow price
-            if ($currentInventory > 500 && $price >= $shadowPrice * 0.95) {
-                $counterQuantity = min($quantity, $this->calculateSellQuantity($chemical, $currentInventory));
-                $counterPrice = round(max($optimalSellPrice, $price * 1.05), 2);
-
-                if ($this->hasSufficientInventory($chemical, $counterQuantity) && $counterQuantity >= self::MIN_QUANTITY) {
-                    return [
-                        'type' => 'counter_negotiation',
-                        'negotiationId' => $negotiation['id'],
-                        'quantity' => $counterQuantity,
-                        'price' => $counterPrice
-                    ];
-                }
-            }
-        } else {
-            // Initiator is selling, so NPC is buying
-            // Calculate optimal buy price (shadow price × 0.95)
-            $optimalBuyPrice = $shadowPrice * self::BUY_MARGIN;
-
-            // Accept if price is at or below optimal buy price and we can afford
-            if ($price <= $optimalBuyPrice && $this->hasSufficientFunds($quantity * $price)) {
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
-            }
-
-            // Counter with our optimal buy price
-            if ($price <= $shadowPrice * 1.1 && $this->hasSufficientFunds($quantity * $optimalBuyPrice)) {
-                return [
+            // Counter if price is too low but within acceptable range
+            if ($price < $optimalSellPrice * 0.95 && $price >= $shadowPrice * 0.9) {
+                 return [
                     'type' => 'counter_negotiation',
                     'negotiationId' => $negotiation['id'],
                     'quantity' => $quantity,
-                    'price' => round($optimalBuyPrice, 2)
+                    'price' => round($optimalSellPrice, 2)
                 ];
             }
         }
-
-        // Reject if:
-        // 1. Price is too far from shadow price
-        // 2. We don't have sufficient inventory/funds
-        return [
-            'type' => 'reject_negotiation',
-            'negotiationId' => $negotiation['id']
-        ];
-    }
-
-    /**
-     * Fallback negotiation response when shadow prices unavailable
-     */
-    private function respondWithFallback($negotiation)
-    {
-        $latestOffer = end($negotiation['offers']);
-        $chemical = $negotiation['chemical'];
-        $quantity = $latestOffer['quantity'];
-        $price = $latestOffer['price'];
-        $currentInventory = $this->inventory[$chemical] ?? 0;
-        $type = $negotiation['type'] ?? 'buy';
-
-        if ($type === 'buy') {
-            // Simple logic: accept if price >= $3.50 and we have excess
-            if ($price >= 3.50 && $currentInventory > 500 && $this->hasSufficientInventory($chemical, $quantity)) {
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
-            }
-
-            // Counter with higher price if we have inventory
-            if ($currentInventory > 300 && $price >= 2.50) {
-                $counterQuantity = min($quantity, floor($currentInventory * 0.4));
-                $counterPrice = max(3.50, round($price * 1.15, 2));
-
-                if ($counterQuantity >= 100) {
+        // NPC is the responder, meaning the RPC initiated the negotiation (RPC wants to sell to NPC or buy from NPC).
+        else {
+            // RPC wants to buy from NPC (type 'buy' from RPC perspective, so NPC is seller)
+            if ($type === 'buy') {
+                $optimalSellPrice = $shadowPrice * self::SELL_MARGIN;
+                if ($price >= $optimalSellPrice && $this->hasSufficientInventory($chemical, $quantity)) {
+                    return [
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
+                    ];
+                }
+                // Counter if price is too low but we have excess and it's still profitable
+                if ($this->hasSufficientInventory($chemical, $quantity) && $price >= $shadowPrice * 0.9) {
                     return [
                         'type' => 'counter_negotiation',
                         'negotiationId' => $negotiation['id'],
-                        'quantity' => $counterQuantity,
-                        'price' => $counterPrice
+                        'quantity' => $quantity,
+                        'price' => round($optimalSellPrice, 2)
                     ];
                 }
             }
-        } else {
-            // NPC is buying
-            if ($price <= 2.50 && $currentInventory < 500 && $this->hasSufficientFunds($quantity * $price)) {
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
+            // RPC wants to sell to NPC (type 'sell' from RPC perspective, so NPC is buyer)
+            else {
+                $optimalBuyPrice = $shadowPrice * self::BUY_MARGIN;
+                if ($price <= $optimalBuyPrice && $this->hasSufficientFunds($quantity * $price)) {
+                    return [
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
+                    ];
+                }
+                // Counter if price is too high but we need it and can afford it at optimal price
+                if ($this->hasSufficientFunds($quantity * $price) && $price <= $shadowPrice * 1.1) {
+                    return [
+                        'type' => 'counter_negotiation',
+                        'negotiationId' => $negotiation['id'],
+                        'quantity' => $quantity,
+                        'price' => round($optimalBuyPrice, 2)
+                    ];
+                }
             }
         }
-
-        // Reject otherwise
+        
+        // Default to reject
         return [
             'type' => 'reject_negotiation',
             'negotiationId' => $negotiation['id']
         ];
     }
-}

@@ -27,7 +27,7 @@ const ReportingHelper = require('./helpers/reporting');
 
 // Configuration
 const CONFIG = {
-    baseUrl: 'http://cndq.test',
+    baseUrl: 'http://cndq.test/CNDQ',
     teams: [
         'test_mail1@stonybrook.edu',
         'test_mail2@stonybrook.edu',
@@ -44,8 +44,8 @@ const CONFIG = {
     standards: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
     outputDir: './accessibility-reports',
     pages: [
-        { name: 'Main Page', url: '/index.html' },
-        { name: 'Admin Page', url: '/admin.html' }
+        { name: 'Main Page', url: '/' },
+        { name: 'Admin Page', url: '/admin/' }
     ],
     themes: ['dark', 'light', 'high-contrast']
 };
@@ -72,6 +72,10 @@ class TestRunner {
                 case 'game':
                 case 'simulation':
                     await this.runGameSimulation();
+                    break;
+
+                case 'robust':
+                    await this.runRobustGameSimulation();
                     break;
 
                 case 'components':
@@ -101,6 +105,25 @@ class TestRunner {
             ReportingHelper.printError(`Test execution failed: ${error.message}`);
             console.error(error.stack);
             process.exit(1);
+        }
+    }
+
+    async runRobustGameSimulation() {
+        ReportingHelper.printSection('🚀', 'Running Robust Game Simulation Test');
+
+        const browserHelper = new BrowserHelper(this.config);
+        
+        try {
+            const RobustGameSimulation = require('./robust-game-simulation');
+            const test = new RobustGameSimulation(this.config);
+            this.results.robustGameSimulation = await test.run();
+        } finally {
+            if (!this.config.keepOpen) {
+                // The test itself should handle browser closing, but as a fallback:
+                if (browserHelper.browser) {
+                    await browserHelper.close();
+                }
+            }
         }
     }
 

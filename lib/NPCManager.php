@@ -359,7 +359,7 @@ class NPCManager
         $negotiationAction = $strategy->respondToNegotiations();
 
         if ($negotiationAction) {
-            file_put_contents(__DIR__ . '/../data/npc_last_action.json', json_encode(['npc' => $npc['teamName'], 'action' => $negotiationAction, 'time' => time()], JSON_PRETTY_PRINT));
+            error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) decided to: {$negotiationAction['type']}");
             $this->executeNPCAction($npc, $negotiationAction, $currentSession);
             return; // Prioritize negotiation responses over new trades
         }
@@ -367,20 +367,8 @@ class NPCManager
         // If no negotiations to respond to, decide on regular trade action
         $action = $strategy->decideTrade();
 
-        // LOG EVERYTHING for debugging
-        $debug = [
-            'npc' => $npc['teamName'],
-            'skill' => $npc['skillLevel'],
-            'time' => date('Y-m-d H:i:s'),
-            'action' => $action ?: 'no_action'
-        ];
-        $existingDebug = file_exists(__DIR__ . '/../data/npc_debug.json') ? json_decode(file_get_contents(__DIR__ . '/../data/npc_debug.json'), true) : [];
-        if (!is_array($existingDebug)) $existingDebug = [];
-        $existingDebug[] = $debug;
-        if (count($existingDebug) > 20) array_shift($existingDebug);
-        file_put_contents(__DIR__ . '/../data/npc_debug.json', json_encode($existingDebug, JSON_PRETTY_PRINT));
-
         if ($action) {
+            error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) decided to: {$action['type']}");
             $this->executeNPCAction($npc, $action, $currentSession);
         }
     }

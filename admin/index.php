@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../userData.php';
+require_once __DIR__ . '/../config.php';
 
 // Check if user is admin
 if (!isAdmin()) {
@@ -16,7 +17,7 @@ if (!isAdmin()) {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Access Denied - CNDQ Admin</title>
-        <link rel="stylesheet" href="../css/styles.css">
+        <link rel="stylesheet" href="<?php echo htmlspecialchars($basePath); ?>/css/styles.css">
     </head>
     <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
         <div class="max-w-md w-full bg-gray-800 rounded-lg p-8 border-2 border-red-600 text-center">
@@ -46,7 +47,22 @@ if (!isAdmin()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Admin Dashboard</title>
-    <link rel="stylesheet" href="../css/styles.css">
+    <script>
+        window.APP_BASE_PATH = "<?php echo htmlspecialchars($basePath); ?>";
+    </script>
+    <?php
+        // $basePath is defined in the access denied block, but redefine here if that block is removed
+        if (!isset($basePath)) {
+            $basePath = dirname($_SERVER['SCRIPT_NAME']);
+            $cndqPos = strpos($basePath, '/CNDQ');
+            if ($cndqPos !== false) {
+                $basePath = substr($basePath, 0, $cndqPos + strlen('/CNDQ'));
+            } else {
+                $basePath = '';
+            }
+        }
+    ?>
+    <link rel="stylesheet" href="<?php echo htmlspecialchars($basePath); ?>/css/styles.css">
     <style>
         /* Focus styles */
         *:focus-visible {
@@ -228,7 +244,6 @@ if (!isAdmin()) {
                         <option value="novice">Novice (Threshold-based, methodical)</option>
                         <option value="expert">Expert (Shadow price-based, strategic)</option>
                     </select>
-                    <input type="number" id="npc-count" value="1" min="1" max="10" class="bg-gray-600 border border-gray-500 rounded px-4 py-2 w-20 text-white text-center">
                     <button onclick="createNPC()" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded font-bold transition">
                         Add NPC
                     </button>
@@ -693,7 +708,8 @@ if (!isAdmin()) {
 
         async function createNPC() {
             const skillLevel = document.getElementById('npc-skill-level').value;
-            const count = parseInt(document.getElementById('npc-count').value);
+            const countEl = document.getElementById('npc-count');
+            const count = countEl ? parseInt(countEl.value) : 1; // Default to 1 if element is absent
 
             if (count < 1 || count > 10) {
                 showToast('Count must be between 1 and 10', 'error');

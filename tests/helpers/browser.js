@@ -3,6 +3,7 @@
  */
 
 const puppeteer = require('puppeteer');
+const path = require('path');
 
 class BrowserHelper {
     constructor(config) {
@@ -60,25 +61,39 @@ class BrowserHelper {
      * Login as a user
      */
     async login(page, userEmail) {
-        await page.goto(`${this.config.baseUrl}/dev_login.php?user=${userEmail}`);
-        await this.sleep(1000);
+        // dev_login.php is at the root of CNDQ project
+        const loginUrl = `${this.config.baseUrl}/dev_login.php?user=${userEmail}`;
+        const targetUrl = `${this.config.baseUrl}/`;
+
+        await page.goto(loginUrl, { waitUntil: 'domcontentloaded' });
+        
+        // Wait for the URL to change to the target, which confirms the redirect
+        await page.waitForFunction((url) => window.location.href.includes(url), { timeout: 15000 }, targetUrl);
+        
+        await this.sleep(1000); // Small sleep for safety
     }
 
     /**
      * Navigate to a page
      */
-    async navigateTo(page, path, options = {}) {
-        const url = path.startsWith('http') ? path : `${this.config.baseUrl}${path}`;
+    async navigateTo(page, pathStr, options = {}) {
+        const url = pathStr.startsWith('http') ? pathStr : `${this.config.baseUrl}${pathStr}`;
         await page.goto(url, { waitUntil: 'networkidle2', ...options });
     }
 
     /**
-     * Login and navigate
+     * Login and navigate to a path (simplified)
      */
-    async loginAndNavigate(userEmail, path) {
+    async loginAndNavigate(userEmail, pathStr) {
         const page = await this.newPage();
-        await this.login(page, userEmail);
-        await this.navigateTo(page, path);
+        // dev_login.php redirects to index.php, which is our main app page.
+        await this.login(page, userEmail); 
+        
+        // If we want a specific path OTHER than index.php, navigate there
+        if (pathStr && !pathStr.includes('index.php')) {
+            await this.navigateTo(page, pathStr);
+        }
+        
         await this.sleep(2000); // Wait for page to fully load
         return page;
     }
@@ -105,6 +120,25 @@ class BrowserHelper {
      */
     keepOpen() {
         return new Promise(() => {});
+    }
+
+    /**
+     * Run a shell command synchronously.
+     * @param {string} command - The shell command to run.
+     * @param {string} [cwd=process.cwd()] - The current working directory for the command.
+     * @returns {string} The stdout from the command.
+     */
+    runShellCommand(command, cwd = process.cwd()) {
+        const { execSync } = require('child_process');
+        try {
+            return execSync(command, { cwd, encoding: 'utf8', stdio: 'pipe' });
+        } catch (error) {
+            console.error(`Error running shell command: ${command}`);
+            console.error(error.message);
+            if (error.stdout) console.error(`STDOUT: ${error.stdout}`);
+            if (error.stderr) console.error(`STDERR: ${error.stderr}`);
+            throw error;
+        }
     }
 }
 

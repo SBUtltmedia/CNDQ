@@ -1,10 +1,11 @@
+<?php require_once 'config.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Marketplace</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="<?php echo htmlspecialchars($basePath); ?>/css/styles.css">
     <style>
         /* Page-specific animations */
         @keyframes spin {
@@ -637,6 +638,12 @@
     </div>
 
     <!-- Main JavaScript Application -->
-    <script type="module" src="js/marketplace.js"></script>
+    <script>
+        window.APP_BASE_PATH = "<?php echo htmlspecialchars($basePath); ?>";
+    </script>
+    <script id="main-app-script" 
+            type="module" 
+            src="<?php echo htmlspecialchars($basePath); ?>/js/marketplace.js"
+            data-base-path="<?php echo htmlspecialchars($basePath); ?>"></script>
 </body>
 </html>
