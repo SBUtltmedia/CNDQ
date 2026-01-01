@@ -35,9 +35,11 @@ class BeginnerStrategy extends NPCTradingStrategy
         
         // If no market ads to respond to, randomly decide to make a new offer (e.g., post a buy order)
         // This makes beginners also active buyers on occasion.
+        /* DISABLED: NPCs should not submit buy requests
         if ($this->randomFloat(0, 1) < 0.2) { // 20% chance to post a buy order
              return $this->decideBuy();
         }
+        */
 
         return null; // No action needed
     }

@@ -49,12 +49,14 @@ class NoviceStrategy extends NPCTradingStrategy
             }
             
             // If inventory is low, try to buy
+            /* DISABLED: NPCs should not submit buy requests
             if ($amount < self::LOW_INVENTORY) {
                 $action = $this->tryToBuy($chemical);
                 if ($action) {
                     return $action;
                 }
             }
+            */
         }
 
         return null; // No action needed

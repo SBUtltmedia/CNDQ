@@ -132,11 +132,34 @@ class SessionHelper {
             throw new Error(`Invalid phase "${phase}" specified.`);
         }
         
-        const buttonSelector = `button[onclick="setPhase('${phase}')"]`;
-        await adminPage.waitForSelector(buttonSelector, { timeout: 10000 });
-        await adminPage.click(buttonSelector);
-        await this.browser.sleep(500); // Wait for API call to likely complete
-        console.log(`   - Phase set to ${phase}`);
+        const result = await adminPage.evaluate(async (ph, baseUrl) => {
+            try {
+                // Use explicit baseUrl from test config
+                const response = await fetch(`${baseUrl}/api/admin/session.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'setPhase', phase: ph })
+                });
+                
+                const text = await response.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    return { success: false, message: 'Invalid JSON (' + response.status + '): ' + text.substring(0, 100) };
+                }
+            } catch (e) {
+                return { success: false, message: 'Fetch error: ' + e.message };
+            }
+        }, phase, this.browser.config.baseUrl);
+
+        if (result.success) {
+            console.log(`   - Phase set to ${phase}`);
+        } else {
+            const msg = result.message || result.error || JSON.stringify(result);
+            throw new Error(`Failed to set phase to ${phase}: ${msg}`);
+        }
+        
+        await this.browser.sleep(500);
     }
 }
 

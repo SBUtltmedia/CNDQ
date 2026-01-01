@@ -18,11 +18,29 @@ try {
     echo "  Phase: {$state['phase']}\n";
     echo "  Auto-advance: " . ($state['autoAdvance'] ? 'ON' : 'OFF') . "\n";
     echo "  Time remaining: {$state['timeRemaining']}s\n";
-
-    if ($state['phase'] === 'trading' && $state['autoAdvance']) {
-        echo "  ✓ NPCs should be trading\n";
-    } else {
-        echo "  - NPCs not active (wrong phase or auto-advance off)\n";
+    
+    // Debug NPC trigger logic explicitly
+    $sessionFile = __DIR__ . '/../data/session_state.json';
+    $data = json_decode(file_get_contents($sessionFile), true);
+    $npcLastRun = $data['npcLastRun'] ?? 0;
+    $timeSince = time() - $npcLastRun;
+    
+    echo "  NPC Last Run: $npcLastRun (Ago: {$timeSince}s)\n";
+    
+    if ($state['phase'] === 'trading') {
+        if ($timeSince < 10) {
+            echo "  ⚠ Skipped: Recently run ($timeSince < 10s)\n";
+        } else {
+             // It should have run in getState(). If timeSince is still large, it failed to update timestamp
+             // or getState didn't trigger it (e.g. NPCManager disabled)
+             require_once __DIR__ . '/../lib/NPCManager.php';
+             $mgr = new NPCManager();
+             if (!$mgr->isEnabled()) {
+                 echo "  ⚠ Skipped: NPC System Disabled\n";
+             } else {
+                 echo "  ✓ Cycle attempted (Timestamp should have updated)\n";
+             }
+        }
     }
 
 } catch (Exception $e) {

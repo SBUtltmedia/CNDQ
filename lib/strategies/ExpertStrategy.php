@@ -352,4 +352,4 @@ class ExpertStrategy extends NPCTradingStrategy
             'type' => 'reject_negotiation',
             'negotiationId' => $negotiation['id']
         ];
-    }
+    }}
