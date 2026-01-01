@@ -182,3 +182,4 @@ class ChemicalCard extends LitElement {
 }
 
 customElements.define('chemical-card', ChemicalCard);
+
