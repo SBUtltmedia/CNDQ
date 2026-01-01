@@ -899,24 +899,23 @@ class MarketplaceApp {
         }
     }
 
-    /**
-     * Make counter-offer
-     */
     async makeCounterOffer() {
         const quantity = parseFloat(document.getElementById('haggle-qty-slider').value);
         const price = parseFloat(document.getElementById('haggle-price-slider').value);
+        const reaction = parseFloat(document.getElementById('haggle-reaction-slider').value);
 
         if (!quantity || quantity <= 0) {
             this.showToast('Please enter a valid quantity', 'error');
             return;
         }
 
-        if (price === null || price < 0) {
-            this.showToast('Please enter a valid price', 'error');
-            return;
-        }
-
         try {
+            // First send the reaction (ghost player event)
+            await api.post('/api/negotiations/react.php', {
+                negotiationId: this.currentNegotiation.id,
+                level: reaction
+            });
+
             await api.negotiations.counter(this.currentNegotiation.id, quantity, price);
             this.showToast('Counter-offer sent', 'success');
             await this.loadNegotiations();
@@ -1109,58 +1108,51 @@ class MarketplaceApp {
     updateHaggleUI(shadowPrice, isBuyer) {
         const qty = parseFloat(document.getElementById('haggle-qty-slider').value);
         const price = parseFloat(document.getElementById('haggle-price-slider').value);
+        const reaction = parseFloat(document.getElementById('haggle-reaction-slider').value);
         const total = qty * price;
 
         document.getElementById('haggle-qty-display').textContent = qty;
         document.getElementById('haggle-price-display').textContent = price.toFixed(2);
         document.getElementById('haggle-total').textContent = total.toFixed(2);
 
-        // Annoyance Logic
-        // For seller, higher price is better (less annoyance). 
-        // For buyer, lower price is better.
-        // Wait, the meter usually represents NPC's patience. 
-        // If user is SELLING to NPC: User wants high price. High price annoy NPC.
-        // If user is BUYING from NPC: User wants low price. Low price annoy NPC.
-        
-        const ratio = price / Math.max(0.01, shadowPrice);
-        let annoyance = 0;
-        let label = "Interested";
-        let color = "bg-green-500";
+        // Player Reaction Label
+        const reactionLabel = document.getElementById('reaction-label');
+        if (reaction > 80) { reactionLabel.textContent = "Offended"; reactionLabel.className = "text-red-500 font-bold"; }
+        else if (reaction > 50) { reactionLabel.textContent = "Disappointed"; reactionLabel.className = "text-yellow-500 font-bold"; }
+        else if (reaction > 20) { reactionLabel.textContent = "Wary"; reactionLabel.className = "text-blue-400 font-bold"; }
+        else { reactionLabel.textContent = "Neutral"; reactionLabel.className = "text-blue-300 font-bold"; }
 
-        // Reverse logic based on role
+        // Persistent NPC Patience (Loaded from state)
+        const negId = this.currentNegotiation.id;
+        const negState = this.profile.negotiationStates?.[negId] || { patience: 100 };
+        
+        // Calculate "Predicted" patience drain if we send this offer
+        const ratio = price / Math.max(0.01, shadowPrice);
         const type = this.currentNegotiation.type || 'buy';
         const userIsSelling = (this.currentNegotiation.initiatorId === this.currentUser && type === 'sell') || 
                             (this.currentNegotiation.responderId === this.currentUser && type === 'buy');
 
-        if (userIsSelling) {
-            // User selling to NPC: High price = NPC annoyed
-            annoyance = (ratio / 2.5) * 100; // 2.5x shadow price is max annoyance
-        } else {
-            // User buying from NPC: Low price = NPC annoyed
-            annoyance = ((1 / Math.max(0.1, ratio)) / 3) * 100; 
-        }
+        // Show the persistent bar
+        const patienceBar = document.getElementById('patience-bar');
+        const patienceVal = document.getElementById('patience-value');
+        const patiencePercent = Math.max(0, negState.patience);
+        
+        patienceBar.style.width = `${patiencePercent}%`;
+        patienceVal.textContent = `${patiencePercent}%`;
 
-        annoyance = Math.min(100, Math.max(5, annoyance));
-
-        if (annoyance > 80) { 
-            label = "Furious"; color = "bg-red-600"; 
-            // Trigger shake effect on modal
+        if (patiencePercent < 30) {
+            patienceBar.className = "h-full bg-red-600 animate-pulse";
+            // Trigger shake if they keep pushing
             const modalContent = document.querySelector('#negotiation-modal > div');
             if (modalContent) {
-                modalContent.classList.remove('animate-shake');
-                void modalContent.offsetWidth; // Trigger reflow
                 modalContent.classList.add('animate-shake');
+                setTimeout(() => modalContent.classList.remove('animate-shake'), 500);
             }
+        } else if (patiencePercent < 60) {
+            patienceBar.className = "h-full bg-yellow-500";
+        } else {
+            patienceBar.className = "h-full bg-emerald-500";
         }
-        else if (annoyance > 50) { label = "Annoyed"; color = "bg-yellow-500"; }
-        else if (annoyance > 20) { label = "Interested"; color = "bg-green-500"; }
-        else { label = "Excited"; color = "bg-emerald-400"; }
-
-        const bar = document.getElementById('annoyance-bar');
-        bar.style.width = `${annoyance}%`;
-        bar.className = `h-full ${color} transition-all duration-300`;
-        document.getElementById('annoyance-label').textContent = label;
-        document.getElementById('annoyance-label').className = `font-bold ${color.replace('bg-', 'text-')}`;
     }
 
     /**
@@ -1352,6 +1344,11 @@ class MarketplaceApp {
         });
 
         document.getElementById('haggle-price-slider').addEventListener('input', () => {
+            const shadowVal = this.shadowPrices[this.currentNegotiation.chemical] || 2.0;
+            this.updateHaggleUI(shadowVal);
+        });
+
+        document.getElementById('haggle-reaction-slider').addEventListener('input', () => {
             const shadowVal = this.shadowPrices[this.currentNegotiation.chemical] || 2.0;
             this.updateHaggleUI(shadowVal);
         });

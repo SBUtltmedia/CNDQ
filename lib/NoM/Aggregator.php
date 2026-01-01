@@ -33,6 +33,7 @@ class Aggregator {
             'profile' => ['email' => '', 'teamName' => '', 'currentFunds' => 0, 'startingFunds' => 0, 'settings' => []],
             'inventory' => ['C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0, 'updatedAt' => 0, 'transactionsSinceLastShadowCalc' => 0],
             'productions' => [], 'offers' => [], 'buyOrders' => [], 'ads' => [], 'notifications' => [],
+            'negotiationStates' => [], // Tracks patience and player reactions per negotiation
             'shadowPrices' => ['C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0, 'calculatedAt' => 0],
             'lastUpdate' => 0, 'eventsProcessed' => 0
         ];
@@ -95,8 +96,33 @@ class Aggregator {
                 $state['offers'] = array_values(array_filter($state['offers'], fn($o) => $o['id'] !== $payload['id']));
                 break;
             case 'add_buy_order': $state['buyOrders'][] = $payload; break;
-            case 'remove_buy_order':
-                $state['buyOrders'] = array_values(array_filter($state['buyOrders'], fn($o) => $o['id'] !== $payload['id']));
+            case 'update_buy_order':
+                foreach ($state['buyOrders'] as &$order) {
+                    if ($order['id'] === $payload['id']) {
+                        $order = array_merge($order, $payload['updates']);
+                        $order['updatedAt'] = $timestamp;
+                    }
+                }
+                break;
+
+            case 'add_counter_offer':
+                // Track patience drain for this specific negotiation
+                $negId = $payload['negotiationId'];
+                if (!isset($state['negotiationStates'][$negId])) {
+                    $state['negotiationStates'][$negId] = ['patience' => 100, 'lastReaction' => 0];
+                }
+                
+                // If the offer was from the counter-party, reduce our patience based on greed
+                // (In a real No-M, we'd need shadow prices here, but we can use simple counts for now)
+                $state['negotiationStates'][$negId]['patience'] -= 10; 
+                break;
+
+            case 'add_reaction':
+                $negId = $payload['negotiationId'];
+                if (!isset($state['negotiationStates'][$negId])) {
+                    $state['negotiationStates'][$negId] = ['patience' => 100, 'lastReaction' => 0];
+                }
+                $state['negotiationStates'][$negId]['lastReaction'] = $payload['level'];
                 break;
             case 'add_ad': $state['ads'][] = $payload; break;
             case 'remove_ad':

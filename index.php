@@ -473,20 +473,34 @@
                                 </div>
                                 <input type="range" id="haggle-price-slider" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500">
                                 <div class="flex justify-between text-[10px] text-gray-500 mt-1">
-                                    <span>Fair Deal</span>
-                                    <span>High Profit</span>
+                                    <span>Generous</span>
+                                    <span>Greedy</span>
                                 </div>
                             </div>
 
-                            <!-- Annoyance Meter (Visual Feedback) -->
-                            <div class="pt-2">
+                            <!-- Player Reaction (Your Annoyance) -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <label class="text-blue-300 font-semibold">Your Reaction to Counter-Offer</label>
+                                    <span id="reaction-label" class="text-blue-400 font-bold">Neutral</span>
+                                </div>
+                                <input type="range" id="haggle-reaction-slider" min="0" max="100" value="0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                                <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+                                    <span>Accepting</span>
+                                    <span>Displeased</span>
+                                </div>
+                            </div>
+
+                            <!-- Persistent NPC Patience Meter -->
+                            <div class="pt-2 border-t border-gray-700">
                                 <div class="flex justify-between text-[10px] uppercase tracking-wider mb-1">
-                                    <span id="annoyance-label" class="text-green-400 font-bold">Interested</span>
-                                    <span class="text-gray-400">NPC Patience</span>
+                                    <span class="text-gray-400">Merchant Patience</span>
+                                    <span id="patience-value" class="text-white font-bold">100%</span>
                                 </div>
-                                <div class="w-full h-3 bg-gray-900 rounded-full overflow-hidden border border-gray-700">
-                                    <div id="annoyance-bar" class="h-full bg-green-500 transition-all duration-300" style="width: 20%"></div>
+                                <div class="w-full h-2 bg-gray-900 rounded-full overflow-hidden border border-gray-800">
+                                    <div id="patience-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 100%"></div>
                                 </div>
+                                <p class="text-[10px] text-gray-500 mt-1">If patience runs out, the deal is cancelled.</p>
                             </div>
 
                             <div class="bg-gray-900 p-3 rounded flex justify-between items-center">
