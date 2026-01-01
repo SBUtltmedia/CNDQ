@@ -19,13 +19,14 @@ async function runTest() {
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
-    const page = await browser.newPage();
+    let page; // Define page in a higher scope
 
     try {
+        page = await browser.newPage();
         // --- STEP 1: ADMIN SETUP ---
         console.log('🛡️  ADMIN: Setting up short timers and enabling NPCs...');
         await page.setCookie({ name: 'mock_mail', value: adminUser, domain: 'herd.test', path: '/' });
-        await page.goto(`${baseUrl}/admin/index.php`, { waitUntil: 'networkidle2' });
+        await page.goto(`${baseUrl}/admin/index.php`, { waitUntil: 'networkidle2', timeout: 30000 });
         
         // 1. Reset Game for clean slate
         console.log('   Resetting game data...');
@@ -86,14 +87,18 @@ async function runTest() {
         // --- STEP 2: PLAYER OBSERVATION ---
         console.log('👤 PLAYER: Logging in to watch the world turn...');
         await page.setCookie({ name: 'mock_mail', value: testUser, domain: 'herd.test', path: '/' });
-        await page.goto(baseUrl, { waitUntil: 'networkidle2' });
+        await page.goto(baseUrl, { waitUntil: 'networkidle2', timeout: 30000 });
         await page.waitForSelector('#app:not(.hidden)');
 
         // Post a single ad so Auto-Advance doesn't stop (it checks for activity)
         console.log('📝 Posting activity ad to keep auto-advance alive...');
         await page.evaluate(() => {
             const card = document.querySelector('chemical-card[chemical="C"]');
-            card.querySelector('#post-buy-btn').click();
+            if (card) {
+                // Lit components have their own render lifecycle, access internal button
+                const btn = card.renderRoot.querySelector('.btn');
+                if (btn) btn.click();
+            }
         });
         await page.waitForSelector('#offer-modal:not(.hidden)');
         await page.click('#offer-submit-btn');

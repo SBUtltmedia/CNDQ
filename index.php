@@ -97,7 +97,7 @@
     <div id="toast-container" class="fixed bottom-4 right-4 z-[9999] space-y-2" role="region" aria-live="polite" aria-atomic="false" aria-label="Notifications"></div>
 
     <!-- Main App Container -->
-    <div id="app" class="hidden">
+    <div id="app">
 
         <!-- Header -->
         <header class="bg-gray-800 border-b-2 border-green-500 shadow-lg">

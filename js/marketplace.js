@@ -98,7 +98,6 @@ class MarketplaceApp {
 
             // Hide loading, show app
             document.getElementById('loading-overlay').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
             console.log('✓ Marketplace initialized successfully');
 
         } catch (error) {
@@ -354,20 +353,10 @@ class MarketplaceApp {
         ['C', 'N', 'D', 'Q'].forEach(chemical => {
             const card = document.querySelector(`chemical-card[chemical="${chemical}"]`);
             if (card) {
+                // Lit properties are case-sensitive
                 card.currentUserId = this.currentUser;
-                
-                // Add brief glow if inventory changed
-                if (this.inventory && card.inventory !== this.inventory[chemical]) {
-                    const cardInner = card.querySelector('div');
-                    if (cardInner) {
-                        cardInner.classList.add('inventory-update-glow');
-                        setTimeout(() => cardInner.classList.remove('inventory-update-glow'), 500);
-                    }
-                }
-
                 card.inventory = this.inventory[chemical];
                 card.shadowPrice = this.shadowPrices[chemical];
-                card.sellAds = this.advertisements[chemical]?.sell || [];
                 card.buyAds = this.advertisements[chemical]?.buy || [];
             }
         });
@@ -1233,10 +1222,6 @@ class MarketplaceApp {
             // If responding to a buy request, use special respond modal
             if (type === 'buy') {
                 this.openRespondModal(teamId, teamName, chemical);
-            } else {
-                // Original flow for sell ads (though sell is disabled now)
-                this.openNegotiationModal();
-                setTimeout(() => this.startNewNegotiation(teamId, teamName, chemical, type), 100);
             }
         });
 

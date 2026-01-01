@@ -1,104 +1,89 @@
-/**
- * Advertisement Item Web Component
- *
- * Displays a single advertisement (buy or sell interest) for a chemical.
- * Shows team name and negotiation button.
- *
- * Usage:
- *   <advertisement-item
- *       team-name="Team Alpha"
- *       team-id="team@example.com"
- *       type="sell"
- *       chemical="C"
- *       is-my-ad>
- *   </advertisement-item>
- *
- * Events:
- *   - negotiate: Dispatched when user clicks negotiate button
- *     detail: { teamId, teamName, chemical, type }
- */
+import { LitElement, html, css } from 'lit';
 
-import { tailwindStyles } from './shared-styles.js';
+const componentStyles = css`
+    :host {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+    .ad-item {
+        background-color: var(--color-bg-tertiary, #374151);
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        transition: background-color 0.2s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .ad-item:hover {
+        background-color: #4b5563; /* Slightly lighter */
+    }
+    .team-name {
+        font-weight: 600;
+        color: var(--color-text-primary, #f9fafb);
+    }
+    .your-ad {
+        font-size: 0.75rem;
+        font-style: italic;
+        color: var(--color-text-tertiary, #d1d5db);
+    }
+    .btn {
+        background-color: #10b981;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        border: none;
+        cursor: pointer;
+    }
+    .btn:hover {
+        background-color: #059669;
+    }
+`;
 
-class AdvertisementItem extends HTMLElement {
+class AdvertisementItem extends LitElement {
+    static styles = componentStyles;
+
+    static properties = {
+        teamName: { type: String },
+        teamId: { type: String },
+        type: { type: String },
+        chemical: { type: String },
+        isMyAd: { type: Boolean }
+    };
+
     constructor() {
         super();
-        // Use light DOM to work with global Tailwind styles
-    }
-
-    static get observedAttributes() {
-        return ['team-name', 'team-id', 'type', 'is-my-ad', 'chemical'];
-    }
-
-    get teamName() { return this.getAttribute('team-name'); }
-    set teamName(val) { this.setAttribute('team-name', val); }
-
-    get teamId() { return this.getAttribute('team-id'); }
-    set teamId(val) { this.setAttribute('team-id', val); }
-
-    get type() { return this.getAttribute('type'); } // 'buy' or 'sell'
-    set type(val) { this.setAttribute('type', val); }
-
-    get isMyAd() { return this.hasAttribute('is-my-ad'); }
-    set isMyAd(val) {
-        if (val) this.setAttribute('is-my-ad', '');
-        else this.removeAttribute('is-my-ad');
-    }
-
-    get chemical() { return this.getAttribute('chemical'); }
-    set chemical(val) { this.setAttribute('chemical', val); }
-
-    connectedCallback() {
-        this.render();
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (oldValue !== newValue && this.firstChild) {
-            this.render();
-        }
-    }
-
-    render() {
-        // In the simplified model, all advertisements are BUY requests
-        // So we always want to "Sell to" them.
-        const buttonText = 'Sell to';
-        const bgColor = 'bg-blue-700';
-
-        this.innerHTML = `
-            <div class="bg-gray-700 rounded p-3 border border-gray-600">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="font-semibold text-sm text-white">${this.teamName}</div>
-                        <div class="text-xs text-gray-300">Wants to buy</div>
-                    </div>
-                    ${!this.isMyAd ? `
-                        <button
-                            class="negotiate-btn ${bgColor} hover:opacity-90 text-white px-3 py-1 rounded text-xs font-semibold transition"
-                            part="button">
-                            ${buttonText}
-                        </button>
-                    ` : '<span class="text-xs text-gray-400 italic">Your ad</span>'}
-                </div>
-            </div>
-        `;
-
-        if (!this.isMyAd) {
-            this.querySelector('.negotiate-btn')
-                .addEventListener('click', () => this.handleNegotiate());
-        }
+        this.isMyAd = false;
     }
 
     handleNegotiate() {
         this.dispatchEvent(new CustomEvent('negotiate', {
-            bubbles: true,
-            composed: true, // CRITICAL: Crosses shadow DOM boundary
             detail: {
                 teamId: this.teamId,
                 teamName: this.teamName,
                 chemical: this.chemical,
                 type: this.type
-            }
+            },
+            bubbles: true,
+            composed: true
         }));
+    }
+
+    render() {
+        return html`
+            <div class="ad-item">
+                <div class="team-info">
+                    <span class="team-name">${this.teamName}</span>
+                    ${this.isMyAd ? html`<span class="your-ad"> (Your Request)</span>` : ''}
+                </div>
+                ${!this.isMyAd ? html`
+                    <button class="btn" @click=${this.handleNegotiate}>
+                        Sell to
+                    </button>
+                ` : ''}
+            </div>
+        `;
     }
 }
 

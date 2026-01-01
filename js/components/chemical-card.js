@@ -1,199 +1,183 @@
-/**
- * Chemical Card Web Component
- *
- * Displays a chemical column with inventory, shadow price, post buttons,
- * and lists of buy/sell advertisements.
- *
- * Usage:
- *   <chemical-card chemical="C"></chemical-card>
- *
- * Properties (set via JavaScript):
- *   - inventory: Number - current inventory amount
- *   - shadowPrice: Number - calculated shadow price
- *   - sellAds: Array - advertisements of teams wanting to sell
- *   - buyAds: Array - advertisements of teams wanting to buy
- *   - currentUserId: String - to identify own advertisements
- *
- * Events:
- *   - post-interest: Dispatched when post sell/buy button clicked
- *     detail: { chemical, type }
- *   - negotiate: Proxied from child advertisement-item components
- *     detail: { teamId, teamName, chemical, type }
- */
+import { LitElement, html, css } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 
-import { tailwindStyles } from './shared-styles.js';
-import './advertisement-item.js';
+// Since we can't use Tailwind inside the Shadow DOM directly,
+// we define our styles here. These are inspired by your existing styles.
+const componentStyles = css`
+    :host {
+        display: block;
+    }
+    .card {
+        background-color: var(--color-bg-secondary, #1f2937);
+        border-radius: 0.5rem;
+        border: 2px solid var(--border-color, #4b5563);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        color: var(--color-text-primary, #f9fafb);
+    }
+    .header {
+        padding: 1rem;
+        text-align: center;
+        background-color: var(--header-bg-color, #374151);
+    }
+    .header h2 {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: white;
+    }
+    .content {
+        padding: 1rem;
+    }
+    .info-box {
+        background-color: var(--color-bg-tertiary, #374151);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .info-label {
+        font-size: 0.875rem;
+        color: var(--color-text-secondary, #e5e7eb);
+    }
+    .info-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+    }
+    .shadow-price {
+        font-size: 0.75rem;
+        color: var(--color-text-secondary, #e5e7eb);
+        margin-top: 0.25rem;
+    }
+    .shadow-price span {
+        color: var(--color-success, #10b981);
+        font-weight: 700;
+    }
+    .btn {
+        width: 100%;
+        background-color: #2563eb;
+        color: white;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .btn:hover {
+        background-color: #1d4ed8;
+    }
+    .btn-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .ads-header {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--color-text-secondary, #e5e7eb);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .ads-container {
+        max-height: 24rem;
+        overflow-y: auto;
+        padding-right: 0.25rem; /* for scrollbar */
+    }
+    .empty-ads {
+        font-size: 0.75rem;
+        color: var(--color-text-tertiary, #d1d5db);
+        text-align: center;
+        padding: 1rem 0;
+    }
+`;
 
-class ChemicalCard extends HTMLElement {
+class ChemicalCard extends LitElement {
+    static styles = componentStyles;
+
+    static properties = {
+        chemical: { type: String },
+        inventory: { type: Number },
+        shadowPrice: { type: Number },
+        buyAds: { type: Array },
+        currentUserId: { type: String }
+    };
+
     constructor() {
         super();
-        // Use light DOM to work with global Tailwind styles
-        this._data = {
-            inventory: 0,
-            shadowPrice: 0,
-            sellAds: [],
-            buyAds: []
+        this.chemical = '';
+        this.inventory = 0;
+        this.shadowPrice = 0;
+        this.buyAds = [];
+        this.currentUserId = '';
+    }
+
+    getChemicalColor(chemical) {
+        const colors = {
+            C: { border: 'var(--color-chemical-c, #6eb5ff)', header: '#1d4ed8' },
+            N: { border: 'var(--color-chemical-n, #d4a8fc)', header: '#7c3aed' },
+            D: { border: 'var(--color-chemical-d, #fcd34d)', header: '#b45309' },
+            Q: { border: 'var(--color-chemical-q, #ffa0a0)', header: '#b91c1c' }
         };
+        return colors[chemical] || colors.C;
     }
 
-    static get observedAttributes() {
-        return ['chemical', 'current-user-id'];
-    }
-
-    get chemical() { return this.getAttribute('chemical'); }
-    set chemical(val) { this.setAttribute('chemical', val); }
-
-    get currentUserId() { return this.getAttribute('current-user-id'); }
-    set currentUserId(val) { this.setAttribute('current-user-id', val); }
-
-    // Use properties for complex data (arrays/objects)
-    get inventory() { return this._data.inventory; }
-    set inventory(val) {
-        this._data.inventory = val;
-        this.updateInventory();
-    }
-
-    get shadowPrice() { return this._data.shadowPrice; }
-    set shadowPrice(val) {
-        this._data.shadowPrice = val;
-        this.updateShadowPrice();
-    }
-
-    get sellAds() { return this._data.sellAds; }
-    set sellAds(val) {
-        this._data.sellAds = val || [];
-        this.renderAdvertisements();
-    }
-
-    get buyAds() { return this._data.buyAds; }
-    set buyAds(val) {
-        this._data.buyAds = val || [];
-        this.renderAdvertisements();
-    }
-
-    connectedCallback() {
-        this.render();
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (oldValue !== newValue && this.firstChild) {
-            if (name === 'chemical') {
-                this.render(); // Full re-render if chemical changes
-            } else if (name === 'current-user-id') {
-                this.renderAdvertisements(); // Re-render ads to update "Your ad" labels
-            }
-        }
+    handlePostBuyRequest() {
+        this.dispatchEvent(new CustomEvent('post-interest', {
+            detail: { chemical: this.chemical, type: 'buy' },
+            bubbles: true,
+            composed: true
+        }));
     }
 
     render() {
-        const colors = {
-            C: { border: 'border-blue-500', header: 'bg-blue-600' },
-            N: { border: 'border-purple-500', header: 'bg-purple-600' },
-            D: { border: 'border-yellow-500', header: 'bg-yellow-600' },
-            Q: { border: 'border-red-500', header: 'bg-red-600' }
-        };
+        const { border, header } = this.getChemicalColor(this.chemical);
+        const hasActiveBuyAd = this.buyAds.some(ad => ad.teamId === this.currentUserId);
 
-        const { border, header } = colors[this.chemical] || colors.C;
-
-        this.innerHTML = `
-            <div class="bg-gray-800 rounded-lg border-2 ${border} shadow-xl">
-                <div class="${header} p-4 text-center">
-                    <h2 class="font-bold text-xl text-white">Chemical ${this.chemical}</h2>
+        return html`
+            <div class="card" style="--border-color: ${border};">
+                <div class="header" style="--header-bg-color: ${header};">
+                    <h2>Chemical ${this.chemical}</h2>
                 </div>
-                <div class="p-4">
-                    <!-- Inventory Display -->
-                    <div class="bg-gray-700 rounded-lg p-3 mb-4">
-                        <div class="text-sm text-gray-300">Your Inventory</div>
-                        <div class="text-2xl font-bold text-white" id="inventory">0</div>
-                        <div class="text-xs text-gray-300 mt-1">
-                            Shadow Price:
-                            <span class="text-success font-bold" id="shadow-price-container">
-                                $<span id="shadow-price">0</span>
-                            </span>
+                <div class="content">
+                    <div class="info-box">
+                        <div class="info-label">Your Inventory</div>
+                        <div class="info-value">${this.inventory.toLocaleString()}</div>
+                        <div class="shadow-price">
+                            Shadow Price: <span>$${this.shadowPrice.toFixed(2)}</span>
                         </div>
                     </div>
 
-                    <!-- Post Buy Request Button -->
-                    <div class="mb-4">
-                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition shadow-lg text-sm"
-                                id="post-buy-btn">
-                            📋 Post Buy Request
+                    <div style="margin-bottom: 1rem;">
+                        <button 
+                            class="btn ${hasActiveBuyAd ? 'btn-disabled' : ''}" 
+                            @click=${this.handlePostBuyRequest}
+                            ?disabled=${hasActiveBuyAd}>
+                            ${hasActiveBuyAd ? 'Request Posted' : '📋 Post Buy Request'}
                         </button>
-                        <p class="text-xs text-gray-400 mt-2 text-center">Post what you need, teams will offer to sell</p>
+                        <p class="empty-ads" style="margin: 0.5rem 0 0; text-align: center;">
+                            Post what you need, teams will offer to sell.
+                        </p>
                     </div>
 
-                    <!-- Teams Wanting to Buy -->
                     <div>
-                        <h4 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-wide">
-                            Buy Requests
-                        </h4>
-                        <div id="buy-ads" class="space-y-2 max-h-96 overflow-y-auto scrollbar-thin">
-                            <p class="text-xs text-gray-300 text-center py-4">No buy requests yet</p>
+                        <h4 class="ads-header">Buy Requests</h4>
+                        <div class="ads-container">
+                            ${this.buyAds.length === 0
+                                ? html`<p class="empty-ads">No buy requests yet</p>`
+                                : this.buyAds.map(ad => unsafeHTML(
+                                    `<advertisement-item
+                                        teamName="${ad.teamName}"
+                                        teamId="${ad.teamId}"
+                                        type="buy"
+                                        chemical="${this.chemical}"
+                                        ?isMyAd="${ad.teamId === this.currentUserId}"
+                                    ></advertisement-item>`
+                                ))
+                            }
                         </div>
                     </div>
                 </div>
             </div>
         `;
-
-        // Setup event listener
-        this.querySelector('#post-buy-btn')
-            .addEventListener('click', () => this.handlePostInterest('buy'));
-
-        // Initial render of data
-        this.updateInventory();
-        this.updateShadowPrice();
-        this.renderAdvertisements();
-    }
-
-    updateInventory() {
-        const el = this.querySelector('#inventory');
-        if (el) el.textContent = this.formatNumber(this.inventory);
-    }
-
-    updateShadowPrice() {
-        const el = this.querySelector('#shadow-price');
-        if (el) el.textContent = this.formatNumber(this.shadowPrice);
-    }
-
-    renderAdvertisements() {
-        if (!this.firstChild) return;
-
-        const buyContainer = this.querySelector('#buy-ads');
-
-        // Render buy requests only
-        if (this.buyAds.length === 0) {
-            buyContainer.innerHTML = '<p class="text-xs text-gray-300 text-center py-4">No buy requests yet</p>';
-        } else {
-            buyContainer.innerHTML = '';
-            this.buyAds.forEach(ad => {
-                const item = document.createElement('advertisement-item');
-                item.teamName = ad.teamName;
-                item.teamId = ad.teamId;
-                item.type = 'buy';
-                item.chemical = this.chemical;
-                item.isMyAd = ad.teamId === this.currentUserId;
-                buyContainer.appendChild(item);
-            });
-        }
-    }
-
-    handlePostInterest(type) {
-        this.dispatchEvent(new CustomEvent('post-interest', {
-            bubbles: true,
-            composed: true,
-            detail: {
-                chemical: this.chemical,
-                type: type
-            }
-        }));
-    }
-
-    formatNumber(num) {
-        if (num === null || num === undefined) return '0';
-        return parseFloat(num).toLocaleString('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2
-        });
     }
 }
 
