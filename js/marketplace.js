@@ -355,6 +355,16 @@ class MarketplaceApp {
             const card = document.querySelector(`chemical-card[chemical="${chemical}"]`);
             if (card) {
                 card.currentUserId = this.currentUser;
+                
+                // Add brief glow if inventory changed
+                if (this.inventory && card.inventory !== this.inventory[chemical]) {
+                    const cardInner = card.querySelector('div');
+                    if (cardInner) {
+                        cardInner.classList.add('inventory-update-glow');
+                        setTimeout(() => cardInner.classList.remove('inventory-update-glow'), 500);
+                    }
+                }
+
                 card.inventory = this.inventory[chemical];
                 card.shadowPrice = this.shadowPrices[chemical];
                 card.sellAds = this.advertisements[chemical]?.sell || [];
@@ -1132,7 +1142,16 @@ class MarketplaceApp {
 
         annoyance = Math.min(100, Math.max(5, annoyance));
 
-        if (annoyance > 80) { label = "Furious"; color = "bg-red-600"; }
+        if (annoyance > 80) { 
+            label = "Furious"; color = "bg-red-600"; 
+            // Trigger shake effect on modal
+            const modalContent = document.querySelector('#negotiation-modal > div');
+            if (modalContent) {
+                modalContent.classList.remove('animate-shake');
+                void modalContent.offsetWidth; // Trigger reflow
+                modalContent.classList.add('animate-shake');
+            }
+        }
         else if (annoyance > 50) { label = "Annoyed"; color = "bg-yellow-500"; }
         else if (annoyance > 20) { label = "Interested"; color = "bg-green-500"; }
         else { label = "Excited"; color = "bg-emerald-400"; }
@@ -1447,6 +1466,14 @@ class MarketplaceApp {
                 data.phase === 'trading' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
             }`;
 
+            // Toggle Production Overlay
+            const prodOverlay = document.getElementById('production-overlay');
+            if (data.phase === 'production') {
+                prodOverlay.classList.remove('hidden');
+            } else {
+                prodOverlay.classList.add('hidden');
+            }
+
             // Update Timer
             const minutes = Math.floor(data.timeRemaining / 60);
             const seconds = data.timeRemaining % 60;
@@ -1486,7 +1513,13 @@ class MarketplaceApp {
     renderFunds() {
         const fundsEl = document.getElementById('current-funds');
         if (fundsEl && this.profile) {
-            fundsEl.textContent = '$' + this.formatNumber(this.profile.currentFunds);
+            const newFunds = '$' + this.formatNumber(this.profile.currentFunds);
+            if (fundsEl.textContent !== newFunds) {
+                fundsEl.classList.remove('animate-success-pop');
+                void fundsEl.offsetWidth; // Trigger reflow
+                fundsEl.classList.add('animate-success-pop');
+            }
+            fundsEl.textContent = newFunds;
         }
     }
 

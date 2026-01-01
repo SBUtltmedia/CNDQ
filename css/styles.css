@@ -873,3 +873,60 @@ td {
     background-color: rgba(59, 130, 246, 0.2);
     color: var(--color-info);
 }
+/* --- New Game Animations --- */
+
+/* Full Screen Production Overlay */
+#production-overlay {
+    background: rgba(17, 24, 39, 0.9);
+    backdrop-filter: blur(4px);
+}
+
+.cog-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+.cog {
+    position: absolute;
+    fill: var(--color-brand-primary);
+    animation: spin 4s linear infinite;
+}
+
+.cog-1 { width: 120px; top: 0; left: 0; }
+.cog-2 { width: 80px; top: 80px; left: 100px; animation-direction: reverse; animation-duration: 3s; fill: var(--color-brand-secondary); }
+.cog-3 { width: 60px; top: 20px; left: 110px; animation-duration: 2s; fill: #4ade80; }
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Furious Shake Animation */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+.animate-shake {
+    animation: shake 0.1s ease-in-out 0s 3;
+}
+
+/* Success Pop */
+@keyframes success-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); color: var(--color-brand-primary); }
+    100% { transform: scale(1); }
+}
+
+.animate-success-pop {
+    animation: success-pop 0.4s ease-out;
+}
+
+/* Inventory Update Glow */
+.inventory-update-glow {
+    box-shadow: 0 0 15px var(--color-brand-primary);
+    transition: box-shadow 0.3s ease;
+}
+
