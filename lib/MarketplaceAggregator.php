@@ -38,10 +38,28 @@ class MarketplaceAggregator {
 
             $teamPath = $this->teamsDir . '/' . $dir;
             if (is_dir($teamPath)) {
-                // Try to read profile to get actual email
-                $profileFile = $teamPath . '/profile.json';
-                if (file_exists($profileFile)) {
-                    $profile = json_decode(file_get_contents($profileFile), true);
+                try {
+                    // Use TeamStorage to get profile (leverages cache)
+                    // We need to extract the email from the directory name if we don't have it,
+                    // but the directory name IS the safe email. 
+                    // To be safe, we can try to find a way to get the real email.
+                    // Actually, let's just look for cached_state.json first as an optimization.
+                    $cacheFile = $teamPath . '/cached_state.json';
+                    $profile = null;
+                    
+                    if (file_exists($cacheFile)) {
+                        $cached = json_decode(file_get_contents($cacheFile), true);
+                        $profile = $cached['profile'] ?? null;
+                    }
+                    
+                    // Fallback to legacy profile.json if no cache or cache is incomplete
+                    if (!$profile) {
+                        $profileFile = $teamPath . '/profile.json';
+                        if (file_exists($profileFile)) {
+                            $profile = json_decode(file_get_contents($profileFile), true);
+                        }
+                    }
+
                     if ($profile && isset($profile['email'])) {
                         $teams[] = [
                             'email' => $profile['email'],
@@ -49,6 +67,8 @@ class MarketplaceAggregator {
                             'lastActive' => $profile['lastActive'] ?? 0
                         ];
                     }
+                } catch (Exception $e) {
+                    continue;
                 }
             }
         }

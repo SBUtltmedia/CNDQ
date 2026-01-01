@@ -7,33 +7,37 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../userData.php';
 require_once __DIR__ . '/../../lib/SessionManager.php';
+require_once __DIR__ . '/../../lib/TeamStorage.php';
 
 try {
     $sessionManager = new SessionManager();
-    $currentSession = $sessionManager->getState();
+    $sessionState = $sessionManager->getState();
 
     // Get all teams
     $teamsDir = __DIR__ . '/../../data/teams';
     $standings = [];
 
     if (is_dir($teamsDir)) {
-        $teamDirs = glob($teamsDir . '/*', GLOB_ONLYDIR);
+        $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
 
         foreach ($teamDirs as $teamDir) {
-            $profileFile = $teamDir . '/profile.json';
+            $email = basename($teamDir);
+            
+            try {
+                // Use TeamStorage to leverage the cache
+                $storage = new TeamStorage($email);
+                $state = $storage->getState();
+                $profile = $state['profile'];
 
-            if (file_exists($profileFile)) {
-                $profile = json_decode(file_get_contents($profileFile), true);
-
-                if ($profile && isset($profile['startingFunds']) && isset($profile['currentFunds'])) {
-                    $startingFunds = $profile['startingFunds'];
-                    $currentFunds = $profile['currentFunds'];
+                if ($profile && isset($profile['startingFunds'])) {
+                    $startingFunds = $profile['startingFunds'] ?? 0;
+                    $currentFunds = $profile['currentFunds'] ?? 0;
                     $profit = $currentFunds - $startingFunds;
                     $roi = $startingFunds > 0 ? (($profit / $startingFunds) * 100) : 0;
 
                     $standings[] = [
                         'teamName' => $profile['teamName'] ?? 'Unknown Team',
-                        'teamId' => $profile['email'], // Hidden from display, for reference
+                        'teamId' => $profile['email'] ?? $email,
                         'startingFunds' => $startingFunds,
                         'currentFunds' => $currentFunds,
                         'profit' => $profit,
@@ -41,6 +45,10 @@ try {
                         'lastActive' => $profile['lastActive'] ?? 0
                     ];
                 }
+            } catch (Exception $e) {
+                // Skip teams with errors
+                error_log("Error processing team $email for leaderboard: " . $e->getMessage());
+                continue;
             }
         }
     }
@@ -57,8 +65,8 @@ try {
 
     echo json_encode([
         'success' => true,
-        'session' => $currentSession['currentSession'],
-        'phase' => $currentSession['phase'],
+        'session' => $sessionState['currentSession'],
+        'phase' => $sessionState['phase'],
         'standings' => $standings,
         'totalTeams' => count($standings)
     ]);

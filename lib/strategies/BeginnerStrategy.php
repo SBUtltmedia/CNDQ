@@ -91,6 +91,7 @@ class BeginnerStrategy extends NPCTradingStrategy
 
             // Only sell if we have a reasonable amount (e.g., > 100 gallons)
             if ($available < 100) {
+                error_log("NPC {$this->npc['teamName']} ignored buy ad for $chemical: only $available gallons available.");
                 continue;
             }
 
@@ -98,7 +99,12 @@ class BeginnerStrategy extends NPCTradingStrategy
             $offerPrice = $this->randomFloat(self::MIN_PRICE, max(self::MIN_PRICE, $ad['maxPrice']));
             $offerQty = min($ad['quantity'], floor($available * self::MAX_INVENTORY_PERCENT)); // Offer a fraction of our inventory
 
-            if ($offerQty < 50) continue; // Minimum quantity to offer
+            if ($offerQty < 50) {
+                error_log("NPC {$this->npc['teamName']} ignored buy ad for $chemical: offerQty $offerQty too low.");
+                continue;
+            }
+
+            error_log("NPC {$this->npc['teamName']} responding to buy ad for $chemical from {$ad['buyerName']}");
 
             return [
                 'type' => 'initiate_negotiation',
@@ -120,66 +126,37 @@ class BeginnerStrategy extends NPCTradingStrategy
     public function respondToNegotiations()
     {
         $pendingNegotiations = $this->getPendingNegotiations();
+        if (empty($pendingNegotiations)) return null;
 
-        if (empty($pendingNegotiations)) {
-            return null;
-        }
-
-        // Only respond to the first pending negotiation
         $negotiation = array_values($pendingNegotiations)[0];
         $latestOffer = end($negotiation['offers']);
-
         $chemical = $negotiation['chemical'];
-        $quantity = $latestOffer['quantity'];
         $price = $latestOffer['price'];
-        $type = $negotiation['type'] ?? 'buy'; // From initiator's perspective
+        $type = $negotiation['type'] ?? 'buy'; // from initiator's perspective
 
-        // If the NPC initiated the negotiation, it means we're selling.
-        // We're responding to a counter-offer from the RPC.
-        if ($negotiation['initiatorId'] === $this->npc['email']) {
-            // NPC is the seller, RPC countered our sell offer.
-            // Accept if the price is above a certain threshold, counter otherwise.
-            if ($price >= self::MIN_PRICE * 1.2) { // Accept if RPC offers a good price
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
-            } else { // Counter with a slightly lower price or reject
-                $counterPrice = max(self::MIN_PRICE, $price * 1.05); // Try to get 5% more
-                return [
-                    'type' => 'counter_negotiation',
-                    'negotiationId' => $negotiation['id'],
-                    'quantity' => $quantity,
-                    'price' => round($counterPrice, 2)
-                ];
-            }
-        } else {
-            // NPC is the responder, meaning the RPC initiated the negotiation (RPC wants to sell to NPC or buy from NPC).
-            // This scenario is for RPCs initiating "sell offers" to NPCs (which we prevent in the test design)
-            // Or RPCs accepting NPC's initial offer and sending a counter.
+        // Determine NPC role
+        // If initiator is buying, NPC is selling
+        $role = ($type === 'buy') ? 'seller' : 'buyer';
+        
+        $evaluation = $this->evaluateOffer($chemical, $price, $role);
 
-            // If the RPC wants to buy from us (type 'buy' from RPC perspective, so NPC is seller)
-            if ($type === 'buy') {
-                // We are selling. Check if we have inventory and price is acceptable.
-                if ($this->hasSufficientInventory($chemical, $quantity) && $price >= self::MIN_PRICE) {
-                    return [
-                        'type' => 'accept_negotiation',
-                        'negotiationId' => $negotiation['id']
-                    ];
-                }
-            } else {
-                // If the RPC wants to sell to us (type 'sell' from RPC perspective, so NPC is buyer)
-                // We are buying. Check if we have funds and price is acceptable.
-                if ($this->hasSufficientFunds($quantity * $price) && $price <= self::MAX_PRICE) {
-                    return [
-                        'type' => 'accept_negotiation',
-                        'negotiationId' => $negotiation['id']
-                    ];
-                }
-            }
+        if ($evaluation['action'] === 'accept') {
+            return [
+                'type' => 'accept_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
+        } elseif ($evaluation['action'] === 'counter') {
+            // Counter with something closer to fair
+            $shadowPrice = $this->calculateShadowPrices()[$chemical] ?? 2.0;
+            $counterPrice = ($role === 'seller') ? $shadowPrice * 1.1 : $shadowPrice * 0.9;
+            return [
+                'type' => 'counter_negotiation',
+                'negotiationId' => $negotiation['id'],
+                'quantity' => $latestOffer['quantity'],
+                'price' => round($counterPrice, 2)
+            ];
         }
         
-        // Default to reject if conditions not met
         return [
             'type' => 'reject_negotiation',
             'negotiationId' => $negotiation['id']

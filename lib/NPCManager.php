@@ -148,16 +148,13 @@ class NPCManager
             $existingNames = array_column($config['npcs'], 'teamName');
             $teamName = TeamNameGenerator::generateUnique($email, $existingNames, $skillLevel);
 
-            // Create team directory and initialize via TeamStorage
+            // Create team directory and initialize via TeamStorage (which is No-M event-sourced)
             $storage = new TeamStorage($email);
 
-            // Update profile with generated name
-            $storage->updateProfile(function($profile) use ($teamName) {
-                $profile['teamName'] = $teamName;
-                return $profile;
-            });
+            // Update profile with generated name via event
+            $storage->setTeamName($teamName);
 
-            // Add to NPC config
+            // Add to NPC config (Central Registry)
             $npc = [
                 'id' => $npcId,
                 'email' => $email,
@@ -261,15 +258,14 @@ class NPCManager
     {
         $config = $this->loadConfig();
 
-        // Enrich with current team data
+        // Enrich with current team data using No-M getState()
         foreach ($config['npcs'] as &$npc) {
             try {
                 $storage = new TeamStorage($npc['email']);
-                $profile = $storage->getProfile();
-                $inventory = $storage->getInventory();
+                $state = $storage->getState();
 
-                $npc['currentFunds'] = $profile['currentFunds'] ?? 0;
-                $npc['inventory'] = $inventory;
+                $npc['currentFunds'] = $state['profile']['currentFunds'] ?? 0;
+                $npc['inventory'] = $state['inventory'];
             } catch (Exception $e) {
                 error_log("Failed to load NPC data for {$npc['email']}: " . $e->getMessage());
             }

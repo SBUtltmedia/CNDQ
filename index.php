@@ -411,23 +411,65 @@
                         </div>
                     </div>
 
-                    <!-- Counter-Offer Form (only shown when it's user's turn) -->
-                    <div id="counter-offer-form" class="hidden">
-                        <h5 class="font-bold mb-3 text-green-400">Make Counter-Offer</h5>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                    <!-- Witcher 3 Style Counter-Offer Form -->
+                    <div id="counter-offer-form" class="hidden bg-gray-800 rounded-lg p-4 border border-blue-500 shadow-inner">
+                        <h5 class="font-bold mb-4 text-blue-400 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Haggle with Merchant
+                        </h5>
+                        
+                        <div class="space-y-6">
+                            <!-- Quantity Slider -->
                             <div>
-                                <label for="counter-quantity" class="block text-sm font-semibold mb-2 text-gray-300">Quantity (gallons)</label>
-                                <input type="number" id="counter-quantity" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white">
+                                <div class="flex justify-between text-sm mb-2">
+                                    <label class="text-gray-300 font-semibold">Quantity</label>
+                                    <span class="text-white font-mono"><span id="haggle-qty-display">0</span> gal</span>
+                                </div>
+                                <input type="range" id="haggle-qty-slider" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500">
+                                <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+                                    <span>Min: 1</span>
+                                    <span>Max: <span id="haggle-qty-max">0</span></span>
+                                </div>
                             </div>
+
+                            <!-- Price Slider (The Greed Bar) -->
                             <div>
-                                <label for="counter-price" class="block text-sm font-semibold mb-2 text-gray-300">Price per Gallon ($)</label>
-                                <input type="number" id="counter-price" min="0" step="0.01" class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white">
+                                <div class="flex justify-between text-sm mb-2">
+                                    <label class="text-gray-300 font-semibold">Offer Price</label>
+                                    <span class="text-white font-mono">$<span id="haggle-price-display">0.00</span>/gal</span>
+                                </div>
+                                <input type="range" id="haggle-price-slider" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500">
+                                <div class="flex justify-between text-[10px] text-gray-500 mt-1">
+                                    <span>Fair Deal</span>
+                                    <span>High Profit</span>
+                                </div>
+                            </div>
+
+                            <!-- Annoyance Meter (Visual Feedback) -->
+                            <div class="pt-2">
+                                <div class="flex justify-between text-[10px] uppercase tracking-wider mb-1">
+                                    <span id="annoyance-label" class="text-green-400 font-bold">Interested</span>
+                                    <span class="text-gray-400">NPC Patience</span>
+                                </div>
+                                <div class="w-full h-3 bg-gray-900 rounded-full overflow-hidden border border-gray-700">
+                                    <div id="annoyance-bar" class="h-full bg-green-500 transition-all duration-300" style="width: 20%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-900 p-3 rounded flex justify-between items-center">
+                                <span class="text-xs text-gray-400">Total Transaction:</span>
+                                <span class="text-lg font-bold text-blue-400">$<span id="haggle-total">0.00</span></span>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-300 mb-4">Your Shadow Price: <span class="text-green-400 font-semibold">$<span id="counter-shadow-hint">0</span></span></p>
-                        <button id="submit-counter-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold transition">
-                            Send Counter-Offer
-                        </button>
+
+                        <div class="flex gap-2 mt-6">
+                            <button id="submit-counter-btn" class="flex-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-bold transition flex items-center justify-center gap-2">
+                                Send Offer
+                            </button>
+                            <button id="cancel-counter-btn" class="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 py-3 rounded font-semibold transition">
+                                Back
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Action Buttons (only shown when it's user's turn to respond) -->

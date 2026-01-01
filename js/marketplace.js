@@ -694,26 +694,14 @@ class MarketplaceApp {
         if (pending.length === 0) {
             pendingContainer.innerHTML = '<p class="text-gray-300 text-center py-4">No pending negotiations</p>';
         } else {
-            pendingContainer.innerHTML = pending.map(neg => {
-                const otherTeam = neg.initiatorId === this.currentUser ? neg.responderName : neg.initiatorName;
-                const lastOffer = neg.offers[neg.offers.length - 1];
-                const isMyTurn = neg.lastOfferBy !== this.currentUser;
-
-                return `
-                    <div class="bg-gray-600 rounded p-3 cursor-pointer hover:bg-gray-550 transition"
-                         onclick="app.viewNegotiationDetail('${neg.id}')">
-                        <div class="flex items-center justify-between mb-1">
-                            <div class="font-semibold text-sm">Chemical ${neg.chemical}</div>
-                            ${isMyTurn ?
-                                '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Your Turn</span>' :
-                                '<span class="px-2 py-1 bg-gray-500 text-gray-200 rounded text-xs">Waiting</span>'
-                            }
-                        </div>
-                        <div class="text-xs text-gray-300">${otherTeam}</div>
-                        <div class="text-xs text-gray-300">Latest: ${lastOffer.quantity} gal @ $${lastOffer.price.toFixed(2)}</div>
-                    </div>
-                `;
-            }).join('');
+            pendingContainer.innerHTML = '';
+            pending.forEach(neg => {
+                const card = document.createElement('negotiation-card');
+                card.negotiation = neg;
+                card.currentUserId = this.currentUser;
+                card.context = 'list';
+                pendingContainer.appendChild(card);
+            });
         }
 
         // Render completed
@@ -721,25 +709,14 @@ class MarketplaceApp {
         if (completed.length === 0) {
             completedContainer.innerHTML = '<p class="text-gray-300 text-center py-4">No completed negotiations</p>';
         } else {
-            completedContainer.innerHTML = completed.map(neg => {
-                const otherTeam = neg.initiatorId === this.currentUser ? neg.responderName : neg.initiatorName;
-                const lastOffer = neg.offers[neg.offers.length - 1];
-                const statusBadge = neg.status === 'accepted' ?
-                    '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Accepted</span>' :
-                    '<span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-semibold">Rejected</span>';
-
-                return `
-                    <div class="bg-gray-600 rounded p-3 cursor-pointer hover:bg-gray-550 transition"
-                         onclick="app.viewNegotiationDetail('${neg.id}')">
-                        <div class="flex items-center justify-between mb-1">
-                            <div class="font-semibold text-sm">Chemical ${neg.chemical}</div>
-                            ${statusBadge}
-                        </div>
-                        <div class="text-xs text-gray-300">${otherTeam}</div>
-                        <div class="text-xs text-gray-300">Final: ${lastOffer.quantity} gal @ $${lastOffer.price.toFixed(2)}</div>
-                    </div>
-                `;
-            }).join('');
+            completedContainer.innerHTML = '';
+            completed.forEach(neg => {
+                const card = document.createElement('negotiation-card');
+                card.negotiation = neg;
+                card.currentUserId = this.currentUser;
+                card.context = 'list';
+                completedContainer.appendChild(card);
+            });
         }
     }
 
@@ -748,7 +725,13 @@ class MarketplaceApp {
      */
     viewNegotiationDetail(negotiationId) {
         const negotiation = this.myNegotiations.find(n => n.id === negotiationId);
-        if (!negotiation) return;
+        if (!negotiation) {
+            console.error('Negotiation not found:', negotiationId);
+            return;
+        }
+
+        // CRITICAL: Ensure the modal is actually open
+        this.openNegotiationModal();
 
         this.currentNegotiation = negotiation;
 
@@ -822,11 +805,30 @@ class MarketplaceApp {
             actions.classList.remove('hidden');
             waiting.classList.add('hidden');
 
-            // Set shadow price hint
-            const shadowHint = document.getElementById('counter-shadow-hint');
-            const shadowVal = this.shadowPrices[negotiation.chemical];
-            const contextText = isBuyer ? '(Max to buy)' : '(Min to sell)';
-            shadowHint.innerHTML = `${shadowVal.toFixed(2)} <span class="text-gray-400 font-normal text-[10px] ml-1">${contextText}</span>`;
+            // Initialize Haggle Sliders (Witcher 3 Style)
+            const shadowVal = this.shadowPrices[negotiation.chemical] || 2.0;
+            const inventoryVal = this.inventory[negotiation.chemical] || 0;
+            const latestOffer = negotiation.offers[negotiation.offers.length - 1];
+
+            const qtySlider = document.getElementById('haggle-qty-slider');
+            const priceSlider = document.getElementById('haggle-price-slider');
+            
+            // Set Quantity Range
+            const maxQty = isBuyer ? 2000 : Math.floor(inventoryVal); // Buyer max is arbitrary/funds-based, Seller max is inventory
+            document.getElementById('haggle-qty-max').textContent = maxQty;
+            qtySlider.min = 1;
+            qtySlider.max = maxQty;
+            qtySlider.value = latestOffer.quantity;
+            document.getElementById('haggle-qty-display').textContent = latestOffer.quantity;
+
+            // Set Price Range (0% to 300% of shadow price)
+            priceSlider.min = 0;
+            priceSlider.max = Math.ceil(shadowVal * 3);
+            priceSlider.step = 0.1;
+            priceSlider.value = latestOffer.price;
+            document.getElementById('haggle-price-display').textContent = latestOffer.price.toFixed(2);
+
+            this.updateHaggleUI(shadowVal, isBuyer);
         } else {
             // Waiting for other team
             actions.classList.add('hidden');
@@ -891,8 +893,8 @@ class MarketplaceApp {
      * Make counter-offer
      */
     async makeCounterOffer() {
-        const quantity = parseFloat(document.getElementById('counter-quantity').value);
-        const price = parseFloat(document.getElementById('counter-price').value);
+        const quantity = parseFloat(document.getElementById('haggle-qty-slider').value);
+        const price = parseFloat(document.getElementById('haggle-price-slider').value);
 
         if (!quantity || quantity <= 0) {
             this.showToast('Please enter a valid quantity', 'error');
@@ -1095,6 +1097,57 @@ class MarketplaceApp {
 
 
     /**
+     * Update the Haggle (Witcher 3) UI visuals
+     */
+    updateHaggleUI(shadowPrice, isBuyer) {
+        const qty = parseFloat(document.getElementById('haggle-qty-slider').value);
+        const price = parseFloat(document.getElementById('haggle-price-slider').value);
+        const total = qty * price;
+
+        document.getElementById('haggle-qty-display').textContent = qty;
+        document.getElementById('haggle-price-display').textContent = price.toFixed(2);
+        document.getElementById('haggle-total').textContent = total.toFixed(2);
+
+        // Annoyance Logic
+        // For seller, higher price is better (less annoyance). 
+        // For buyer, lower price is better.
+        // Wait, the meter usually represents NPC's patience. 
+        // If user is SELLING to NPC: User wants high price. High price annoy NPC.
+        // If user is BUYING from NPC: User wants low price. Low price annoy NPC.
+        
+        const ratio = price / Math.max(0.01, shadowPrice);
+        let annoyance = 0;
+        let label = "Interested";
+        let color = "bg-green-500";
+
+        // Reverse logic based on role
+        const type = this.currentNegotiation.type || 'buy';
+        const userIsSelling = (this.currentNegotiation.initiatorId === this.currentUser && type === 'sell') || 
+                            (this.currentNegotiation.responderId === this.currentUser && type === 'buy');
+
+        if (userIsSelling) {
+            // User selling to NPC: High price = NPC annoyed
+            annoyance = (ratio / 2.5) * 100; // 2.5x shadow price is max annoyance
+        } else {
+            // User buying from NPC: Low price = NPC annoyed
+            annoyance = ((1 / Math.max(0.1, ratio)) / 3) * 100; 
+        }
+
+        annoyance = Math.min(100, Math.max(5, annoyance));
+
+        if (annoyance > 80) { label = "Furious"; color = "bg-red-600"; }
+        else if (annoyance > 50) { label = "Annoyed"; color = "bg-yellow-500"; }
+        else if (annoyance > 20) { label = "Interested"; color = "bg-green-500"; }
+        else { label = "Excited"; color = "bg-emerald-400"; }
+
+        const bar = document.getElementById('annoyance-bar');
+        bar.style.width = `${annoyance}%`;
+        bar.className = `h-full ${color} transition-all duration-300`;
+        document.getElementById('annoyance-label').textContent = label;
+        document.getElementById('annoyance-label').className = `font-bold ${color.replace('bg-', 'text-')}`;
+    }
+
+    /**
      * Setup event listeners
      */
     setupEventListeners() {
@@ -1233,6 +1286,7 @@ class MarketplaceApp {
         // Web Component Events: View negotiation detail (from negotiation-card)
         document.addEventListener('view-detail', (e) => {
             const { negotiationId } = e.detail;
+            console.log('📢 View-detail caught for:', negotiationId);
             this.viewNegotiationDetail(negotiationId);
         });
 
@@ -1268,6 +1322,22 @@ class MarketplaceApp {
 
         document.getElementById('submit-counter-btn').addEventListener('click', () => {
             this.makeCounterOffer();
+        });
+
+        document.getElementById('cancel-counter-btn').addEventListener('click', () => {
+            document.getElementById('counter-offer-form').classList.add('hidden');
+            document.getElementById('negotiation-actions').classList.remove('hidden');
+        });
+
+        // Haggle Slider Listeners
+        document.getElementById('haggle-qty-slider').addEventListener('input', () => {
+            const shadowVal = this.shadowPrices[this.currentNegotiation.chemical] || 2.0;
+            this.updateHaggleUI(shadowVal);
+        });
+
+        document.getElementById('haggle-price-slider').addEventListener('input', () => {
+            const shadowVal = this.shadowPrices[this.currentNegotiation.chemical] || 2.0;
+            this.updateHaggleUI(shadowVal);
         });
 
         document.getElementById('accept-offer-btn').addEventListener('click', () => {
@@ -1328,12 +1398,30 @@ class MarketplaceApp {
      * Start polling for updates
      */
     startPolling() {
-        this.pollingInterval = setInterval(async () => {
-            await this.loadAdvertisements();
-            await this.loadNegotiations();
-            await this.loadNotifications();
-            await this.checkSessionPhase(); // Trigger auto-advance if enabled
-        }, this.pollingFrequency);
+        if (this.pollingInterval) return;
+
+        const poll = async () => {
+            try {
+                await Promise.all([
+                    this.loadAdvertisements(),
+                    this.loadNegotiations(),
+                    this.loadNotifications()
+                ]);
+                
+                // Only poll session if user is admin-like (has '@localhost' or 'admin')
+                if (this.currentUser && (this.currentUser.includes('admin') || this.currentUser.includes('localhost'))) {
+                    await this.checkSessionPhase();
+                }
+            } catch (error) {
+                console.warn('⚠️ Polling error, pausing for one cycle:', error.message);
+                if (error.message.includes('404')) {
+                    console.error('🚫 Critical 404 detected. Stopping poll to prevent request storm.');
+                    this.stopPolling();
+                }
+            }
+        };
+
+        this.pollingInterval = setInterval(poll, this.pollingFrequency);
     }
 
     /**
@@ -1675,8 +1763,9 @@ class MarketplaceApp {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new MarketplaceApp();
-    window.app.init();
+    const app = new MarketplaceApp();
+    window.app = app;
+    app.init();
 
     // Auto-detect if admin deleted teams - reload to get new team
     setInterval(async () => {

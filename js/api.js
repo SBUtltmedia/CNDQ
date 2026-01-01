@@ -12,33 +12,42 @@
 
 class ApiClient {
     constructor() {
-        // Priority 1: Global variable injected by PHP
-        if (typeof window.APP_BASE_PATH !== 'undefined') {
+        // Priority 1: Use current URL to detect base path casing
+        // This is the most reliable way to match what the server expects
+        const path = window.location.pathname;
+        const projectMatch = path.match(/\/(CNDQ|cndq)/i);
+        
+        if (projectMatch) {
+            this.basePath = projectMatch[0];
+        } else if (typeof window.APP_BASE_PATH !== 'undefined' && window.APP_BASE_PATH !== null) {
             this.basePath = window.APP_BASE_PATH;
         } else {
-            // Priority 2: Data attribute on script tag
-            const scriptTag = document.getElementById('main-app-script');
-            this.basePath = scriptTag ? scriptTag.getAttribute('data-base-path') : '';
-        }
-
-        // Handle null/undefined
-        if (!this.basePath) {
             this.basePath = '';
         }
 
-        // Ensure no trailing slash
-        if (this.basePath.endsWith('/')) {
-            this.basePath = this.basePath.slice(0, -1);
-        }
+        // Clean up basePath
+        if (this.basePath === '/') this.basePath = '';
+        if (this.basePath.endsWith('/')) this.basePath = this.basePath.slice(0, -1);
         
-        console.log('API Client initialized with basePath:', this.basePath);
+        console.group('🌐 API Client Initialized');
+        console.log('Current URL:', path);
+        console.log('Detected Base Path:', this.basePath);
+        console.groupEnd();
     }
 
     /**
      * Generic fetch wrapper with error handling
      */
     async request(endpoint, options = {}) {
-        const url = `${this.basePath}${endpoint}`;
+        // Ensure endpoint doesn't have leading slash if basePath exists
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+        const separator = (this.basePath === '' || cleanEndpoint === '') ? '' : '/';
+        
+        // Final URL construction
+        let url = `${this.basePath}${separator}${cleanEndpoint}`;
+        if (!url.startsWith('/') && !url.startsWith('http')) url = '/' + url;
+
+        if (window.APP_DEBUG) console.log(`[API] ${options.method || 'GET'} ${url}`);
         
         const defaultOptions = {
             headers: {
@@ -67,19 +76,24 @@ class ApiClient {
 
                 return data;
             } else {
-                // Handle non-JSON response (likely HTML error page from server)
+                // Handle non-JSON response
                 const text = await response.text();
-                // Extract title from HTML if possible for better error message
+                const is404 = response.status === 404;
+                
                 const titleMatch = text.match(/<title>(.*?)<\/title>/i);
-                const title = titleMatch ? titleMatch[1] : 'Unknown Error';
+                const title = titleMatch ? titleMatch[1] : (is404 ? '404 Not Found' : 'Unknown Error');
                 
-                console.error(`API Error: Expected JSON but got ${contentType || 'unknown type'} from ${url}`);
-                console.error('Response preview:', text.substring(0, 500));
+                const errorMsg = `[${response.status}] ${title} at ${url}`;
+                console.error('🚨 SERVER ERROR:', errorMsg);
                 
-                throw new Error(`Server returned non-JSON response: ${title} (HTTP ${response.status})`);
+                // CRITICAL: Log the body so Puppeteer can see the PHP error
+                console.log('BODY_START:' + text + ':BODY_END');
+                
+                throw new Error(errorMsg);
             }
         } catch (error) {
-            console.error(`API Error [${endpoint}]:`, error);
+            const msg = `API Error [${url}]: ${error.message}`;
+            console.error(msg);
             throw error;
         }
     }

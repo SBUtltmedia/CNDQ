@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $currentUserEmail = getCurrentUserEmail();
 
-if (!$currentUserEmail || $currentUserEmail === 'dev_user') {
+if (!$currentUserEmail) {
     http_response_code(401);
     echo json_encode(['error' => 'Not authenticated']);
     exit;

@@ -287,4 +287,40 @@ abstract class NPCTradingStrategy
             return $neg['responderId'] === $this->npc['email'];
         });
     }
+
+    /**
+     * Evaluate an offer based on shadow prices and "greed ratio"
+     * 
+     * @param string $chemical Chemical type
+     * @param float $price Offered price
+     * @param string $role NPC role: 'seller' or 'buyer'
+     * @return array [
+     *   'ratio' => float, 
+     *   'quality' => 'steal'|'fair'|'greedy'|'robbery',
+     *   'action' => 'accept'|'counter'|'reject'
+     * ]
+     */
+    protected function evaluateOffer($chemical, $price, $role) {
+        $shadowPrice = $this->calculateShadowPrices()[$chemical] ?? 2.0;
+        
+        // Greed ratio: How far is this from our internal value?
+        // For seller NPC: higher ratio is better
+        // For buyer NPC: lower ratio is better
+        if ($role === 'seller') {
+            $ratio = $price / max(0.01, $shadowPrice);
+            
+            if ($ratio >= 1.5) return ['ratio' => $ratio, 'quality' => 'excellent', 'action' => 'accept'];
+            if ($ratio >= 1.0) return ['ratio' => $ratio, 'quality' => 'fair', 'action' => 'accept'];
+            if ($ratio >= 0.8) return ['ratio' => $ratio, 'quality' => 'greedy', 'action' => 'counter'];
+            return ['ratio' => $ratio, 'quality' => 'robbery', 'action' => 'reject'];
+        } else {
+            // NPC is buying
+            $ratio = $price / max(0.01, $shadowPrice);
+            
+            if ($ratio <= 0.7) return ['ratio' => $ratio, 'quality' => 'excellent', 'action' => 'accept'];
+            if ($ratio <= 1.0) return ['ratio' => $ratio, 'quality' => 'fair', 'action' => 'accept'];
+            if ($ratio <= 1.2) return ['ratio' => $ratio, 'quality' => 'greedy', 'action' => 'counter'];
+            return ['ratio' => $ratio, 'quality' => 'robbery', 'action' => 'reject'];
+        }
+    }
 }
