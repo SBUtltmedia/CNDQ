@@ -57,7 +57,7 @@
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- Production Phase Overlay -->
-    <div id="production-overlay" class="hidden fixed inset-0 flex items-center justify-center z-[100]">
+    <div id="production-overlay" class="hidden fixed inset-0 flex items-center justify-center z-[120]">
         <div class="text-center">
             <div class="cog-container mx-auto mb-8">
                 <svg class="cog cog-1" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
@@ -78,7 +78,7 @@
     </div>
 
     <!-- Confirmation Dialog -->
-    <div id="confirm-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div id="confirm-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-4">
         <div class="bg-gray-800 rounded-lg p-4 md:p-6 max-w-md w-full border border-gray-700 shadow-xl">
             <h3 class="text-xl font-bold mb-4 text-white" id="confirm-title">Confirm Action</h3>
             <p class="text-gray-300 mb-6" id="confirm-message"></p>

@@ -930,3 +930,10 @@ td {
     transition: box-shadow 0.3s ease;
 }
 
+/* Layout Utilities */
+.z-\[110\] { z-index: 110 !important; }
+.max-w-md { max-width: 28rem !important; }
+.max-w-lg { max-width: 32rem !important; }
+.max-w-xl { max-width: 36rem !important; }
+
+.z-\[120\] { z-index: 120 !important; }
