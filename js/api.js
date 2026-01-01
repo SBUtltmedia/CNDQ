@@ -12,14 +12,25 @@
 
 class ApiClient {
     constructor() {
-        const scriptTag = document.getElementById('main-app-script');
-        this.basePath = scriptTag ? scriptTag.getAttribute('data-base-path') : '';
+        // Priority 1: Use current URL to detect base path casing
+        // This is the most reliable way to match what the server expects
+        const path = window.location.pathname;
+        const projectMatch = path.match(/\/(CNDQ|cndq)/i);
+        
+        if (projectMatch) {
+            this.basePath = projectMatch[0];
+        } else if (typeof window.APP_BASE_PATH !== 'undefined' && window.APP_BASE_PATH !== null) {
+            this.basePath = window.APP_BASE_PATH;
+        } else {
+            this.basePath = '';
+        }
 
         // Clean up basePath
         if (this.basePath === '/') this.basePath = '';
         if (this.basePath.endsWith('/')) this.basePath = this.basePath.slice(0, -1);
         
         console.group('🌐 API Client Initialized');
+        console.log('Current URL:', path);
         console.log('Detected Base Path:', this.basePath);
         console.groupEnd();
     }

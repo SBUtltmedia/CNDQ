@@ -88,4 +88,3 @@ class AdvertisementItem extends LitElement {
 }
 
 customElements.define('advertisement-item', AdvertisementItem);
-
