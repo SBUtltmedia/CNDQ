@@ -61,7 +61,15 @@ class TradeExecutor {
                 'message' => "Bought $quantity gallons of $chemical for $" . number_format($totalCost, 2)
             ]);
 
-            // Clean up offer if provided
+            // Calculate Trade Heat (Mutually Beneficial vs Detrimental)
+            $sellerShadow = $sellerStorage->getShadowPrices()[$chemical] ?? 0;
+            $buyerShadow = $buyerStorage->getShadowPrices()[$chemical] ?? 0;
+            
+            $sellerGain = $pricePerGallon - $sellerShadow;
+            $buyerGain = $buyerShadow - $pricePerGallon;
+            $totalHeat = ($sellerGain + $buyerGain) * $quantity;
+
+            // ... Clean up offer logic ...
             if ($offerId) {
                 if (strpos($offerId, 'buy_') === 0) {
                     $buyerStorage->removeBuyOrder($offerId);
@@ -73,7 +81,14 @@ class TradeExecutor {
             return [
                 'success' => true,
                 'message' => 'Trade events emitted successfully',
-                'transactionId' => $transactionId
+                'transactionId' => $transactionId,
+                'heat' => [
+                    'total' => $totalHeat,
+                    'isHot' => ($sellerGain > 0 && $buyerGain > 0),
+                    'isCold' => ($sellerGain < 0 && $buyerGain < 0),
+                    'sellerGain' => $sellerGain,
+                    'buyerGain' => $buyerGain
+                ]
             ];
 
         } catch (Exception $e) {

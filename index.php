@@ -164,6 +164,26 @@
         <!-- Main Content -->
         <main id="main-content" class="container mx-auto px-4 py-4 md:py-6" role="main">
 
+            <!-- Session Status Bar -->
+            <div class="bg-gray-800 border-l-4 border-purple-500 p-4 mb-6 rounded shadow-lg flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="bg-purple-900/30 px-3 py-1 rounded border border-purple-500/50">
+                        <span class="text-xs text-purple-300 uppercase font-bold">Session</span>
+                        <span id="session-num-display" class="text-lg font-mono ml-2">1</span>
+                    </div>
+                    <div>
+                        <span id="phase-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-blue-600 text-white">Production</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <span class="text-gray-400 text-xs uppercase font-bold">Time Remaining</span>
+                    <div class="bg-gray-900 px-4 py-2 rounded font-mono text-xl text-yellow-400 border border-gray-700 w-24 text-center" id="session-timer">
+                        00:00
+                    </div>
+                </div>
+            </div>
+
             <!-- 4-Column Chemical Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
                 <chemical-card chemical="C"></chemical-card>

@@ -50,17 +50,23 @@ class SessionManager {
         // Calculate time remaining based on current phase
         if ($data['phase'] === 'production') {
             $elapsed = time() - $data['phaseStartedAt'];
-            $data['timeRemaining'] = max(0, $data['productionDuration'] - $elapsed);
+            $data['timeRemaining'] = max(0, ($data['productionDuration'] ?? 5) - $elapsed);
 
             // Auto-run production on first entry to production phase
             if ($data['autoAdvance'] && !isset($data['productionRun'])) {
                 // Mark that we've run production for this phase
                 $this->runAutoProduction();
+                // Reload state to get the productionRun flag
+                $data = json_decode(file_get_contents($this->sessionFile), true);
+                $elapsed = time() - $data['phaseStartedAt'];
+                $data['timeRemaining'] = max(0, ($data['productionDuration'] ?? 5) - $elapsed);
             }
 
             // Auto-advance if time expired and auto-advance is enabled
-            if ($data['autoAdvance'] && $data['timeRemaining'] === 0) {
-                return $this->advancePhase();
+            if ($data['autoAdvance'] && $data['timeRemaining'] <= 0) {
+                $newState = $this->advancePhase();
+                file_put_contents($this->sessionFile, json_encode($newState, JSON_PRETTY_PRINT));
+                return $newState;
             }
         }
 
@@ -70,42 +76,31 @@ class SessionManager {
 
             // Run NPC trading cycle every 10 seconds (if NPC system is enabled)
             $npcLastRun = $data['npcLastRun'] ?? 0;
-            $timeSinceNPCRun = time() - $npcLastRun;
-
-            if ($timeSinceNPCRun >= 10) {
-                // Check if NPC system is enabled
+            if (time() - $npcLastRun >= 10) {
                 require_once __DIR__ . '/NPCManager.php';
                 $npcManager = new NPCManager();
-
                 if ($npcManager->isEnabled()) {
                     try {
                         $npcManager->runTradingCycle();
-
-                        // Update npcLastRun timestamp
+                        // Update npcLastRun inside the file
                         $fp = fopen($this->sessionFile, 'c+');
                         if ($fp && flock($fp, LOCK_EX)) {
                             $tempData = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
                             $tempData['npcLastRun'] = time();
-
-                            ftruncate($fp, 0);
-                            rewind($fp);
+                            ftruncate($fp, 0); rewind($fp);
                             fwrite($fp, json_encode($tempData, JSON_PRETTY_PRINT));
-                            fflush($fp);
-                            flock($fp, LOCK_UN);
-                            fclose($fp);
-
-                            // Update local data to reflect change
+                            fflush($fp); flock($fp, LOCK_UN); fclose($fp);
                             $data['npcLastRun'] = $tempData['npcLastRun'];
                         }
-                    } catch (Exception $e) {
-                        error_log("NPC trading cycle error: " . $e->getMessage());
-                    }
+                    } catch (Exception $e) { error_log("NPC error: " . $e->getMessage()); }
                 }
             }
 
             // Auto-advance if time expired and auto-advance is enabled
-            if ($data['autoAdvance'] && $data['timeRemaining'] === 0) {
-                return $this->advancePhase();
+            if ($data['autoAdvance'] && $data['timeRemaining'] <= 0) {
+                $newState = $this->advancePhase();
+                file_put_contents($this->sessionFile, json_encode($newState, JSON_PRETTY_PRINT));
+                return $newState;
             }
         }
 
@@ -187,34 +182,6 @@ class SessionManager {
 
         $data = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
 
-        // Check for trading activity before advancing from trading phase
-        if ($data['phase'] === 'trading' && $data['autoAdvance']) {
-            $hasActivity = $this->hasTradingActivity($data['currentSession']);
-
-            if (!$hasActivity) {
-                // No trading activity - disable auto-advance to prevent infinite empty sessions
-                $data['autoAdvance'] = false;
-                error_log("Auto-advance disabled: No trading activity in session {$data['currentSession']}");
-
-                ftruncate($fp, 0);
-                rewind($fp);
-                fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-                fflush($fp);
-                flock($fp, LOCK_UN);
-                fclose($fp);
-
-                return $data;
-            }
-        }
-
-        // Record history
-        $data['history'][] = [
-            'session' => $data['currentSession'],
-            'phase' => $data['phase'],
-            'endedAt' => time(),
-            'duration' => time() - $data['phaseStartedAt']
-        ];
-
         // Advance phase
         switch ($data['phase']) {
             case 'production':
@@ -249,14 +216,23 @@ class SessionManager {
      * Called once when production phase starts with auto-advance enabled
      */
     private function runAutoProduction() {
-        // Mark production as run for this phase
+        // Mark production as run for this phase FIRST to avoid race conditions
         $fp = fopen($this->sessionFile, 'c+');
         if (!flock($fp, LOCK_EX)) {
             fclose($fp);
             return;
         }
 
-        $data = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
+        $content = fread($fp, filesize($this->sessionFile) ?: 1);
+        $data = json_decode($content, true);
+        
+        // Double check flag inside lock
+        if (isset($data['productionRun'])) {
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            return;
+        }
+
         $data['productionRun'] = time();
 
         ftruncate($fp, 0);

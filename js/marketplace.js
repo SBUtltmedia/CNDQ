@@ -985,20 +985,17 @@ class MarketplaceApp {
         if (!confirmed) return;
 
         try {
-            // Analyze trade quality before executing
-            const tradeAnalysis = this.analyzeTradeQuality(this.currentNegotiation);
+            const response = await api.negotiations.accept(this.currentNegotiation.id);
+            const heat = response.trade?.heat;
 
-            await api.negotiations.accept(this.currentNegotiation.id);
-
-            // Show appropriate toast based on trade quality
-            if (tradeAnalysis.quality === 'excellent') {
-                this.showToast(tradeAnalysis.message, 'excellent', 5000);
-            } else if (tradeAnalysis.quality === 'good') {
-                this.showToast(tradeAnalysis.message, 'success', 4000);
-            } else if (tradeAnalysis.quality === 'bad') {
-                this.showToast(tradeAnalysis.message, 'bad', 5000);
-            } else if (tradeAnalysis.quality === 'warning') {
-                this.showToast(tradeAnalysis.message, 'warning', 4000);
+            if (heat) {
+                if (heat.isHot) {
+                    this.showToast(`🔥 HOT TRADE! Value created: $${this.formatNumber(heat.total)}`, 'hot', 5000);
+                } else if (heat.isCold) {
+                    this.showToast(`❄️ COLD TRADE! Value destroyed: $${this.formatNumber(Math.abs(heat.total))}`, 'cold', 5000);
+                } else {
+                    this.showToast('Trade executed successfully!', 'success');
+                }
             } else {
                 this.showToast('Trade executed successfully!', 'success');
             }
@@ -1436,18 +1433,36 @@ class MarketplaceApp {
 
     /**
      * Check session phase (triggers auto-advance if enabled)
-     * This runs silently in the background to ensure auto-advance works
-     * even when admin dashboard isn't open
      */
     async checkSessionPhase() {
         try {
-            await api.admin.getSession();
-            // Session state checked - auto-advance will trigger if time expired
-            // We don't need to do anything with the response, just calling
-            // SessionManager::getState() is enough to trigger auto-advance
+            const data = await api.session.getStatus();
+            
+            // Update UI elements
+            document.getElementById('session-num-display').textContent = data.session;
+            
+            const phaseBadge = document.getElementById('phase-badge');
+            phaseBadge.textContent = data.phase;
+            phaseBadge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
+                data.phase === 'trading' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
+            }`;
+
+            // Update Timer
+            const minutes = Math.floor(data.timeRemaining / 60);
+            const seconds = data.timeRemaining % 60;
+            document.getElementById('session-timer').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            // If phase changed to production, refresh profile/inventory
+            if (this.lastPhase && this.lastPhase !== data.phase && data.phase === 'production') {
+                console.log('🔄 Phase changed to Production! Refreshing inventory...');
+                await this.loadProfile();
+                this.showToast('Session advanced! Production complete.', 'info');
+            }
+            this.lastPhase = data.phase;
+
         } catch (error) {
-            // Silently fail - this is a background check
-            // If the user isn't admin, they'll get 403 which is fine
+            console.error('Failed to check session status:', error);
         }
     }
 
@@ -1581,7 +1596,9 @@ class MarketplaceApp {
             info: 'bg-blue-600',
             warning: 'bg-yellow-600',
             excellent: 'bg-gradient-to-r from-green-500 to-emerald-600',
-            bad: 'bg-gradient-to-r from-red-500 to-rose-600'
+            bad: 'bg-gradient-to-r from-red-500 to-rose-600',
+            hot: 'bg-gradient-to-r from-orange-500 to-red-600 shadow-orange-500/50',
+            cold: 'bg-gradient-to-r from-cyan-400 to-blue-600 shadow-blue-500/50'
         };
 
         const icons = {
@@ -1590,7 +1607,9 @@ class MarketplaceApp {
             info: 'ℹ',
             warning: '⚠',
             excellent: '🎉',
-            bad: '⚠️'
+            bad: '⚠️',
+            hot: '🔥',
+            cold: '❄️'
         };
 
         const container = document.getElementById('toast-container');

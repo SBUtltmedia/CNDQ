@@ -308,6 +308,15 @@ class ApiClient {
         }
     };
 
+    session = {
+        /**
+         * Get public session status (triggers auto-advance)
+         */
+        getStatus: async () => {
+            return this.get('/api/session/status.php');
+        }
+    };
+
     // ==========================================
     // Admin APIs
     // ==========================================
