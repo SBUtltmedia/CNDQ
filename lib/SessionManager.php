@@ -1,72 +1,49 @@
 <?php
 /**
- * Session Manager
- *
- * Manages game sessions (rounds) and phases:
- * - Production Phase: Automatic LP production runs for all teams
- * - Trading Phase: Market is open for trades
+ * Session Manager - Refactored for No-M (Filesystem-as-State)
+ * 
+ * Now uses SystemStorage to manage session state via events in data/teams/system/
  */
 
+require_once __DIR__ . '/SystemStorage.php';
+
 class SessionManager {
-    private $sessionFile;
+    private $storage;
 
     public function __construct() {
-        $this->sessionFile = __DIR__ . '/../data/session_state.json';
-        $this->ensureSessionFileExists();
-    }
-
-    private function ensureSessionFileExists() {
-        if (!file_exists($this->sessionFile)) {
-            $initialState = [
-                'currentSession' => 1,
-                'phase' => 'production', // 'production' or 'trading'
-                'autoAdvance' => true, // DEFAULT: Auto-advance enabled for autonomous play
-                'productionDuration' => 5, // Brief pause (5s) while auto-production runs
-                'tradingDuration' => 60, // 1 minute for testing
-                'phaseStartedAt' => time(),
-                'history' => []
-            ];
-
-            $dir = dirname($this->sessionFile);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-
-            file_put_contents($this->sessionFile, json_encode($initialState, JSON_PRETTY_PRINT));
-        }
+        $this->storage = new SystemStorage();
     }
 
     /**
      * Get current session state
      */
     public function getState() {
-        $data = json_decode(file_get_contents($this->sessionFile), true);
+        $data = $this->storage->getSystemState();
 
-        // Ensure productionDuration exists (for backwards compatibility)
-        if (!isset($data['productionDuration'])) {
-            $data['productionDuration'] = 5;
+        if ($data['autoAdvance']) {
+            // Log for debugging
+            // error_log("SessionManager: Phase={$data['phase']}, TimeRemaining=" . ($data['timeRemaining'] ?? 'N/A'));
         }
 
         // Calculate time remaining based on current phase
         if ($data['phase'] === 'production') {
             $elapsed = time() - $data['phaseStartedAt'];
-            $data['timeRemaining'] = max(0, ($data['productionDuration'] ?? 5) - $elapsed);
+            $data['timeRemaining'] = max(0, $data['productionDuration'] - $elapsed);
 
             // Auto-run production on first entry to production phase
             if ($data['autoAdvance'] && !isset($data['productionRun'])) {
-                // Mark that we've run production for this phase
+                error_log("SessionManager: Auto-running production for session " . $data['currentSession']);
                 $this->runAutoProduction();
-                // Reload state to get the productionRun flag
-                $data = json_decode(file_get_contents($this->sessionFile), true);
+                // Reload state
+                $data = $this->storage->getSystemState();
                 $elapsed = time() - $data['phaseStartedAt'];
-                $data['timeRemaining'] = max(0, ($data['productionDuration'] ?? 5) - $elapsed);
+                $data['timeRemaining'] = max(0, $data['productionDuration'] - $elapsed);
             }
 
-            // Auto-advance if time expired and auto-advance is enabled
+            // Auto-advance if time expired
             if ($data['autoAdvance'] && $data['timeRemaining'] <= 0) {
-                $newState = $this->advancePhase();
-                file_put_contents($this->sessionFile, json_encode($newState, JSON_PRETTY_PRINT));
-                return $newState;
+                error_log("SessionManager: Time expired in production phase. Advancing...");
+                return $this->advancePhase();
             }
         }
 
@@ -74,216 +51,87 @@ class SessionManager {
             $elapsed = time() - $data['phaseStartedAt'];
             $data['timeRemaining'] = max(0, $data['tradingDuration'] - $elapsed);
 
-            // Run NPC trading cycle every 10 seconds (if NPC system is enabled)
-            $npcLastRun = $data['npcLastRun'] ?? 0;
-            if (time() - $npcLastRun >= 10) {
-                require_once __DIR__ . '/NPCManager.php';
-                $npcManager = new NPCManager();
-                if ($npcManager->isEnabled()) {
-                    try {
-                        $npcManager->runTradingCycle();
-                        // Update npcLastRun inside the file
-                        $fp = fopen($this->sessionFile, 'c+');
-                        if ($fp && flock($fp, LOCK_EX)) {
-                            $tempData = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
-                            $tempData['npcLastRun'] = time();
-                            ftruncate($fp, 0); rewind($fp);
-                            fwrite($fp, json_encode($tempData, JSON_PRETTY_PRINT));
-                            fflush($fp); flock($fp, LOCK_UN); fclose($fp);
-                            $data['npcLastRun'] = $tempData['npcLastRun'];
-                        }
-                    } catch (Exception $e) { error_log("NPC error: " . $e->getMessage()); }
-                }
-            }
-
-            // Auto-advance if time expired and auto-advance is enabled
+            // Auto-advance if time expired
             if ($data['autoAdvance'] && $data['timeRemaining'] <= 0) {
-                $newState = $this->advancePhase();
-                file_put_contents($this->sessionFile, json_encode($newState, JSON_PRETTY_PRINT));
-                return $newState;
+                error_log("SessionManager: Time expired in trading phase. Advancing...");
+                return $this->advancePhase();
             }
         }
 
         return $data;
     }
 
-    /**
-     * Check if any trading activity occurred in the given session
-     */
-    private function hasTradingActivity($sessionNumber) {
-        // Check for buy requests (offers)
-        $offersFile = __DIR__ . '/../data/advertisements.json';
-        if (file_exists($offersFile)) {
-            $offers = json_decode(file_get_contents($offersFile), true);
-            foreach ($offers as $offer) {
-                if (isset($offer['sessionNumber']) && $offer['sessionNumber'] == $sessionNumber) {
-                    return true;
-                }
-            }
-        }
-
-        // Check for negotiations
-        $negotiationsFile = __DIR__ . '/../data/negotiations.json';
-        if (file_exists($negotiationsFile)) {
-            $negotiations = json_decode(file_get_contents($negotiationsFile), true);
-            foreach ($negotiations as $negotiation) {
-                if (isset($negotiation['sessionNumber']) && $negotiation['sessionNumber'] == $sessionNumber) {
-                    return true;
-                }
-            }
-        }
-
-        // Check for accepted trades in team histories
-        $teamsDir = __DIR__ . '/../data/teams';
-        if (is_dir($teamsDir)) {
-            $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
-            foreach ($teamDirs as $teamDir) {
-                $historyFile = $teamDir . '/trade_history.json';
-                if (file_exists($historyFile)) {
-                    $trades = json_decode(file_get_contents($historyFile), true) ?: [];
-                    foreach ($trades as $trade) {
-                        if (isset($trade['sessionNumber']) && $trade['sessionNumber'] == $sessionNumber) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if trading is currently allowed
-     */
     public function isTradingAllowed() {
-        $state = $this->getState();
-        return $state['phase'] === 'trading';
+        return $this->getState()['phase'] === 'trading';
     }
 
-    /**
-     * Check if production is currently allowed
-     */
     public function isProductionAllowed() {
-        $state = $this->getState();
-        return $state['phase'] === 'production';
+        return $this->getState()['phase'] === 'production';
     }
 
     /**
      * Advance to next phase
-     * Production -> Trading -> (new session) Production
      */
     public function advancePhase() {
-        $fp = fopen($this->sessionFile, 'c+');
-        if (!flock($fp, LOCK_EX)) {
-            fclose($fp);
-            throw new Exception('Could not acquire lock on session file');
-        }
+        $data = $this->storage->getSystemState();
+        $updates = [];
 
-        $data = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
-
-        // Advance phase
         switch ($data['phase']) {
             case 'production':
-                // Production -> Trading
-                $data['phase'] = 'trading';
-                // Clear production run flag
-                unset($data['productionRun']);
+                $updates['phase'] = 'trading';
+                $updates['productionRun'] = null; // Clear for next round
+                error_log("SessionManager: Transitioning Production -> Trading");
                 break;
             case 'trading':
-                // Trading -> Next Session with Production phase
-                $data['currentSession']++;
-                $data['phase'] = 'production';
-                // Clear production run flag for new session
-                unset($data['productionRun']);
+                $updates['currentSession'] = $data['currentSession'] + 1;
+                $updates['phase'] = 'production';
+                $updates['productionRun'] = null;
+                error_log("SessionManager: Transitioning Trading -> Production (Session " . ($data['currentSession'] + 1) . ")");
                 break;
         }
 
-        $data['phaseStartedAt'] = time();
-
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-
-        return $data;
+        $updates['phaseStartedAt'] = time();
+        $this->storage->setSessionData($updates);
+        
+        return array_merge($data, $updates);
     }
 
     /**
      * Run automatic production for all teams
-     * Called once when production phase starts with auto-advance enabled
      */
     private function runAutoProduction() {
-        // Mark production as run for this phase FIRST to avoid race conditions
-        $fp = fopen($this->sessionFile, 'c+');
-        if (!flock($fp, LOCK_EX)) {
-            fclose($fp);
-            return;
-        }
+        $data = $this->storage->getSystemState();
+        if (isset($data['productionRun'])) return;
 
-        $content = fread($fp, filesize($this->sessionFile) ?: 1);
-        $data = json_decode($content, true);
-        
-        // Double check flag inside lock
-        if (isset($data['productionRun'])) {
-            flock($fp, LOCK_UN);
-            fclose($fp);
-            return;
-        }
+        // Mark as run
+        $this->storage->setSessionData(['productionRun' => time()]);
 
-        $data['productionRun'] = time();
-
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-
-        // Scan all team directories and run production for each
         require_once __DIR__ . '/TeamStorage.php';
         require_once __DIR__ . '/LPSolver.php';
 
         $teamsDir = __DIR__ . '/../data/teams';
-        if (!is_dir($teamsDir)) {
-            error_log("Auto-production: teams directory not found");
-            return;
-        }
+        if (!is_dir($teamsDir)) return;
 
         $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
-        $teamsProcessed = 0;
-        $totalRevenue = 0;
         $sessionNumber = $data['currentSession'];
 
         foreach ($teamDirs as $teamDir) {
             $email = basename($teamDir);
+            if ($email === 'system') continue;
 
             try {
                 $storage = new TeamStorage($email);
                 $inventory = $storage->getInventory();
+                if (empty($inventory['C']) && empty($inventory['N'])) continue;
 
-                // Skip teams with no inventory
-                if (empty($inventory['C']) && empty($inventory['N']) &&
-                    empty($inventory['D']) && empty($inventory['Q'])) {
-                    continue;
-                }
-
-                // Run LP solver
                 $solver = new LPSolver();
                 $result = $solver->solve($inventory);
+                if ($result['maxProfit'] <= 0) continue;
 
                 $deicerGallons = $result['deicer'];
                 $solventGallons = $result['solvent'];
                 $revenue = $result['maxProfit'];
 
-                // Skip if no production possible
-                if ($revenue <= 0) {
-                    continue;
-                }
-
-                // Calculate chemicals consumed
                 $consumed = [
                     'C' => $deicerGallons * LPSolver::DEICER_C,
                     'N' => ($deicerGallons * LPSolver::DEICER_N) + ($solventGallons * LPSolver::SOLVENT_N),
@@ -291,30 +139,13 @@ class SessionManager {
                     'Q' => $solventGallons * LPSolver::SOLVENT_Q
                 ];
 
-                // Update inventory (subtract consumed chemicals)
-                $storage->updateInventory(function($inv) use ($consumed) {
-                    $inv['C'] = max(0, round(($inv['C'] ?? 0) - $consumed['C'], 4));
-                    $inv['N'] = max(0, round(($inv['N'] ?? 0) - $consumed['N'], 4));
-                    $inv['D'] = max(0, round(($inv['D'] ?? 0) - $consumed['D'], 4));
-                    $inv['Q'] = max(0, round(($inv['Q'] ?? 0) - $consumed['Q'], 4));
-                    $inv['updatedAt'] = time();
-                    // Don't increment transaction counter for automatic production
-                    return $inv;
-                });
+                foreach ($consumed as $chemical => $amount) {
+                    if ($amount > 0) $storage->adjustChemical($chemical, -$amount);
+                }
 
                 // Credit revenue to team
-                $storage->updateProfile(function($profile) use ($revenue, $sessionNumber) {
-                    $profile['currentFunds'] += $revenue;
+                $storage->updateFunds($revenue);
 
-                    // Set starting funds on first production (Session 1)
-                    if ($sessionNumber == 1 && $profile['startingFunds'] == 0) {
-                        $profile['startingFunds'] = $revenue;
-                    }
-
-                    return $profile;
-                });
-
-                // Record production in history
                 $storage->addProduction([
                     'type' => 'automatic_session',
                     'sessionNumber' => $sessionNumber,
@@ -324,142 +155,48 @@ class SessionManager {
                     'chemicalsConsumed' => $consumed,
                     'note' => "Automatic production for session $sessionNumber"
                 ]);
-
-                $teamsProcessed++;
-                $totalRevenue += $revenue;
-
-            } catch (Exception $e) {
-                error_log("Auto-production failed for team $email: " . $e->getMessage());
-            }
+            } catch (Exception $e) { continue; }
         }
-
-        error_log("Auto-production completed for session $sessionNumber: $teamsProcessed teams, \$$totalRevenue total revenue");
     }
 
-    /**
-     * Set phase directly (admin override)
-     */
     public function setPhase($phase) {
-        if (!in_array($phase, ['production', 'trading'])) {
-            throw new Exception('Invalid phase');
+        $updates = ['phase' => $phase, 'phaseStartedAt' => time()];
+        if ($phase === 'production') {
+            $updates['productionRun'] = null;
         }
-
-        $fp = fopen($this->sessionFile, 'c+');
-        if (!flock($fp, LOCK_EX)) {
-            fclose($fp);
-            throw new Exception('Could not acquire lock');
-        }
-
-        $data = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
-        $data['phase'] = $phase;
-        $data['phaseStartedAt'] = time();
-
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-
-        return $data;
+        $this->storage->setSessionData($updates);
+        return $this->storage->getSystemState();
     }
 
-    /**
-     * Toggle auto-advance
-     */
     public function setAutoAdvance($enabled) {
-        $fp = fopen($this->sessionFile, 'c+');
-        if (!flock($fp, LOCK_EX)) {
-            fclose($fp);
-            throw new Exception('Could not acquire lock');
-        }
-
-        $data = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
-        $data['autoAdvance'] = (bool)$enabled;
-
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-
-        return $data;
+        $this->storage->setSessionData(['autoAdvance' => (bool)$enabled]);
+        return $this->storage->getSystemState();
     }
 
-    /**
-     * Set production duration (in seconds)
-     */
     public function setProductionDuration($seconds) {
-        $fp = fopen($this->sessionFile, 'c+');
-        if (!flock($fp, LOCK_EX)) {
-            fclose($fp);
-            throw new Exception('Could not acquire lock');
-        }
-
-        $data = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
-        $data['productionDuration'] = (int)$seconds;
-
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-
-        return $data;
+        $this->storage->setSessionData(['productionDuration' => (int)$seconds]);
+        return $this->storage->getSystemState();
     }
 
-    /**
-     * Set trading duration (in seconds)
-     */
     public function setTradingDuration($seconds) {
-        $fp = fopen($this->sessionFile, 'c+');
-        if (!flock($fp, LOCK_EX)) {
-            fclose($fp);
-            throw new Exception('Could not acquire lock');
-        }
-
-        $data = json_decode(fread($fp, filesize($this->sessionFile) ?: 1), true);
-        $data['tradingDuration'] = (int)$seconds;
-
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-
-        return $data;
+        $this->storage->setSessionData(['tradingDuration' => (int)$seconds]);
+        return $this->storage->getSystemState();
     }
 
-    /**
-     * Reset to session 1
-     */
-    public function reset() {
-        $fp = fopen($this->sessionFile, 'c+');
-        if (!flock($fp, LOCK_EX)) {
-            fclose($fp);
-            throw new Exception('Could not acquire lock');
-        }
+    public function updateNpcLastRun() {
+        $this->storage->setSessionData(['npcLastRun' => time()]);
+    }
 
-        $data = [
+    public function reset() {
+        $this->storage->setSessionData([
             'currentSession' => 1,
             'phase' => 'production',
-            'autoAdvance' => false,
-            'productionDuration' => 5,
-            'tradingDuration' => 60,
+            'autoAdvance' => true,
+            'productionDuration' => 10,
+            'tradingDuration' => 120,
             'phaseStartedAt' => time(),
-            'history' => []
-        ];
-
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-
-        return $data;
+            'productionRun' => null
+        ]);
+        return $this->storage->getSystemState();
     }
 }

@@ -19,7 +19,7 @@ class ComponentTest {
         try {
             const page = await this.browser.loginAndNavigate(
                 this.config.teams[0],
-                '/index.html'
+                '/'
             );
 
             await this.browser.sleep(3000); // Wait for components to load

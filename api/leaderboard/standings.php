@@ -23,6 +23,9 @@ try {
         foreach ($teamDirs as $teamDir) {
             $email = basename($teamDir);
             
+            // Skip the system team
+            if ($email === 'system') continue;
+            
             try {
                 // Use TeamStorage to leverage the cache
                 $storage = new TeamStorage($email);

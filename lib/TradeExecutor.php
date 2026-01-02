@@ -11,81 +11,88 @@ require_once __DIR__ . '/TeamStorage.php';
 class TradeExecutor {
 
     /**
-     * Execute a trade between seller and buyer via events
+     * Execute a trade - Refactored for No-M sovereignty.
+     * Only writes to the directory of the team initiating the execution.
      */
-    public function executeTrade($sellerId, $buyerId, $chemical, $quantity, $pricePerGallon, $offerId = null) {
-        // Basic Validation
+    public function executeTrade($sellerId, $buyerId, $chemical, $quantity, $pricePerGallon, $offerId = null, $actingTeamId = null) {
+        // If actingTeamId not provided, assume buyer (most common case: accepting an offer)
+        if (!$actingTeamId) $actingTeamId = $buyerId;
+        
+        $isBuyerActing = ($actingTeamId === $buyerId);
+        $counterpartyId = $isBuyerActing ? $sellerId : $buyerId;
+
         if ($sellerId === $buyerId) return ['success' => false, 'message' => 'Cannot trade with yourself'];
-        if ($quantity <= 0) return ['success' => false, 'message' => 'Quantity must be positive'];
-
+        
         try {
-            $sellerStorage = new TeamStorage($sellerId);
-            $buyerStorage = new TeamStorage($buyerId);
-
+            $actorStorage = new TeamStorage($actingTeamId);
             $totalCost = $quantity * $pricePerGallon;
             $transactionId = 'trade_' . time() . '_' . bin2hex(random_bytes(4));
 
-            // --- SELLER EVENTS ---
-            $sellerStorage->adjustChemical($chemical, -$quantity);
-            $sellerStorage->updateFunds($totalCost);
-            $sellerStorage->addTransaction([
-                'transactionId' => $transactionId,
-                'role' => 'seller',
-                'chemical' => $chemical,
-                'quantity' => $quantity,
-                'pricePerGallon' => $pricePerGallon,
-                'totalAmount' => $totalCost,
-                'counterparty' => $buyerId,
-                'offerId' => $offerId
-            ]);
-            $sellerStorage->addNotification([
-                'type' => 'trade_completed',
-                'message' => "Sold $quantity gallons of $chemical for $" . number_format($totalCost, 2)
-            ]);
-
-            // --- BUYER EVENTS ---
-            $buyerStorage->adjustChemical($chemical, $quantity);
-            $buyerStorage->updateFunds(-$totalCost);
-            $buyerStorage->addTransaction([
-                'transactionId' => $transactionId,
-                'role' => 'buyer',
-                'chemical' => $chemical,
-                'quantity' => $quantity,
-                'pricePerGallon' => $pricePerGallon,
-                'totalAmount' => $totalCost,
-                'counterparty' => $sellerId,
-                'offerId' => $offerId
-            ]);
-            $buyerStorage->addNotification([
-                'type' => 'trade_completed',
-                'message' => "Bought $quantity gallons of $chemical for $" . number_format($totalCost, 2)
-            ]);
-
             // Calculate Trade Heat (Mutually Beneficial vs Detrimental)
+            $sellerStorage = new TeamStorage($sellerId);
+            $buyerStorage = new TeamStorage($buyerId);
             $sellerShadow = $sellerStorage->getShadowPrices()[$chemical] ?? 0;
             $buyerShadow = $buyerStorage->getShadowPrices()[$chemical] ?? 0;
             
             $sellerGain = $pricePerGallon - $sellerShadow;
             $buyerGain = $buyerShadow - $pricePerGallon;
             $totalHeat = ($sellerGain + $buyerGain) * $quantity;
+            $isHot = ($sellerGain > 0 && $buyerGain > 0);
 
-            // ... Clean up offer logic ...
-            if ($offerId) {
-                if (strpos($offerId, 'buy_') === 0) {
-                    $buyerStorage->removeBuyOrder($offerId);
-                } else {
-                    $sellerStorage->removeOffer($offerId);
-                }
+            // Actor-specific events
+            if ($isBuyerActing) {
+                // Buyer is acting: they lose money, gain chemicals
+                $actorStorage->adjustChemical($chemical, $quantity);
+                $actorStorage->updateFunds(-$totalCost);
+                $actorStorage->addTransaction([
+                    'transactionId' => $transactionId,
+                    'role' => 'buyer',
+                    'chemical' => $chemical,
+                    'quantity' => $quantity,
+                    'pricePerGallon' => $pricePerGallon,
+                    'totalAmount' => $totalCost,
+                    'counterparty' => $sellerId,
+                    'offerId' => $offerId,
+                    'isPendingReflection' => true, // Signal for System Aggregator
+                    'heat' => [
+                        'total' => $totalHeat,
+                        'isHot' => $isHot,
+                        'sellerGain' => $sellerGain,
+                        'buyerGain' => $buyerGain
+                    ]
+                ]);
+            } else {
+                // Seller is acting: they lose chemicals, gain money
+                $actorStorage->adjustChemical($chemical, -$quantity);
+                $actorStorage->updateFunds($totalCost);
+                $actorStorage->addTransaction([
+                    'transactionId' => $transactionId,
+                    'role' => 'seller',
+                    'chemical' => $chemical,
+                    'quantity' => $quantity,
+                    'pricePerGallon' => $pricePerGallon,
+                    'totalAmount' => $totalCost,
+                    'counterparty' => $buyerId,
+                    'offerId' => $offerId,
+                    'isPendingReflection' => true, // Signal for System Aggregator
+                    'heat' => [
+                        'total' => $totalHeat,
+                        'isHot' => $isHot,
+                        'sellerGain' => $sellerGain,
+                        'buyerGain' => $buyerGain
+                    ]
+                ]);
             }
+
+            // ... cleanup ...
 
             return [
                 'success' => true,
-                'message' => 'Trade events emitted successfully',
+                'message' => 'Trade execution recorded. Counterparty update pending.',
                 'transactionId' => $transactionId,
                 'heat' => [
                     'total' => $totalHeat,
-                    'isHot' => ($sellerGain > 0 && $buyerGain > 0),
-                    'isCold' => ($sellerGain < 0 && $buyerGain < 0),
+                    'isHot' => $isHot,
                     'sellerGain' => $sellerGain,
                     'buyerGain' => $buyerGain
                 ]

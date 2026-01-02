@@ -140,15 +140,19 @@ class ChemicalCard extends LitElement {
                 <div class="content">
                     <div class="info-box">
                         <div class="info-label">Your Inventory</div>
-                        <div class="info-value">${this.inventory.toLocaleString()}</div>
-                        <div class="shadow-price">
-                            Shadow Price: <span>$${this.shadowPrice.toFixed(2)}</span>
+                        <div id="inventory" class="info-value">${this.inventory.toLocaleString()}</div>
+                        <div class="shadow-price" title="This is the internal value of 1 gallon to YOUR team. Buying below this or selling above this increases your potential profit.">
+                            Shadow Price: <span id="shadow-price">$${this.shadowPrice.toFixed(2)}</span>
+                            <span style="font-size: 0.65rem; display: block; opacity: 0.8; margin-top: 2px;">
+                                (Internal value to your team)
+                            </span>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
-                        <button 
-                            class="btn ${hasActiveBuyAd ? 'btn-disabled' : ''}" 
+                        <button
+                            id="post-buy-btn"
+                            class="btn ${hasActiveBuyAd ? 'btn-disabled' : ''}"
                             @click=${this.handlePostBuyRequest}
                             ?disabled=${hasActiveBuyAd}>
                             ${hasActiveBuyAd ? 'Request Posted' : '📋 Post Buy Request'}

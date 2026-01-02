@@ -12,6 +12,8 @@ try {
     $sessionManager = new SessionManager();
     $state = $sessionManager->getState(); // This call triggers auto-advance logic
 
+    // error_log("API Status: Phase=" . $state['phase'] . ", Session=" . $state['currentSession']);
+
     echo json_encode([
         'success' => true,
         'session' => $state['currentSession'],

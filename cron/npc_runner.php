@@ -13,34 +13,41 @@ echo "[" . date('Y-m-d H:i:s') . "] Running NPC cycle...\n";
 
 try {
     $sessionManager = new SessionManager();
-    $state = $sessionManager->getState(); // This triggers NPCs if conditions are met
+    require_once __DIR__ . '/../lib/NPCManager.php';
+    $npcManager = new NPCManager();
 
-    echo "  Phase: {$state['phase']}\n";
-    echo "  Auto-advance: " . ($state['autoAdvance'] ? 'ON' : 'OFF') . "\n";
-    echo "  Time remaining: {$state['timeRemaining']}s\n";
-    
-    // Debug NPC trigger logic explicitly
-    $sessionFile = __DIR__ . '/../data/session_state.json';
-    $data = json_decode(file_get_contents($sessionFile), true);
-    $npcLastRun = $data['npcLastRun'] ?? 0;
-    $timeSince = time() - $npcLastRun;
-    
-    echo "  NPC Last Run: $npcLastRun (Ago: {$timeSince}s)\n";
-    
-    if ($state['phase'] === 'trading') {
-        if ($timeSince < 10) {
-            echo "  ⚠ Skipped: Recently run ($timeSince < 10s)\n";
-        } else {
-             // It should have run in getState(). If timeSince is still large, it failed to update timestamp
-             // or getState didn't trigger it (e.g. NPCManager disabled)
-             require_once __DIR__ . '/../lib/NPCManager.php';
-             $mgr = new NPCManager();
-             if (!$mgr->isEnabled()) {
-                 echo "  ⚠ Skipped: NPC System Disabled\n";
-             } else {
-                 echo "  ✓ Cycle attempted (Timestamp should have updated)\n";
-             }
+    if (!$npcManager->isEnabled()) {
+        echo "  ⚠ Skipped: NPC System Disabled\n";
+        exit;
+    }
+
+    // Run 5 cycles (every 10 seconds) to fill a 1-minute cron window
+    // This ensures NPCs are active without needing high-frequency cron
+    require_once __DIR__ . '/../lib/NoM/GlobalAggregator.php';
+    $globalAggregator = new NoM\GlobalAggregator();
+
+    for ($i = 0; $i < 6; $i++) {
+        $state = $sessionManager->getState();
+        echo "[" . date('H:i:s') . "] Cycle " . ($i+1) . " - Phase: {$state['phase']}\n";
+
+        // 1. Process trade reflections (System Aggregator role)
+        $reflections = $globalAggregator->processReflections();
+        if ($reflections > 0) {
+            echo "  ✓ Processed $reflections pending trade reflections\n";
         }
+
+        // 2. Run NPC Trading Cycle
+        if ($state['phase'] === 'trading') {
+            echo "  ✓ Running NPC Trading Cycle...\n";
+            $npcManager->runTradingCycle();
+            
+            // Update last run timestamp in session state
+            $sessionManager->updateNpcLastRun();
+        } else {
+            echo "  ⚠ Skipped: Not in trading phase\n";
+        }
+
+        if ($i < 5) sleep(10);
     }
 
 } catch (Exception $e) {

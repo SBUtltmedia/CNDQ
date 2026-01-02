@@ -5,7 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Marketplace</title>
-    <link rel="stylesheet" href="<?php echo htmlspecialchars($basePath); ?>/css/styles.css">
+
+    <!-- Import map for Lit web components -->
+    <script type="importmap">
+    {
+        "imports": {
+            "lit": "https://cdn.jsdelivr.net/npm/lit@3/index.js",
+            "lit/": "https://cdn.jsdelivr.net/npm/lit@3/",
+            "lit-element": "https://cdn.jsdelivr.net/npm/lit-element@4/index.js",
+            "lit-element/": "https://cdn.jsdelivr.net/npm/lit-element@4/",
+            "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2/reactive-element.js",
+            "@lit/reactive-element/": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2/",
+            "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3/lit-html.js",
+            "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3/"
+        }
+    }
+    </script>
+
+    <link rel="stylesheet" href="./css/styles.css">
     <style>
         /* Page-specific animations */
         @keyframes spin {
@@ -190,6 +207,9 @@
                 </div>
                 
                 <div class="flex items-center gap-3">
+                    <button id="manual-refresh-session" class="p-2 bg-gray-700 hover:bg-gray-600 rounded text-gray-400 hover:text-white transition" title="Refresh Session State">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
                     <span class="text-gray-400 text-xs uppercase font-bold">Time Remaining</span>
                     <div class="bg-gray-900 px-4 py-2 rounded font-mono text-xl text-yellow-400 border border-gray-700 w-24 text-center" id="session-timer">
                         00:00
@@ -727,12 +747,8 @@
     </div>
 
     <!-- Main JavaScript Application -->
-    <script>
-        window.APP_BASE_PATH = "<?php echo htmlspecialchars($basePath); ?>";
-    </script>
-    <script id="main-app-script" 
-            type="module" 
-            src="<?php echo htmlspecialchars($basePath); ?>/js/marketplace.js"
-            data-base-path="<?php echo htmlspecialchars($basePath); ?>"></script>
+    <script id="main-app-script"
+            type="module"
+            src="./js/marketplace.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

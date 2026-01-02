@@ -12,26 +12,20 @@
 
 class ApiClient {
     constructor() {
-        // Priority 1: Use current URL to detect base path casing
-        // This is the most reliable way to match what the server expects
+        // Determine the base path relative to the current page
         const path = window.location.pathname;
-        const projectMatch = path.match(/\/(CNDQ|cndq)/i);
-        
-        if (projectMatch) {
-            this.basePath = projectMatch[0];
-        } else if (typeof window.APP_BASE_PATH !== 'undefined' && window.APP_BASE_PATH !== null) {
-            this.basePath = window.APP_BASE_PATH;
+
+        // If we're in /admin/ or any subdirectory, use '../' prefix
+        // Otherwise use './' for root-level pages
+        if (path.includes('/admin/')) {
+            this.pathPrefix = '../';
         } else {
-            this.basePath = '';
+            this.pathPrefix = './';
         }
 
-        // Clean up basePath
-        if (this.basePath === '/') this.basePath = '';
-        if (this.basePath.endsWith('/')) this.basePath = this.basePath.slice(0, -1);
-        
         console.group('🌐 API Client Initialized');
         console.log('Current URL:', path);
-        console.log('Detected Base Path:', this.basePath);
+        console.log('Path Prefix:', this.pathPrefix);
         console.groupEnd();
     }
 
@@ -39,13 +33,11 @@ class ApiClient {
      * Generic fetch wrapper with error handling
      */
     async request(endpoint, options = {}) {
-        // Ensure endpoint doesn't have leading slash if basePath exists
+        // Remove leading slash if present for relative path construction
         const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-        const separator = (this.basePath === '' || cleanEndpoint === '') ? '' : '/';
-        
-        // Final URL construction
-        let url = `${this.basePath}${separator}${cleanEndpoint}`;
-        if (!url.startsWith('/') && !url.startsWith('http')) url = '/' + url;
+
+        // Construct relative URL
+        const url = `${this.pathPrefix}${cleanEndpoint}`;
 
         if (window.APP_DEBUG) console.log(`[API] ${options.method || 'GET'} ${url}`);
         
@@ -83,12 +75,14 @@ class ApiClient {
                 const titleMatch = text.match(/<title>(.*?)<\/title>/i);
                 const title = titleMatch ? titleMatch[1] : (is404 ? '404 Not Found' : 'Unknown Error');
                 
-                const errorMsg = `[${response.status}] ${title} at ${url}`;
+                // Show the actual URL attempted
+                const fullUrl = new URL(url, window.location.href).href;
+                const errorMsg = `[${response.status}] ${title} at ${fullUrl}`;
                 console.error('🚨 SERVER ERROR:', errorMsg);
-                
+
                 // CRITICAL: Log the body so Puppeteer can see the PHP error
                 console.log('BODY_START:' + text + ':BODY_END');
-                
+
                 throw new Error(errorMsg);
             }
         } catch (error) {

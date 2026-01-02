@@ -9,33 +9,7 @@ require_once __DIR__ . '/../config.php';
 
 // Check if user is admin
 if (!isAdmin()) {
-    http_response_code(403);
-    ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Access Denied - CNDQ Admin</title>
-        <link rel="stylesheet" href="<?php echo htmlspecialchars($basePath); ?>/css/styles.css">
-    </head>
-    <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
-        <div class="max-w-md w-full bg-gray-800 rounded-lg p-8 border-2 border-red-600 text-center">
-            <div class="text-6xl mb-4">🚫</div>
-            <h1 class="text-3xl font-bold text-red-400 mb-4">Access Denied</h1>
-            <p class="text-gray-300 mb-6">
-                You do not have permission to access the admin dashboard.
-            </p>
-            <p class="text-sm text-gray-400 mb-6">
-                Current user: <span class="font-mono text-gray-200"><?php echo htmlspecialchars(getCurrentUserEmail()); ?></span>
-            </p>
-            <a href="../" class="inline-block bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
-                Return to Marketplace
-            </a>
-        </div>
-    </body>
-    </html>
-    <?php
+    header('Location: ./access-denied.html');
     exit;
 }
 
@@ -47,22 +21,24 @@ if (!isAdmin()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Admin Dashboard</title>
-    <script>
-        window.APP_BASE_PATH = "<?php echo htmlspecialchars($basePath); ?>";
-    </script>
-    <?php
-        // $basePath is defined in the access denied block, but redefine here if that block is removed
-        if (!isset($basePath)) {
-            $basePath = dirname($_SERVER['SCRIPT_NAME']);
-            $cndqPos = strpos($basePath, '/CNDQ');
-            if ($cndqPos !== false) {
-                $basePath = substr($basePath, 0, $cndqPos + strlen('/CNDQ'));
-            } else {
-                $basePath = '';
-            }
+
+    <!-- Import map for Lit web components -->
+    <script type="importmap">
+    {
+        "imports": {
+            "lit": "https://cdn.jsdelivr.net/npm/lit@3/index.js",
+            "lit/": "https://cdn.jsdelivr.net/npm/lit@3/",
+            "lit-element": "https://cdn.jsdelivr.net/npm/lit-element@4/index.js",
+            "lit-element/": "https://cdn.jsdelivr.net/npm/lit-element@4/",
+            "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2/reactive-element.js",
+            "@lit/reactive-element/": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2/",
+            "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3/lit-html.js",
+            "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3/"
         }
-    ?>
-    <link rel="stylesheet" href="<?php echo htmlspecialchars($basePath); ?>/css/styles.css">
+    }
+    </script>
+
+    <link rel="stylesheet" href="../css/styles.css">
     <style>
         /* Focus styles */
         *:focus-visible {
@@ -277,27 +253,12 @@ if (!isAdmin()) {
         let sessionState = null;
         let updateInterval = null;
 
-        // Auto-detect base path for subdirectory deployments
-        function getBasePath() {
-            // Get current page path and remove /admin/index.php or /admin/
-            const path = window.location.pathname;
-            const pathParts = path.split('/').filter(p => p);
-
-            // Remove 'admin' and 'index.php' if present
-            while (pathParts.length > 0 && (pathParts[pathParts.length - 1] === 'admin' || pathParts[pathParts.length - 1].includes('.php'))) {
-                pathParts.pop();
-            }
-
-            return '/' + pathParts.join('/');
-        }
-
-        // Helper to construct API URLs with correct base path
+        // Helper to construct API URLs using relative paths
         function apiUrl(endpoint) {
-            const base = getBasePath();
             // Remove leading slash from endpoint if present
             const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-            const fullPath = base === '/' ? `/${cleanEndpoint}` : `${base}/${cleanEndpoint}`;
-            return fullPath;
+            // Admin is one level deep, so use ../ prefix
+            return `../${cleanEndpoint}`;
         }
 
         // Custom Confirm Modal

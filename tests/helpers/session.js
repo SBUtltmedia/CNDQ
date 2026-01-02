@@ -19,7 +19,7 @@ class SessionHelper {
             await this.browser.sleep(1000);
 
             // Navigate to any page to set up context
-            await page.goto(`${this.browser.config.baseUrl}/admin.html`);
+            await page.goto(`${this.browser.config.baseUrl}/admin/`);
             await this.browser.sleep(500);
 
             // Call reset endpoint via fetch
@@ -30,7 +30,12 @@ class SessionHelper {
                         'Content-Type': 'application/json'
                     }
                 });
-                return await response.json();
+                const text = await response.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    return { success: false, error: 'Invalid JSON response from server: ' + text.substring(0, 500) };
+                }
             }, this.browser.config.baseUrl);
 
             if (data.success) {
@@ -103,7 +108,7 @@ class SessionHelper {
     async enableAutoAdvance() {
         const page = await this.browser.loginAndNavigate(
             'admin@stonybrook.edu',
-            '/admin.html'
+            '/admin/'
         );
 
         try {

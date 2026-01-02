@@ -47,11 +47,15 @@ try {
             );
 
             foreach ($files as $fileinfo) {
+                $path = $fileinfo->getRealPath();
+                if (!$path) continue;
                 $deleteFunc = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
-                $deleteFunc($fileinfo->getRealPath());
+                if (file_exists($path)) {
+                    @$deleteFunc($path);
+                }
             }
 
-            rmdir($teamDir);
+            @rmdir($teamDir);
             $deletedCount++;
 
         } catch (Exception $e) {
@@ -59,9 +63,27 @@ try {
         }
     }
 
-    // Delete global marketplace files
+    // Delete global marketplace files and events
     $marketplaceDir = __DIR__ . '/../../data/marketplace';
     if (is_dir($marketplaceDir)) {
+        // Recursive delete for events subdirectory
+        $sharedEventsDir = $marketplaceDir . '/events';
+        if (is_dir($sharedEventsDir)) {
+            $files = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($sharedEventsDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+            foreach ($files as $fileinfo) {
+                $path = $fileinfo->getRealPath();
+                if (!$path) continue;
+                $deleteFunc = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
+                if (file_exists($path)) {
+                    @$deleteFunc($path);
+                }
+            }
+            @rmdir($sharedEventsDir);
+        }
+
         $files = glob($marketplaceDir . '/*.json');
         foreach ($files as $file) {
             unlink($file);
@@ -81,7 +103,7 @@ try {
     $npcConfigFile = __DIR__ . '/../../data/npc_config.json';
     if (file_exists($npcConfigFile)) {
         $defaultNPCConfig = [
-            'enabled' => false,
+            'enabled' => true,
             'npcs' => []
         ];
         file_put_contents($npcConfigFile, json_encode($defaultNPCConfig, JSON_PRETTY_PRINT));

@@ -4,14 +4,14 @@ if (isset($_GET['user'])) {
     $user = $_GET['user'];
     // Set cookie for 30 days
     setcookie('mock_mail', $user, time() + (86400 * 30), "/");
-    header("Location: index.html");
+    header("Location: ./");
     exit;
 }
 
 // Handle Logout / Reset
 if (isset($_GET['reset'])) {
     setcookie('mock_mail', '', time() - 3600, "/");
-    header("Location: index.html");
+    header("Location: ./");
     exit;
 }
 

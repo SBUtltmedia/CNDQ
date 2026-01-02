@@ -1,0 +1,40 @@
+<?php
+/**
+ * SystemStorage - Specialized storage for system-wide state.
+ * Adheres to No-M philosophy by treating the 'system' as a special user.
+ */
+
+require_once __DIR__ . '/TeamStorage.php';
+
+class SystemStorage extends TeamStorage {
+    public function __construct() {
+        parent::__construct('system');
+    }
+
+    /**
+     * Get system state with default values
+     */
+    public function getSystemState() {
+        $state = $this->getState();
+        
+        // If no session events yet, provide sensible defaults
+        // This ensures the first call to getState() returns a valid object
+        // that SessionManager can then use or auto-reset.
+        $session = $state['session'] ?? [];
+        
+        return [
+            'currentSession' => $session['currentSession'] ?? 1,
+            'phase' => $session['phase'] ?? 'production',
+            'autoAdvance' => $session['autoAdvance'] ?? true,
+            'productionDuration' => $session['productionDuration'] ?? 2,
+            'tradingDuration' => $session['tradingDuration'] ?? 300,
+            'phaseStartedAt' => $session['phaseStartedAt'] ?? time(),
+            'npcLastRun' => $session['npcLastRun'] ?? 0,
+            'productionRun' => $session['productionRun'] ?? null
+        ];
+    }
+
+    public function setSessionData($data) {
+        $this->emitEvent('update_session', $data);
+    }
+}

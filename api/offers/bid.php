@@ -92,6 +92,11 @@ try {
 
     $result = $storage->addBuyOrder($buyOrderData);
 
+    // ALSO post advertisement so it shows up in the public marketplace
+    require_once __DIR__ . '/../../lib/AdvertisementManager.php';
+    $adManager = new AdvertisementManager($currentUserEmail, $profile['teamName'] ?? null);
+    $adManager->postAdvertisement($chemical, 'buy');
+
     // Get the created buy order (last one in array)
     $buyOrders = $result['interests'];
     $createdOrder = end($buyOrders);

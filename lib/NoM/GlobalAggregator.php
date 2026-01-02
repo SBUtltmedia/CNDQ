@@ -16,49 +16,85 @@ class GlobalAggregator {
     /**
      * Get the global state by aggregating all team states
      */
-    public function aggregateAll(): array {
-        $globalState = [
-            'teams' => [],
-            'allOffers' => [],
-            'allBuyOrders' => [],
-            'allTransactions' => [],
-            'lastUpdate' => 0,
-            'totalEvents' => 0
-        ];
-
+    /**
+     * Process pending reflections (cross-team events)
+     */
+    public function processReflections() {
         $dirs = array_filter(glob($this->teamsDir . '/*'), 'is_dir');
+        $processedCount = 0;
 
         foreach ($dirs as $dir) {
             $state = Aggregator::aggregate($dir);
-            $email = $state['profile']['email'];
-            
-            if (!$email) continue;
+            $teamId = $state['profile']['email'];
+            if (!$teamId) continue;
 
-            $globalState['teams'][$email] = [
-                'profile' => $state['profile'],
-                'inventory' => $state['inventory']
-            ];
-
-            // Aggregated Offers
-            foreach ($state['offers'] as $offer) {
-                if (($offer['status'] ?? 'active') === 'active') {
-                    $offer['sellerName'] = $state['profile']['teamName'];
-                    $globalState['allOffers'][] = $offer;
+            $transactions = $state['transactions'] ?? [];
+            foreach ($transactions as $txn) {
+                if (!empty($txn['isPendingReflection'])) {
+                    $this->reflectTransaction($teamId, $txn);
+                    $processedCount++;
                 }
             }
+        }
+        return $processedCount;
+    }
 
-            // Aggregated Buy Orders
-            foreach ($state['buyOrders'] as $order) {
-                if (($order['status'] ?? 'active') === 'active') {
-                    $order['buyerName'] = $state['profile']['teamName'];
-                    $globalState['allBuyOrders'][] = $order;
-                }
+    /**
+     * Reflect a transaction to the counterparty
+     */
+    private function reflectTransaction($actorId, $txn) {
+        $counterpartyId = $txn['counterparty'];
+        $transactionId = $txn['transactionId'];
+
+        require_once __DIR__ . '/TeamStorage.php';
+        $counterpartyStorage = new TeamStorage($counterpartyId);
+        $actorStorage = new TeamStorage($actorId);
+
+        // 1. Check if already reflected to counterparty to avoid duplicates
+        $cpState = $counterpartyStorage->getState();
+        foreach ($cpState['transactions'] as $cpTxn) {
+            if ($cpTxn['transactionId'] === $transactionId) {
+                // Already reflected, just clear the flag on actor
+                $actorStorage->emitEvent('mark_reflected', ['transactionId' => $transactionId]);
+                return;
             }
-
-            $globalState['lastUpdate'] = max($globalState['lastUpdate'], $state['lastUpdate']);
-            $globalState['totalEvents'] += $state['eventsProcessed'];
         }
 
-        return $globalState;
+        // 2. Emit reflected event to counterparty
+        $role = ($txn['role'] === 'buyer') ? 'seller' : 'buyer';
+        $quantity = $txn['quantity'];
+        $chemical = $txn['chemical'];
+        $totalAmount = $txn['totalAmount'];
+
+        if ($role === 'seller') {
+            // Actor was buyer, so counterparty is seller
+            $counterpartyStorage->adjustChemical($chemical, -$quantity);
+            $counterpartyStorage->updateFunds($totalAmount);
+        } else {
+            // Actor was seller, so counterparty is buyer
+            $counterpartyStorage->adjustChemical($chemical, $quantity);
+            $counterpartyStorage->updateFunds(-$totalAmount);
+        }
+
+        $counterpartyStorage->addTransaction([
+            'transactionId' => $transactionId,
+            'role' => $role,
+            'chemical' => $chemical,
+            'quantity' => $quantity,
+            'pricePerGallon' => $txn['pricePerGallon'],
+            'totalAmount' => $totalAmount,
+            'counterparty' => $actorId,
+            'offerId' => $txn['offerId'] ?? null,
+            'isReflection' => true,
+            'heat' => $txn['heat'] ?? null
+        ]);
+
+        $counterpartyStorage->addNotification([
+            'type' => 'trade_completed',
+            'message' => ($role === 'seller' ? "Sold" : "Bought") . " $quantity gallons of $chemical for $" . number_format($totalAmount, 2)
+        ]);
+
+        // 3. Mark as reflected on actor
+        $actorStorage->emitEvent('mark_reflected', ['transactionId' => $transactionId]);
     }
 }

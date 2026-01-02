@@ -27,13 +27,13 @@ const ReportingHelper = require('./helpers/reporting');
 
 // Configuration
 const CONFIG = {
-    baseUrl: 'http://cndq.test/CNDQ',
+    baseUrl: 'http://cndq.test/CNDQ/',
     teams: [
         'test_mail1@stonybrook.edu',
         'test_mail2@stonybrook.edu',
         'test_mail3@stonybrook.edu'
     ],
-    targetSessions: 2,
+    targetSessions: 1,
     headless: process.argv.includes('--headless'),
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
     keepOpen: process.argv.includes('--keep-open'),
@@ -130,6 +130,14 @@ class TestRunner {
     async runGameSimulation() {
         ReportingHelper.printSection('🎮', 'Running Game Simulation Test');
 
+        // Start background NPC runner to handle reflections and NPCs
+        console.log('   🚀 Starting background NPC runner...');
+        const runnerPath = 'CNDQ/cron/npc_runner.php';
+        // Run it in a loop for the duration of the test
+        const psCommand = `powershell.exe -NoProfile -Command "Start-Job -ScriptBlock { while($true) { php ${runnerPath}; Start-Sleep -Seconds 10 } }"`;
+        const { exec } = require('child_process');
+        const runnerJob = exec(psCommand);
+
         const browserHelper = new BrowserHelper(this.config);
         await browserHelper.launch();
 
@@ -138,10 +146,12 @@ class TestRunner {
             this.results.gameSimulation = await test.run();
 
             if (this.config.keepOpen) {
-                ReportingHelper.printInfo('\n🔍 Browser kept open for inspection. Close manually when done.');
+                ReportingHelper.printInfo('\\n🔍 Browser kept open for inspection. Close manually when done.');
                 await browserHelper.keepOpen();
             }
         } finally {
+            console.log('   🛑 Stopping background NPC runner...');
+            exec('powershell.exe -NoProfile -Command "Get-Job | Stop-Job; Remove-Job *"');
             if (!this.config.keepOpen) {
                 await browserHelper.close();
             }

@@ -310,15 +310,10 @@ class NPCManager
             return;
         }
 
-        // Get session from data/session_state.json directly without calling getState()
         if ($currentSession === null) {
-            $sessionFile = __DIR__ . '/../data/session_state.json';
-            if (file_exists($sessionFile)) {
-                $sessionData = json_decode(file_get_contents($sessionFile), true);
-                $currentSession = $sessionData['currentSession'] ?? 1;
-            } else {
-                $currentSession = 1;
-            }
+            $sessionManager = new SessionManager();
+            $state = $sessionManager->getState();
+            $currentSession = $state['currentSession'] ?? 1;
         }
 
         $config = $this->loadConfig();

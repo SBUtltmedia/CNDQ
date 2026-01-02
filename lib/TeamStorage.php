@@ -12,6 +12,7 @@ class TeamStorage {
     private $teamDir;
     private $safeEmail;
     private $cacheFile;
+    private $teamName;
 
     /**
      * Initialize storage for a specific team
@@ -23,6 +24,16 @@ class TeamStorage {
         $this->teamDir = __DIR__ . '/../data/teams/' . $this->safeEmail;
         $this->cacheFile = $this->teamDir . '/cached_state.json';
         $this->ensureDirectoryStructure();
+    }
+
+    /**
+     * Get the team name (with caching)
+     */
+    public function getTeamName() {
+        if ($this->teamName) return $this->teamName;
+        $state = $this->getState();
+        $this->teamName = $state['profile']['teamName'] ?? $this->teamEmail;
+        return $this->teamName;
     }
 
     /**
@@ -41,23 +52,37 @@ class TeamStorage {
                 throw new \Exception("Failed to create team directory: {$this->teamDir}");
             }
             
-            $generatedName = TeamNameGenerator::generate($this->teamEmail);
+            $this->teamName = TeamNameGenerator::generate($this->teamEmail);
             
-            $this->emitEvent('init', [
-                'profile' => [
-                    'email' => $this->teamEmail,
-                    'teamName' => $generatedName,
-                    'createdAt' => time(),
-                    'currentFunds' => 0,
-                    'startingFunds' => 0
+            $timestamp = microtime(true);
+            $filename = "event_" . sprintf('%0.6f', $timestamp) . "_init.json";
+            
+            $event = [
+                'type' => 'init',
+                'payload' => [
+                    'profile' => [
+                        'email' => $this->teamEmail,
+                        'teamName' => $this->teamName,
+                        'createdAt' => time(),
+                        'currentFunds' => 10000,
+                        'startingFunds' => 10000
+                    ],
+                    'inventory' => [
+                        'C' => round(rand(500, 2000), 4),
+                        'N' => round(rand(500, 2000), 4),
+                        'D' => round(rand(500, 2000), 4),
+                        'Q' => round(rand(500, 2000), 4)
+                    ],
+                    'shadowPrices' => [
+                        'C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0
+                    ]
                 ],
-                'inventory' => [
-                    'C' => round(rand(500, 2000), 4),
-                    'N' => round(rand(500, 2000), 4),
-                    'D' => round(rand(500, 2000), 4),
-                    'Q' => round(rand(500, 2000), 4)
-                ]
-            ]);
+                'timestamp' => $timestamp,
+                'teamId' => $this->teamEmail,
+                'teamName' => $this->teamName
+            ];
+
+            file_put_contents($this->teamDir . '/' . $filename, json_encode($event, JSON_PRETTY_PRINT));
 
             $this->runAutomaticFirstProduction();
         }
@@ -71,7 +96,9 @@ class TeamStorage {
         $event = [
             'type' => $type,
             'payload' => $payload,
-            'timestamp' => $timestamp
+            'timestamp' => $timestamp,
+            'teamId' => $this->teamEmail,
+            'teamName' => $this->teamName ?? ($type === 'init' ? $payload['profile']['teamName'] : $this->getTeamName())
         ];
 
         $jsonData = json_encode($event, JSON_PRETTY_PRINT);
@@ -88,6 +115,20 @@ class TeamStorage {
             throw new Exception("Failed to rename event file");
         }
 
+        // --- NEW: Shared Event Log for fast global querying ---
+        $sharedTypes = ['add_offer', 'remove_offer', 'update_offer', 'add_buy_order', 'remove_buy_order', 'update_buy_order', 'add_ad', 'remove_ad'];
+        if (in_array($type, $sharedTypes)) {
+            $sharedDir = __DIR__ . '/../data/marketplace/events';
+            if (!is_dir($sharedDir)) {
+                mkdir($sharedDir, 0755, true);
+            }
+            
+            // Explicitly inject teamName into payload for the shared log
+            $event['payload']['teamName'] = $this->getTeamName();
+            $jsonData = json_encode($event, JSON_PRETTY_PRINT);
+            file_put_contents($sharedDir . '/' . $filename, $jsonData);
+        }
+
         // Invalidate cache by deleting it or updating its mtime to be old
         if (file_exists($this->cacheFile)) {
             @unlink($this->cacheFile);
@@ -98,11 +139,20 @@ class TeamStorage {
      * Get the current state (Aggregated and Cached)
      */
     public function getState(): array {
-        // State Caching: Compare mtime of root directory with mtime of cached_state.json
-        $dirMtime = filemtime($this->teamDir);
+        // State Caching: Compare mtime of newest event with mtime of cached_state.json
         $cacheMtime = file_exists($this->cacheFile) ? filemtime($this->cacheFile) : 0;
+        
+        // Find newest event file
+        $events = glob($this->teamDir . '/event_*.json');
+        $newestEventMtime = 0;
+        if (!empty($events)) {
+            // We only need the latest one, and since they are named with timestamps,
+            // the last one in the sorted list is usually the newest.
+            sort($events);
+            $newestEventMtime = filemtime(end($events));
+        }
 
-        if ($cacheMtime >= $dirMtime) {
+        if ($cacheMtime > $newestEventMtime && $cacheMtime > 0) {
             $content = file_get_contents($this->cacheFile);
             $cached = json_decode($content, true);
             if (is_array($cached) && isset($cached['profile'])) return $cached;
@@ -116,7 +166,29 @@ class TeamStorage {
         file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT));
         rename($tmp, $this->cacheFile);
 
+        // Check if we should create a snapshot (e.g. every 50 events)
+        $eventsSinceSnapshot = $state['eventsProcessed'] - ($state['snapshotEvents'] ?? 0);
+        if ($eventsSinceSnapshot >= 50) {
+            $this->createSnapshot($state);
+        }
+
         return $state;
+    }
+
+    /**
+     * Create a baseline snapshot of the current state
+     */
+    private function createSnapshot(array $state) {
+        $state['snapshotEvents'] = $state['eventsProcessed'];
+        $state['snapshotAt'] = time();
+        
+        $snapshotFile = $this->teamDir . '/snapshot.json';
+        $tmp = tempnam($this->teamDir, 'tmp_snap_');
+        file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT));
+        rename($tmp, $snapshotFile);
+        
+        // Optional: Clean up old event files that are now in the snapshot
+        // (Be careful with this in a real audit log system, maybe move to 'archive/' instead)
     }
 
     /**
@@ -144,7 +216,8 @@ class TeamStorage {
             $this->adjustChemical($chem, -$amount);
         }
 
-        $this->setFunds($revenue, true);
+        // --- FIXED: Add revenue to existing funds (don't reset baseline) ---
+        $this->updateFunds($revenue);
 
         $this->addProduction([
             'type' => 'automatic_initial',
@@ -175,9 +248,7 @@ class TeamStorage {
     }
 
     public function updateFunds($amount) {
-        $state = $this->getState();
-        $newFunds = $state['profile']['currentFunds'] + $amount;
-        $this->emitEvent('set_funds', ['amount' => $newFunds]);
+        $this->emitEvent('adjust_funds', ['amount' => $amount]);
     }
 
     public function setFunds($amount, $isStarting = false) {

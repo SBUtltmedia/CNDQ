@@ -10,9 +10,11 @@ require_once __DIR__ . '/TeamStorage.php';
 
 class MarketplaceAggregator {
     private $teamsDir;
+    private $sharedEventsDir;
 
     public function __construct() {
         $this->teamsDir = __DIR__ . '/../data/teams';
+        $this->sharedEventsDir = __DIR__ . '/../data/marketplace/events';
 
         if (!is_dir($this->teamsDir)) {
             mkdir($this->teamsDir, 0755, true);
@@ -20,46 +22,30 @@ class MarketplaceAggregator {
     }
 
     /**
-     * Get list of all team emails
-     * @return array List of team email addresses
+     * Get list of all team emails (Slow O(N) scan, used for stats)
      */
     public function getAllTeams() {
         $teams = [];
-
-        if (!is_dir($this->teamsDir)) {
-            return $teams;
-        }
+        if (!is_dir($this->teamsDir)) return $teams;
 
         $dirs = scandir($this->teamsDir);
         foreach ($dirs as $dir) {
-            if ($dir === '.' || $dir === '..') {
-                continue;
-            }
-
+            if ($dir === '.' || $dir === '..') continue;
             $teamPath = $this->teamsDir . '/' . $dir;
             if (is_dir($teamPath)) {
                 try {
-                    // Use TeamStorage to get profile (leverages cache)
-                    // We need to extract the email from the directory name if we don't have it,
-                    // but the directory name IS the safe email. 
-                    // To be safe, we can try to find a way to get the real email.
-                    // Actually, let's just look for cached_state.json first as an optimization.
                     $cacheFile = $teamPath . '/cached_state.json';
                     $profile = null;
-                    
                     if (file_exists($cacheFile)) {
                         $cached = json_decode(file_get_contents($cacheFile), true);
                         $profile = $cached['profile'] ?? null;
                     }
-                    
-                    // Fallback to legacy profile.json if no cache or cache is incomplete
                     if (!$profile) {
                         $profileFile = $teamPath . '/profile.json';
                         if (file_exists($profileFile)) {
                             $profile = json_decode(file_get_contents($profileFile), true);
                         }
                     }
-
                     if ($profile && isset($profile['email'])) {
                         $teams[] = [
                             'email' => $profile['email'],
@@ -67,390 +53,189 @@ class MarketplaceAggregator {
                             'lastActive' => $profile['lastActive'] ?? 0
                         ];
                     }
-                } catch (Exception $e) {
-                    continue;
-                }
+                } catch (Exception $e) { continue; }
             }
         }
-
-        // Sort by last active (most recent first)
-        usort($teams, function($a, $b) {
-            return $b['lastActive'] - $a['lastActive'];
-        });
-
+        usort($teams, fn($a, $b) => $b['lastActive'] - $a['lastActive']);
         return $teams;
     }
 
     /**
-     * Get all active offers from all teams
-     * @param string|null $chemical Filter by specific chemical (C, N, D, Q)
-     * @return array Aggregated offers
+     * Get all active offers (Fast O(E) scan from shared log)
      */
     public function getActiveOffers($chemical = null) {
-        $allOffers = [];
-        $teams = $this->getAllTeams();
-
-        foreach ($teams as $teamInfo) {
-            try {
-                $storage = new TeamStorage($teamInfo['email']);
-                $offerData = $storage->getOffersMade();
-
-                // Check if offers key exists and is an array
-                if (!isset($offerData['offers']) || !is_array($offerData['offers'])) {
-                    continue;
-                }
-
-                foreach ($offerData['offers'] as $offer) {
-                    // Only include active offers
-                    if ($offer['status'] !== 'active') {
-                        continue;
-                    }
-
-                    // Filter by chemical if specified
-                    if ($chemical && $offer['chemical'] !== $chemical) {
-                        continue;
-                    }
-
-                    // Add team info
-                    $offer['sellerName'] = $teamInfo['teamName'];
-
-                    $allOffers[] = $offer;
-                }
-            } catch (Exception $e) {
-                // Skip teams with errors
-                error_log("Error reading offers from team {$teamInfo['email']}: " . $e->getMessage());
-                continue;
-            }
+        $data = $this->getAggregatedFromSharedLog();
+        $offers = $data['offers'];
+        if ($chemical) {
+            $offers = array_values(array_filter($offers, fn($o) => ($o['chemical'] ?? '') === $chemical));
         }
-
-        return $allOffers;
+        return $offers;
     }
 
     /**
-     * Get all active buy orders from all teams
-     * @param string|null $chemical Filter by specific chemical (C, N, D, Q)
-     * @return array Aggregated buy orders
+     * Get all active buy orders (Fast O(E) scan from shared log)
      */
     public function getActiveBuyOrders($chemical = null) {
-        $allBuyOrders = [];
-        $teams = $this->getAllTeams();
-
-        foreach ($teams as $teamInfo) {
-            try {
-                $storage = new TeamStorage($teamInfo['email']);
-                $buyOrderData = $storage->getBuyOrders();
-
-                // Check if interests key exists and is an array
-                if (!isset($buyOrderData['interests']) || !is_array($buyOrderData['interests'])) {
-                    continue;
-                }
-
-                foreach ($buyOrderData['interests'] as $buyOrder) {
-                    // Only include active buy orders
-                    if (($buyOrder['status'] ?? 'active') !== 'active') {
-                        continue;
-                    }
-
-                    // Filter by chemical if specified
-                    if ($chemical && $buyOrder['chemical'] !== $chemical) {
-                        continue;
-                    }
-
-                    // Add team info
-                    $buyOrder['buyerName'] = $teamInfo['teamName'];
-
-                    $allBuyOrders[] = $buyOrder;
-                }
-            } catch (Exception $e) {
-                // Skip teams with errors
-                error_log("Error reading buy orders from team {$teamInfo['email']}: " . $e->getMessage());
-                continue;
-            }
+        $data = $this->getAggregatedFromSharedLog();
+        $buyOrders = $data['buyOrders'];
+        if ($chemical) {
+            $buyOrders = array_values(array_filter($buyOrders, fn($o) => ($o['chemical'] ?? '') === $chemical));
         }
-
-        return $allBuyOrders;
+        return $buyOrders;
     }
 
-    /**
-     * Get offers grouped by chemical
-     * @return array Offers grouped by C, N, D, Q
-     */
     public function getOffersByChemical() {
-        $grouped = [
-            'C' => [],
-            'N' => [],
-            'D' => [],
-            'Q' => []
-        ];
-
-        $allOffers = $this->getActiveOffers();
-
-        foreach ($allOffers as $offer) {
-            $chemical = $offer['chemical'] ?? null;
-            if ($chemical && isset($grouped[$chemical])) {
-                $grouped[$chemical][] = $offer;
-            }
+        $grouped = ['C' => [], 'N' => [], 'D' => [], 'Q' => []];
+        foreach ($this->getActiveOffers() as $offer) {
+            $chem = $offer['chemical'] ?? null;
+            if ($chem && isset($grouped[$chem])) $grouped[$chem][] = $offer;
         }
-
-        // Sort each group by price (lowest first - best deals for buyers)
-        foreach ($grouped as $chem => &$offers) {
+        foreach ($grouped as &$offers) {
             usort($offers, function($a, $b) {
-                $priceA = $a['minPrice'] ?? $a['price'] ?? PHP_INT_MAX;
-                $priceB = $b['minPrice'] ?? $b['price'] ?? PHP_INT_MAX;
-                return $priceA <=> $priceB;
+                return ($a['minPrice'] ?? $a['price'] ?? 0) <=> ($b['minPrice'] ?? $b['price'] ?? 0);
             });
         }
-
         return $grouped;
     }
 
-    /**
-     * Get buy orders grouped by chemical
-     * @return array Buy orders grouped by C, N, D, Q
-     */
     public function getBuyOrdersByChemical() {
-        $grouped = [
-            'C' => [],
-            'N' => [],
-            'D' => [],
-            'Q' => []
-        ];
-
-        $allBuyOrders = $this->getActiveBuyOrders();
-
-        foreach ($allBuyOrders as $buyOrder) {
-            $chemical = $buyOrder['chemical'] ?? null;
-            if ($chemical && isset($grouped[$chemical])) {
-                $grouped[$chemical][] = $buyOrder;
-            }
+        $grouped = ['C' => [], 'N' => [], 'D' => [], 'Q' => []];
+        foreach ($this->getActiveBuyOrders() as $order) {
+            $chem = $order['chemical'] ?? null;
+            if ($chem && isset($grouped[$chem])) $grouped[$chem][] = $order;
         }
-
-        // Sort each group by price (highest first - best deals for sellers)
-        foreach ($grouped as $chem => &$buyOrders) {
-            usort($buyOrders, function($a, $b) {
-                $priceA = $a['maxPrice'] ?? $a['price'] ?? 0;
-                $priceB = $b['maxPrice'] ?? $b['price'] ?? 0;
-                return $priceB <=> $priceA; // Descending order
+        foreach ($grouped as &$orders) {
+            usort($orders, function($a, $b) {
+                return ($b['maxPrice'] ?? $b['price'] ?? 0) <=> ($a['maxPrice'] ?? $a['price'] ?? 0);
             });
         }
-
         return $grouped;
     }
 
-    /**
-     * Get a specific offer by ID
-     * @param string $offerId The offer ID
-     * @return array|null The offer data or null if not found
-     */
     public function getOfferById($offerId) {
-        $allOffers = $this->getActiveOffers();
-
-        foreach ($allOffers as $offer) {
-            if ($offer['id'] === $offerId) {
-                return $offer;
-            }
+        foreach ($this->getActiveOffers() as $offer) {
+            if ($offer['id'] === $offerId) return $offer;
         }
-
         return null;
     }
 
-    /**
-     * Get a specific buy order by ID
-     * @param string $buyOrderId The buy order ID
-     * @return array|null The buy order data or null if not found
-     */
     public function getBuyOrderById($buyOrderId) {
-        $allBuyOrders = $this->getActiveBuyOrders();
-
-        foreach ($allBuyOrders as $buyOrder) {
-            if ($buyOrder['id'] === $buyOrderId) {
-                return $buyOrder;
-            }
+        foreach ($this->getActiveBuyOrders() as $order) {
+            if ($order['id'] === $buyOrderId) return $order;
         }
-
         return null;
     }
 
     /**
-     * Get team statistics for leaderboard/scoreboard
-     * @return array Team rankings
+     * Aggregates marketplace from shared log.
+     */
+    public function getAggregatedFromSharedLog() {
+        if (!is_dir($this->sharedEventsDir)) {
+            return ['offers' => [], 'buyOrders' => [], 'ads' => []];
+        }
+
+        $events = glob("$this->sharedEventsDir/event_*.json");
+        sort($events);
+
+        $offers = [];
+        $buyOrders = [];
+        $ads = [];
+
+        foreach ($events as $file) {
+            $event = json_decode(file_get_contents($file), true);
+            if (!$event) continue;
+
+            $type = $event['type'];
+            $payload = $event['payload'];
+            $teamId = $event['teamId'] ?? 'unknown';
+            $teamName = $event['teamName'] ?? $teamId;
+
+            switch ($type) {
+                case 'add_offer':
+                    $payload['teamId'] = $teamId;
+                    $payload['sellerName'] = $teamName;
+                    $offers[$payload['id']] = $payload;
+                    break;
+                case 'remove_offer':
+                    unset($offers[$payload['id']]);
+                    break;
+                case 'update_offer':
+                    if (isset($offers[$payload['id']])) {
+                        $offers[$payload['id']] = array_merge($offers[$payload['id']], $payload['updates']);
+                    }
+                    break;
+                case 'add_buy_order':
+                    $payload['teamId'] = $teamId;
+                    $payload['buyerName'] = $teamName;
+                    $buyOrders[$payload['id']] = $payload;
+                    break;
+                case 'remove_buy_order':
+                    unset($buyOrders[$payload['id']]);
+                    break;
+                case 'update_buy_order':
+                    if (isset($buyOrders[$payload['id']])) {
+                        $buyOrders[$payload['id']] = array_merge($buyOrders[$payload['id']], $payload['updates']);
+                    }
+                    break;
+                case 'add_ad':
+                    $payload['teamId'] = $teamId;
+                    $payload['teamName'] = $teamName;
+                    $ads[$payload['id']] = $payload;
+                    break;
+                case 'remove_ad':
+                    unset($ads[$payload['id']]);
+                    break;
+            }
+        }
+
+        return ['offers' => array_values($offers), 'buyOrders' => array_values($buyOrders), 'ads' => array_values($ads)];
+    }
+
+    /**
+     * Get team statistics (Still slow O(N) scan)
      */
     public function getTeamStatistics() {
         $stats = [];
         $teams = $this->getAllTeams();
-
         foreach ($teams as $teamInfo) {
             try {
                 $storage = new TeamStorage($teamInfo['email']);
-                $profile = $storage->getProfile();
-                $inventory = $storage->getInventory();
-                $transactions = $storage->getTransactions();
-
+                $state = $storage->getState();
                 $stats[] = [
                     'email' => $teamInfo['email'],
-                    'teamName' => $teamInfo['teamName'],
-                    'startingFunds' => $profile['startingFunds'] ?? 10000,
-                    'currentFunds' => $profile['currentFunds'] ?? 10000,
-                    'percentChange' => $this->calculatePercentChange(
-                        $profile['startingFunds'] ?? 10000,
-                        $profile['currentFunds'] ?? 10000
-                    ),
-                    'totalTrades' => count($transactions['transactions'] ?? []),
-                    'inventory' => [
-                        'C' => $inventory['C'] ?? 0,
-                        'N' => $inventory['N'] ?? 0,
-                        'D' => $inventory['D'] ?? 0,
-                        'Q' => $inventory['Q'] ?? 0
-                    ]
+                    'teamName' => $state['profile']['teamName'] ?? $teamInfo['teamName'],
+                    'startingFunds' => $state['profile']['startingFunds'] ?? 0,
+                    'currentFunds' => $state['profile']['currentFunds'] ?? 0,
+                    'percentChange' => $this->calculatePercentChange($state['profile']['startingFunds'] ?? 0, $state['profile']['currentFunds'] ?? 0),
+                    'totalTrades' => count($state['transactions'] ?? []),
+                    'inventory' => $state['inventory']
                 ];
-            } catch (Exception $e) {
-                error_log("Error reading stats from team {$teamInfo['email']}: " . $e->getMessage());
-                continue;
-            }
+            } catch (Exception $e) { continue; }
         }
-
-        // Sort by percent change (best performance first)
-        usort($stats, function($a, $b) {
-            return $b['percentChange'] <=> $a['percentChange'];
-        });
-
+        usort($stats, fn($a, $b) => $b['percentChange'] <=> $a['percentChange']);
         return $stats;
     }
 
-    /**
-     * Calculate percentage change
-     */
     private function calculatePercentChange($starting, $current) {
-        if ($starting == 0) {
-            return 0;
-        }
-        return (($current - $starting) / $starting) * 100;
+        return ($starting == 0) ? 0 : (($current - $starting) / $starting) * 100;
     }
 
-    /**
-     * Get recent trades across all teams (for activity feed)
-     * @param int $limit Number of trades to return
-     * @return array Recent trades
-     */
     public function getRecentTrades($limit = 20) {
+        // This is still slow, but we can optimize it later if needed by sharing transaction events.
         $allTrades = [];
         $teams = $this->getAllTeams();
-
         foreach ($teams as $teamInfo) {
             try {
                 $storage = new TeamStorage($teamInfo['email']);
-                $transactions = $storage->getTransactions();
-
-                foreach ($transactions['transactions'] as $txn) {
+                $txns = $storage->getTransactions()['transactions'] ?? [];
+                foreach ($txns as $txn) {
                     $txn['teamEmail'] = $teamInfo['email'];
                     $txn['teamName'] = $teamInfo['teamName'];
                     $allTrades[] = $txn;
                 }
-            } catch (Exception $e) {
-                continue;
-            }
+            } catch (Exception $e) { continue; }
         }
-
-        // Sort by timestamp (most recent first)
-        usort($allTrades, function($a, $b) {
-            return ($b['timestamp'] ?? 0) - ($a['timestamp'] ?? 0);
-        });
-
+        usort($allTrades, fn($a, $b) => ($b['timestamp'] ?? 0) - ($a['timestamp'] ?? 0));
         return array_slice($allTrades, 0, $limit);
-    }
-
-    /**
-     * Get marketplace summary statistics
-     * @return array Summary data
-     */
-    public function getMarketplaceSummary() {
-        $offers = $this->getActiveOffers();
-        $teams = $this->getAllTeams();
-
-        $summary = [
-            'totalTeams' => count($teams),
-            'activeOffers' => count($offers),
-            'offersByChemical' => [
-                'C' => 0,
-                'N' => 0,
-                'D' => 0,
-                'Q' => 0
-            ],
-            'priceRanges' => [
-                'C' => ['min' => null, 'max' => null],
-                'N' => ['min' => null, 'max' => null],
-                'D' => ['min' => null, 'max' => null],
-                'Q' => ['min' => null, 'max' => null]
-            ]
-        ];
-
-        foreach ($offers as $offer) {
-            $chem = $offer['chemical'] ?? null;
-            if (!$chem || !isset($summary['offersByChemical'][$chem])) {
-                continue;
-            }
-
-            $summary['offersByChemical'][$chem]++;
-
-            $price = $offer['minPrice'] ?? $offer['price'] ?? null;
-            if ($price !== null) {
-                $range = &$summary['priceRanges'][$chem];
-                if ($range['min'] === null || $price < $range['min']) {
-                    $range['min'] = $price;
-                }
-                if ($range['max'] === null || $price > $range['max']) {
-                    $range['max'] = $price;
-                }
-            }
-        }
-
-        return $summary;
-    }
-
-    /**
-     * Cache marketplace data to aggregated file (optional optimization)
-     * This can be called periodically to reduce directory scanning
-     */
-    public function cacheMarketplaceData() {
-        $cacheDir = __DIR__ . '/../data/marketplace';
-        if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
-        }
-
-        $cacheFile = $cacheDir . '/active_offers.json';
-
-        $data = [
-            'offers' => $this->getActiveOffers(),
-            'offersByChemical' => $this->getOffersByChemical(),
-            'buyOrders' => $this->getActiveBuyOrders(),
-            'buyOrdersByChemical' => $this->getBuyOrdersByChemical(),
-            'summary' => $this->getMarketplaceSummary(),
-            'cachedAt' => time()
-        ];
-
-        file_put_contents($cacheFile, json_encode($data, JSON_PRETTY_PRINT));
-
-        return $data;
-    }
-
-    /**
-     * Get cached marketplace data if recent enough
-     * @param int $maxAge Maximum age in seconds (default 5 seconds)
-     * @return array|null Cached data or null if stale
-     */
-    public function getCachedMarketplaceData($maxAge = 5) {
-        $cacheFile = __DIR__ . '/../data/marketplace/active_offers.json';
-
-        if (!file_exists($cacheFile)) {
-            return null;
-        }
-
-        $cacheAge = time() - filemtime($cacheFile);
-        if ($cacheAge > $maxAge) {
-            return null;
-        }
-
-        $data = json_decode(file_get_contents($cacheFile), true);
-        return $data;
     }
 }

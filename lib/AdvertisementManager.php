@@ -29,40 +29,20 @@ class AdvertisementManager {
     }
 
     public static function getAllAdvertisements() {
+        require_once __DIR__ . '/MarketplaceAggregator.php';
+        $aggregator = new MarketplaceAggregator();
+        $data = $aggregator->getAggregatedFromSharedLog();
+        
         $allAds = ['buy' => [], 'sell' => []];
-        $teamsDir = __DIR__ . '/../data/teams';
-
-        if (!is_dir($teamsDir)) return $allAds;
-
-        $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
-
-        foreach ($teamDirs as $dir) {
-            try {
-                // Use a temporary TeamStorage to get state efficiently
-                $email = basename($dir); 
-                // We don't know the real email if it differs from dir name, 
-                // but usually they are the same in this project.
-                // Let's use the directory name as the email for now.
-                $storage = new TeamStorage($email);
-                $state = $storage->getState();
-                $teamName = $state['profile']['teamName'] ?? $state['profile']['email'] ?? $email;
-
-                if (isset($state['ads']) && is_array($state['ads'])) {
-                    foreach ($state['ads'] as $ad) {
-                        if (($ad['status'] ?? 'active') === 'active') {
-                            $ad['teamName'] = $teamName;
-                            $type = $ad['type'] ?? 'buy';
-                            if (isset($allAds[$type])) {
-                                $allAds[$type][] = $ad;
-                            }
-                        }
-                    }
-                }
-            } catch (Exception $e) {
-                continue;
+        
+        // Map ads to the expected format
+        foreach ($data['ads'] as $ad) {
+            $type = $ad['type'] ?? 'buy';
+            if (isset($allAds[$type])) {
+                $allAds[$type][] = $ad;
             }
         }
-
+        
         return $allAds;
     }
 

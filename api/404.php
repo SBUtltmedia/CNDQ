@@ -11,6 +11,6 @@ echo json_encode([
     'error' => '404 Not Found',
     'message' => 'The requested API endpoint does not exist.',
     'request_uri' => $_SERVER['REQUEST_URI'],
-    'hint' => 'Check if the CNDQ folder name matches the URL casing (CNDQ vs cndq) and verify your basePath in api.js',
+    'hint' => 'Verify the API endpoint path is correct',
     'server' => 'Herd/Nginx (JSON Fallback)'
 ], JSON_PRETTY_PRINT);

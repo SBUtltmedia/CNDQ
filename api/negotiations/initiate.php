@@ -40,6 +40,7 @@ if (!$sessionManager->isTradingAllowed()) {
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
+error_log("Initiate Negotiation Input: " . json_encode($input));
 
 $responderId = $input['responderId'] ?? null;
 $chemical = $input['chemical'] ?? null;
@@ -48,6 +49,7 @@ $price = $input['price'] ?? null;
 $type = $input['type'] ?? 'buy'; // 'buy' or 'sell' from initiator perspective
 
 if (!$responderId || !$chemical || !$quantity || $price === null) {
+    error_log("Initiate Negotiation Failed: Missing fields. responderId=$responderId, chem=$chemical, qty=$quantity, price=$price");
     http_response_code(400);
     echo json_encode(['error' => 'Missing required fields']);
     exit;
@@ -90,6 +92,8 @@ try {
     $currentSession = $sessionState['currentSession'];
 
     $negotiationManager = new NegotiationManager();
+
+    error_log("Initiating Negotiation: From=" . ($initiatorProfile['teamName'] ?? 'NULL') . " To=" . ($responderProfile['teamName'] ?? 'NULL') . " Chem=$chemical Qty=$quantity Price=$price");
 
     $negotiation = $negotiationManager->createNegotiation(
         $currentUserEmail,

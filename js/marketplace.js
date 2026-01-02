@@ -1389,6 +1389,11 @@ class MarketplaceApp {
         document.getElementById('production-guide-ok-btn').addEventListener('click', () => {
             this.closeProductionGuide();
         });
+
+        document.getElementById('manual-refresh-session').addEventListener('click', () => {
+            this.checkSessionPhase();
+            this.showToast('Session status refreshed', 'info');
+        });
     }
 
 
@@ -1403,13 +1408,9 @@ class MarketplaceApp {
                 await Promise.all([
                     this.loadAdvertisements(),
                     this.loadNegotiations(),
-                    this.loadNotifications()
+                    this.loadNotifications(),
+                    this.checkSessionPhase()
                 ]);
-                
-                // Only poll session if user is admin-like (has '@localhost' or 'admin')
-                if (this.currentUser && (this.currentUser.includes('admin') || this.currentUser.includes('localhost'))) {
-                    await this.checkSessionPhase();
-                }
             } catch (error) {
                 console.warn('⚠️ Polling error, pausing for one cycle:', error.message);
                 if (error.message.includes('404')) {
@@ -1438,22 +1439,27 @@ class MarketplaceApp {
     async checkSessionPhase() {
         try {
             const data = await api.session.getStatus();
+            console.log(`[Session] Polled: Session=${data.session}, Phase=${data.phase}, Time=${data.timeRemaining}`);
             
             // Update UI elements
             document.getElementById('session-num-display').textContent = data.session;
             
             const phaseBadge = document.getElementById('phase-badge');
-            phaseBadge.textContent = data.phase;
-            phaseBadge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
-                data.phase === 'trading' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
-            }`;
+            if (phaseBadge) {
+                phaseBadge.textContent = data.phase;
+                phaseBadge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
+                    data.phase === 'trading' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
+                }`;
+            }
 
             // Toggle Production Overlay
             const prodOverlay = document.getElementById('production-overlay');
-            if (data.phase === 'production') {
-                prodOverlay.classList.remove('hidden');
-            } else {
-                prodOverlay.classList.add('hidden');
+            if (prodOverlay) {
+                if (data.phase === 'production') {
+                    prodOverlay.classList.remove('hidden');
+                } else {
+                    prodOverlay.classList.add('hidden');
+                }
             }
 
             // Update Timer

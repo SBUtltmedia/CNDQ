@@ -66,6 +66,10 @@ class GameSimulation {
 
             if (phase === 'trading') {
                 await this.runTradingPhase();
+                
+                ReportingHelper.printSection('⚙️', 'Waiting for trade reflections to settle...');
+                await this.browser.sleep(12000); // Wait > 10s for npc_runner/reflections
+
                 await this.displayLeaderboard(currentSession);
 
                 ReportingHelper.printSection('⏳', 'Waiting for trading phase to end...');
@@ -84,6 +88,7 @@ class GameSimulation {
         console.log('\n' + '='.repeat(60));
         console.log('FINAL RESULTS');
         console.log('='.repeat(60));
+        await this.browser.sleep(5000); // Small extra wait
         await this.displayLeaderboard(currentSession - 1);
     }
 
@@ -104,7 +109,7 @@ class GameSimulation {
         ReportingHelper.printSection('📢', 'Teams posting advertisements...');
 
         for (const teamEmail of this.config.teams) {
-            const page = await this.browser.loginAndNavigate(teamEmail, '/index.html');
+            const page = await this.browser.loginAndNavigate(teamEmail, '/');
 
             try {
                 const shadowPrices = await this.team.getShadowPrices(page);
@@ -136,7 +141,7 @@ class GameSimulation {
         ReportingHelper.printSection('💼', 'Teams responding to buy requests...');
 
         for (const teamEmail of this.config.teams) {
-            const page = await this.browser.loginAndNavigate(teamEmail, '/index.html');
+            const page = await this.browser.loginAndNavigate(teamEmail, '/');
 
             try {
                 const teamName = await this.team.getTeamName(page);
@@ -169,7 +174,7 @@ class GameSimulation {
         ReportingHelper.printSection('💬', 'Teams responding to negotiations...');
 
         for (const teamEmail of this.config.teams) {
-            const page = await this.browser.loginAndNavigate(teamEmail, '/index.html');
+            const page = await this.browser.loginAndNavigate(teamEmail, '/');
 
             try {
                 const teamName = await this.team.getTeamName(page);
@@ -215,7 +220,7 @@ class GameSimulation {
         ];
 
         ReportingHelper.printSummary('\n✅ Full Game Flow Tested:', items);
-        console.log(`\n📊 View detailed results at: ${this.config.baseUrl}/index.html`);
+        console.log(`\n📊 View detailed results at: ${this.config.baseUrl}`);
     }
 }
 
