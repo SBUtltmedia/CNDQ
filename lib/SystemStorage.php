@@ -30,7 +30,9 @@ class SystemStorage extends TeamStorage {
             'tradingDuration' => $session['tradingDuration'] ?? 300,
             'phaseStartedAt' => $session['phaseStartedAt'] ?? time(),
             'npcLastRun' => $session['npcLastRun'] ?? 0,
-            'productionRun' => $session['productionRun'] ?? null
+            'productionRun' => $session['productionRun'] ?? null,
+            'initialProductionRun' => $session['initialProductionRun'] ?? null,
+            'productionJustRan' => $session['productionJustRan'] ?? null
         ];
     }
 

@@ -110,6 +110,92 @@
         </div>
     </div>
 
+    <!-- Production Results Modal -->
+    <div id="production-results-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[110] p-4">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full border-2 border-green-500 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-green-500 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Production Complete - Session <span id="prod-result-session">1</span></span>
+                </h3>
+                <button id="prod-result-close" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Production Output -->
+                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                    <h4 class="text-lg font-semibold text-white mb-3">Products Manufactured</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-blue-900 bg-opacity-30 p-3 rounded border border-blue-700">
+                            <div class="text-blue-400 text-sm mb-1">De-Icer</div>
+                            <div class="text-2xl font-bold text-white"><span id="prod-result-deicer">0</span> gal</div>
+                        </div>
+                        <div class="bg-purple-900 bg-opacity-30 p-3 rounded border border-purple-700">
+                            <div class="text-purple-400 text-sm mb-1">Solvent</div>
+                            <div class="text-2xl font-bold text-white"><span id="prod-result-solvent">0</span> gal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Revenue -->
+                <div class="bg-green-900 bg-opacity-30 rounded-lg p-4 border-2 border-green-600">
+                    <h4 class="text-lg font-semibold text-green-400 mb-2">Revenue Earned</h4>
+                    <div class="text-3xl font-bold text-white">$<span id="prod-result-revenue">0</span></div>
+                </div>
+
+                <!-- Chemicals Consumed -->
+                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                    <h4 class="text-lg font-semibold text-white mb-3">Chemicals Consumed</h4>
+                    <div class="grid grid-cols-4 gap-2 text-center font-mono">
+                        <div class="bg-blue-600 bg-opacity-50 p-2 rounded">
+                            <div class="text-xs text-blue-200">C</div>
+                            <div class="text-lg font-bold text-white"><span id="prod-result-chem-C">0</span></div>
+                        </div>
+                        <div class="bg-purple-600 bg-opacity-50 p-2 rounded">
+                            <div class="text-xs text-purple-200">N</div>
+                            <div class="text-lg font-bold text-white"><span id="prod-result-chem-N">0</span></div>
+                        </div>
+                        <div class="bg-yellow-600 bg-opacity-50 p-2 rounded">
+                            <div class="text-xs text-yellow-200">D</div>
+                            <div class="text-lg font-bold text-white"><span id="prod-result-chem-D">0</span></div>
+                        </div>
+                        <div class="bg-red-600 bg-opacity-50 p-2 rounded">
+                            <div class="text-xs text-red-200">Q</div>
+                            <div class="text-lg font-bold text-white"><span id="prod-result-chem-Q">0</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Status -->
+                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
+                    <h4 class="text-lg font-semibold text-white mb-3">Current Status</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-gray-400 text-sm mb-1">Funds</div>
+                            <div class="text-xl font-bold text-green-500">$<span id="prod-result-current-funds">0</span></div>
+                        </div>
+                        <div>
+                            <div class="text-gray-400 text-sm mb-1">Inventory</div>
+                            <div class="text-sm font-mono space-y-1">
+                                <div class="text-blue-400">C: <span id="prod-result-inv-C">0</span></div>
+                                <div class="text-purple-400">N: <span id="prod-result-inv-N">0</span></div>
+                                <div class="text-yellow-400">D: <span id="prod-result-inv-D">0</span></div>
+                                <div class="text-red-400">Q: <span id="prod-result-inv-Q">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Continue Button -->
+                <button id="prod-result-continue" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition text-lg">
+                    Continue to Trading
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-[9999] space-y-2" role="region" aria-live="polite" aria-atomic="false" aria-label="Notifications"></div>
 

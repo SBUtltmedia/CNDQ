@@ -20,92 +20,99 @@ class SessionManager {
     public function getState() {
         $data = $this->storage->getSystemState();
 
-        if ($data['autoAdvance']) {
-            // Log for debugging
-            // error_log("SessionManager: Phase={$data['phase']}, TimeRemaining=" . ($data['timeRemaining'] ?? 'N/A'));
-        }
-
-        // Calculate time remaining based on current phase
-        if ($data['phase'] === 'production') {
-            $elapsed = time() - $data['phaseStartedAt'];
-            $data['timeRemaining'] = max(0, $data['productionDuration'] - $elapsed);
-
-            // Auto-run production on first entry to production phase
-            if ($data['autoAdvance'] && !isset($data['productionRun'])) {
-                error_log("SessionManager: Auto-running production for session " . $data['currentSession']);
-                $this->runAutoProduction();
-                // Reload state
-                $data = $this->storage->getSystemState();
-                $elapsed = time() - $data['phaseStartedAt'];
-                $data['timeRemaining'] = max(0, $data['productionDuration'] - $elapsed);
-            }
-
-            // Auto-advance if time expired
-            if ($data['autoAdvance'] && $data['timeRemaining'] <= 0) {
-                error_log("SessionManager: Time expired in production phase. Advancing...");
-                return $this->advancePhase();
-            }
-        }
-
-        if ($data['phase'] === 'trading') {
+        // Helper function to calculate time remaining
+        $calculateTimeRemaining = function(&$data) {
             $elapsed = time() - $data['phaseStartedAt'];
             $data['timeRemaining'] = max(0, $data['tradingDuration'] - $elapsed);
+        };
 
-            // Auto-advance if time expired
-            if ($data['autoAdvance'] && $data['timeRemaining'] <= 0) {
-                error_log("SessionManager: Time expired in trading phase. Advancing...");
-                return $this->advancePhase();
+        // Calculate initial time remaining
+        $calculateTimeRemaining($data);
+
+        // Run initial production if never run (game start)
+        if (!isset($data['initialProductionRun'])) {
+            error_log("SessionManager: Running initial production before first marketplace");
+            $this->runProductionForAllTeams($data['currentSession']);
+            $this->storage->setSessionData(['initialProductionRun' => time()]);
+            $data = $this->storage->getSystemState();
+            $calculateTimeRemaining($data);
+        }
+
+        // Process NPCs if enabled (throttled to prevent redundant runs)
+        $npcConfigFile = __DIR__ . '/../data/npc_config.json';
+        $npcSettings = file_exists($npcConfigFile) ? json_decode(file_get_contents($npcConfigFile), true) : [];
+        if (($npcSettings['enabled'] ?? false)) {
+            $lastRun = $data['npcLastRun'] ?? 0;
+            $now = time();
+
+            // Run NPCs at most once every 10 seconds (prevents redundant processing with multiple clients)
+            if ($now - $lastRun >= 10) {
+                error_log("SessionManager: Auto-processing NPCs (last run: {$lastRun}, now: {$now})");
+                require_once __DIR__ . '/NPCManager.php';
+                $npcManager = new NPCManager();
+                $npcManager->runTradingCycle($data['currentSession']);
+                $this->updateNpcLastRun();
+                // Reload state after NPC processing
+                $data = $this->storage->getSystemState();
+                $calculateTimeRemaining($data);
             }
+        }
+
+        // Auto-advance if time expired: Run production, increment session, start new trading
+        if ($data['autoAdvance'] && $data['timeRemaining'] <= 0) {
+            error_log("SessionManager: Trading session {$data['currentSession']} complete. Running production...");
+
+            // Run production for this session
+            $this->runProductionForAllTeams($data['currentSession']);
+
+            // Increment session and reset timer
+            $newSession = $data['currentSession'] + 1;
+            $updates = [
+                'currentSession' => $newSession,
+                'phaseStartedAt' => time(),
+                'productionJustRan' => time() // Flag for client to show results modal
+            ];
+
+            $this->storage->setSessionData($updates);
+            error_log("SessionManager: Session {$newSession} starting");
+
+            return array_merge($data, $updates);
         }
 
         return $data;
     }
 
     public function isTradingAllowed() {
-        return $this->getState()['phase'] === 'trading';
-    }
-
-    public function isProductionAllowed() {
-        return $this->getState()['phase'] === 'production';
+        return true; // Always trading now - no production phase
     }
 
     /**
-     * Advance to next phase
+     * Manual session advance (for admin)
      */
-    public function advancePhase() {
+    public function advanceSession() {
         $data = $this->storage->getSystemState();
-        $updates = [];
 
-        switch ($data['phase']) {
-            case 'production':
-                $updates['phase'] = 'trading';
-                $updates['productionRun'] = null; // Clear for next round
-                error_log("SessionManager: Transitioning Production -> Trading");
-                break;
-            case 'trading':
-                $updates['currentSession'] = $data['currentSession'] + 1;
-                $updates['phase'] = 'production';
-                $updates['productionRun'] = null;
-                error_log("SessionManager: Transitioning Trading -> Production (Session " . ($data['currentSession'] + 1) . ")");
-                break;
-        }
+        // Run production for current session
+        $this->runProductionForAllTeams($data['currentSession']);
 
-        $updates['phaseStartedAt'] = time();
+        // Increment session
+        $newSession = $data['currentSession'] + 1;
+        $updates = [
+            'currentSession' => $newSession,
+            'phaseStartedAt' => time(),
+            'productionJustRan' => time()
+        ];
+
         $this->storage->setSessionData($updates);
-        
+        error_log("SessionManager: Manually advanced to session {$newSession}");
+
         return array_merge($data, $updates);
     }
 
     /**
-     * Run automatic production for all teams
+     * Run production for all teams
      */
-    private function runAutoProduction() {
-        $data = $this->storage->getSystemState();
-        if (isset($data['productionRun'])) return;
-
-        // Mark as run
-        $this->storage->setSessionData(['productionRun' => time()]);
-
+    private function runProductionForAllTeams($sessionNumber) {
         require_once __DIR__ . '/TeamStorage.php';
         require_once __DIR__ . '/LPSolver.php';
 
@@ -113,7 +120,6 @@ class SessionManager {
         if (!is_dir($teamsDir)) return;
 
         $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
-        $sessionNumber = $data['currentSession'];
 
         foreach ($teamDirs as $teamDir) {
             $email = basename($teamDir);

@@ -19,7 +19,8 @@ try {
         'session' => $state['currentSession'],
         'phase' => $state['phase'],
         'timeRemaining' => $state['timeRemaining'] ?? 0,
-        'autoAdvance' => $state['autoAdvance'] ?? false
+        'autoAdvance' => $state['autoAdvance'] ?? false,
+        'productionJustRan' => $state['productionJustRan'] ?? null
     ]);
 
 } catch (Exception $e) {

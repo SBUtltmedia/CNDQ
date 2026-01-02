@@ -92,16 +92,14 @@ if (!isAdmin()) {
 
         <!-- Direct Phase Control -->
         <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-            <h2 class="text-xl font-bold mb-4">Direct Phase Control</h2>
+            <h2 class="text-xl font-bold mb-4">Manual Session Advance</h2>
 
-            <div class="flex gap-3">
-                <button onclick="setPhase('production')" class="flex-1 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-bold transition">
-                    Set: Production
-                </button>
-                <button onclick="setPhase('trading')" class="flex-1 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition">
-                    Set: Trading
-                </button>
-            </div>
+            <button onclick="advancePhase()" class="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
+                Advance to Next Session →
+            </button>
+            <p class="text-xs text-gray-300 mt-2">
+                Manually advances to the next session (runs production and increments session number)
+            </p>
         </div>
 
         <!-- Auto-Advance Settings -->
@@ -117,46 +115,33 @@ if (!isAdmin()) {
 
             <div class="bg-blue-900/30 border border-blue-500/50 rounded p-4 mb-6">
                 <div class="text-sm text-blue-200 mb-2">
-                    <strong>Auto-Advance Cycle:</strong> Production (auto LP runs) → Trading → Production (next session)
+                    <strong>Auto-Advance Flow:</strong> Trading Session → Auto Production → Next Trading Session
                 </div>
                 <div class="text-xs text-blue-300 space-y-1">
-                    <p><strong>Production Phase:</strong> Automatic LP solver runs for all teams (once per session):</p>
+                    <p><strong>Trading Phase:</strong> Teams buy/sell chemicals on the marketplace</p>
+                    <p class="mt-2"><strong>Automatic Production:</strong> When trading time expires, LP solver runs automatically for all teams:</p>
                     <ul class="list-disc ml-5">
                         <li>Optimizes Deicer/Solvent production mix</li>
                         <li>Consumes chemicals from inventory</li>
                         <li>Credits revenue to team accounts</li>
-                        <li>Records production history with session number</li>
+                        <li>Shows results modal to players</li>
+                        <li>Advances to next trading session</li>
                     </ul>
-                    <p class="mt-1"><strong>Trading Phase:</strong> Teams can buy/sell chemicals on the marketplace</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label for="production-duration-seconds" class="block text-sm text-gray-300 mb-2">Production Pause (Auto LP runs)</label>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="production-duration-seconds" value="5" min="1" max="30" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-24 text-white" aria-label="Production pause duration in seconds">
-                        <span class="text-gray-300">seconds</span>
-                    </div>
-                    <button onclick="updateProductionDuration()" class="mt-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-bold transition w-full text-sm">
-                        Update Pause
-                    </button>
-                    <div class="text-xs text-gray-300 mt-1">Brief pause while production runs automatically</div>
+            <div>
+                <label for="trading-duration-minutes" class="block text-sm text-gray-300 mb-2">Trading Session Duration</label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="trading-duration-minutes" value="10" min="0" max="60" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration minutes">
+                    <span class="text-gray-300">min</span>
+                    <input type="number" id="trading-duration-seconds" value="0" min="0" max="59" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration seconds">
+                    <span class="text-gray-300">sec</span>
                 </div>
-
-                <div>
-                    <label for="trading-duration-minutes" class="block text-sm text-gray-300 mb-2">Trading Duration</label>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="trading-duration-minutes" value="10" min="0" max="60" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration minutes">
-                        <span class="text-gray-300">min</span>
-                        <input type="number" id="trading-duration-seconds" value="0" min="0" max="59" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration seconds">
-                        <span class="text-gray-300">sec</span>
-                    </div>
-                    <button onclick="updateTradingDuration()" class="mt-2 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition w-full text-sm">
-                        Update Trading
-                    </button>
-                    <div class="text-xs text-gray-300 mt-1">Time for teams to buy/sell chemicals</div>
-                </div>
+                <button onclick="updateTradingDuration()" class="mt-2 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition w-full text-sm">
+                    Update Session Duration
+                </button>
+                <div class="text-xs text-gray-300 mt-1">Time for each trading session (production runs automatically when time expires)</div>
             </div>
         </div>
 
@@ -368,25 +353,14 @@ if (!isAdmin()) {
             if (!sessionState) return;
 
             document.getElementById('session-number').textContent = sessionState.currentSession;
-            document.getElementById('current-phase').textContent = sessionState.phase;
+            document.getElementById('current-phase').textContent = 'Trading';
 
             const phaseEl = document.getElementById('current-phase');
-            phaseEl.className = 'text-3xl font-bold capitalize ';
-            if (sessionState.phase === 'trading') {
-                phaseEl.className += 'text-green-400';
-            } else if (sessionState.phase === 'production') {
-                phaseEl.className += 'text-blue-400';
-            } else {
-                phaseEl.className += 'text-gray-300';
-            }
+            phaseEl.className = 'text-3xl font-bold capitalize text-green-400';
 
             document.getElementById('auto-advance').checked = sessionState.autoAdvance;
 
-            // Production duration
-            const prodDuration = sessionState.productionDuration || 5;
-            document.getElementById('production-duration-seconds').value = prodDuration;
-
-            // Trading duration
+            // Trading session duration
             const tradeDuration = sessionState.tradingDuration || 600;
             document.getElementById('trading-duration-minutes').value = Math.floor(tradeDuration / 60);
             document.getElementById('trading-duration-seconds').value = tradeDuration % 60;
@@ -397,17 +371,11 @@ if (!isAdmin()) {
         function updateTimer() {
             if (!sessionState) return;
 
-            const isTimedPhase = (sessionState.phase === 'trading' || sessionState.phase === 'production');
-
-            if (isTimedPhase && sessionState.timeRemaining !== undefined) {
+            if (sessionState.timeRemaining !== undefined) {
                 const minutes = Math.floor(sessionState.timeRemaining / 60);
                 const seconds = sessionState.timeRemaining % 60;
                 document.getElementById('time-remaining').textContent =
                     `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-                document.getElementById('timer-container').style.display = 'block';
-            } else {
-                document.getElementById('timer-container').style.display = 'none';
             }
         }
 
@@ -462,26 +430,6 @@ if (!isAdmin()) {
                 }
             } catch (error) {
                 showToast('Failed to toggle auto-advance', 'error');
-            }
-        }
-
-        async function updateProductionDuration() {
-            const secs = parseInt(document.getElementById('production-duration-seconds').value) || 5;
-
-            try {
-                const response = await fetch(apiUrl('/api/admin/session.php'), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'setProductionDuration', seconds: secs })
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    showToast('Production pause updated to ' + secs + ' seconds');
-                    await loadSessionState();
-                }
-            } catch (error) {
-                showToast('Failed to update production pause', 'error');
             }
         }
 

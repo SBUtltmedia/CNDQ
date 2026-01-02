@@ -23,6 +23,7 @@ class MarketplaceApp {
         this.myNegotiations = [];
         this.notifications = [];
         this.settings = { showTradingHints: false };
+        this.productionResultsShown = false; // Flag to prevent showing modal multiple times
 
         // Polling
         this.pollingInterval = null;
@@ -1394,6 +1395,15 @@ class MarketplaceApp {
             this.checkSessionPhase();
             this.showToast('Session status refreshed', 'info');
         });
+
+        // Production Results Modal event listeners
+        document.getElementById('prod-result-close').addEventListener('click', () => {
+            this.closeProductionResults();
+        });
+
+        document.getElementById('prod-result-continue').addEventListener('click', () => {
+            this.closeProductionResults();
+        });
     }
 
 
@@ -1476,6 +1486,13 @@ class MarketplaceApp {
             }
             this.lastPhase = data.phase;
 
+            // Check for production results to display
+            if (data.productionJustRan && !this.productionResultsShown) {
+                console.log('✨ Production just completed! Showing results modal...');
+                this.productionResultsShown = true;
+                await this.showProductionResults(data.session);
+            }
+
         } catch (error) {
             console.error('Failed to check session status:', error);
         }
@@ -1493,6 +1510,65 @@ class MarketplaceApp {
      */
     closeSettings() {
         this.closeModalAccessible('settings-modal');
+    }
+
+    /**
+     * Show production results modal
+     */
+    async showProductionResults(sessionNumber) {
+        try {
+            // Fetch production results from API
+            const response = await fetch(`/api/production/results.php?session=${sessionNumber}`);
+            if (!response.ok) {
+                console.error('Failed to fetch production results:', response.statusText);
+                return;
+            }
+
+            const data = await response.json();
+
+            // Populate modal with data
+            document.getElementById('prod-result-session').textContent = data.sessionNumber || sessionNumber;
+            document.getElementById('prod-result-deicer').textContent = this.formatNumber(data.production.deicer);
+            document.getElementById('prod-result-solvent').textContent = this.formatNumber(data.production.solvent);
+            document.getElementById('prod-result-revenue').textContent = this.formatNumber(data.revenue);
+
+            // Chemicals consumed
+            document.getElementById('prod-result-chem-C').textContent = this.formatNumber(data.chemicalsConsumed.C);
+            document.getElementById('prod-result-chem-N').textContent = this.formatNumber(data.chemicalsConsumed.N);
+            document.getElementById('prod-result-chem-D').textContent = this.formatNumber(data.chemicalsConsumed.D);
+            document.getElementById('prod-result-chem-Q').textContent = this.formatNumber(data.chemicalsConsumed.Q);
+
+            // Current status
+            document.getElementById('prod-result-current-funds').textContent = this.formatNumber(data.currentFunds);
+            document.getElementById('prod-result-inv-C').textContent = this.formatNumber(data.currentInventory.C);
+            document.getElementById('prod-result-inv-N').textContent = this.formatNumber(data.currentInventory.N);
+            document.getElementById('prod-result-inv-D').textContent = this.formatNumber(data.currentInventory.D);
+            document.getElementById('prod-result-inv-Q').textContent = this.formatNumber(data.currentInventory.Q);
+
+            // Show modal
+            const modal = document.getElementById('production-results-modal');
+            modal.classList.remove('hidden');
+
+            console.log('✅ Production results modal displayed');
+        } catch (error) {
+            console.error('Error showing production results:', error);
+        }
+    }
+
+    /**
+     * Close production results modal
+     */
+    closeProductionResults() {
+        const modal = document.getElementById('production-results-modal');
+        modal.classList.add('hidden');
+
+        // Reset flag so it can show again next time
+        this.productionResultsShown = false;
+
+        // Refresh profile to show updated funds/inventory
+        this.loadProfile();
+
+        console.log('✅ Production results modal closed');
     }
 
     /**
