@@ -34,11 +34,11 @@ try {
 
         switch ($action) {
             case 'advance':
-                // Advance to next phase
-                $state = $sessionManager->advancePhase();
+                // Advance to next session (runs production and increments session)
+                $state = $sessionManager->advanceSession();
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Advanced to ' . $state['phase'] . ' phase',
+                    'message' => 'Advanced to session ' . $state['currentSession'],
                     'session' => $state
                 ]);
                 break;

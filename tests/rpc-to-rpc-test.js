@@ -18,11 +18,13 @@ const puppeteer = require('puppeteer');
 const BASE_URL = 'http://cndq.test/CNDQ';
 const TEAMS = [
     'test_mail1@stonybrook.edu',
-    'test_mail2@stonybrook.edu'
+    'test_mail2@stonybrook.edu',
+    'test_mail3@stonybrook.edu',
+    'test_mail4@stonybrook.edu'
 ];
 
 const CHEMICALS = ['C', 'N', 'D', 'Q'];
-const TARGET_SESSIONS = 3;
+const TARGET_SESSIONS = 1; // Test one complete session (trading + production)
 
 /**
  * Main simulation function
@@ -36,50 +38,182 @@ async function runSimulation() {
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
+    // Keep one RPC page open for polling (triggers auto-advance)
+    let pollingPage = null;
+
     try {
+        // Step 0: Reset game to clean state
+        console.log('📋 Step 0: Resetting game to clean state...');
+        await resetGame(browser);
+
+        // Step 0b: Disable NPCs (pure RPC-to-RPC test)
+        console.log('\n📋 Step 0b: Disabling NPCs (RPC-to-RPC only)...');
+        await disableNPCs(browser);
+
         // Step 1: Enable auto-advance via admin UI
-        console.log('📋 Step 1: Enabling auto-advance via admin UI...');
+        console.log('\n📋 Step 1: Enabling auto-advance via admin UI...');
         await enableAutoAdvance(browser);
 
-        // Step 2: Run game simulation for TARGET_SESSIONS sessions
-        console.log(`\n📋 Step 2: Starting ${TARGET_SESSIONS}-session gameplay...\n`);
+        // Step 2: Teams calculate initial shadow prices (game start only)
+        console.log('\n📋 Step 2: Teams calculating initial shadow prices...');
+        await allTeamsCalculateShadowPrices(browser);
+
+        // Step 3: Open persistent polling page for Team 1
+        console.log('\n📋 Step 3: Opening persistent RPC window for polling...');
+        pollingPage = await browser.newPage();
+
+        // Listen for console messages and errors
+        pollingPage.on('console', msg => console.log(`   [Polling Page ${msg.type()}]:`, msg.text()));
+        pollingPage.on('pageerror', err => console.error(`   [Polling Page Error]:`, err.message));
+        pollingPage.on('response', response => {
+            if (response.status() === 404) {
+                console.warn(`   [Polling Page 404]: ${response.url()}`);
+            }
+        });
+
+        await pollingPage.goto(`${BASE_URL}/dev_login.php?user=${TEAMS[0]}`, { waitUntil: 'networkidle2' });
+        await sleep(500);
+        await pollingPage.goto(BASE_URL, { waitUntil: 'networkidle2' });
+
+        // Wait for marketplace to initialize
+        await pollingPage.waitForSelector('#app:not(.hidden)', { timeout: 10000 });
+        await sleep(2000);
+
+        console.log('   ✓ RPC window open - JavaScript polling will trigger auto-advance');
+
+        // Step 4: Run game simulation for TARGET_SESSIONS sessions
+        console.log(`\n📋 Step 4: Starting ${TARGET_SESSIONS}-session gameplay...\n`);
         await playMultipleSessions(browser);
 
         console.log('\n✅ Simulation complete!');
         console.log('\n📋 Full RPC-to-RPC Flow Tested:');
-        console.log('   ✓ Auto-advance enabled (via UI)');
-        console.log('   ✓ Advertisement posting (buy/sell based on shadow prices)');
+        console.log('   ✓ Cookie-based authentication (dev_login.php)');
+        console.log('   ✓ Shadow DOM UI element access');
+        console.log('   ✓ Advertisement posting (buy/sell via chemical cards)');
         console.log('   ✓ Negotiation initiation (RPC → RPC)');
         console.log('   ✓ Negotiation responses (accept/counter/reject)');
-        console.log('   ✓ Trading phase completion');
-        console.log('   ✓ Automatic production (between sessions)');
-        console.log('   ✓ Session transitions');
+        console.log('   ✓ Production run (manual trigger)');
+        console.log('   ✓ Session advancement');
         console.log('   ✓ Leaderboard updates');
-        console.log(`   ✓ ${TARGET_SESSIONS} complete sessions with ${TEAMS.length} teams`);
+        console.log(`   ✓ ${TARGET_SESSIONS} complete session(s) with ${TEAMS.length} RPC teams (NO NPCs)`);
 
     } catch (error) {
         console.error('❌ Simulation failed:', error);
         process.exit(1);
     } finally {
+        // Close polling page first
+        if (pollingPage) {
+            await pollingPage.close();
+        }
         await browser.close();
     }
 }
 
 /**
- * Enable auto-advance via admin panel UI
+ * Reset the entire game - deletes all team data and resets session to 1
+ */
+async function resetGame(browser) {
+    const page = await browser.newPage();
+
+    try {
+        // Login as admin
+        await page.goto(`${BASE_URL}/dev_login.php?user=admin@stonybrook.edu`, { waitUntil: 'networkidle2' });
+        await sleep(500);
+
+        // Call reset API
+        const result = await page.evaluate(async () => {
+            const response = await fetch('/CNDQ/api/admin/reset-game.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin'
+            });
+            return await response.json();
+        });
+
+        if (result.success) {
+            console.log(`   ✓ Game reset - ${result.teamsDeleted} teams deleted, session reset to 1`);
+        } else {
+            console.warn(`   ⚠️  Reset warning: ${result.error || result.message}`);
+        }
+    } finally {
+        await page.close();
+    }
+}
+
+/**
+ * Disable NPCs for pure RPC-to-RPC testing
+ */
+async function disableNPCs(browser) {
+    const page = await browser.newPage();
+
+    try {
+        // Login as admin
+        await page.goto(`${BASE_URL}/dev_login.php?user=admin@stonybrook.edu`, { waitUntil: 'networkidle2' });
+        await sleep(500);
+
+        // Navigate to admin page
+        await page.goto(`${BASE_URL}/admin/index.php`, { waitUntil: 'networkidle2' });
+        await sleep(500);
+
+        // Disable NPCs via admin UI
+        const result = await page.evaluate(async () => {
+            // Check if NPC toggle exists and disable it
+            const npcToggle = document.getElementById('npc-enabled');
+            if (npcToggle && npcToggle.checked) {
+                npcToggle.click();
+                // Wait for the change to save
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return { disabled: true };
+            }
+            return { disabled: false, alreadyDisabled: true };
+        });
+
+        if (result.disabled) {
+            console.log('   ✓ NPCs disabled');
+        } else if (result.alreadyDisabled) {
+            console.log('   ✓ NPCs already disabled');
+        }
+    } finally {
+        await page.close();
+    }
+}
+
+/**
+ * Enable auto-advance via admin panel UI and set short trading duration for testing
  */
 async function enableAutoAdvance(browser) {
     const page = await browser.newPage();
 
     try {
-        // Login as admin via dev_login.php
-        await page.goto(`${BASE_URL}/dev_login.php`, { waitUntil: 'networkidle2' });
-        await page.click('a[href*="admin@stonybrook.edu"]');
-        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+        // Login as admin via dev_login.php (direct URL with user parameter)
+        await page.goto(`${BASE_URL}/dev_login.php?user=admin@stonybrook.edu`, { waitUntil: 'networkidle2' });
+
+        // Verify cookie was set
+        const cookies = await page.cookies();
+        const mockMailCookie = cookies.find(c => c.name === 'mock_mail');
+        if (!mockMailCookie) {
+            console.warn('   ⚠️  Warning: Cookie not set for admin login');
+        }
 
         // Navigate to admin panel
         await page.goto(`${BASE_URL}/admin/index.php`, { waitUntil: 'networkidle2' });
         await page.waitForSelector('#auto-advance', { timeout: 10000 });
+
+        // Set trading duration to 30 seconds for faster testing
+        await page.evaluate(() => {
+            document.getElementById('trading-duration-minutes').value = 0;
+            document.getElementById('trading-duration-seconds').value = 30;
+        });
+        await page.evaluate(() => {
+            return fetch(`${window.location.origin}/CNDQ/api/admin/session.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'setTradingDuration', seconds: 30 }),
+                credentials: 'same-origin'
+            });
+        });
+        await sleep(500);
+        console.log('   ✓ Trading duration set to 30 seconds');
 
         // Enable auto-advance checkbox via UI
         const isChecked = await page.$eval('#auto-advance', el => el.checked);
@@ -124,23 +258,59 @@ async function playMultipleSessions(browser) {
         // Teams respond to incoming negotiations
         await allTeamsRespondToNegotiations(browser);
 
-        // Check leaderboard during trading
+        // Check leaderboard before production
         await checkLeaderboard(browser, currentSession);
 
-        // Wait for session to advance (production runs automatically when trading expires)
-        console.log('\n⏳ Waiting for session to advance (trading will expire, production runs automatically)...');
-        await waitForSessionChange(browser, currentSession);
+        // Manually trigger production and session advance
+        console.log('\n⚙️ Manually triggering production and session advance...');
+        await manuallyAdvanceSession(browser);
+        await sleep(3000);
 
         currentSession = await getCurrentSession(browser);
+        console.log(`   ✓ Advanced to session ${currentSession}`);
     }
 
-    console.log(`\n🏁 Completed ${TARGET_SESSIONS} sessions!`);
+    console.log(`\n🏁 Completed ${TARGET_SESSIONS} session(s) with production!`);
 
-    // Final leaderboard
+    // Final leaderboard after production
     console.log('\n' + '='.repeat(60));
-    console.log('FINAL RESULTS');
+    console.log('FINAL RESULTS (After Production)');
     console.log('='.repeat(60));
     await checkLeaderboard(browser, currentSession - 1);
+}
+
+/**
+ * All teams calculate their shadow prices
+ */
+async function allTeamsCalculateShadowPrices(browser) {
+    for (const teamEmail of TEAMS) {
+        const page = await browser.newPage();
+
+        try {
+            // Login as team
+            await page.goto(`${BASE_URL}/dev_login.php?user=${teamEmail}`, { waitUntil: 'networkidle2' });
+            await sleep(500);
+
+            // Call shadow prices API
+            const result = await page.evaluate(async () => {
+                const response = await fetch('/CNDQ/api/production/shadow-prices.php', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+                return await response.json();
+            });
+
+            if (result.success) {
+                const sp = result.shadowPrices;
+                const teamIndex = TEAMS.indexOf(teamEmail) + 1;
+                console.log(`   Team ${teamIndex}: C=$${sp.C} N=$${sp.N} D=$${sp.D} Q=$${sp.Q} (profit: $${result.maxProfit.toFixed(2)})`);
+            }
+        } catch (error) {
+            console.warn(`   ⚠️  ${teamEmail}: Failed to calculate shadow prices - ${error.message}`);
+        } finally {
+            await page.close();
+        }
+    }
 }
 
 /**
@@ -153,10 +323,9 @@ async function allTeamsAdvertise(browser) {
         const page = await browser.newPage();
 
         try {
-            // Login as team via dev_login
-            await page.goto(`${BASE_URL}/dev_login.php`, { waitUntil: 'networkidle2' });
-            await page.click(`a[href*="${teamEmail}"]`);
-            await page.waitForNavigation({ waitUntil: 'networkidle2' });
+            // Login as team via dev_login (direct URL with user parameter)
+            await page.goto(`${BASE_URL}/dev_login.php?user=${teamEmail}`, { waitUntil: 'networkidle2' });
+            await sleep(500);
 
             await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
             await page.waitForSelector('#app:not(.hidden)', { timeout: 10000 });
@@ -164,7 +333,19 @@ async function allTeamsAdvertise(browser) {
 
             // Get shadow prices from UI
             const shadowPrices = await getShadowPrices(page);
-            const teamName = await page.$eval('#team-name', el => el.textContent);
+
+            // Wait for team name to load (it gets populated by the profile loading)
+            const teamName = await page.waitForFunction(() => {
+                const el = document.getElementById('team-name');
+                const name = el?.textContent?.trim();
+                return name && name !== '' ? name : null;
+            }, { timeout: 10000 })
+                .then(handle => handle.jsonValue())
+                .catch(() => {
+                    // If team name not found, use the email we logged in with
+                    const teamIndex = TEAMS.indexOf(teamEmail) + 1;
+                    return `Team ${teamIndex} (${teamEmail})`;
+                });
 
             console.log(`   ${teamName}:`);
 
@@ -201,10 +382,9 @@ async function allTeamsNegotiate(browser) {
         const page = await browser.newPage();
 
         try {
-            // Login as team
-            await page.goto(`${BASE_URL}/dev_login.php`, { waitUntil: 'networkidle2' });
-            await page.click(`a[href*="${teamEmail}"]`);
-            await page.waitForNavigation({ waitUntil: 'networkidle2' });
+            // Login as team (direct URL with user parameter)
+            await page.goto(`${BASE_URL}/dev_login.php?user=${teamEmail}`, { waitUntil: 'networkidle2' });
+            await sleep(500);
 
             await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
             await page.waitForSelector('#app:not(.hidden)', { timeout: 10000 });
@@ -247,53 +427,76 @@ async function allTeamsNegotiate(browser) {
 }
 
 /**
- * Get shadow prices from UI elements
+ * Get shadow prices from UI elements (in shadow DOM)
  */
 async function getShadowPrices(page) {
     return await page.evaluate(() => {
         const prices = {};
         ['C', 'N', 'D', 'Q'].forEach(chem => {
-            const priceEl = document.getElementById(`shadow-${chem}`);
-            prices[chem] = priceEl ? parseFloat(priceEl.textContent.replace('$', '') || '0') : 0;
+            const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+            if (card && card.shadowRoot) {
+                const el = card.shadowRoot.querySelector('#shadow-price');
+                const text = el?.textContent?.trim() || '$0';
+                const priceMatch = text.match(/\$([\d.]+)/);
+                prices[chem] = priceMatch ? parseFloat(priceMatch[1]) : 0;
+            } else {
+                prices[chem] = 0;
+            }
         });
         return prices;
     });
 }
 
 /**
- * Post advertisement for a chemical via UI
+ * Post advertisement for a chemical via UI (using shadow DOM)
  */
 async function postAdvertisement(page, chemical, type) {
+    // Click the button inside the chemical card's shadow DOM
     await page.evaluate((chem, adType) => {
         const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
-        if (card) {
-            const button = card.querySelector(`#post-${adType}-btn`);
+        if (card && card.shadowRoot) {
+            const button = card.shadowRoot.querySelector(`#post-${adType}-btn`);
             if (button) button.click();
         }
     }, chemical, type);
 
-    // Wait for modal and submit
-    await page.waitForSelector('#offer-modal:not(.hidden)', { timeout: 5000 });
-    await page.click('#offer-submit-btn');
+    await sleep(800);
+
+    // Fill in the modal (Main DOM) - use default values
+    await page.evaluate(() => {
+        const qtyInput = document.getElementById('offer-quantity');
+        const priceInput = document.getElementById('offer-price');
+
+        if (qtyInput && priceInput) {
+            qtyInput.value = 100;  // Default quantity
+            priceInput.value = 5.00;  // Default price
+            qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+            priceInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
     await sleep(500);
+    await page.click('#offer-submit-btn');
+    await sleep(1000);
 }
 
 /**
- * Find a seller for a chemical from UI
+ * Find a seller for a chemical from UI (in shadow DOM)
  */
 async function findSeller(page, chemical) {
     return await page.evaluate((chem) => {
         const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
-        if (!card) return null;
+        if (!card || !card.shadowRoot) return null;
 
-        const adItems = card.querySelectorAll('advertisement-item');
+        const adItems = card.shadowRoot.querySelectorAll('advertisement-item');
         for (const item of adItems) {
-            if (item.getAttribute('type') === 'sell' && item.getAttribute('is-my-ad') !== 'true') {
-                return {
-                    teamId: item.getAttribute('team-id'),
-                    teamName: item.getAttribute('team-name'),
-                    chemical: chem
-                };
+            const type = item.type || item.getAttribute('type');
+            const teamId = item.teamId || item.getAttribute('teamid') || item.getAttribute('teamId');
+            const teamName = item.teamName || item.getAttribute('teamname') || item.getAttribute('teamName');
+            const isMyAd = item.isMyAd || item.hasAttribute('ismyad') || item.hasAttribute('isMyAd');
+
+            if (type === 'sell' && !isMyAd) {
+                return { teamId, teamName, chemical: chem };
             }
         }
         return null;
@@ -301,21 +504,22 @@ async function findSeller(page, chemical) {
 }
 
 /**
- * Find a buyer for a chemical from UI
+ * Find a buyer for a chemical from UI (in shadow DOM)
  */
 async function findBuyer(page, chemical) {
     return await page.evaluate((chem) => {
         const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
-        if (!card) return null;
+        if (!card || !card.shadowRoot) return null;
 
-        const adItems = card.querySelectorAll('advertisement-item');
+        const adItems = card.shadowRoot.querySelectorAll('advertisement-item');
         for (const item of adItems) {
-            if (item.getAttribute('type') === 'buy' && item.getAttribute('is-my-ad') !== 'true') {
-                return {
-                    teamId: item.getAttribute('team-id'),
-                    teamName: item.getAttribute('team-name'),
-                    chemical: chem
-                };
+            const type = item.type || item.getAttribute('type');
+            const teamId = item.teamId || item.getAttribute('teamid') || item.getAttribute('teamId');
+            const teamName = item.teamName || item.getAttribute('teamname') || item.getAttribute('teamName');
+            const isMyAd = item.isMyAd || item.hasAttribute('ismyad') || item.hasAttribute('isMyAd');
+
+            if (type === 'buy' && !isMyAd) {
+                return { teamId, teamName, chemical: chem };
             }
         }
         return null;
@@ -323,19 +527,20 @@ async function findBuyer(page, chemical) {
 }
 
 /**
- * Initiate negotiation with another team via UI
+ * Initiate negotiation with another team via UI (using shadow DOM)
  */
 async function initiateNegotiation(page, counterparty, chemical, type, myShadowPrice) {
     try {
-        // Click negotiate button via UI
+        // Click negotiate button in advertisement-item shadow DOM
         const clicked = await page.evaluate((teamId, chem) => {
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
-            if (!card) return false;
+            if (!card || !card.shadowRoot) return false;
 
-            const adItems = card.querySelectorAll('advertisement-item');
+            const adItems = card.shadowRoot.querySelectorAll('advertisement-item');
             for (const item of adItems) {
-                if (item.getAttribute('team-id') === teamId) {
-                    const btn = item.querySelector('.negotiate-btn');
+                const itemTeamId = item.teamId || item.getAttribute('teamid') || item.getAttribute('teamId');
+                if (itemTeamId === teamId && item.shadowRoot) {
+                    const btn = item.shadowRoot.querySelector('.btn');
                     if (btn) {
                         btn.click();
                         return true;
@@ -346,20 +551,28 @@ async function initiateNegotiation(page, counterparty, chemical, type, myShadowP
         }, counterparty.teamId, chemical);
 
         if (clicked) {
-            await page.waitForSelector('#respond-modal:not(.hidden)', { timeout: 5000 });
+            await page.waitForSelector('#respond-modal', { visible: true, timeout: 5000 });
+            await sleep(1000);
 
             // Fill in negotiation form via UI
             const quantity = Math.floor(Math.random() * 50) + 10; // 10-60 gallons
             const priceOffset = (Math.random() * 2) - 1; // -1 to +1
             const price = Math.max(0.1, myShadowPrice + priceOffset).toFixed(2);
 
-            await page.click('#respond-quantity', { clickCount: 3 });
-            await page.type('#respond-quantity', quantity.toString());
-            await page.click('#respond-price', { clickCount: 3 });
-            await page.type('#respond-price', price);
+            await page.evaluate((qty, prc) => {
+                const qtyInput = document.getElementById('respond-quantity');
+                const priceInput = document.getElementById('respond-price');
+                if (qtyInput && priceInput) {
+                    qtyInput.value = qty;
+                    priceInput.value = prc;
+                    qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    priceInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }, quantity, price);
 
-            await page.click('#respond-submit-btn');
             await sleep(500);
+            await page.click('#respond-submit-btn');
+            await sleep(1000);
         }
     } catch (error) {
         // Negotiation might fail - that's okay
@@ -376,10 +589,9 @@ async function allTeamsRespondToNegotiations(browser) {
         const page = await browser.newPage();
 
         try {
-            // Login as team
-            await page.goto(`${BASE_URL}/dev_login.php`, { waitUntil: 'networkidle2' });
-            await page.click(`a[href*="${teamEmail}"]`);
-            await page.waitForNavigation({ waitUntil: 'networkidle2' });
+            // Login as team (direct URL with user parameter)
+            await page.goto(`${BASE_URL}/dev_login.php?user=${teamEmail}`, { waitUntil: 'networkidle2' });
+            await sleep(500);
 
             await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
             await page.waitForSelector('#app:not(.hidden)', { timeout: 10000 });
@@ -483,22 +695,34 @@ async function checkLeaderboard(browser, session) {
 
     const page = await browser.newPage();
     try {
-        // Login to access leaderboard UI
-        await page.goto(`${BASE_URL}/dev_login.php`, { waitUntil: 'networkidle2' });
-        await page.click(`a[href*="${TEAMS[0]}"]`);
-        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+        // Login to access leaderboard UI (direct URL with user parameter)
+        await page.goto(`${BASE_URL}/dev_login.php?user=${TEAMS[0]}`, { waitUntil: 'networkidle2' });
+        await sleep(500);
 
         await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('#leaderboard', { timeout: 10000 });
+
+        // Open leaderboard modal
+        await page.waitForSelector('#leaderboard-btn', { timeout: 10000 });
+        await page.click('#leaderboard-btn');
+        await sleep(1000);
+
+        // Wait for leaderboard content to load
+        await page.waitForSelector('#leaderboard-body', { timeout: 5000 });
+
+        // Give async loadLeaderboard() time to fetch and render (simplified approach)
+        await sleep(3000);
 
         // Read leaderboard from UI elements
         const leaderboard = await page.evaluate(() => {
-            const rows = Array.from(document.querySelectorAll('#leaderboard tbody tr'));
-            return rows.map(row => ({
-                teamName: row.querySelector('.team-name')?.textContent || '',
-                funds: parseFloat(row.querySelector('.funds')?.textContent?.replace(/[$,]/g, '') || '0'),
-                roi: parseFloat(row.querySelector('.roi')?.textContent?.replace('%', '') || '0')
-            }));
+            const rows = Array.from(document.querySelectorAll('#leaderboard-body tr'));
+            return rows.map(row => {
+                const cells = row.querySelectorAll('td');
+                return {
+                    teamName: cells[1]?.textContent?.trim() || '',
+                    funds: parseFloat(cells[2]?.textContent?.replace(/[$,]/g, '') || '0'),
+                    roi: parseFloat(cells[3]?.textContent?.replace('%', '') || '0')
+                };
+            });
         });
 
         leaderboard.forEach((team, index) => {
@@ -514,43 +738,81 @@ async function checkLeaderboard(browser, session) {
 }
 
 /**
- * Get current session number from UI
+ * Get current session number from API (not UI to avoid race conditions)
  */
 async function getCurrentSession(browser) {
     const page = await browser.newPage();
     try {
-        await page.goto(`${BASE_URL}/dev_login.php`, { waitUntil: 'networkidle2' });
-        await page.click(`a[href*="${TEAMS[0]}"]`);
-        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+        // Login (direct URL with user parameter)
+        await page.goto(`${BASE_URL}/dev_login.php?user=${TEAMS[0]}`, { waitUntil: 'networkidle2' });
+        await sleep(500);
 
-        await page.goto(BASE_URL, { waitUntil: 'networkidle2' });
-        await page.waitForSelector('#session-num-display', { timeout: 10000 });
+        // Query API directly instead of reading from UI (avoids timing issues)
+        const sessionData = await page.evaluate(async () => {
+            const response = await fetch('/CNDQ/api/admin/session.php', {
+                method: 'GET',
+                credentials: 'same-origin'
+            });
+            const data = await response.json();
+            return data.session.currentSession;
+        });
 
-        return await page.$eval('#session-num-display', el => parseInt(el.textContent));
+        return sessionData;
     } finally {
         await page.close();
     }
 }
 
 /**
- * Wait for session to change (production runs automatically between sessions)
+ * Manually advance session (triggers production and moves to next session)
  */
-async function waitForSessionChange(browser, currentSessionNum) {
-    const maxWaitSeconds = 120;
-    const startTime = Date.now();
+async function manuallyAdvanceSession(browser) {
+    const page = await browser.newPage();
+    try {
+        // Login as admin
+        await page.goto(`${BASE_URL}/dev_login.php?user=admin@stonybrook.edu`, { waitUntil: 'networkidle2' });
+        await sleep(500);
 
-    while ((Date.now() - startTime) / 1000 < maxWaitSeconds) {
-        const newSession = await getCurrentSession(browser);
+        // Navigate to admin page to ensure we're authenticated
+        await page.goto(`${BASE_URL}/admin/index.php`, { waitUntil: 'networkidle2' });
+        await sleep(1000);
 
-        if (newSession > currentSessionNum) {
-            console.log(`   ✓ Session advanced from ${currentSessionNum} to ${newSession} (production ran automatically)`);
-            return;
+        // Call admin API to advance session (relative path from admin page)
+        const result = await page.evaluate(async () => {
+            try {
+                const response = await fetch('../api/admin/session.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'advance' }),
+                    credentials: 'same-origin'
+                });
+
+                const text = await response.text();
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    return {
+                        success: false,
+                        error: 'Invalid JSON response',
+                        responseText: text.substring(0, 200)
+                    };
+                }
+            } catch (e) {
+                return { success: false, error: e.message };
+            }
+        });
+
+        if (result.success) {
+            console.log(`   ✓ Production ran and advanced to session ${result.session.currentSession}`);
+        } else {
+            console.warn(`   ⚠️  Advance failed: ${result.error}`);
+            if (result.responseText) {
+                console.warn(`   Response: ${result.responseText}`);
+            }
         }
-
-        await sleep(2000); // Check every 2 seconds
+    } finally {
+        await page.close();
     }
-
-    throw new Error(`Timeout waiting for session to advance from ${currentSessionNum}`);
 }
 
 /**

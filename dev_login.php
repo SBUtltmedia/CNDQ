@@ -2,15 +2,29 @@
 // Handle Login Selection
 if (isset($_GET['user'])) {
     $user = $_GET['user'];
-    // Set cookie for 30 days
-    setcookie('mock_mail', $user, time() + (86400 * 30), "/");
+    // Set cookie for 30 days with explicit SameSite for Puppeteer compatibility
+    setcookie('mock_mail', $user, [
+        'expires' => time() + (86400 * 30),
+        'path' => '/',
+        'domain' => '',
+        'secure' => false,
+        'httponly' => false,
+        'samesite' => 'Lax'  // Lax allows cookies in top-level navigation
+    ]);
     header("Location: ./");
     exit;
 }
 
 // Handle Logout / Reset
 if (isset($_GET['reset'])) {
-    setcookie('mock_mail', '', time() - 3600, "/");
+    setcookie('mock_mail', '', [
+        'expires' => time() - 3600,
+        'path' => '/',
+        'domain' => '',
+        'secure' => false,
+        'httponly' => false,
+        'samesite' => 'Lax'
+    ]);
     header("Location: ./");
     exit;
 }

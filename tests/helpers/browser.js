@@ -62,15 +62,23 @@ class BrowserHelper {
      */
     async login(page, userEmail) {
         // dev_login.php is at the root of CNDQ project
-        const loginUrl = `${this.config.baseUrl}/dev_login.php?user=${userEmail}`;
-        const targetUrl = `${this.config.baseUrl}/`;
+        // Remove trailing slash from baseUrl to avoid double slashes
+        const baseUrl = this.config.baseUrl.replace(/\/$/, '');
+        const loginUrl = `${baseUrl}/dev_login.php?user=${userEmail}`;
 
-        await page.goto(loginUrl, { waitUntil: 'domcontentloaded' });
-        
-        // Wait for the URL to change to the target, which confirms the redirect
-        await page.waitForFunction((url) => window.location.href.includes(url), { timeout: 15000 }, targetUrl);
-        
-        await this.sleep(1000); // Small sleep for safety
+        // Navigate to login page (which sets cookie and redirects)
+        await page.goto(loginUrl, { waitUntil: 'networkidle2' });
+
+        // Verify cookie was set
+        const cookies = await page.cookies();
+        const mockMailCookie = cookies.find(c => c.name === 'mock_mail');
+
+        if (!mockMailCookie || mockMailCookie.value !== userEmail) {
+            console.warn(`   ⚠️  Warning: Cookie not set correctly for ${userEmail}`);
+            console.warn(`   Expected: ${userEmail}, Got: ${mockMailCookie?.value || 'none'}`);
+        }
+
+        await this.sleep(500); // Small sleep for safety
     }
 
     /**

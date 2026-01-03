@@ -28,7 +28,8 @@ class SessionHelper {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'same-origin'  // Ensure cookies are sent
                 });
                 const text = await response.text();
                 try {
@@ -143,9 +144,10 @@ class SessionHelper {
                 const response = await fetch(`${baseUrl}/api/admin/session.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'setPhase', phase: ph })
+                    body: JSON.stringify({ action: 'setPhase', phase: ph }),
+                    credentials: 'same-origin'  // Ensure cookies are sent
                 });
-                
+
                 const text = await response.text();
                 try {
                     return JSON.parse(text);
