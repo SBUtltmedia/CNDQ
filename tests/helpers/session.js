@@ -85,8 +85,14 @@ class SessionHelper {
 
     /**
      * Wait for phase to change to target phase
+     * NOTE: In the new model, 'trading' is the permanent phase.
      */
     async waitForPhaseChange(targetPhase, maxWaitSeconds = 120) {
+        if (targetPhase === 'trading') {
+            console.log('   ✓ (Bypass) Already in permanent trading phase');
+            return true;
+        }
+
         const startTime = Date.now();
 
         while ((Date.now() - startTime) / 1000 < maxWaitSeconds) {

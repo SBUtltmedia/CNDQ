@@ -52,8 +52,8 @@ class TeamStorage {
                         'email' => $this->teamEmail,
                         'teamName' => $this->teamName,
                         'createdAt' => time(),
-                        'currentFunds' => 10000,
-                        'startingFunds' => 10000
+                        'currentFunds' => 0,
+                        'startingFunds' => 0
                     ],
                     'inventory' => [
                         'C' => round(rand(500, 2000), 4),
@@ -99,8 +99,8 @@ class TeamStorage {
             $this->adjustChemical($chem, -$amount);
         }
 
-        // --- FIXED: Add revenue to existing funds (don't reset baseline) ---
-        $this->updateFunds($revenue);
+        // --- FIXED: The first production establishes the baseline ---
+        $this->setFunds($revenue, true);
 
         $this->addProduction([
             'type' => 'automatic_initial',
@@ -113,6 +113,8 @@ class TeamStorage {
     }
 
     public function emitEvent(string $type, array $payload) {
+        usleep(50000);
+        clearstatcache(true);
         $timestamp = microtime(true);
         $event = [
             'type' => $type,
@@ -130,11 +132,6 @@ class TeamStorage {
             throw new \Exception("Failed to write temporary event file");
         }
         
-        if (!rename($tmp, $this->teamDir . '/' . $filename)) {
-            @unlink($tmp);
-            throw new \Exception("Failed to rename event file");
-        }
-
         // --- NEW: Shared Event Log for fast global querying ---
         $sharedTypes = ['add_offer', 'remove_offer', 'update_offer', 'add_buy_order', 'remove_buy_order', 'update_buy_order', 'add_ad', 'remove_ad'];
         if (in_array($type, $sharedTypes)) {
@@ -145,8 +142,18 @@ class TeamStorage {
             
             // Explicitly inject teamName into payload for the shared log
             $event['payload']['teamName'] = $this->getTeamName();
-            $jsonData = json_encode($event, JSON_PRETTY_PRINT);
-            file_put_contents($sharedDir . '/' . $filename, $jsonData);
+            $sharedJsonData = json_encode($event, JSON_PRETTY_PRINT);
+            file_put_contents($sharedDir . '/' . $filename, $sharedJsonData);
+            
+            usleep(100000); // 100ms
+        }
+
+        if (!@rename($tmp, $this->teamDir . '/' . $filename)) {
+            if (@copy($tmp, $this->teamDir . '/' . $filename)) {
+                @unlink($tmp);
+            } else {
+                @unlink($tmp);
+            }
         }
 
         // Invalidate cache
@@ -156,6 +163,7 @@ class TeamStorage {
     }
 
     public function getState(): array {
+        clearstatcache(true);
         $cacheMtime = file_exists($this->cacheFile) ? filemtime($this->cacheFile) : 0;
         
         $events = glob($this->teamDir . '/event_*.json');
@@ -174,7 +182,10 @@ class TeamStorage {
         
         $tmp = tempnam($this->teamDir, 'tmp_cache_');
         file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT));
-        rename($tmp, $this->cacheFile);
+        
+        if (!@rename($tmp, $this->cacheFile)) {
+            @unlink($tmp);
+        }
 
         // Check if we should create a snapshot (e.g. every 50 events)
         $eventsSinceSnapshot = $state['eventsProcessed'] - ($state['snapshotEvents'] ?? 0);
@@ -192,7 +203,9 @@ class TeamStorage {
         $snapshotFile = $this->teamDir . '/snapshot.json';
         $tmp = tempnam($this->teamDir, 'tmp_snap_');
         file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT));
-        rename($tmp, $snapshotFile);
+        if (!@rename($tmp, $snapshotFile)) {
+            @unlink($tmp);
+        }
     }
 
     // ==================== Public API ====================

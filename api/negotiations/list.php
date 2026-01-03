@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../../lib/NegotiationManager.php';
+require_once __DIR__ . '/../../lib/TeamStorage.php';
 require_once __DIR__ . '/../../userData.php';
 
 header('Content-Type: application/json');
@@ -18,8 +19,24 @@ if (!$currentUserEmail) {
 }
 
 try {
-    $negotiationManager = new NegotiationManager();
-    $negotiations = $negotiationManager->getTeamNegotiations($currentUserEmail);
+    $storage = new TeamStorage($currentUserEmail);
+    $state = $storage->getState();
+    $negManager = new NegotiationManager();
+    
+    $negotiations = [];
+    $activeNegStates = $state['negotiationStates'] ?? [];
+    
+    foreach ($activeNegStates as $negId => $negState) {
+        // Only show pending negotiations in this list
+        if (($negState['status'] ?? 'pending') === 'pending') {
+            $fullNeg = $negManager->getNegotiation($negId);
+            if ($fullNeg) {
+                // Ensure patience from local state is included
+                $fullNeg['patience'] = $negState['patience'] ?? 100;
+                $negotiations[] = $fullNeg;
+            }
+        }
+    }
 
     echo json_encode([
         'success' => true,

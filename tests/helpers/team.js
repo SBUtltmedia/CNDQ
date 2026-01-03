@@ -61,6 +61,7 @@ class TeamHelper {
      * Post buy request using the modal interface
      */
     async postBuyRequest(page, chemical, shadowPrice) {
+        await page.waitForSelector('#app:not(.hidden)', { timeout: 10000 });
         // Click the buy button inside the chemical card's shadow DOM
         await page.evaluate((chem) => {
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
@@ -98,6 +99,10 @@ class TeamHelper {
      * Find buyer for a chemical (checks ads in shadow DOM)
      */
     async findBuyer(page, chemical) {
+        // Force refresh to bypass stale cache/polling
+        await page.reload({ waitUntil: 'networkidle2' });
+        await this.browser.sleep(2000);
+        
         return await page.evaluate((chem) => {
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
             if (!card || !card.shadowRoot) return null;
@@ -156,28 +161,36 @@ class TeamHelper {
 
         // Fill in respond modal (Main DOM)
         console.log(`      - Filling in respond modal...`);
-        await page.evaluate((inv, sp) => {
-            const quantity = 50;
-            const price = 5.00;
-
+        const subResult = await page.evaluate((sp) => {
+            const modalInv = parseFloat(document.getElementById('respond-your-inventory').textContent.replace(/,/g, '')) || 0;
             const qtyInput = document.getElementById('respond-quantity');
             const priceInput = document.getElementById('respond-price');
-            const modal = document.getElementById('respond-modal');
             
-            console.log(`[DEBUG] respond modal visibility: ${modal.classList.contains('hidden') ? 'HIDDEN' : 'VISIBLE'}`);
-            
+            if (modalInv < 1) {
+                return { success: false, reason: "No inventory to sell (has " + modalInv + ")" };
+            }
+
+            const quantity = Math.min(50, Math.floor(modalInv));
+            const price = 5.00;
+
             if (qtyInput && priceInput) {
                 qtyInput.value = quantity;
                 priceInput.value = price;
                 qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
                 priceInput.dispatchEvent(new Event('input', { bubbles: true }));
-            } else {
-                console.log(`[DEBUG] Failed to find inputs: qty=${!!qtyInput}, price=${!!priceInput}`);
+                return { success: true, quantity, price };
             }
-        }, inventory, shadowPrice);
+            return { success: false, reason: "Inputs not found" };
+        }, shadowPrice);
+
+        if (!subResult.success) {
+            console.log(`      ✗ Cannot submit offer: ${subResult.reason}`);
+            await page.click('#respond-cancel-btn');
+            return;
+        }
 
         await this.browser.sleep(500);
-        console.log(`      - Submitting offer...`);
+        console.log(`      - Submitting offer for ${subResult.quantity} gal...`);
         await page.click('#respond-submit-btn');
         
         // Wait for toast message to appear
@@ -194,6 +207,10 @@ class TeamHelper {
      * Respond to pending negotiations with more verbosity
      */
     async respondToNegotiations(page, shadowPrices, acceptanceRate = 0.7) {
+        // Force refresh to bypass stale cache/polling
+        await page.reload({ waitUntil: 'networkidle2' });
+        await this.browser.sleep(2000);
+
         // 1. Open Negotiation Modal
         const modalOpen = await page.evaluate(() => {
             const btn = document.getElementById('view-all-negotiations-btn');
@@ -210,7 +227,12 @@ class TeamHelper {
         }
         await this.browser.sleep(1000);
 
-        // 2. Look for "Your Turn" negotiations
+        // 2. Wait for list to load and look for "Your Turn" negotiations
+        await page.waitForFunction(() => {
+            const container = document.getElementById('pending-negotiations');
+            return container && (container.children.length > 1 || container.innerText.includes('No pending'));
+        }, { timeout: 5000 }).catch(() => {});
+
         const negData = await page.evaluate(() => {
             const pendingContainer = document.getElementById('pending-negotiations');
             const cards = pendingContainer?.querySelectorAll('negotiation-card');
@@ -236,13 +258,25 @@ class TeamHelper {
         const firstNeg = negData[0];
         console.log(`      - Acting on: ${firstNeg.text}`);
 
-        // 3. Click the card to open details
-        await page.evaluate((id) => {
+        // 3. Click the card to open details (click the internal button)
+        const clicked = await page.evaluate((id) => {
             const card = document.querySelector(`negotiation-card[negotiation-id="${id}"]`);
-            card?.click();
+            const btn = card?.querySelector('[role="button"]');
+            if (btn) {
+                btn.click();
+                return true;
+            }
+            return false;
         }, firstNeg.id);
 
-        await this.browser.sleep(1000);
+        if (!clicked) {
+            console.log('      ✗ Failed to click negotiation card button');
+            return null;
+        }
+
+        await this.browser.sleep(2000); // Wait for detail view to render
+        // Wait for at least one offer bubble (which uses class max-w-xs)
+        await page.waitForSelector('#offer-history div.max-w-xs', { timeout: 10000 }).catch(() => {});
 
         // 4. Get details from detail view
         const negDetails = await page.evaluate(() => {
@@ -250,46 +284,60 @@ class TeamHelper {
             const chemical = chemText.match(/Chemical ([CNDQ])/)?.[1];
             
             const history = document.getElementById('offer-history');
-            const lastBubble = history?.lastElementChild;
+            const bubbles = history?.querySelectorAll('.max-w-xs');
+            const lastBubble = bubbles && bubbles.length > 0 ? bubbles[bubbles.length - 1] : null;
+            
             if (lastBubble) {
                 const text = lastBubble.textContent || '';
-                // Look for patterns like "100 gal @ $5.50/gal"
+                // Detailed debug log inside browser
+                console.log(`[DEBUG] Parsing bubble text: "${text}"`);
+                
                 const qtyMatch = text.match(/(\d+)\s*gal/);
-                const priceMatch = text.match(/\$\s*([\d.]+)/);
+                const priceMatch = text.match(/\$\s*([\d,.]+)/);
+                
                 return {
                     chemical,
                     quantity: qtyMatch ? parseInt(qtyMatch[1]) : 0,
-                    price: priceMatch ? parseFloat(priceMatch[1]) : 0
+                    price: priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : 0,
+                    rawText: text
                 };
             }
-            return { chemical };
+            return { chemical, error: "History bubble not found", historyHTML: history?.innerHTML };
         });
 
-        if (!negDetails.price) {
-            console.log('      - Could not parse price from offer history bubble');
+        if (!negDetails.price || negDetails.price === 0) {
+            console.log(`      ✗ PARSE FAILURE: Could not extract price from bubble.`);
+            console.log(`      [DEBUG] History HTML: "${negDetails.historyHTML}"`);
         }
 
         const shouldAccept = Math.random() < acceptanceRate;
 
         if (shouldAccept) {
             console.log(`      - Decided to ACCEPT: ${negDetails.quantity} gal @ $${negDetails.price}/gal`);
-            const accepted = await page.evaluate(() => {
+            
+            // Trigger accept
+            await page.evaluate(() => {
                 const btn = document.getElementById('accept-offer-btn');
-                if (btn && !btn.classList.contains('hidden')) {
-                    btn.click();
-                    return true;
-                }
-                return false;
+                if (btn && !btn.classList.contains('hidden')) btn.click();
             });
 
-            if (accepted) {
-                await this.browser.sleep(500);
-                await page.click('#confirm-ok');
-                await this.browser.sleep(1000);
-                return { action: 'accepted', ...negDetails };
-            } else {
-                console.log('      - Failed to find or click accept button');
-            }
+            await this.browser.sleep(1000);
+            
+            // Handle confirm
+            await page.evaluate(() => {
+                const btn = document.getElementById('confirm-ok');
+                if (btn) btn.click();
+            });
+
+            // --- WAIT FOR TOAST RESPONSE ---
+            const resultToast = await page.waitForFunction(() => {
+                const el = document.querySelector('#toast-container div:last-child');
+                return el ? el.textContent : null;
+            }, { timeout: 8000 }).then(h => h.jsonValue()).catch(() => "No toast appeared");
+
+            console.log(`      [BROWSER] Acceptance Result: ${resultToast}`);
+            
+            return { action: 'accepted', ...negDetails };
         } else {
             console.log(`      - Decided to REJECT.`);
             const rejected = await page.evaluate(() => {

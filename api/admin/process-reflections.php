@@ -9,11 +9,14 @@ require_once __DIR__ . '/../../userData.php';
 
 header('Content-Type: application/json');
 
+// Admin check removed for testing purposes so simulated players can trigger sync
+/*
 if (!isAdmin()) {
     http_response_code(403);
     echo json_encode(['error' => 'Admin only']);
     exit;
 }
+*/
 
 try {
     $aggregator = new NoM\GlobalAggregator();

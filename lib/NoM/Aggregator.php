@@ -103,7 +103,10 @@ class Aggregator {
 
             case 'set_funds':
                 $state['profile']['currentFunds'] = $payload['amount'];
-                if ($payload['is_starting'] ?? false) $state['profile']['startingFunds'] = $payload['amount'];
+                // Only set startingFunds if it's currently 0
+                if (($payload['is_starting'] ?? false) && ($state['profile']['startingFunds'] <= 0)) {
+                    $state['profile']['startingFunds'] = $payload['amount'];
+                }
                 break;
 
             case 'adjust_funds':
@@ -129,27 +132,37 @@ class Aggregator {
                 $negId = $payload['negotiationId'];
                 if (!isset($state['negotiationStates'][$negId])) {
                     $state['negotiationStates'][$negId] = [
+                        'id' => $negId,
                         'patience' => 100,
                         'lastReaction' => 0,
                         'chemical' => $payload['chemical'],
                         'role' => $payload['role'],
                         'counterparty' => $payload['counterparty'],
-                        'startedAt' => $timestamp
+                        'startedAt' => $timestamp,
+                        'status' => 'pending'
                     ];
                 }
                 break;
 
             case 'add_counter_offer':
-                // Track patience drain for this specific negotiation
                 $negId = $payload['negotiationId'];
                 if (!isset($state['negotiationStates'][$negId])) {
                     $state['negotiationStates'][$negId] = ['patience' => 100, 'lastReaction' => 0];
                 }
                 
-                // If the offer was from the counter-party, reduce our patience
+                // Update basic state if missing
+                $state['negotiationStates'][$negId]['id'] = $negId;
+                
+                // Track patience drain for this specific negotiation
                 if (!empty($payload['isFromMe']) === false) {
-                    // Reduce patience by 10 per offer (simple model)
                     $state['negotiationStates'][$negId]['patience'] = max(0, $state['negotiationStates'][$negId]['patience'] - 10);
+                }
+                break;
+
+            case 'close_negotiation':
+                $negId = $payload['negotiationId'];
+                if (isset($state['negotiationStates'][$negId])) {
+                    $state['negotiationStates'][$negId]['status'] = $payload['status'];
                 }
                 break;
 

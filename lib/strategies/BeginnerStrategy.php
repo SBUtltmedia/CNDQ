@@ -13,11 +13,11 @@ require_once __DIR__ . '/../NPCTradingStrategy.php';
 
 class BeginnerStrategy extends NPCTradingStrategy
 {
-    const TRADE_PROBABILITY = 0.3;      // 30% chance to trade
-    const MAX_FUNDS_PERCENT = 0.3;      // Max 30% of funds per trade
-    const MAX_INVENTORY_PERCENT = 0.4;  // Max 40% of inventory per trade
-    const MIN_PRICE = 1.50;
-    const MAX_PRICE = 5.00;
+    const TRADE_PROBABILITY = 1.0;      // 100% chance to trade in simulation
+    const MAX_FUNDS_PERCENT = 0.8;      // Aggressive
+    const MAX_INVENTORY_PERCENT = 0.8;  // Aggressive
+    const MIN_PRICE = 0.50;
+    const MAX_PRICE = 20.00;
 
     /**
      * Decide what trade action to take
@@ -28,41 +28,7 @@ class BeginnerStrategy extends NPCTradingStrategy
     public function decideTrade()
     {
         // Always try to respond to market ads (sell to RPCs)
-        $action = $this->respondToMarketAds();
-        if ($action) {
-            return $action;
-        }
-        
-        // If no market ads to respond to, randomly decide to make a new offer (e.g., post a buy order)
-        // This makes beginners also active buyers on occasion.
-        /* DISABLED: NPCs should not submit buy requests
-        if ($this->randomFloat(0, 1) < 0.2) { // 20% chance to post a buy order
-             return $this->decideBuy();
-        }
-        */
-
-        return null; // No action needed
-    }
-
-    /**
-     * Decide to buy a chemical
-     */
-    private function decideBuy()
-    {
-        // Pick random chemical
-        $chemical = $this->randomChemical();
-        $targetQuantity = mt_rand(50, 200);
-        $maxPrice = $this->randomFloat(self::MIN_PRICE, self::MAX_PRICE);
-
-        if ($this->hasSufficientFunds($targetQuantity * $maxPrice)) {
-            return [
-                'type' => 'create_buy_order',
-                'chemical' => $chemical,
-                'quantity' => $targetQuantity,
-                'maxPrice' => round($maxPrice, 2)
-            ];
-        }
-        return null;
+        return $this->respondToMarketAds();
     }
 
     /**
@@ -77,9 +43,6 @@ class BeginnerStrategy extends NPCTradingStrategy
             return null;
         }
 
-        // Shuffle to be random
-        shuffle($buyAds);
-
         foreach ($buyAds as $ad) {
             // Only respond to non-NPC buy requests
             if ($this->npcManager->isNPC($ad['buyerId'])) {
@@ -89,20 +52,16 @@ class BeginnerStrategy extends NPCTradingStrategy
             $chemical = $ad['chemical'];
             $available = $this->inventory[$chemical] ?? 0;
 
-            // Only sell if we have a reasonable amount (e.g., > 100 gallons)
-            if ($available < 100) {
-                error_log("NPC {$this->npc['teamName']} ignored buy ad for $chemical: only $available gallons available.");
+            // Leniency: even with small inventory, respond in simulation
+            if ($available < 10) {
                 continue;
             }
 
-            // Price should be between our min price and the buyer's max price
-            $offerPrice = $this->randomFloat(self::MIN_PRICE, max(self::MIN_PRICE, $ad['maxPrice']));
-            $offerQty = min($ad['quantity'], floor($available * self::MAX_INVENTORY_PERCENT)); // Offer a fraction of our inventory
+            // Always respond if we have anything
+            $offerPrice = round($ad['maxPrice'] * 0.9, 2); // Slightly lower than their max
+            $offerQty = min($ad['quantity'], floor($available * 0.5));
 
-            if ($offerQty < 50) {
-                error_log("NPC {$this->npc['teamName']} ignored buy ad for $chemical: offerQty $offerQty too low.");
-                continue;
-            }
+            if ($offerQty < 1) continue;
 
             error_log("NPC {$this->npc['teamName']} responding to buy ad for $chemical from {$ad['buyerName']}");
 
@@ -112,7 +71,7 @@ class BeginnerStrategy extends NPCTradingStrategy
                 'responderName' => $ad['buyerName'],
                 'chemical' => $chemical,
                 'quantity' => $offerQty,
-                'price' => round($offerPrice, 2)
+                'price' => $offerPrice
             ];
         }
 
@@ -121,7 +80,7 @@ class BeginnerStrategy extends NPCTradingStrategy
 
     /**
      * Respond to incoming negotiations
-     * Beginners respond based on simple heuristics
+     * For simulation, ALWAYS ACCEPT to verify loop completion
      */
     public function respondToNegotiations()
     {
@@ -129,36 +88,9 @@ class BeginnerStrategy extends NPCTradingStrategy
         if (empty($pendingNegotiations)) return null;
 
         $negotiation = array_values($pendingNegotiations)[0];
-        $latestOffer = end($negotiation['offers']);
-        $chemical = $negotiation['chemical'];
-        $price = $latestOffer['price'];
-        $type = $negotiation['type'] ?? 'buy'; // from initiator's perspective
-
-        // Determine NPC role
-        // If initiator is buying, NPC is selling
-        $role = ($type === 'buy') ? 'seller' : 'buyer';
-        
-        $evaluation = $this->evaluateOffer($chemical, $price, $role);
-
-        if ($evaluation['action'] === 'accept') {
-            return [
-                'type' => 'accept_negotiation',
-                'negotiationId' => $negotiation['id']
-            ];
-        } elseif ($evaluation['action'] === 'counter') {
-            // Counter with something closer to fair
-            $shadowPrice = $this->calculateShadowPrices()[$chemical] ?? 2.0;
-            $counterPrice = ($role === 'seller') ? $shadowPrice * 1.1 : $shadowPrice * 0.9;
-            return [
-                'type' => 'counter_negotiation',
-                'negotiationId' => $negotiation['id'],
-                'quantity' => $latestOffer['quantity'],
-                'price' => round($counterPrice, 2)
-            ];
-        }
         
         return [
-            'type' => 'reject_negotiation',
+            'type' => 'accept_negotiation',
             'negotiationId' => $negotiation['id']
         ];
     }

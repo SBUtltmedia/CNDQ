@@ -96,6 +96,10 @@ class NegotiationManager {
 
         // Emit events to both parties
         try {
+            require_once __DIR__ . '/TeamStorage.php';
+            $iStorage = new TeamStorage($initiatorId);
+            $rStorage = new TeamStorage($responderId);
+
             $iStorage->emitEvent('initiate_negotiation', [
                 'negotiationId' => $negotiationId,
                 'chemical' => $chemical,
@@ -231,6 +235,16 @@ class NegotiationManager {
 
         file_put_contents($filePath, json_encode($negotiation, JSON_PRETTY_PRINT));
 
+        // Emit events to both parties
+        try {
+            $otherTeamId = ($acceptingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
+            $aStorage = new TeamStorage($acceptingTeamId);
+            $oStorage = new TeamStorage($otherTeamId);
+            
+            $aStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
+            $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
+        } catch (Exception $e) {}
+
         return $negotiation;
     }
 
@@ -257,6 +271,16 @@ class NegotiationManager {
         $negotiation['updatedAt'] = time();
 
         file_put_contents($filePath, json_encode($negotiation, JSON_PRETTY_PRINT));
+
+        // Emit events to both parties
+        try {
+            $otherTeamId = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
+            $rStorage = new TeamStorage($rejectingTeamId);
+            $oStorage = new TeamStorage($otherTeamId);
+            
+            $rStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
+            $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
+        } catch (Exception $e) {}
 
         return $negotiation;
     }

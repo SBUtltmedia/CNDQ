@@ -17,7 +17,11 @@ class MarketplaceAggregator {
         $this->sharedEventsDir = __DIR__ . '/../data/marketplace/events';
 
         if (!is_dir($this->teamsDir)) {
-            mkdir($this->teamsDir, 0755, true);
+            @mkdir($this->teamsDir, 0755, true);
+        }
+        
+        if (!is_dir($this->sharedEventsDir)) {
+            @mkdir($this->sharedEventsDir, 0755, true);
         }
     }
 
@@ -135,6 +139,9 @@ class MarketplaceAggregator {
         }
 
         $events = glob("$this->sharedEventsDir/event_*.json");
+        if (!$events) {
+            return ['offers' => [], 'buyOrders' => [], 'ads' => []];
+        }
         sort($events);
 
         $offers = [];

@@ -196,9 +196,9 @@ class SessionManager {
     public function reset() {
         $this->storage->setSessionData([
             'currentSession' => 1,
-            'phase' => 'production',
+            'phase' => 'trading',
             'autoAdvance' => true,
-            'productionDuration' => 10,
+            'productionDuration' => 0, // Not used in new model but kept for compatibility
             'tradingDuration' => 120,
             'phaseStartedAt' => time(),
             'productionRun' => null

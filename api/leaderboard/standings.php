@@ -32,9 +32,16 @@ try {
                 $state = $storage->getState();
                 $profile = $state['profile'];
 
-                if ($profile && isset($profile['startingFunds'])) {
-                    $startingFunds = $profile['startingFunds'] ?? 0;
+                if ($profile) {
                     $currentFunds = $profile['currentFunds'] ?? 0;
+                    $startingFunds = $profile['startingFunds'] ?? 0;
+                    
+                    // If startingFunds is 0, it means we should use
+                    // the first production revenue as our real baseline for ROI.
+                    if ($startingFunds <= 0 && !empty($state['productions'])) {
+                        $startingFunds = $state['productions'][0]['revenue'] ?? 0;
+                    }
+
                     $profit = $currentFunds - $startingFunds;
                     $roi = $startingFunds > 0 ? (($profit / $startingFunds) * 100) : 0;
 

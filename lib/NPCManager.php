@@ -350,7 +350,7 @@ class NPCManager
         $negotiationAction = $strategy->respondToNegotiations();
 
         if ($negotiationAction) {
-            error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) decided to: {$negotiationAction['type']}");
+            error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) ACTION: {$negotiationAction['type']}");
             $this->executeNPCAction($npc, $negotiationAction, $currentSession);
             return; // Prioritize negotiation responses over new trades
         }
@@ -359,7 +359,7 @@ class NPCManager
         $action = $strategy->decideTrade();
 
         if ($action) {
-            error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) decided to: {$action['type']}");
+            error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) ACTION: {$action['type']}");
             $this->executeNPCAction($npc, $action, $currentSession);
         }
     }

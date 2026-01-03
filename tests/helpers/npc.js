@@ -74,6 +74,7 @@ class NpcHelper {
      * @param {string} skillLevel - 'beginner', 'novice', or 'expert'.
      */
     async createNpc(adminPage, skillLevel) {
+        await adminPage.waitForSelector('#npc-skill-level', { timeout: 10000 });
         await adminPage.select('#npc-skill-level', skillLevel);
         await adminPage.click('button[onclick="createNPC()"]');
         await this.browser.sleep(1500); // Wait for creation and UI update

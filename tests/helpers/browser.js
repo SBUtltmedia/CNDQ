@@ -18,7 +18,14 @@ class BrowserHelper {
         const defaultOptions = {
             headless: this.config.headless || false,
             defaultViewport: { width: 1280, height: 800 },
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--hide-scrollbars',
+                '--mute-audio'
+            ]
         };
 
         this.browser = await puppeteer.launch({ ...defaultOptions, ...options });
@@ -72,10 +79,13 @@ class BrowserHelper {
         // Verify cookie was set
         const cookies = await page.cookies();
         const mockMailCookie = cookies.find(c => c.name === 'mock_mail');
+        
+        // Browser might return URL-encoded value (%40 for @)
+        const actualValue = mockMailCookie ? decodeURIComponent(mockMailCookie.value) : 'none';
 
-        if (!mockMailCookie || mockMailCookie.value !== userEmail) {
+        if (!mockMailCookie || actualValue !== userEmail) {
             console.warn(`   ⚠️  Warning: Cookie not set correctly for ${userEmail}`);
-            console.warn(`   Expected: ${userEmail}, Got: ${mockMailCookie?.value || 'none'}`);
+            console.log(`   Expected: ${userEmail}, Got: ${actualValue}`);
         }
 
         await this.sleep(500); // Small sleep for safety

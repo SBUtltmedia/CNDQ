@@ -28,13 +28,14 @@ if (!$currentUserEmail) {
 
 // Check if trading is allowed
 $sessionManager = new SessionManager();
+$sessionState = $sessionManager->getState();
+
 if (!$sessionManager->isTradingAllowed()) {
-    $state = $sessionManager->getState();
     http_response_code(403);
     echo json_encode([
         'error' => 'Trading not allowed',
-        'message' => 'Market is currently ' . $state['phase'] . '.',
-        'currentPhase' => $state['phase']
+        'message' => 'Market is currently ' . ($sessionState['phase'] ?? 'UNKNOWN') . '.',
+        'currentPhase' => ($sessionState['phase'] ?? 'UNKNOWN')
     ]);
     exit;
 }

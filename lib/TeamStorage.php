@@ -64,8 +64,8 @@ class TeamStorage {
                         'email' => $this->teamEmail,
                         'teamName' => $this->teamName,
                         'createdAt' => time(),
-                        'currentFunds' => 10000,
-                        'startingFunds' => 10000
+                        'currentFunds' => 0,
+                        'startingFunds' => 0
                     ],
                     'inventory' => [
                         'C' => round(rand(500, 2000), 4),
@@ -92,6 +92,9 @@ class TeamStorage {
      * Emit an event (Atomic Write)
      */
     public function emitEvent(string $type, array $payload) {
+        // Micro-sleep to ensure unique timestamp and allow FS to breathe
+        usleep(50000); 
+        clearstatcache(true);
         $timestamp = microtime(true);
         $event = [
             'type' => $type,
@@ -110,11 +113,6 @@ class TeamStorage {
             throw new Exception("Failed to write temporary event file");
         }
         
-        if (!rename($tmp, $this->teamDir . '/' . $filename)) {
-            @unlink($tmp);
-            throw new Exception("Failed to rename event file");
-        }
-
         // --- NEW: Shared Event Log for fast global querying ---
         $sharedTypes = ['add_offer', 'remove_offer', 'update_offer', 'add_buy_order', 'remove_buy_order', 'update_buy_order', 'add_ad', 'remove_ad'];
         if (in_array($type, $sharedTypes)) {
@@ -125,8 +123,22 @@ class TeamStorage {
             
             // Explicitly inject teamName into payload for the shared log
             $event['payload']['teamName'] = $this->getTeamName();
-            $jsonData = json_encode($event, JSON_PRETTY_PRINT);
-            file_put_contents($sharedDir . '/' . $filename, $jsonData);
+            $sharedJsonData = json_encode($event, JSON_PRETTY_PRINT);
+            file_put_contents($sharedDir . '/' . $filename, $sharedJsonData);
+            
+            // On Windows, a small delay helps ensure the file is visible to other processes
+            usleep(100000); // 100ms
+        }
+
+        if (!@rename($tmp, $this->teamDir . '/' . $filename)) {
+            // Fallback for Windows file locks
+            if (@copy($tmp, $this->teamDir . '/' . $filename)) {
+                @unlink($tmp);
+            } else {
+                $err = error_get_last();
+                error_log("TeamStorage: Critical write failure for $filename: " . ($err['message'] ?? 'Unknown error'));
+                @unlink($tmp);
+            }
         }
 
         // Invalidate cache by deleting it or updating its mtime to be old
@@ -139,6 +151,7 @@ class TeamStorage {
      * Get the current state (Aggregated and Cached)
      */
     public function getState(): array {
+        clearstatcache(true);
         // State Caching: Compare mtime of newest event with mtime of cached_state.json
         $cacheMtime = file_exists($this->cacheFile) ? filemtime($this->cacheFile) : 0;
         
@@ -155,7 +168,10 @@ class TeamStorage {
         if ($cacheMtime > $newestEventMtime && $cacheMtime > 0) {
             $content = file_get_contents($this->cacheFile);
             $cached = json_decode($content, true);
-            if (is_array($cached) && isset($cached['profile'])) return $cached;
+            if (is_array($cached) && isset($cached['profile'])) {
+                // error_log("TeamStorage [{$this->teamEmail}]: Using cached state.");
+                return $cached;
+            }
         }
 
         // Aggregate state from legacy files and events
@@ -164,7 +180,11 @@ class TeamStorage {
         // Save to cache
         $tmp = tempnam($this->teamDir, 'tmp_cache_');
         file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT));
-        rename($tmp, $this->cacheFile);
+        
+        // Use @ to suppress permission denied warnings on Windows if file is locked
+        if (!@rename($tmp, $this->cacheFile)) {
+            @unlink($tmp);
+        }
 
         // Check if we should create a snapshot (e.g. every 50 events)
         $eventsSinceSnapshot = $state['eventsProcessed'] - ($state['snapshotEvents'] ?? 0);
@@ -185,7 +205,9 @@ class TeamStorage {
         $snapshotFile = $this->teamDir . '/snapshot.json';
         $tmp = tempnam($this->teamDir, 'tmp_snap_');
         file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT));
-        rename($tmp, $snapshotFile);
+        if (!@rename($tmp, $snapshotFile)) {
+            @unlink($tmp);
+        }
         
         // Optional: Clean up old event files that are now in the snapshot
         // (Be careful with this in a real audit log system, maybe move to 'archive/' instead)
@@ -216,8 +238,8 @@ class TeamStorage {
             $this->adjustChemical($chem, -$amount);
         }
 
-        // --- FIXED: Add revenue to existing funds (don't reset baseline) ---
-        $this->updateFunds($revenue);
+        // --- FIXED: The first production establishes the baseline ---
+        $this->setFunds($revenue, true);
 
         $this->addProduction([
             'type' => 'automatic_initial',
