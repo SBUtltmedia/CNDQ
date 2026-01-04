@@ -446,6 +446,12 @@ class MarketplaceApp {
      * Open buy request modal
      */
     openBuyRequestModal(chemical) {
+        // Don't open if production modal is visible (it should block everything)
+        if (this.isProductionModalBlocking()) {
+            console.log('⚠️ Production modal is open - blocking offer modal');
+            return;
+        }
+
         const modal = document.getElementById('offer-modal');
         document.getElementById('offer-chemical').value = `Chemical ${chemical}`;
         document.getElementById('offer-shadow-hint').textContent = this.shadowPrices[chemical].toFixed(2);
@@ -532,6 +538,12 @@ class MarketplaceApp {
      * Open respond to buy request modal
      */
     openRespondModal(buyerTeamId, buyerTeamName, chemical) {
+        // Don't open if production modal is visible (it should block everything)
+        if (this.isProductionModalBlocking()) {
+            console.log('⚠️ Production modal is open - blocking respond modal');
+            return;
+        }
+
         const modal = document.getElementById('respond-modal');
 
         // Store context for later
@@ -651,9 +663,23 @@ class MarketplaceApp {
     }
 
     /**
+     * Check if production modal is currently blocking other modals
+     */
+    isProductionModalBlocking() {
+        const productionModal = document.getElementById('production-results-modal');
+        return productionModal && !productionModal.classList.contains('hidden');
+    }
+
+    /**
      * Open negotiation modal
      */
     openNegotiationModal() {
+        // Don't open if production modal is visible (it should block everything)
+        if (this.isProductionModalBlocking()) {
+            console.log('⚠️ Production modal is open - blocking negotiation modal');
+            return;
+        }
+
         const modal = document.getElementById('negotiation-modal');
         modal.classList.remove('hidden');
         modal.setAttribute('role', 'dialog');
@@ -1467,10 +1493,12 @@ class MarketplaceApp {
             if (data.productionJustRan && !this.productionResultsShown) {
                 console.log('✨ Production just completed! Showing results modal...');
                 this.productionResultsShown = true;
-                // For session 1 (initial), show session 1 production
-                // For session 2+, show previous session (session - 1)
+                // Session 1 = "Start Session 1" (initial production)
+                // Session 2 = "End Session 1" (session 1 just ended)
+                // Session 3 = "End Session 2" (session 2 just ended)
+                const isInitial = data.session === 1;
                 const productionSession = data.session === 1 ? 1 : data.session - 1;
-                await this.showProductionResults(productionSession);
+                await this.showProductionResults(productionSession, isInitial);
                 await this.loadProfile(); // Refresh to show updated inventory/funds
             }
 
@@ -1496,7 +1524,7 @@ class MarketplaceApp {
     /**
      * Show production results modal (transition from "in progress" to "complete" state)
      */
-    async showProductionResults(sessionNumber) {
+    async showProductionResults(sessionNumber, isInitial = false) {
         try {
             // Fetch production results from API
             const response = await fetch(`/CNDQ/api/production/results.php?session=${sessionNumber}`);
@@ -1508,7 +1536,17 @@ class MarketplaceApp {
             const data = await response.json();
 
             // Populate modal with data
-            document.getElementById('prod-result-session').textContent = data.sessionNumber || sessionNumber;
+            const sessionNum = data.sessionNumber || sessionNumber;
+            document.getElementById('prod-result-session').textContent = sessionNum;
+
+            // Set title: "Start Session 1" for initial load, "End Session X" for session completions
+            const titleElement = document.getElementById('prod-result-title');
+            if (isInitial) {
+                titleElement.innerHTML = `Start Session <span id="prod-result-session">${sessionNum}</span>`;
+            } else {
+                titleElement.innerHTML = `End Session <span id="prod-result-session">${sessionNum}</span>`;
+            }
+
             document.getElementById('prod-result-deicer').textContent = this.formatNumber(data.production.deicer);
             document.getElementById('prod-result-solvent').textContent = this.formatNumber(data.production.solvent);
             document.getElementById('prod-result-revenue').textContent = this.formatNumber(data.revenue);
@@ -1792,6 +1830,12 @@ class MarketplaceApp {
      * Open modal with focus management
      */
     openModalAccessible(modalId) {
+        // Don't open if production modal is visible (it should block everything)
+        if (this.isProductionModalBlocking()) {
+            console.log(`⚠️ Production modal is open - blocking ${modalId}`);
+            return;
+        }
+
         this.focusBeforeModal = document.activeElement;
         const modal = document.getElementById(modalId);
         this.currentModal = modal;

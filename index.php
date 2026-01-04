@@ -132,7 +132,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <span>Production Complete - Session <span id="prod-result-session">1</span></span>
+                        <span id="prod-result-title">Production Complete - Session <span id="prod-result-session">1</span></span>
                     </h3>
                     <button id="prod-result-close" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
                 </div>

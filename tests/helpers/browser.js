@@ -132,12 +132,28 @@ class BrowserHelper {
 
             if (modalVisible) {
                 if (this.config.verbose) {
-                    console.log('   🎯 Production modal detected, auto-closing...');
+                    console.log('   🎯 Production modal detected, waiting for complete state...');
                 }
 
-                // Wait for continue button and click it
-                await page.waitForSelector('#prod-result-continue', { timeout: 5000 });
-                await page.click('#prod-result-continue');
+                // Wait for the modal to transition from "in-progress" to "complete" state
+                // The continue button is only visible when production-complete is shown
+                await page.waitForSelector('#production-complete:not(.hidden)', { timeout: 10000 });
+                await this.sleep(500); // Small delay for animation
+
+                // Click the continue button using evaluate (more reliable than .click())
+                const clicked = await page.evaluate(() => {
+                    const button = document.getElementById('prod-result-continue');
+                    if (button) {
+                        button.click();
+                        return true;
+                    }
+                    return false;
+                });
+
+                if (!clicked) {
+                    throw new Error('Continue button not found');
+                }
+
                 await this.sleep(500); // Small delay after closing
 
                 if (this.config.verbose) {
@@ -146,7 +162,7 @@ class BrowserHelper {
             }
         } catch (error) {
             if (this.config.verbose) {
-                console.log('   ℹ️  No production modal to close (or timeout)');
+                console.log('   ℹ️  No production modal to close (or timeout):', error.message);
             }
         }
     }

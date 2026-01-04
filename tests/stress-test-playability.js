@@ -27,7 +27,7 @@ const CONFIG = {
     targetSessions: 2,
     headless: false,
     slowMo: 0,
-    verbose: false
+    verbose: true
 };
 
 async function runScenario(scenarioName, autoAdvance) {
@@ -43,7 +43,10 @@ async function runScenario(scenarioName, autoAdvance) {
         // --- STEP 1: RESET & SETUP ---
         ReportingHelper.printStep(1, 'Resetting game and initializing NPCs');
         await session.resetGame();
-        
+
+        // Wait for reset to fully propagate
+        await new Promise(r => setTimeout(r, 2000));
+
         const adminContext = await browser.createBrowserContext();
         const adminPage = await adminContext.newPage();
         await browserHelper.login(adminPage, 'admin@stonybrook.edu');
@@ -102,6 +105,7 @@ async function runScenario(scenarioName, autoAdvance) {
             const context = await browser.createBrowserContext();
             const page = await context.newPage();
             await browserHelper.login(page, email);
+            await browserHelper.closeProductionModalIfPresent(page);
             await context.close();
         }
 
@@ -117,7 +121,8 @@ async function runScenario(scenarioName, autoAdvance) {
                     const context = await browser.createBrowserContext();
                     const page = await context.newPage();
                     await browserHelper.login(page, email);
-                    
+                    await browserHelper.closeProductionModalIfPresent(page);
+
                     try {
                         const shadows = await teamHelper.getShadowPrices(page);
                         const inventory = await teamHelper.getInventory(page);
@@ -197,13 +202,49 @@ async function runScenario(scenarioName, autoAdvance) {
                 console.log(`   ✓ Manually advanced`);
             }
 
-            // 3. Leaderboard Verification
+            // 3. Leaderboard Verification & ROI Sanity Check
             const lbContext = await browser.createBrowserContext();
             const lbPage = await lbContext.newPage();
             await browserHelper.login(lbPage, CONFIG.teams[0]);
+            await browserHelper.closeProductionModalIfPresent(lbPage);
             await new Promise(r => setTimeout(r, 2000));
             const standings = await teamHelper.getLeaderboard();
             ReportingHelper.printLeaderboard(standings, s);
+
+            // ROI Sanity Checks
+            console.log('\n   🔍 ROI Sanity Checks:');
+            let roiIssues = [];
+            for (const team of standings) {
+                const roi = team.roi;
+                const funds = team.currentFunds;
+                const starting = team.startingFunds;
+
+                // Check for insane ROI values
+                if (roi < -100) {
+                    roiIssues.push(`   ⚠️  ${team.teamName}: ROI ${roi.toFixed(1)}% (Lost everything)`);
+                } else if (roi > 500) {
+                    roiIssues.push(`   ⚠️  ${team.teamName}: ROI ${roi.toFixed(1)}% (Suspiciously high)`);
+                } else if (funds < 0) {
+                    roiIssues.push(`   ❌ ${team.teamName}: Negative funds $${funds.toFixed(2)}`);
+                } else if (Object.values(team.inventory || {}).some(v => v < -0.001)) { // Allow for -0 and tiny floating point errors
+                    const negChems = Object.entries(team.inventory || {})
+                        .filter(([, v]) => v < -0.001) // Only flag truly negative values
+                        .map(([chem, v]) => `${chem}:${v.toFixed(1)}`)
+                        .join(', ');
+                    roiIssues.push(`   ❌ ${team.teamName}: Negative inventory [${negChems}]`);
+                } else {
+                    console.log(`   ✓ ${team.teamName}: ROI ${roi.toFixed(1)}% (Funds: $${funds.toFixed(2)} from $${starting.toFixed(2)})`);
+                }
+            }
+
+            if (roiIssues.length > 0) {
+                console.log('\n   🚨 ROI ISSUES DETECTED:');
+                roiIssues.forEach(issue => console.log(issue));
+                throw new Error('ROI sanity check failed - see issues above');
+            } else {
+                console.log('   ✅ All teams have sane ROI values\n');
+            }
+
             await lbContext.close();
         }
 
