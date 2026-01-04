@@ -105,15 +105,50 @@ class BrowserHelper {
     async loginAndNavigate(userEmail, pathStr) {
         const page = await this.newPage();
         // dev_login.php redirects to index.php, which is our main app page.
-        await this.login(page, userEmail); 
-        
+        await this.login(page, userEmail);
+
         // If we want a specific path OTHER than index.php, navigate there
         if (pathStr && !pathStr.includes('index.php')) {
             await this.navigateTo(page, pathStr);
         }
-        
+
         await this.sleep(2000); // Wait for page to fully load
+
+        // Auto-close production modal if it appears
+        await this.closeProductionModalIfPresent(page);
+
         return page;
+    }
+
+    /**
+     * Close production modal if it's visible
+     */
+    async closeProductionModalIfPresent(page) {
+        try {
+            const modalVisible = await page.evaluate(() => {
+                const modal = document.getElementById('production-results-modal');
+                return modal && !modal.classList.contains('hidden');
+            });
+
+            if (modalVisible) {
+                if (this.config.verbose) {
+                    console.log('   🎯 Production modal detected, auto-closing...');
+                }
+
+                // Wait for continue button and click it
+                await page.waitForSelector('#prod-result-continue', { timeout: 5000 });
+                await page.click('#prod-result-continue');
+                await this.sleep(500); // Small delay after closing
+
+                if (this.config.verbose) {
+                    console.log('   ✅ Production modal closed');
+                }
+            }
+        } catch (error) {
+            if (this.config.verbose) {
+                console.log('   ℹ️  No production modal to close (or timeout)');
+            }
+        }
     }
 
     /**

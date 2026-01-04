@@ -25,7 +25,7 @@ const CONFIG = {
         'gamma@stonybrook.edu'
     ],
     targetSessions: 2,
-    headless: true,
+    headless: false,
     slowMo: 0,
     verbose: false
 };

@@ -104,6 +104,8 @@ class TeamStorage {
             ]
         );
 
+        // Run "session 0" production immediately
+        // User will see modal on first load showing initial production results
         $this->runAutomaticFirstProduction();
     }
 
@@ -453,11 +455,12 @@ class TeamStorage {
 
         $this->addProduction([
             'type' => 'automatic_initial',
+            'sessionNumber' => 1,  // First production is session 1
             'deicer' => $deicerGallons,
             'solvent' => $solventGallons,
             'revenue' => $revenue,
             'chemicalsConsumed' => $consumed,
-            'note' => 'Initial production (100% capacity) to set starting funds'
+            'note' => 'Welcome to CNDQ! Your first production run is complete.'
         ]);
     }
 

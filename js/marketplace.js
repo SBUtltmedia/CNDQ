@@ -93,6 +93,9 @@ class MarketplaceApp {
             this.loadSavedTheme();
             console.log('✓ Theme loaded');
 
+            // Check for production results BEFORE showing app
+            await this.checkSessionPhase();
+
             // Start polling
             this.startPolling();
             console.log('✓ Polling started');
@@ -1453,44 +1456,22 @@ class MarketplaceApp {
             
             // Update UI elements
             document.getElementById('session-num-display').textContent = data.session;
-            
-            const phaseBadge = document.getElementById('phase-badge');
-            if (phaseBadge) {
-                phaseBadge.textContent = data.phase;
-                phaseBadge.className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
-                    data.phase === 'trading' ? 'bg-green-600 text-white' : 'bg-blue-600 text-white'
-                }`;
-            }
-
-            // Toggle Production Overlay
-            const prodOverlay = document.getElementById('production-overlay');
-            if (prodOverlay) {
-                if (data.phase === 'production') {
-                    prodOverlay.classList.remove('hidden');
-                } else {
-                    prodOverlay.classList.add('hidden');
-                }
-            }
 
             // Update Timer
             const minutes = Math.floor(data.timeRemaining / 60);
             const seconds = data.timeRemaining % 60;
-            document.getElementById('session-timer').textContent = 
+            document.getElementById('session-timer').textContent =
                 `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-            // If phase changed to production, refresh profile/inventory
-            if (this.lastPhase && this.lastPhase !== data.phase && data.phase === 'production') {
-                console.log('🔄 Phase changed to Production! Refreshing inventory...');
-                await this.loadProfile();
-                this.showToast('Session advanced! Production complete.', 'info');
-            }
-            this.lastPhase = data.phase;
 
             // Check for production results to display
             if (data.productionJustRan && !this.productionResultsShown) {
                 console.log('✨ Production just completed! Showing results modal...');
                 this.productionResultsShown = true;
-                await this.showProductionResults(data.session);
+                // For session 1 (initial), show session 1 production
+                // For session 2+, show previous session (session - 1)
+                const productionSession = data.session === 1 ? 1 : data.session - 1;
+                await this.showProductionResults(productionSession);
+                await this.loadProfile(); // Refresh to show updated inventory/funds
             }
 
         } catch (error) {
@@ -1513,12 +1494,12 @@ class MarketplaceApp {
     }
 
     /**
-     * Show production results modal
+     * Show production results modal (transition from "in progress" to "complete" state)
      */
     async showProductionResults(sessionNumber) {
         try {
             // Fetch production results from API
-            const response = await fetch(`/api/production/results.php?session=${sessionNumber}`);
+            const response = await fetch(`/CNDQ/api/production/results.php?session=${sessionNumber}`);
             if (!response.ok) {
                 console.error('Failed to fetch production results:', response.statusText);
                 return;
@@ -1545,11 +1526,16 @@ class MarketplaceApp {
             document.getElementById('prod-result-inv-D').textContent = this.formatNumber(data.currentInventory.D);
             document.getElementById('prod-result-inv-Q').textContent = this.formatNumber(data.currentInventory.Q);
 
-            // Show modal
+            // Transition from "in progress" to "complete" state
             const modal = document.getElementById('production-results-modal');
-            modal.classList.remove('hidden');
+            const prodInProgress = document.getElementById('production-in-progress');
+            const prodComplete = document.getElementById('production-complete');
 
-            console.log('✅ Production results modal displayed');
+            modal.classList.remove('hidden');
+            prodInProgress.classList.add('hidden');
+            prodComplete.classList.remove('hidden');
+
+            console.log('✅ Production results modal displayed (complete state)');
         } catch (error) {
             console.error('Error showing production results:', error);
         }
@@ -1558,12 +1544,29 @@ class MarketplaceApp {
     /**
      * Close production results modal
      */
-    closeProductionResults() {
+    async closeProductionResults() {
         const modal = document.getElementById('production-results-modal');
-        modal.classList.add('hidden');
+        const prodInProgress = document.getElementById('production-in-progress');
+        const prodComplete = document.getElementById('production-complete');
 
-        // Reset flag so it can show again next time
+        modal.classList.add('hidden');
+        prodInProgress.classList.add('hidden');
+        prodComplete.classList.add('hidden');
+
+        // Acknowledge production to server (clears productionJustRan flag)
+        try {
+            await fetch('/CNDQ/api/session/status.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ acknowledgeProduction: true })
+            });
+        } catch (error) {
+            console.error('Failed to acknowledge production:', error);
+        }
+
+        // Reset flags so they can show again next time
         this.productionResultsShown = false;
+        this.productionModalShown = false;
 
         // Refresh profile to show updated funds/inventory
         this.loadProfile();
@@ -1859,7 +1862,10 @@ class MarketplaceApp {
      */
     formatNumber(num) {
         if (num === null || num === undefined) return '0';
-        return parseFloat(num).toLocaleString('en-US', {
+        const parsed = parseFloat(num);
+        // Fix negative zero display issue
+        const value = Object.is(parsed, -0) ? 0 : parsed;
+        return value.toLocaleString('en-US', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 2
         });

@@ -65,14 +65,15 @@ class SessionManager {
     public function runProductionForAllTeams($sessionNumber) {
         require_once __DIR__ . '/TeamStorage.php';
         require_once __DIR__ . '/LPSolver.php';
+        require_once __DIR__ . '/Database.php';
 
-        $teamsDir = __DIR__ . '/../data/teams';
-        if (!is_dir($teamsDir)) return;
+        // Get all teams from database
+        $db = Database::getInstance();
+        $teams = $db->query('SELECT DISTINCT team_email FROM team_events');
+        if (empty($teams)) return;
 
-        $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
-
-        foreach ($teamDirs as $teamDir) {
-            $email = basename($teamDir);
+        foreach ($teams as $teamRow) {
+            $email = $teamRow['team_email'];
             if ($email === 'system') continue;
 
             try {
@@ -159,7 +160,8 @@ class SessionManager {
             'productionDuration' => 0, // Not used in new model but kept for compatibility
             'tradingDuration' => 120,
             'phaseStartedAt' => time(),
-            'productionRun' => null
+            'productionRun' => null,
+            'productionJustRan' => time() // Set flag so modal shows initial production on first load
         ]);
         return $this->storage->getSystemState();
     }

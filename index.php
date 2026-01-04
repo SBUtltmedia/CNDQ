@@ -113,17 +113,31 @@
     <!-- Production Results Modal -->
     <div id="production-results-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[110] p-4">
         <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full border-2 border-green-500 shadow-2xl">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-2xl font-bold text-green-500 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>Production Complete - Session <span id="prod-result-session">1</span></span>
-                </h3>
-                <button id="prod-result-close" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            <!-- Production In Progress State -->
+            <div id="production-in-progress" class="hidden text-center py-8">
+                <div class="cog-container mx-auto mb-6">
+                    <svg class="cog cog-1" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+                    <svg class="cog cog-2" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+                    <svg class="cog cog-3" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+                </div>
+                <h2 class="text-3xl font-bold text-green-500 font-mono animate-pulse uppercase tracking-tight">Production Running</h2>
+                <p class="text-gray-300 mt-3 text-lg">Linear programming solvers optimizing your profit...</p>
+                <p class="text-gray-400 mt-2 text-sm">Session <span id="prod-progress-session">1</span></p>
             </div>
 
-            <div class="space-y-6">
+            <!-- Production Complete State -->
+            <div id="production-complete" class="hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-2xl font-bold text-green-500 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Production Complete - Session <span id="prod-result-session">1</span></span>
+                    </h3>
+                    <button id="prod-result-close" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+                </div>
+
+                <div class="space-y-6">
                 <!-- Production Output -->
                 <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
                     <h4 class="text-lg font-semibold text-white mb-3">Products Manufactured</h4>
@@ -192,8 +206,10 @@
                 <button id="prod-result-continue" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition text-lg">
                     Continue to Trading
                 </button>
+                </div>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- Toast Notifications Container -->
@@ -286,9 +302,6 @@
                     <div class="bg-purple-900/30 px-3 py-1 rounded border border-purple-500/50">
                         <span class="text-xs text-purple-300 uppercase font-bold">Session</span>
                         <span id="session-num-display" class="text-lg font-mono ml-2">1</span>
-                    </div>
-                    <div>
-                        <span id="phase-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-blue-600 text-white">Production</span>
                     </div>
                 </div>
                 
