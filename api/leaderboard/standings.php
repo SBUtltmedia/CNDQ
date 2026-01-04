@@ -7,64 +7,40 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../userData.php';
 require_once __DIR__ . '/../../lib/SessionManager.php';
-require_once __DIR__ . '/../../lib/TeamStorage.php';
+require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
 
 try {
     $sessionManager = new SessionManager();
     $sessionState = $sessionManager->getState();
 
-    // Get all teams
-    $teamsDir = __DIR__ . '/../../data/teams';
+    // Use MarketplaceAggregator to get team statistics from SQLite
+    $marketplace = new MarketplaceAggregator();
+    $stats = $marketplace->getTeamStatistics();
+
     $standings = [];
 
-    if (is_dir($teamsDir)) {
-        $teamDirs = array_filter(glob($teamsDir . '/*'), 'is_dir');
+    foreach ($stats as $teamStat) {
+        // Skip the system team
+        if ($teamStat['email'] === 'system') continue;
 
-        foreach ($teamDirs as $teamDir) {
-            $email = basename($teamDir);
-            
-            // Skip the system team
-            if ($email === 'system') continue;
-            
-            try {
-                // Use TeamStorage to leverage the cache
-                $storage = new TeamStorage($email);
-                $state = $storage->getState();
-                $profile = $state['profile'];
-
-                if ($profile) {
-                    $currentFunds = $profile['currentFunds'] ?? 0;
-                    $startingFunds = $profile['startingFunds'] ?? 0;
-                    
-                    // If startingFunds is 0, it means we should use
-                    // the first production revenue as our real baseline for ROI.
-                    if ($startingFunds <= 0 && !empty($state['productions'])) {
-                        $startingFunds = $state['productions'][0]['revenue'] ?? 0;
-                    }
-
-                    $profit = $currentFunds - $startingFunds;
-                    $roi = $startingFunds > 0 ? (($profit / $startingFunds) * 100) : 0;
-
-                    $standings[] = [
-                        'teamName' => $profile['teamName'] ?? 'Unknown Team',
-                        'teamId' => $profile['email'] ?? $email,
-                        'startingFunds' => $startingFunds,
-                        'currentFunds' => $currentFunds,
-                        'profit' => $profit,
-                        'roi' => $roi,
-                        'lastActive' => $profile['lastActive'] ?? 0
-                    ];
-                }
-            } catch (Exception $e) {
-                // Skip teams with errors
-                error_log("Error processing team $email for leaderboard: " . $e->getMessage());
-                continue;
-            }
-        }
+        $standings[] = [
+            'teamName' => $teamStat['teamName'],
+            'teamId' => $teamStat['email'],
+            'startingFunds' => $teamStat['startingFunds'],
+            'currentFunds' => $teamStat['currentFunds'],
+            'profit' => $teamStat['currentFunds'] - $teamStat['startingFunds'],
+            'roi' => $teamStat['percentChange'],
+            'inventory' => $teamStat['inventory'],
+            'totalTrades' => $teamStat['totalTrades']
+        ];
     }
 
     // Sort by ROI descending (highest ROI first)
+    // Use currentFunds as a tie-breaker if ROI is equal
     usort($standings, function($a, $b) {
+        if (abs($b['roi'] - $a['roi']) < 0.0001) {
+            return $b['currentFunds'] <=> $a['currentFunds'];
+        }
         return $b['roi'] <=> $a['roi'];
     });
 

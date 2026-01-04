@@ -31,10 +31,10 @@ class AdvertisementManager {
     public static function getAllAdvertisements() {
         require_once __DIR__ . '/MarketplaceAggregator.php';
         $aggregator = new MarketplaceAggregator();
-        $data = $aggregator->getAggregatedFromSharedLog();
-        
+        $data = $aggregator->getAggregatedFromEvents(); // Updated for SQLite
+
         $allAds = ['buy' => [], 'sell' => []];
-        
+
         // Map ads to the expected format
         foreach ($data['ads'] as $ad) {
             $type = $ad['type'] ?? 'buy';
@@ -42,7 +42,7 @@ class AdvertisementManager {
                 $allAds[$type][] = $ad;
             }
         }
-        
+
         return $allAds;
     }
 

@@ -119,6 +119,7 @@ class ExpertStrategy extends NPCTradingStrategy
 
     /**
      * Try to buy a chemical when shadow price is high
+     * NPC posts a BUY REQUEST to the market
      */
     private function tryToBuy() {
         if ($this->shadowPrices === null) {
@@ -132,26 +133,18 @@ class ExpertStrategy extends NPCTradingStrategy
             $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
             $currentAmount = $this->inventory[$chemical] ?? 0;
 
-            // Only buy if shadow price is high and inventory is relatively low
-            if ($shadowPrice > 5.0 && $currentAmount < 800) { // Threshold for "high" shadow price
-                $maxBuyPrice = $shadowPrice * self::BUY_MARGIN;
-                
-                // Look for sellers
-                $offers = $this->getMarketOffers();
-                $cheapestOffer = $this->findCheapestOffer($chemical, $offers);
+            // Only post buy request if shadow price is high and inventory is low
+            if ($shadowPrice > 2.0 && $currentAmount < 1000) { 
+                $maxBuyPrice = round($shadowPrice * self::BUY_MARGIN, 2);
+                $quantity = $this->calculateBuyQuantity($chemical, $currentAmount);
 
-                if ($cheapestOffer && $cheapestOffer['minPrice'] <= $maxBuyPrice) {
-                    $quantity = min(self::MAX_QUANTITY, $cheapestOffer['quantity'], $this->calculateBuyQuantity($chemical, $currentAmount));
-                    if ($quantity >= self::MIN_QUANTITY && $this->hasSufficientFunds($quantity * $cheapestOffer['minPrice'])) {
-                        return [
-                            'type' => 'accept_offer',
-                            'offerId' => $cheapestOffer['id'],
-                            'sellerId' => $cheapestOffer['sellerId'],
-                            'chemical' => $chemical,
-                            'quantity' => $quantity,
-                            'price' => $cheapestOffer['minPrice']
-                        ];
-                    }
+                if ($quantity >= self::MIN_QUANTITY && $this->hasSufficientFunds($quantity * $maxBuyPrice)) {
+                    return [
+                        'type' => 'create_buy_order',
+                        'chemical' => $chemical,
+                        'quantity' => $quantity,
+                        'maxPrice' => $maxBuyPrice
+                    ];
                 }
             }
         }
@@ -159,31 +152,44 @@ class ExpertStrategy extends NPCTradingStrategy
     }
 
     /**
-     * Try to sell a chemical when shadow price is low
+     * Try to sell a chemical when it is a remainder
+     * Expert NPCs sell anything NOT used in the current optimal production mix
      */
     private function tryToSell() {
         if ($this->shadowPrices === null) {
             $this->shadowPrices = $this->calculateShadowPrices();
         }
-        if (!$this->shadowPrices) {
-            return null;
-        }
+        
+        // Use the LP Solver result from calculating shadow prices
+        $inventory = $this->inventory;
+        $solver = new LPSolver();
+        $result = $solver->solve($inventory);
+        
+        $deicer = $result['deicer'];
+        $solvent = $result['solvent'];
+        
+        // Calculate what will be consumed
+        $willConsume = [
+            'C' => ($deicer * LPSolver::DEICER_C),
+            'N' => ($deicer * LPSolver::DEICER_N) + ($solvent * LPSolver::SOLVENT_N),
+            'D' => ($deicer * LPSolver::DEICER_D) + ($solvent * LPSolver::SOLVENT_D),
+            'Q' => ($solvent * LPSolver::SOLVENT_Q)
+        ];
 
         foreach (['C', 'N', 'D', 'Q'] as $chemical) {
-            $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
-            $currentAmount = $this->inventory[$chemical] ?? 0;
+            $currentAmount = $inventory[$chemical] ?? 0;
+            $neededForProduction = $willConsume[$chemical] ?? 0;
+            $surplus = $currentAmount - $neededForProduction;
 
-            // Only sell if shadow price is low and we have excess inventory
-            if ($shadowPrice < 2.0 && $currentAmount > 1200) { // Threshold for "low" shadow price
-                $minSellPrice = $shadowPrice * self::SELL_MARGIN;
-                
+            // If we have more than 10 gallons of leftovers, sell it!
+            if ($surplus > 10) {
                 // Look for buyers (buy orders)
                 $buyOrders = $this->getMarketBuyOrders();
                 $highestBuyOrder = $this->findHighestBuyOrder($chemical, $buyOrders);
 
-                if ($highestBuyOrder && $highestBuyOrder['maxPrice'] >= $minSellPrice) {
-                    $quantity = min(self::MAX_QUANTITY, $highestBuyOrder['quantity'], $this->calculateSellQuantity($chemical, $currentAmount));
-                    if ($quantity >= self::MIN_QUANTITY && $this->hasSufficientInventory($chemical, $quantity)) {
+                if ($highestBuyOrder) {
+                    $quantity = min($surplus, $highestBuyOrder['quantity']);
+                    if ($quantity >= 1 && $this->hasSufficientInventory($chemical, $quantity)) {
                         return [
                             'type' => 'accept_buy_order',
                             'buyOrderId' => $highestBuyOrder['id'],

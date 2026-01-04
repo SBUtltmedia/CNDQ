@@ -13,12 +13,13 @@ require_once __DIR__ . '/NegotiationManager.php';
 
 class NPCManager
 {
-    private $configFile;
+    private $db;
     private $negotiationManager;
 
     public function __construct()
     {
-        $this->configFile = __DIR__ . '/../data/npc_config.json';
+        require_once __DIR__ . '/Database.php';
+        $this->db = Database::getInstance();
         $this->negotiationManager = null;
     }
 
@@ -55,13 +56,11 @@ class NPCManager
     }
 
     /**
-     * Check if two parties can trade (prevents NPC-to-NPC trading)
+     * Check if two parties can trade
      */
     public function canTradeWith($email1, $email2)
     {
-        if ($this->isNPC($email1) && $this->isNPC($email2)) {
-            return false; // Block NPC-to-NPC trades
-        }
+        // Enabled for simulation: allow everyone to trade with everyone
         return true;
     }
 
@@ -70,15 +69,21 @@ class NPCManager
      */
     public function loadConfig()
     {
-        if (!file_exists($this->configFile)) {
-            return $this->getDefaultConfig();
+        $row = $this->db->queryOne(
+            'SELECT value FROM config WHERE key = ?',
+            ['npc_config']
+        );
+
+        if (!$row) {
+            $default = $this->getDefaultConfig();
+            $this->saveConfig($default);
+            return $default;
         }
 
-        $content = file_get_contents($this->configFile);
-        $config = json_decode($content, true);
+        $config = json_decode($row['value'], true);
 
         if ($config === null) {
-            error_log("Failed to parse NPC config JSON");
+            error_log("Failed to parse NPC config JSON from database");
             return $this->getDefaultConfig();
         }
 
@@ -86,21 +91,16 @@ class NPCManager
     }
 
     /**
-     * Save NPC configuration to JSON file with atomic write
+     * Save NPC configuration to database
      */
     public function saveConfig($config)
     {
-        $dir = dirname($this->configFile);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
+        $json = json_encode($config);
 
-        $json = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
-        // Atomic write using temp file + rename
-        $tempFile = $this->configFile . '.tmp';
-        file_put_contents($tempFile, $json);
-        rename($tempFile, $this->configFile);
+        $this->db->execute(
+            'INSERT OR REPLACE INTO config (key, value, updated_at) VALUES (?, ?, ?)',
+            ['npc_config', $json, time()]
+        );
 
         return true;
     }
@@ -408,11 +408,6 @@ class NPCManager
             $storage = new TeamStorage($npc['email']);
 
             switch ($action['type']) {
-                case 'accept_offer':
-                    // NPC is buyer, accepting a sell offer
-                    $this->executeAcceptOffer($npc, $action, $storage);
-                    break;
-
                 case 'create_buy_order':
                     // NPC is posting a buy order
                     $this->executeCreateBuyOrder($npc, $action, $storage, $currentSession);
@@ -421,11 +416,6 @@ class NPCManager
                 case 'accept_buy_order':
                     // NPC is seller, accepting a buy order
                     $this->executeAcceptBuyOrder($npc, $action, $storage);
-                    break;
-
-                case 'create_sell_offer':
-                    // NPC is posting a sell offer
-                    $this->executeCreateSellOffer($npc, $action, $storage);
                     break;
 
                 case 'accept_negotiation':
@@ -481,36 +471,6 @@ class NPCManager
         );
 
         error_log("NPC {$npc['teamName']} initiated sell negotiation with {$action['responderName']} for {$action['quantity']} gal of {$action['chemical']} at \${$action['price']}/gal");
-    }
-
-    /**
-     * Execute accept_offer action (NPC buying)
-     */
-    private function executeAcceptOffer($npc, $action, $storage)
-    {
-        // Verify seller is not an NPC
-        if (!$this->canTradeWith($npc['email'], $action['sellerId'])) {
-            error_log("Blocked NPC-to-NPC trade attempt: {$npc['email']} -> {$action['sellerId']}");
-            return;
-        }
-
-        $executor = new TradeExecutor();
-        $result = $executor->executeTrade(
-            $action['sellerId'],    // seller
-            $npc['email'],          // buyer (NPC)
-            $action['chemical'],
-            $action['quantity'],
-            $action['price'],
-            $action['offerId'] ?? null
-        );
-
-        if ($result['success']) {
-            // Calculate profit (negative for buying)
-            $cost = $action['quantity'] * $action['price'];
-            $this->updateNPCStats($npc['id'], -$cost);
-
-            error_log("NPC {$npc['teamName']} bought {$action['quantity']} gal of {$action['chemical']} at \${$action['price']}/gal");
-        }
     }
 
     /**

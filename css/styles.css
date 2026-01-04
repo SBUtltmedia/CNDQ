@@ -22,10 +22,10 @@
     --color-brand-secondary: #059669;
     --color-accent: #fbbf24;
 
-    --color-chemical-c: #6eb5ff; /* Brightened for 4.5:1 on #374151 */
-    --color-chemical-n: #d4a8fc; /* Brightened for 4.5:1 on #374151 */
-    --color-chemical-d: #fcd34d;
-    --color-chemical-q: #ffa0a0; /* Brightened for 4.5:1 on #374151 */
+    --color-chemical-c: #74b1fb; /* WCAG AA compliant - 4.63:1 on #374151 */
+    --color-chemical-n: #c997fc; /* WCAG AA compliant - 4.57:1 on #374151 */
+    --color-chemical-d: #fcd554; /* WCAG AA compliant - 7.26:1 on #374151 */
+    --color-chemical-q: #fa8f8f; /* WCAG AA compliant - 4.61:1 on #374151 */
 
     --color-success: #10b981;
     --color-error: #ffa0a0; /* Updated to match chemical-q */
@@ -56,10 +56,10 @@
     --color-brand-secondary: #047857;
     --color-accent: #ca8a04;
 
-    --color-chemical-c: #1d4ed8;
-    --color-chemical-n: #7c3aed;
-    --color-chemical-d: #92570b; /* Darkened for 4.5:1 on #e5e7eb */
-    --color-chemical-q: #b91c1c;
+    --color-chemical-c: #0763d5; /* WCAG AA compliant - 4.52:1 on #e5e7eb */
+    --color-chemical-n: #8c1ff9; /* WCAG AA compliant - 4.61:1 on #e5e7eb */
+    --color-chemical-d: #7e6102; /* WCAG AA compliant - 4.71:1 on #e5e7eb */
+    --color-chemical-q: #d10a0a; /* WCAG AA compliant - 4.51:1 on #e5e7eb */
 
     --color-success: #15803d; /* Darker green for 4.5:1+ contrast on white/light gray */
     --color-error: #dc2626;

@@ -1,41 +1,54 @@
 <?php
 /**
- * Negotiation Manager
- * Handles private negotiations between teams
+ * Negotiation Manager - SQLite-based negotiation storage
+ *
+ * Handles private negotiations between teams using database storage.
+ * Migrated from file-based to SQLite for production scalability.
  */
 
+require_once __DIR__ . '/Database.php';
+
 class NegotiationManager {
-    private $dataDir;
+    private $db;
 
     public function __construct() {
-        $this->dataDir = __DIR__ . '/../data/negotiations';
-        $this->ensureDataDirExists();
-    }
-
-    private function ensureDataDirExists() {
-        if (!is_dir($this->dataDir)) {
-            mkdir($this->dataDir, 0755, true);
-        }
+        $this->db = Database::getInstance();
     }
 
     /**
      * Get all active negotiations for a team
      */
     public function getTeamNegotiations($teamEmail) {
-        $negotiations = [];
-        $files = glob($this->dataDir . '/negotiation_*.json');
+        $negotiations = $this->db->query(
+            'SELECT n.*, COUNT(o.id) as offer_count
+             FROM negotiations n
+             LEFT JOIN negotiation_offers o ON n.id = o.negotiation_id
+             WHERE (n.initiator_id = ? OR n.responder_id = ?)
+               AND n.status = ?
+             GROUP BY n.id
+             ORDER BY n.updated_at DESC',
+            [$teamEmail, $teamEmail, 'pending']
+        );
 
-        foreach ($files as $file) {
-            $data = json_decode(file_get_contents($file), true);
-
-            // Include if team is involved and negotiation is still active
-            if (($data['initiatorId'] === $teamEmail || $data['responderId'] === $teamEmail)
-                && $data['status'] === 'pending') {
-                $negotiations[] = $data;
-            }
+        // Fetch offers for each negotiation
+        foreach ($negotiations as &$neg) {
+            $neg['offers'] = $this->getNegotiationOffers($neg['id']);
         }
 
         return $negotiations;
+    }
+
+    /**
+     * Get offers for a negotiation
+     */
+    private function getNegotiationOffers($negotiationId) {
+        return $this->db->query(
+            'SELECT from_team_id, from_team_name, quantity, price, heat_is_hot, heat_total, created_at
+             FROM negotiation_offers
+             WHERE negotiation_id = ?
+             ORDER BY created_at ASC',
+            [$negotiationId]
+        );
     }
 
     /**
@@ -47,260 +60,324 @@ class NegotiationManager {
         $initiatorName = $initiatorName ?: $initiatorId;
         $responderName = $responderName ?: $responderId;
 
-        $offer = [
-            'fromTeamId' => $initiatorId,
-            'fromTeamName' => $initiatorName,
-            'quantity' => $initialOffer['quantity'],
-            'price' => $initialOffer['price'],
-            'createdAt' => time()
-        ];
+        // Calculate heat info
+        $heatIsHot = 0;
+        $heatTotal = 0;
 
-        // Add Heat Info
         try {
             require_once __DIR__ . '/TeamStorage.php';
             $iStorage = new TeamStorage($initiatorId);
             $rStorage = new TeamStorage($responderId);
             $iShadow = $iStorage->getShadowPrices()[$chemical] ?? 0;
             $rShadow = $rStorage->getShadowPrices()[$chemical] ?? 0;
-            
+
             // Determine who is buyer and who is seller
-            // $type is from initiator perspective
             $iIsBuyer = ($type === 'buy');
             $iGain = $iIsBuyer ? ($iShadow - $initialOffer['price']) : ($initialOffer['price'] - $iShadow);
             $rGain = $iIsBuyer ? ($initialOffer['price'] - $rShadow) : ($rShadow - $initialOffer['price']);
-            
-            $offer['heat'] = [
-                'isHot' => ($iGain > 0 && $rGain > 0),
-                'total' => ($iGain + $rGain) * $initialOffer['quantity']
-            ];
+
+            $heatIsHot = ($iGain > 0 && $rGain > 0) ? 1 : 0;
+            $heatTotal = ($iGain + $rGain) * $initialOffer['quantity'];
         } catch (Exception $e) {}
 
-        $negotiation = [
-            'id' => $negotiationId,
-            'chemical' => $chemical,
-            'type' => $type, // 'buy' or 'sell' from initiator perspective
-            'initiatorId' => $initiatorId,
-            'initiatorName' => $initiatorName,
-            'responderId' => $responderId,
-            'responderName' => $responderName,
-            'sessionNumber' => $sessionNumber,
-            'offers' => [$offer],
-            'status' => 'pending',
-            'lastOfferBy' => $initiatorId,
-            'createdAt' => time(),
-            'updatedAt' => time()
-        ];
-
-        $filePath = $this->dataDir . '/negotiation_' . $negotiationId . '.json';
-        file_put_contents($filePath, json_encode($negotiation, JSON_PRETTY_PRINT));
-
-        // Emit events to both parties
+        // Start transaction
+        $this->db->beginTransaction();
         try {
-            require_once __DIR__ . '/TeamStorage.php';
-            $iStorage = new TeamStorage($initiatorId);
-            $rStorage = new TeamStorage($responderId);
+            // Insert negotiation
+            $this->db->insert(
+                'INSERT INTO negotiations
+                 (id, chemical, type, initiator_id, initiator_name, responder_id, responder_name,
+                  session_number, status, last_offer_by)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $negotiationId,
+                    $chemical,
+                    $type,
+                    $initiatorId,
+                    $initiatorName,
+                    $responderId,
+                    $responderName,
+                    $sessionNumber,
+                    'pending',
+                    $initiatorId
+                ]
+            );
 
-            $iStorage->emitEvent('initiate_negotiation', [
-                'negotiationId' => $negotiationId,
-                'chemical' => $chemical,
-                'counterparty' => $responderId,
-                'role' => 'initiator'
-            ]);
-            $rStorage->emitEvent('initiate_negotiation', [
-                'negotiationId' => $negotiationId,
-                'chemical' => $chemical,
-                'counterparty' => $initiatorId,
-                'role' => 'responder'
-            ]);
-        } catch (Exception $e) {}
+            // Insert first offer
+            $this->db->insert(
+                'INSERT INTO negotiation_offers
+                 (negotiation_id, from_team_id, from_team_name, quantity, price, heat_is_hot, heat_total)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $negotiationId,
+                    $initiatorId,
+                    $initiatorName,
+                    $initialOffer['quantity'],
+                    $initialOffer['price'],
+                    $heatIsHot,
+                    $heatTotal
+                ]
+            );
 
-        return $negotiation;
+            // Emit events to both parties
+            try {
+                require_once __DIR__ . '/TeamStorage.php';
+                $iStorage = new TeamStorage($initiatorId);
+                $rStorage = new TeamStorage($responderId);
+
+                $iStorage->emitEvent('initiate_negotiation', [
+                    'negotiationId' => $negotiationId,
+                    'chemical' => $chemical,
+                    'counterparty' => $responderId,
+                    'role' => 'initiator'
+                ]);
+                $rStorage->emitEvent('initiate_negotiation', [
+                    'negotiationId' => $negotiationId,
+                    'chemical' => $chemical,
+                    'counterparty' => $initiatorId,
+                    'role' => 'responder'
+                ]);
+            } catch (Exception $e) {}
+
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+
+        return $this->getNegotiation($negotiationId);
     }
 
     /**
      * Get negotiation by ID
      */
     public function getNegotiation($negotiationId) {
-        $filePath = $this->dataDir . '/negotiation_' . $negotiationId . '.json';
+        $negotiation = $this->db->queryOne(
+            'SELECT * FROM negotiations WHERE id = ?',
+            [$negotiationId]
+        );
 
-        if (!file_exists($filePath)) {
+        if (!$negotiation) {
             return null;
         }
 
-        return json_decode(file_get_contents($filePath), true);
+        // Fetch offers
+        $negotiation['offers'] = $this->getNegotiationOffers($negotiationId);
+
+        return $negotiation;
     }
 
     /**
      * Add counter-offer to negotiation
      */
     public function addCounterOffer($negotiationId, $fromTeamId, $fromTeamName, $quantity, $price) {
-        $filePath = $this->dataDir . '/negotiation_' . $negotiationId . '.json';
+        $negotiation = $this->getNegotiation($negotiationId);
 
-        if (!file_exists($filePath)) {
+        if (!$negotiation) {
             throw new Exception('Negotiation not found');
         }
 
-        $negotiation = json_decode(file_get_contents($filePath), true);
-
         // Verify team is part of this negotiation
-        if ($fromTeamId !== $negotiation['initiatorId'] && $fromTeamId !== $negotiation['responderId']) {
+        if ($fromTeamId !== $negotiation['initiator_id'] && $fromTeamId !== $negotiation['responder_id']) {
             throw new Exception('Unauthorized');
         }
 
         // Verify it's their turn (can't counter your own offer)
-        if ($negotiation['lastOfferBy'] === $fromTeamId) {
+        if ($negotiation['last_offer_by'] === $fromTeamId) {
             throw new Exception('Wait for other team to respond');
         }
 
-        $offer = [
-            'fromTeamId' => $fromTeamId,
-            'fromTeamName' => $fromTeamName,
-            'quantity' => $quantity,
-            'price' => $price,
-            'createdAt' => time()
-        ];
+        // Calculate heat info
+        $heatIsHot = 0;
+        $heatTotal = 0;
 
-        // Add Heat Info
         try {
             require_once __DIR__ . '/TeamStorage.php';
-            $iStorage = new TeamStorage($negotiation['initiatorId']);
-            $rStorage = new TeamStorage($negotiation['responderId']);
+            $iStorage = new TeamStorage($negotiation['initiator_id']);
+            $rStorage = new TeamStorage($negotiation['responder_id']);
             $iShadow = $iStorage->getShadowPrices()[$negotiation['chemical']] ?? 0;
             $rShadow = $rStorage->getShadowPrices()[$negotiation['chemical']] ?? 0;
-            
+
             $iIsBuyer = ($negotiation['type'] === 'buy');
             $iGain = $iIsBuyer ? ($iShadow - $price) : ($price - $iShadow);
             $rGain = $iIsBuyer ? ($price - $rShadow) : ($rShadow - $price);
-            
-            $offer['heat'] = [
-                'isHot' => ($iGain > 0 && $rGain > 0),
-                'total' => ($iGain + $rGain) * $quantity
-            ];
+
+            $heatIsHot = ($iGain > 0 && $rGain > 0) ? 1 : 0;
+            $heatTotal = ($iGain + $rGain) * $quantity;
         } catch (Exception $e) {}
 
-        $negotiation['offers'][] = $offer;
-
-        $negotiation['lastOfferBy'] = $fromTeamId;
-        $negotiation['updatedAt'] = time();
-
-        file_put_contents($filePath, json_encode($negotiation, JSON_PRETTY_PRINT));
-
-        // Emit events to both parties
+        // Start transaction
+        $this->db->beginTransaction();
         try {
-            $otherTeamId = ($fromTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
-            $fromStorage = new TeamStorage($fromTeamId);
-            $otherStorage = new TeamStorage($otherTeamId);
-            
-            $fromStorage->emitEvent('add_counter_offer', [
-                'negotiationId' => $negotiationId,
-                'isFromMe' => true,
-                'offer' => $offer
-            ]);
-            $otherStorage->emitEvent('add_counter_offer', [
-                'negotiationId' => $negotiationId,
-                'isFromMe' => false,
-                'offer' => $offer
-            ]);
-        } catch (Exception $e) {}
+            // Insert offer
+            $this->db->insert(
+                'INSERT INTO negotiation_offers
+                 (negotiation_id, from_team_id, from_team_name, quantity, price, heat_is_hot, heat_total)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $negotiationId,
+                    $fromTeamId,
+                    $fromTeamName,
+                    $quantity,
+                    $price,
+                    $heatIsHot,
+                    $heatTotal
+                ]
+            );
 
-        return $negotiation;
+            // Update negotiation
+            $this->db->execute(
+                'UPDATE negotiations
+                 SET last_offer_by = ?, updated_at = ?
+                 WHERE id = ?',
+                [$fromTeamId, time(), $negotiationId]
+            );
+
+            // Emit events to both parties
+            try {
+                $otherTeamId = ($fromTeamId === $negotiation['initiator_id']) ? $negotiation['responder_id'] : $negotiation['initiator_id'];
+                $fromStorage = new TeamStorage($fromTeamId);
+                $otherStorage = new TeamStorage($otherTeamId);
+
+                $offerData = [
+                    'from_team_id' => $fromTeamId,
+                    'from_team_name' => $fromTeamName,
+                    'quantity' => $quantity,
+                    'price' => $price,
+                    'heat' => [
+                        'isHot' => (bool)$heatIsHot,
+                        'total' => $heatTotal
+                    ]
+                ];
+
+                $fromStorage->emitEvent('add_counter_offer', [
+                    'negotiationId' => $negotiationId,
+                    'isFromMe' => true,
+                    'offer' => $offerData
+                ]);
+                $otherStorage->emitEvent('add_counter_offer', [
+                    'negotiationId' => $negotiationId,
+                    'isFromMe' => false,
+                    'offer' => $offerData
+                ]);
+            } catch (Exception $e) {}
+
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+
+        return $this->getNegotiation($negotiationId);
     }
 
     /**
      * Accept negotiation (execute trade)
      */
     public function acceptNegotiation($negotiationId, $acceptingTeamId) {
-        $filePath = $this->dataDir . '/negotiation_' . $negotiationId . '.json';
+        $negotiation = $this->getNegotiation($negotiationId);
 
-        if (!file_exists($filePath)) {
+        if (!$negotiation) {
             throw new Exception('Negotiation not found');
         }
 
-        $negotiation = json_decode(file_get_contents($filePath), true);
-
         // Verify team is part of this negotiation
-        if ($acceptingTeamId !== $negotiation['initiatorId'] && $acceptingTeamId !== $negotiation['responderId']) {
+        if ($acceptingTeamId !== $negotiation['initiator_id'] && $acceptingTeamId !== $negotiation['responder_id']) {
             throw new Exception('Unauthorized');
         }
 
         // Verify it's their turn (can only accept other team's offer)
-        if ($negotiation['lastOfferBy'] === $acceptingTeamId) {
+        if ($negotiation['last_offer_by'] === $acceptingTeamId) {
             throw new Exception('Cannot accept your own offer');
         }
 
-        $negotiation['status'] = 'accepted';
-        $negotiation['acceptedBy'] = $acceptingTeamId;
-        $negotiation['acceptedAt'] = time();
-        $negotiation['updatedAt'] = time();
-
-        file_put_contents($filePath, json_encode($negotiation, JSON_PRETTY_PRINT));
-
-        // Emit events to both parties
+        // Start transaction
+        $this->db->beginTransaction();
         try {
-            $otherTeamId = ($acceptingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
-            $aStorage = new TeamStorage($acceptingTeamId);
-            $oStorage = new TeamStorage($otherTeamId);
-            
-            $aStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
-            $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
-        } catch (Exception $e) {}
+            // Update negotiation
+            $this->db->execute(
+                'UPDATE negotiations
+                 SET status = ?, accepted_by = ?, accepted_at = ?, updated_at = ?
+                 WHERE id = ?',
+                ['accepted', $acceptingTeamId, time(), time(), $negotiationId]
+            );
 
-        return $negotiation;
+            // Emit events to both parties
+            try {
+                $otherTeamId = ($acceptingTeamId === $negotiation['initiator_id']) ? $negotiation['responder_id'] : $negotiation['initiator_id'];
+                $aStorage = new TeamStorage($acceptingTeamId);
+                $oStorage = new TeamStorage($otherTeamId);
+
+                $aStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
+                $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
+            } catch (Exception $e) {}
+
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+
+        return $this->getNegotiation($negotiationId);
     }
 
     /**
      * Reject/Cancel negotiation
      */
     public function rejectNegotiation($negotiationId, $rejectingTeamId) {
-        $filePath = $this->dataDir . '/negotiation_' . $negotiationId . '.json';
+        $negotiation = $this->getNegotiation($negotiationId);
 
-        if (!file_exists($filePath)) {
+        if (!$negotiation) {
             throw new Exception('Negotiation not found');
         }
 
-        $negotiation = json_decode(file_get_contents($filePath), true);
-
         // Verify team is part of this negotiation
-        if ($rejectingTeamId !== $negotiation['initiatorId'] && $rejectingTeamId !== $negotiation['responderId']) {
+        if ($rejectingTeamId !== $negotiation['initiator_id'] && $rejectingTeamId !== $negotiation['responder_id']) {
             throw new Exception('Unauthorized');
         }
 
-        $negotiation['status'] = 'rejected';
-        $negotiation['rejectedBy'] = $rejectingTeamId;
-        $negotiation['rejectedAt'] = time();
-        $negotiation['updatedAt'] = time();
-
-        file_put_contents($filePath, json_encode($negotiation, JSON_PRETTY_PRINT));
-
-        // Emit events to both parties
+        // Start transaction
+        $this->db->beginTransaction();
         try {
-            $otherTeamId = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
-            $rStorage = new TeamStorage($rejectingTeamId);
-            $oStorage = new TeamStorage($otherTeamId);
-            
-            $rStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
-            $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
-        } catch (Exception $e) {}
+            // Update negotiation
+            $this->db->execute(
+                'UPDATE negotiations
+                 SET status = ?, rejected_by = ?, rejected_at = ?, updated_at = ?
+                 WHERE id = ?',
+                ['rejected', $rejectingTeamId, time(), time(), $negotiationId]
+            );
 
-        return $negotiation;
+            // Emit events to both parties
+            try {
+                $otherTeamId = ($rejectingTeamId === $negotiation['initiator_id']) ? $negotiation['responder_id'] : $negotiation['initiator_id'];
+                $rStorage = new TeamStorage($rejectingTeamId);
+                $oStorage = new TeamStorage($otherTeamId);
+
+                $rStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
+                $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
+            } catch (Exception $e) {}
+
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+
+        return $this->getNegotiation($negotiationId);
     }
 
     /**
      * Clean up old negotiations (optional - for maintenance)
      */
     public function cleanupOldNegotiations($olderThanDays = 7) {
-        $files = glob($this->dataDir . '/negotiation_*.json');
         $cutoffTime = time() - ($olderThanDays * 24 * 60 * 60);
-        $deleted = 0;
 
-        foreach ($files as $file) {
-            $data = json_decode(file_get_contents($file), true);
-
-            if ($data['updatedAt'] < $cutoffTime && in_array($data['status'], ['accepted', 'rejected'])) {
-                unlink($file);
-                $deleted++;
-            }
-        }
+        $deleted = $this->db->execute(
+            'DELETE FROM negotiations
+             WHERE updated_at < ?
+               AND status IN (?, ?)',
+            [$cutoffTime, 'accepted', 'rejected']
+        );
 
         return $deleted;
     }

@@ -116,4 +116,30 @@ To ensure the system handles polling efficiently (~100 users):
   enforced by the 'eppn' derived from the Shibboleth session.
 - Users cannot overwrite other users' files because the file path 
   is constructed strictly from the validated session variable.
+
+6. THE SHUT-IN & THE WORLD TURNER (OPTIMIZED FLOW)
+To solve performance bottlenecks (O(N) scanning per user), we adopt the 
+"Shut-In" model for users and a "World Turner" role for the Admin.
+
+A. The "Shut-In" (User)
+The user is like a shut-in who never leaves their room (directory).
+- **View:** They verify ONLY their own state (`data/teams/<eppn>/`) and a 
+  cached "Window to the World" (`data/public_market_snapshot.json`).
+- **Action:** They never calculate the world state. They push "Intention Slips" 
+  (Event JSONs) under the door into the hallway (Shared Event Log).
+- **Delivery:** Results (Profit, Production) are slid under their door 
+  by the World Turner.
+
+B. The "World Turner" (Admin/Cron)
+A special, singleton process that makes the world spin.
+- **Responsibility:**
+  1.  **Aggregates:** Scans the hallway (Shared Events), builds the 
+      `public_market_snapshot.json`, and updates `market_stats.json`.
+  2.  **Executes:** Matches trades if clearing logic is centralized.
+  3.  **Produces:** When the session timer expires, IT runs the `LPSolver` 
+      for everyone and deposits "Production Result" events into user folders.
+  4.  **Advances:** Updates `session_state.json`.
+
+This ensures that 100 users hitting the site results in 100 simple 
+JSON reads, not 100 global directory scans.
 ================================================================

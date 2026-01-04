@@ -1,8 +1,8 @@
 /**
- * Comprehensive CNDQ Game Loop Test (Full Playability Demo with Atomic Verification)
- * 
+ * Comprehensive CNDQ Game Loop Test (SQLite Version)
+ *
  * Verifies the social loop (RPC vs RPC) and PvE loop (RPC vs NPC)
- * with real-time filesystem checks.
+ * with SQLite database verification.
  */
 
 const fs = require('fs');
@@ -14,7 +14,7 @@ const NpcHelper = require('./helpers/npc');
 const ReportingHelper = require('./helpers/reporting');
 const { execSync } = require('child_process');
 
-// Path to SQLite database for verification
+// Path to database for verification
 const DB_PATH = path.resolve(__dirname, '../data/cndq.db');
 
 // Configuration
@@ -30,9 +30,9 @@ const CONFIG = {
 };
 
 /**
- * Atomic Verification Helper: Check if a specific event type exists in SQLite database for a team.
+ * SQLite Verification Helper: Check if a specific event type exists in database for a team.
  */
-function verifyOnDisk(email, eventType) {
+function verifyInDatabase(email, eventType) {
     if (!fs.existsSync(DB_PATH)) {
         console.log(`      ⚠️ [DB-CHECK] Database not found: ${DB_PATH}`);
         return false;
@@ -61,9 +61,9 @@ function verifyOnDisk(email, eventType) {
 }
 
 async function runComprehensiveTest() {
-    ReportingHelper.printHeader('CNDQ Atomic Playability Demo');
+    ReportingHelper.printHeader('CNDQ Atomic Playability Demo (SQLite)');
     ReportingHelper.printInfo(`Teams: 2 | NPCs: 1 | Sessions: ${CONFIG.targetSessions}`);
-    
+
     const browser = new BrowserHelper(CONFIG);
     const session = new SessionHelper(browser);
     const team = new TeamHelper(browser);
@@ -103,13 +103,13 @@ async function runComprehensiveTest() {
         // --- STEP 1: SETUP ---
         ReportingHelper.printStep(1, 'Resetting game and initializing teams');
         await session.resetGame();
-        
+
         for (const email of CONFIG.teams) {
             const page = await browser.newPage();
             await loginAs(page, email);
             await page.close();
             await new Promise(r => setTimeout(r, 500)); // Give DB time to write
-            verifyOnDisk(email, 'init');
+            verifyInDatabase(email, 'init');
         }
 
         const adminPage = await browser.newPage();
@@ -139,8 +139,8 @@ async function runComprehensiveTest() {
             const shadowsA = await team.getShadowPrices(pageA);
             await team.postBuyRequest(pageA, 'D', shadowsA['D'] || 10);
             await pageA.close();
-            await new Promise(r => setTimeout(r, 500)); // Give DB time to write
-            verifyOnDisk(CONFIG.teams[0], 'add_buy_order');
+            await new Promise(r => setTimeout(r, 500));
+            verifyInDatabase(CONFIG.teams[0], 'add_buy_order');
 
             console.log(`   - [Session ${s}] Player Beta responding to Alpha...`);
             const pageB = await browser.newPage();
@@ -148,8 +148,8 @@ async function runComprehensiveTest() {
             const buyAd = await team.findBuyer(pageB, 'D');
             if (buyAd) {
                 await team.respondToBuyRequest(pageB, buyAd, 'D', 5.00, 1000);
-                await new Promise(r => setTimeout(r, 500)); // Give DB time to write
-                verifyOnDisk(CONFIG.teams[1], 'initiate_negotiation');
+                await new Promise(r => setTimeout(r, 500));
+                verifyInDatabase(CONFIG.teams[1], 'initiate_negotiation');
             }
             await pageB.close();
 
@@ -164,8 +164,8 @@ async function runComprehensiveTest() {
             const res = await team.respondToNegotiations(pageA2, shadowsA2, 1.0);
             if (res && res.action === 'accepted') {
                 console.log(`      ✓ Alpha accepted trade for ${res.chemical}`);
-                await new Promise(r => setTimeout(r, 500)); // Give DB time to write
-                verifyOnDisk(CONFIG.teams[0], 'close_negotiation');
+                await new Promise(r => setTimeout(r, 500));
+                verifyInDatabase(CONFIG.teams[0], 'close_negotiation');
             }
             await pageA2.close();
 
@@ -173,16 +173,17 @@ async function runComprehensiveTest() {
             ReportingHelper.printSection('⚙️', `[Session ${s}] Settling and leaderboard...`);
             await triggerSync();
             runNpcHeartbeat();
-            await new Promise(r => setTimeout(r, 5000)); 
-            
+            await new Promise(r => setTimeout(r, 5000));
+
             const standings = await team.getLeaderboard();
             ReportingHelper.printLeaderboard(standings, s);
         }
 
-        ReportingHelper.printSuccess('\n✨ Atomic Demo Complete!');
+        ReportingHelper.printSuccess('\n✨ SQLite Demo Complete!');
 
     } catch (error) {
         ReportingHelper.printError(`Test failed: ${error.message}`);
+        console.error(error.stack);
     } finally {
         await browser.close();
     }

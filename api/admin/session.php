@@ -17,6 +17,11 @@ try {
         // Get current session state (public - triggers auto-advance if enabled)
         $state = $sessionManager->getState();
 
+        // Auto-advance if time expired and auto-advance is enabled
+        if (($state['autoAdvance'] ?? false) && ($state['timeRemaining'] ?? 0) <= 0) {
+            $state = $sessionManager->advanceSession();
+        }
+
         echo json_encode([
             'success' => true,
             'session' => $state

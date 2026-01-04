@@ -1,18 +1,20 @@
 <?php
 /**
- * TeamStorage - Manages all file operations for a single team.
- * Refactored to adhere to No-M (Filesystem-as-State) philosophy.
+ * TeamStorage - SQLite-based storage for team events and state
+ *
+ * Migrated from file-based to SQLite for production scalability.
+ * Maintains same public API for backward compatibility.
  */
 
+require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/NoM/Aggregator.php';
 require_once __DIR__ . '/TeamNameGenerator.php';
 
 class TeamStorage {
     private $teamEmail;
-    private $teamDir;
     private $safeEmail;
-    private $cacheFile;
     private $teamName;
+    private $db;
 
     /**
      * Initialize storage for a specific team
@@ -21,9 +23,8 @@ class TeamStorage {
     public function __construct($email) {
         $this->teamEmail = $email;
         $this->safeEmail = $this->sanitizeEmail($email);
-        $this->teamDir = __DIR__ . '/../data/teams/' . $this->safeEmail;
-        $this->cacheFile = $this->teamDir . '/cached_state.json';
-        $this->ensureDirectoryStructure();
+        $this->db = Database::getInstance();
+        $this->ensureTeamInitialized();
     }
 
     /**
@@ -37,113 +38,142 @@ class TeamStorage {
     }
 
     /**
-     * Sanitize email for safe filesystem usage
+     * Sanitize email for safe usage
      */
     public static function sanitizeEmail($email) {
         return preg_replace('/[^a-zA-Z0-9_\-@.]/', '_', $email);
     }
 
     /**
-     * Create team directory and emit initial event if new
+     * Check if team exists, initialize if new
      */
-    private function ensureDirectoryStructure() {
-        if (!is_dir($this->teamDir)) {
-            if (!mkdir($this->teamDir, 0755, true)) {
-                throw new \Exception("Failed to create team directory: {$this->teamDir}");
-            }
-            
-            $this->teamName = TeamNameGenerator::generate($this->teamEmail);
-            
-            $timestamp = microtime(true);
-            $filename = "event_" . sprintf('%0.6f', $timestamp) . "_init.json";
-            
-            $event = [
-                'type' => 'init',
-                'payload' => [
-                    'profile' => [
-                        'email' => $this->teamEmail,
-                        'teamName' => $this->teamName,
-                        'createdAt' => time(),
-                        'currentFunds' => 0,
-                        'startingFunds' => 0
-                    ],
-                    'inventory' => [
-                        'C' => round(rand(500, 2000), 4),
-                        'N' => round(rand(500, 2000), 4),
-                        'D' => round(rand(500, 2000), 4),
-                        'Q' => round(rand(500, 2000), 4)
-                    ],
-                    'shadowPrices' => [
-                        'C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0
-                    ]
-                ],
-                'timestamp' => $timestamp,
-                'teamId' => $this->teamEmail,
-                'teamName' => $this->teamName
-            ];
+    private function ensureTeamInitialized() {
+        // Check if team has any events
+        $existing = $this->db->queryOne(
+            'SELECT id FROM team_events WHERE team_email = ? LIMIT 1',
+            [$this->teamEmail]
+        );
 
-            file_put_contents($this->teamDir . '/' . $filename, json_encode($event, JSON_PRETTY_PRINT));
-
-            $this->runAutomaticFirstProduction();
+        if (!$existing) {
+            $this->initializeNewTeam();
         }
     }
 
     /**
-     * Emit an event (Atomic Write)
+     * Initialize a new team with starting inventory
+     */
+    private function initializeNewTeam() {
+        $this->teamName = TeamNameGenerator::generate($this->teamEmail);
+
+        $timestamp = microtime(true);
+
+        $event = [
+            'type' => 'init',
+            'payload' => [
+                'profile' => [
+                    'email' => $this->teamEmail,
+                    'teamName' => $this->teamName,
+                    'createdAt' => time(),
+                    'currentFunds' => 0,
+                    'startingFunds' => 0
+                ],
+                'inventory' => [
+                    'C' => round(rand(500, 2000), 4),
+                    'N' => round(rand(500, 2000), 4),
+                    'D' => round(rand(500, 2000), 4),
+                    'Q' => round(rand(500, 2000), 4)
+                ],
+                'shadowPrices' => [
+                    'C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0
+                ]
+            ],
+            'timestamp' => $timestamp,
+            'teamId' => $this->teamEmail,
+            'teamName' => $this->teamName
+        ];
+
+        $this->db->insert(
+            'INSERT INTO team_events (team_email, team_name, event_type, payload, timestamp)
+             VALUES (?, ?, ?, ?, ?)',
+            [
+                $this->teamEmail,
+                $this->teamName,
+                'init',
+                json_encode($event['payload']),
+                $timestamp
+            ]
+        );
+
+        $this->runAutomaticFirstProduction();
+    }
+
+    /**
+     * Emit an event - core write operation
      */
     public function emitEvent(string $type, array $payload) {
-        // Micro-sleep to ensure unique timestamp and allow FS to breathe
-        usleep(50000); 
-        clearstatcache(true);
+        // Small delay to ensure unique timestamps
+        usleep(50000);
+
         $timestamp = microtime(true);
+        $teamName = $this->teamName ?? $this->getTeamName();
+
         $event = [
             'type' => $type,
             'payload' => $payload,
             'timestamp' => $timestamp,
             'teamId' => $this->teamEmail,
-            'teamName' => $this->teamName ?? ($type === 'init' ? $payload['profile']['teamName'] : $this->getTeamName())
+            'teamName' => $teamName
         ];
 
-        $jsonData = json_encode($event, JSON_PRETTY_PRINT);
-        // Use high-precision timestamp to ensure order and uniqueness
-        $filename = "event_" . sprintf('%0.6f', $timestamp) . "_" . $type . ".json";
-        
-        $tmp = tempnam($this->teamDir, 'tmp_');
-        if (file_put_contents($tmp, $jsonData) === false) {
-            throw new Exception("Failed to write temporary event file");
-        }
-        
-        // --- NEW: Shared Event Log for fast global querying ---
-        $sharedTypes = ['add_offer', 'remove_offer', 'update_offer', 'add_buy_order', 'remove_buy_order', 'update_buy_order', 'add_ad', 'remove_ad'];
-        if (in_array($type, $sharedTypes)) {
-            $sharedDir = __DIR__ . '/../data/marketplace/events';
-            if (!is_dir($sharedDir)) {
-                mkdir($sharedDir, 0755, true);
-            }
-            
-            // Explicitly inject teamName into payload for the shared log
-            $event['payload']['teamName'] = $this->getTeamName();
-            $sharedJsonData = json_encode($event, JSON_PRETTY_PRINT);
-            file_put_contents($sharedDir . '/' . $filename, $sharedJsonData);
-            
-            // On Windows, a small delay helps ensure the file is visible to other processes
-            usleep(100000); // 100ms
-        }
+        // Start transaction for atomic write
+        $this->db->beginTransaction();
+        try {
+            // Insert team event
+            $this->db->insert(
+                'INSERT INTO team_events (team_email, team_name, event_type, payload, timestamp)
+                 VALUES (?, ?, ?, ?, ?)',
+                [
+                    $this->teamEmail,
+                    $teamName,
+                    $type,
+                    json_encode($payload),
+                    $timestamp
+                ]
+            );
 
-        if (!@rename($tmp, $this->teamDir . '/' . $filename)) {
-            // Fallback for Windows file locks
-            if (@copy($tmp, $this->teamDir . '/' . $filename)) {
-                @unlink($tmp);
-            } else {
-                $err = error_get_last();
-                error_log("TeamStorage: Critical write failure for $filename: " . ($err['message'] ?? 'Unknown error'));
-                @unlink($tmp);
-            }
-        }
+            // If this is a marketplace event, also insert into marketplace_events
+            $marketplaceTypes = ['add_offer', 'remove_offer', 'update_offer',
+                               'add_buy_order', 'remove_buy_order', 'update_buy_order',
+                               'add_ad', 'remove_ad'];
 
-        // Invalidate cache by deleting it or updating its mtime to be old
-        if (file_exists($this->cacheFile)) {
-            @unlink($this->cacheFile);
+            if (in_array($type, $marketplaceTypes)) {
+                // Ensure teamName is in payload for marketplace
+                $event['payload']['teamName'] = $teamName;
+
+                $this->db->insert(
+                    'INSERT INTO marketplace_events (team_email, team_name, event_type, payload, timestamp)
+                     VALUES (?, ?, ?, ?, ?)',
+                    [
+                        $this->teamEmail,
+                        $teamName,
+                        $type,
+                        json_encode($event['payload']),
+                        $timestamp
+                    ]
+                );
+            }
+
+            // Invalidate cache
+            $this->db->execute(
+                'DELETE FROM team_state_cache WHERE team_email = ?',
+                [$this->teamEmail]
+            );
+
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollback();
+            error_log("TeamStorage: Failed to emit event '$type' for {$this->teamEmail}: " . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -151,45 +181,223 @@ class TeamStorage {
      * Get the current state (Aggregated and Cached)
      */
     public function getState(): array {
-        clearstatcache(true);
-        // State Caching: Compare mtime of newest event with mtime of cached_state.json
-        $cacheMtime = file_exists($this->cacheFile) ? filemtime($this->cacheFile) : 0;
-        
-        // Find newest event file
-        $events = glob($this->teamDir . '/event_*.json');
-        $newestEventMtime = 0;
-        if (!empty($events)) {
-            // We only need the latest one, and since they are named with timestamps,
-            // the last one in the sorted list is usually the newest.
-            sort($events);
-            $newestEventMtime = filemtime(end($events));
-        }
+        // Try to get cached state
+        $cached = $this->db->queryOne(
+            'SELECT state, last_event_id, events_processed FROM team_state_cache WHERE team_email = ?',
+            [$this->teamEmail]
+        );
 
-        if ($cacheMtime > $newestEventMtime && $cacheMtime > 0) {
-            $content = file_get_contents($this->cacheFile);
-            $cached = json_decode($content, true);
-            if (is_array($cached) && isset($cached['profile'])) {
-                // error_log("TeamStorage [{$this->teamEmail}]: Using cached state.");
-                return $cached;
+        // Check if cache is still valid
+        if ($cached) {
+            $lastEventInDb = $this->db->queryOne(
+                'SELECT id FROM team_events WHERE team_email = ? ORDER BY id DESC LIMIT 1',
+                [$this->teamEmail]
+            );
+
+            if ($lastEventInDb && $lastEventInDb['id'] == $cached['last_event_id']) {
+                // Cache is valid
+                $state = json_decode($cached['state'], true);
+                $state['eventsProcessed'] = $cached['events_processed'];
+                return $state;
             }
         }
 
-        // Aggregate state from legacy files and events
-        $state = \NoM\Aggregator::aggregate($this->teamDir);
-        
-        // Save to cache
-        $tmp = tempnam($this->teamDir, 'tmp_cache_');
-        file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT));
-        
-        // Use @ to suppress permission denied warnings on Windows if file is locked
-        if (!@rename($tmp, $this->cacheFile)) {
-            @unlink($tmp);
-        }
+        // Cache miss or invalid - aggregate from events
+        $state = $this->aggregateStateFromEvents();
 
-        // Check if we should create a snapshot (e.g. every 50 events)
+        // Get last event ID for cache validation
+        $lastEvent = $this->db->queryOne(
+            'SELECT id FROM team_events WHERE team_email = ? ORDER BY id DESC LIMIT 1',
+            [$this->teamEmail]
+        );
+
+        // Save to cache
+        $this->db->execute(
+            'INSERT OR REPLACE INTO team_state_cache (team_email, state, last_event_id, events_processed, updated_at)
+             VALUES (?, ?, ?, ?, ?)',
+            [
+                $this->teamEmail,
+                json_encode($state),
+                $lastEvent['id'] ?? null,
+                $state['eventsProcessed'],
+                time()
+            ]
+        );
+
+        // Check if we should create a snapshot (every 50 events)
         $eventsSinceSnapshot = $state['eventsProcessed'] - ($state['snapshotEvents'] ?? 0);
         if ($eventsSinceSnapshot >= 50) {
             $this->createSnapshot($state);
+        }
+
+        return $state;
+    }
+
+    /**
+     * Aggregate state from all events
+     */
+    private function aggregateStateFromEvents(): array {
+        // Check for latest snapshot to start from
+        $snapshot = $this->db->queryOne(
+            'SELECT state, event_count FROM team_snapshots
+             WHERE team_email = ?
+             ORDER BY created_at DESC LIMIT 1',
+            [$this->teamEmail]
+        );
+
+        if ($snapshot) {
+            $state = json_decode($snapshot['state'], true);
+            $state['snapshotEvents'] = $snapshot['event_count'];
+            $startEventId = $snapshot['event_count'];
+        } else {
+            // Start with empty state
+            $state = [
+                'profile' => [
+                    'email' => $this->teamEmail,
+                    'teamName' => $this->teamEmail,
+                    'currentFunds' => 0,
+                    'startingFunds' => 0,
+                    'settings' => []
+                ],
+                'inventory' => ['C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0],
+                'shadowPrices' => ['C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0],
+                'offers' => [],
+                'buyOrders' => [],
+                'transactions' => [],
+                'notifications' => [],
+                'ads' => [],
+                'productions' => [],
+                'session' => [],  // For system team
+                'snapshotEvents' => 0
+            ];
+            $startEventId = 0;
+        }
+
+        // Get all events since snapshot (or all if no snapshot)
+        $events = $this->db->query(
+            'SELECT event_type, payload, timestamp
+             FROM team_events
+             WHERE team_email = ?
+             ORDER BY timestamp ASC',
+            [$this->teamEmail]
+        );
+
+        $state['eventsProcessed'] = count($events);
+
+        // Apply events using the NoM Aggregator logic
+        foreach ($events as $event) {
+            $state = $this->applyEvent($state, $event['event_type'], json_decode($event['payload'], true));
+        }
+
+        return $state;
+    }
+
+    /**
+     * Apply a single event to state (uses NoM Aggregator logic)
+     */
+    private function applyEvent(array $state, string $type, array $payload): array {
+        // This mirrors the logic from NoM\Aggregator::aggregate()
+        switch ($type) {
+            case 'init':
+                if (isset($payload['profile'])) $state['profile'] = array_merge($state['profile'], $payload['profile']);
+                if (isset($payload['inventory'])) $state['inventory'] = $payload['inventory'];
+                if (isset($payload['shadowPrices'])) $state['shadowPrices'] = $payload['shadowPrices'];
+                break;
+
+            case 'update_profile':
+                $state['profile'] = array_merge($state['profile'], $payload);
+                break;
+
+            case 'set_funds':
+                $state['profile']['currentFunds'] = $payload['amount'];
+                if ($payload['is_starting'] ?? false) {
+                    $state['profile']['startingFunds'] = $payload['amount'];
+                }
+                break;
+
+            case 'adjust_funds':
+                $state['profile']['currentFunds'] = ($state['profile']['currentFunds'] ?? 0) + $payload['amount'];
+                break;
+
+            case 'adjust_chemical':
+                $chem = $payload['chemical'];
+                $state['inventory'][$chem] = ($state['inventory'][$chem] ?? 0) + $payload['amount'];
+                break;
+
+            case 'update_shadow_prices':
+                $state['shadowPrices'] = $payload;
+                break;
+
+            case 'add_offer':
+                $state['offers'][] = $payload;
+                break;
+
+            case 'remove_offer':
+                $state['offers'] = array_values(array_filter($state['offers'], fn($o) => $o['id'] !== $payload['id']));
+                break;
+
+            case 'update_offer':
+                foreach ($state['offers'] as &$offer) {
+                    if ($offer['id'] === $payload['id']) {
+                        $offer = array_merge($offer, $payload['updates']);
+                    }
+                }
+                break;
+
+            case 'add_buy_order':
+                $state['buyOrders'][] = $payload;
+                break;
+
+            case 'remove_buy_order':
+                $state['buyOrders'] = array_values(array_filter($state['buyOrders'], fn($o) => $o['id'] !== $payload['id']));
+                break;
+
+            case 'update_buy_order':
+                foreach ($state['buyOrders'] as &$order) {
+                    if ($order['id'] === $payload['id']) {
+                        $order = array_merge($order, $payload['updates']);
+                    }
+                }
+                break;
+
+            case 'add_transaction':
+                $state['transactions'][] = $payload;
+                break;
+
+            case 'add_notification':
+                $state['notifications'][] = $payload;
+                break;
+
+            case 'mark_notifications_read':
+                if ($payload['ids'] === null) {
+                    foreach ($state['notifications'] as &$notif) {
+                        $notif['read'] = true;
+                    }
+                } else {
+                    foreach ($state['notifications'] as &$notif) {
+                        if (in_array($notif['id'], $payload['ids'])) {
+                            $notif['read'] = true;
+                        }
+                    }
+                }
+                break;
+
+            case 'add_ad':
+                $state['ads'][] = $payload;
+                break;
+
+            case 'remove_ad':
+                $state['ads'] = array_values(array_filter($state['ads'], fn($a) => $a['id'] !== $payload['id']));
+                break;
+
+            case 'add_production':
+                $state['productions'][] = $payload;
+                break;
+
+            case 'update_session':
+                // Merge session data (for system team)
+                $state['session'] = array_merge($state['session'] ?? [], $payload);
+                break;
         }
 
         return $state;
@@ -201,16 +409,16 @@ class TeamStorage {
     private function createSnapshot(array $state) {
         $state['snapshotEvents'] = $state['eventsProcessed'];
         $state['snapshotAt'] = time();
-        
-        $snapshotFile = $this->teamDir . '/snapshot.json';
-        $tmp = tempnam($this->teamDir, 'tmp_snap_');
-        file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT));
-        if (!@rename($tmp, $snapshotFile)) {
-            @unlink($tmp);
-        }
-        
-        // Optional: Clean up old event files that are now in the snapshot
-        // (Be careful with this in a real audit log system, maybe move to 'archive/' instead)
+
+        $this->db->insert(
+            'INSERT INTO team_snapshots (team_email, state, event_count)
+             VALUES (?, ?, ?)',
+            [
+                $this->teamEmail,
+                json_encode($state),
+                $state['eventsProcessed']
+            ]
+        );
     }
 
     /**
@@ -238,8 +446,10 @@ class TeamStorage {
             $this->adjustChemical($chem, -$amount);
         }
 
-        // --- FIXED: The first production establishes the baseline ---
-        $this->setFunds($revenue, true);
+        // Set starting funds to 0, then current funds to revenue
+        // This shows immediate ROI from first production
+        $this->emitEvent('set_funds', ['amount' => 0, 'is_starting' => true]);
+        $this->emitEvent('set_funds', ['amount' => $revenue, 'is_starting' => false]);
 
         $this->addProduction([
             'type' => 'automatic_initial',
@@ -247,7 +457,7 @@ class TeamStorage {
             'solvent' => $solventGallons,
             'revenue' => $revenue,
             'chemicalsConsumed' => $consumed,
-            'note' => 'Automatic first production run'
+            'note' => 'Initial production (100% capacity) to set starting funds'
         ]);
     }
 
@@ -330,6 +540,14 @@ class TeamStorage {
     public function getBuyOrders() { return ['interests' => $this->getState()['buyOrders']]; }
 
     public function addBuyOrder($data) {
+        // Garbage Collection: Remove existing active orders for this chemical
+        $existingOrders = $this->getBuyOrders()['interests'];
+        foreach ($existingOrders as $existingOrder) {
+            if (($existingOrder['chemical'] ?? '') === ($data['chemical'] ?? '')) {
+                $this->removeBuyOrder($existingOrder['id']);
+            }
+        }
+
         $data['id'] = 'buy_' . time() . '_' . bin2hex(random_bytes(4));
         $data['buyerId'] = $this->teamEmail;
         $data['createdAt'] = time();
@@ -374,6 +592,14 @@ class TeamStorage {
     public function getAds() { return $this->getState()['ads']; }
 
     public function addAd($chemical, $type) {
+        // Garbage Collection: Remove existing active ads for this chemical/type
+        $existingAds = $this->getAds();
+        foreach ($existingAds as $existingAd) {
+            if ($existingAd['chemical'] === $chemical && $existingAd['type'] === $type) {
+                $this->removeAd($existingAd['id']);
+            }
+        }
+
         $ad = [
             'id' => 'ad_' . time() . '_' . bin2hex(random_bytes(4)),
             'teamId' => $this->teamEmail,
@@ -409,6 +635,9 @@ class TeamStorage {
     // ==================== Utility Methods ====================
 
     public function getTeamEmail() { return $this->teamEmail; }
-    public function getTeamDirectory() { return $this->teamDir; }
+    public function getTeamDirectory() {
+        // For backward compatibility - returns legacy directory path
+        return __DIR__ . '/../data/teams/' . $this->safeEmail;
+    }
     public function getFullState() { return $this->getState(); }
 }

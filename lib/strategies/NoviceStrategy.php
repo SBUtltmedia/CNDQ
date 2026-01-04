@@ -13,10 +13,10 @@ require_once __DIR__ . '/../NPCTradingStrategy.php';
 
 class NoviceStrategy extends NPCTradingStrategy
 {
-    const BUY_THRESHOLD = 2.50;         // Max price willing to pay
-    const SELL_THRESHOLD = 3.00;        // Min price to accept
-    const LOW_INVENTORY = 300;          // Trade when inventory below this
-    const EXCESS_INVENTORY = 1800;      // Trade when inventory above this
+    const BUY_THRESHOLD = 5.00;         // Max price willing to pay
+    const SELL_THRESHOLD = 2.00;        // Min price to accept
+    const LOW_INVENTORY = 500;          // Trade when inventory below this
+    const EXCESS_INVENTORY = 1200;      // Trade when inventory above this
     const BUY_QUANTITY_MIN = 200;       // Minimum buy quantity
     const BUY_QUANTITY_MAX = 400;       // Maximum buy quantity
     const SELL_QUANTITY_MIN = 200;      // Minimum sell quantity
@@ -36,12 +36,12 @@ class NoviceStrategy extends NPCTradingStrategy
             return $adAction;
         }
 
-        // Check each chemical for excess to sell directly to market buy orders
+        // Check each chemical for any amount above 50 gallons to sell
         foreach (['C', 'N', 'D', 'Q'] as $chemical) {
             $amount = $this->inventory[$chemical] ?? 0;
 
-            if ($amount > self::EXCESS_INVENTORY) {
-                // Excess inventory - try to sell
+            if ($amount > 50) {
+                // Try to sell remainders
                 $action = $this->tryToSell($chemical);
                 if ($action) {
                     return $action;
@@ -49,14 +49,12 @@ class NoviceStrategy extends NPCTradingStrategy
             }
             
             // If inventory is low, try to buy
-            /* DISABLED: NPCs should not submit buy requests
             if ($amount < self::LOW_INVENTORY) {
                 $action = $this->tryToBuy($chemical);
                 if ($action) {
                     return $action;
                 }
             }
-            */
         }
 
         return null; // No action needed
@@ -90,7 +88,7 @@ class NoviceStrategy extends NPCTradingStrategy
         $buyAds = $aggregator->getActiveBuyOrders();
 
         foreach ($buyAds as $ad) {
-            // Skip if it's an NPC
+            // Skip if it's an NPC (simulated players aren't NPCs)
             if ($this->npcManager->isNPC($ad['buyerId'])) {
                 continue;
             }
@@ -98,14 +96,14 @@ class NoviceStrategy extends NPCTradingStrategy
             $chemical = $ad['chemical'];
             $amount = $this->inventory[$chemical] ?? 0;
 
-            // Novices only sell if they have excess and the price is good
-            if ($amount > self::EXCESS_INVENTORY) {
+            // Sell if we have a reasonable remainder (> 50)
+            if ($amount > 50) {
                 $targetPrice = $ad['maxPrice'] ?? 0;
                 
                 if ($targetPrice >= self::SELL_THRESHOLD) {
                     // Initiate negotiation
-                    $qty = min($ad['quantity'], $amount - self::LOW_INVENTORY); // Sell down to LOW_INVENTORY
-                    $qty = max(self::SELL_QUANTITY_MIN, min(self::SELL_QUANTITY_MAX, $qty));
+                    $qty = min($ad['quantity'], $amount - 10); // Sell down to 10
+                    $qty = max(1, min(self::SELL_QUANTITY_MAX, $qty));
                     
                     if ($qty > 0 && $this->hasSufficientInventory($chemical, $qty)) {
                         return [
@@ -125,29 +123,17 @@ class NoviceStrategy extends NPCTradingStrategy
     }
 
     /**
-     * Try to sell a chemical at or above threshold price
+     * Try to sell a chemical remainder
      */
     private function tryToSell($chemical)
     {
         $buyOrders = $this->getMarketBuyOrders();
         $highestBuyOrder = $this->findHighestBuyOrder($chemical, $buyOrders);
 
-        // Check if there's a buy order at or above our sell threshold
         if ($highestBuyOrder && $highestBuyOrder['maxPrice'] >= self::SELL_THRESHOLD) {
-            // Determine quantity - sell excess down to reasonable level
             $currentAmount = $this->inventory[$chemical] ?? 0;
-            $targetAmount = (self::LOW_INVENTORY + self::EXCESS_INVENTORY) / 2; // Mid-range
-            $excessAmount = $currentAmount - $targetAmount;
+            $quantity = min($currentAmount - 10, $highestBuyOrder['quantity']);
 
-            $desiredQuantity = min(
-                self::SELL_QUANTITY_MAX,
-                max(self::SELL_QUANTITY_MIN, $excessAmount)
-            );
-
-            // Don't sell more than buyer wants
-            $quantity = min($desiredQuantity, $highestBuyOrder['quantity']);
-
-            // Check if we have enough inventory
             if ($quantity > 0 && $this->hasSufficientInventory($chemical, $quantity)) {
                 return [
                     'type' => 'accept_buy_order',
