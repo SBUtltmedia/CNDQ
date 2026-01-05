@@ -316,6 +316,13 @@ class NegotiationManager {
 
                 $aStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
                 $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
+
+                // Add notifications for history
+                $aStorage->addNotification([
+                    'type' => 'trade_completed',
+                    'message' => "Trade accepted! Negotiation for Chemical {$negotiation['chemical']} complete."
+                ]);
+                // Counterparty (oStorage) notification is handled by GlobalAggregator reflection
             } catch (Exception $e) {
                 error_log("NegotiationManager: Failed to emit accept events: " . $e->getMessage());
             }
@@ -398,6 +405,16 @@ class NegotiationManager {
 
                 $rStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
                 $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
+
+                // Add notifications for history
+                $rStorage->addNotification([
+                    'type' => 'negotiation_rejected',
+                    'message' => "You cancelled the negotiation for Chemical {$negotiation['chemical']}."
+                ]);
+                $oStorage->addNotification([
+                    'type' => 'negotiation_rejected',
+                    'message' => "The negotiation for Chemical {$negotiation['chemical']} was cancelled by the other team."
+                ]);
             } catch (Exception $e) {
                 error_log("NegotiationManager: Failed to emit reject events: " . $e->getMessage());
             }

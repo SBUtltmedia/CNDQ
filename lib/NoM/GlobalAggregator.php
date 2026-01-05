@@ -1,39 +1,45 @@
 <?php
 /**
  * GlobalAggregator - Aggregates state across all teams
+ * SQLite Implementation
  */
 namespace NoM;
 
-require_once __DIR__ . '/Aggregator.php';
+require_once __DIR__ . '/../Database.php';
+require_once __DIR__ . '/../TeamStorage.php';
 
 class GlobalAggregator {
-    private $teamsDir;
+    private $db;
 
     public function __construct() {
-        $this->teamsDir = __DIR__ . '/../../data/teams';
+        $this->db = \Database::getInstance();
     }
 
-    /**
-     * Get the global state by aggregating all team states
-     */
     /**
      * Process pending reflections (cross-team events)
      */
     public function processReflections() {
-        $dirs = array_filter(glob($this->teamsDir . '/*'), 'is_dir');
+        // Get all teams that have ever had an event
+        $teams = $this->db->query('SELECT DISTINCT team_email FROM team_events');
         $processedCount = 0;
 
-        foreach ($dirs as $dir) {
-            $state = Aggregator::aggregate($dir);
-            $teamId = $state['profile']['email'];
-            if (!$teamId) continue;
+        foreach ($teams as $row) {
+            $teamId = $row['team_email'];
+            if (!$teamId || $teamId === 'system') continue;
 
-            $transactions = $state['transactions'] ?? [];
-            foreach ($transactions as $txn) {
-                if (!empty($txn['isPendingReflection'])) {
-                    $this->reflectTransaction($teamId, $txn);
-                    $processedCount++;
+            try {
+                $storage = new \TeamStorage($teamId);
+                $state = $storage->getState();
+
+                $transactions = $state['transactions'] ?? [];
+                foreach ($transactions as $txn) {
+                    if (!empty($txn['isPendingReflection'])) {
+                        $this->reflectTransaction($teamId, $txn);
+                        $processedCount++;
+                    }
                 }
+            } catch (\Exception $e) {
+                error_log("GlobalAggregator: Failed to process reflections for $teamId: " . $e->getMessage());
             }
         }
         return $processedCount;
@@ -46,14 +52,14 @@ class GlobalAggregator {
         $counterpartyId = $txn['counterparty'];
         $transactionId = $txn['transactionId'];
 
-        require_once __DIR__ . '/TeamStorage.php';
-        $counterpartyStorage = new TeamStorage($counterpartyId);
-        $actorStorage = new TeamStorage($actorId);
+        $counterpartyStorage = new \TeamStorage($counterpartyId);
+        $actorStorage = new \TeamStorage($actorId);
 
         // 1. Check if already reflected to counterparty to avoid duplicates
         $cpState = $counterpartyStorage->getState();
-        foreach ($cpState['transactions'] as $cpTxn) {
-            if ($cpTxn['transactionId'] === $transactionId) {
+        $cpTransactions = $cpState['transactions'] ?? [];
+        foreach ($cpTransactions as $cpTxn) {
+            if (($cpTxn['transactionId'] ?? '') === $transactionId) {
                 // Already reflected, just clear the flag on actor
                 $actorStorage->emitEvent('mark_reflected', ['transactionId' => $transactionId]);
                 return;
@@ -64,14 +70,17 @@ class GlobalAggregator {
         $role = ($txn['role'] === 'buyer') ? 'seller' : 'buyer';
         $quantity = $txn['quantity'];
         $chemical = $txn['chemical'];
-        $totalAmount = $txn['totalAmount'];
+        $totalAmount = $txn['totalAmount']; // Amount is always positive here
 
+        // Note: adjustChemical and updateFunds accept negative values for deductions
         if ($role === 'seller') {
             // Actor was buyer, so counterparty is seller
+            // Seller loses chemicals, gains money
             $counterpartyStorage->adjustChemical($chemical, -$quantity);
             $counterpartyStorage->updateFunds($totalAmount);
         } else {
             // Actor was seller, so counterparty is buyer
+            // Buyer gains chemicals, loses money
             $counterpartyStorage->adjustChemical($chemical, $quantity);
             $counterpartyStorage->updateFunds(-$totalAmount);
         }
@@ -96,5 +105,7 @@ class GlobalAggregator {
 
         // 3. Mark as reflected on actor
         $actorStorage->emitEvent('mark_reflected', ['transactionId' => $transactionId]);
+        
+        error_log("GlobalAggregator: Reflected transaction $transactionId from $actorId to $counterpartyId");
     }
 }

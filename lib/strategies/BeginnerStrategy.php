@@ -86,7 +86,7 @@ class BeginnerStrategy extends NPCTradingStrategy
 
     /**
      * Respond to incoming negotiations
-     * For simulation, ALWAYS ACCEPT to verify loop completion
+     * For simulation, accept if we have enough resources
      */
     public function respondToNegotiations()
     {
@@ -94,6 +94,20 @@ class BeginnerStrategy extends NPCTradingStrategy
         if (empty($pendingNegotiations)) return null;
 
         $negotiation = array_values($pendingNegotiations)[0];
+        $latestOffer = end($negotiation['offers']);
+        $chemical = $negotiation['chemical'];
+        $quantity = $latestOffer['quantity'];
+        $price = $latestOffer['price'];
+        $type = $negotiation['type'] ?? 'buy';
+
+        // Check feasibility
+        if ($type === 'buy') {
+            // Player wants to buy from NPC (NPC is seller)
+            if (!$this->hasSufficientInventory($chemical, $quantity)) return null;
+        } else {
+            // Player wants to sell to NPC (NPC is buyer)
+            if (!$this->hasSufficientFunds($quantity * $price)) return null;
+        }
         
         return [
             'type' => 'accept_negotiation',

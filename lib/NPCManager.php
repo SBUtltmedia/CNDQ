@@ -485,6 +485,18 @@ class NPCManager
                     error_log("Unknown NPC action type: {$action['type']}");
             }
 
+            // Immediately process reflections after NPC action to update counterparty (human) state
+            try {
+                require_once __DIR__ . '/NoM/GlobalAggregator.php';
+                $aggregator = new NoM\GlobalAggregator();
+                $count = $aggregator->processReflections();
+                if ($count > 0) {
+                    error_log("NPCManager: Processed $count reflections after {$action['type']}");
+                }
+            } catch (Exception $e) {
+                error_log("NPCManager: Reflection processing failed: " . $e->getMessage());
+            }
+
         } catch (Exception $e) {
             error_log("Failed to execute NPC action for {$npc['email']}: " . $e->getMessage());
         }
@@ -566,7 +578,8 @@ class NPCManager
             $action['chemical'],
             $action['quantity'],
             $action['price'],
-            $action['buyOrderId'] ?? null
+            $action['buyOrderId'] ?? null,
+            $npc['email']           // Acting team is the NPC
         );
 
         if ($result['success']) {
@@ -628,7 +641,8 @@ class NPCManager
             $negotiation['chemical'],
             $latestOffer['quantity'],
             $latestOffer['price'],
-            null  // No offerId for negotiations
+            null, // No offerId for negotiations
+            $npc['email'] // Acting team is the NPC
         );
 
         if ($result['success']) {

@@ -592,12 +592,12 @@ if (!isAdmin()) {
                     const npcs = data.npcs || [];
                     const activeNPCs = npcs.filter(n => n.active).length;
                     const totalTrades = npcs.reduce((sum, n) => sum + (n.stats?.totalTrades || 0), 0);
-                    const totalProfit = npcs.reduce((sum, n) => sum + (n.stats?.totalProfit || 0), 0);
+                    const totalProfit = npcs.reduce((sum, n) => sum + (parseFloat(n.stats?.totalProfit) || 0), 0);
 
                     document.getElementById('npc-total').textContent = npcs.length;
                     document.getElementById('npc-active').textContent = activeNPCs;
                     document.getElementById('npc-trades').textContent = totalTrades;
-                    document.getElementById('npc-profit').textContent = '$' + totalProfit.toFixed(2);
+                    document.getElementById('npc-profit').textContent = '$' + (isNaN(totalProfit) ? '0.00' : totalProfit.toFixed(2));
 
                     // Render NPC list
                     const npcListEl = document.getElementById('npc-list');
@@ -619,9 +619,9 @@ if (!isAdmin()) {
                                         </span>
                                     </div>
                                     <div class="text-sm text-gray-300 flex gap-4">
-                                        <span>Funds: $${((npc.currentFunds || 0)).toFixed(2)}</span>
-                                        <span>Trades: ${npc.stats?.totalTrades || 0}</span>
-                                        <span>Profit: $${((npc.stats?.totalProfit || 0)).toFixed(2)}</span>
+                                        <span>Funds: $${(parseFloat(npc.currentFunds) || 0).toFixed(2)}</span>
+                                        <span>Trades: ${parseInt(npc.stats?.totalTrades) || 0}</span>
+                                        <span>Profit: $${(parseFloat(npc.stats?.totalProfit) || 0).toFixed(2)}</span>
                                     </div>
                                     <div class="text-xs text-gray-400 mt-1">
                                         Inventory: C=${Math.round(npc.inventory?.C || 0)} N=${Math.round(npc.inventory?.N || 0)}

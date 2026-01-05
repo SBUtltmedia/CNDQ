@@ -259,7 +259,32 @@ class NoviceStrategy extends NPCTradingStrategy
             }
         }
         
-        // Default to reject
+        // If we reach here, the previous conditions for acceptance or specific countering weren't met.
+        // Instead of flat rejection, try one last counter-offer at our threshold if we still have interest.
+        
+        if ($type === 'buy') {
+            // NPC is seller. If inventory is okay, counter with SELL_THRESHOLD
+            if ($this->hasSufficientInventory($chemical, $quantity)) {
+                return [
+                    'type' => 'counter_negotiation',
+                    'negotiationId' => $negotiation['id'],
+                    'quantity' => $quantity,
+                    'price' => self::SELL_THRESHOLD
+                ];
+            }
+        } else {
+            // NPC is buyer. If funds are okay, counter with BUY_THRESHOLD
+            if ($this->hasSufficientFunds($quantity * self::BUY_THRESHOLD)) {
+                return [
+                    'type' => 'counter_negotiation',
+                    'negotiationId' => $negotiation['id'],
+                    'quantity' => $quantity,
+                    'price' => self::BUY_THRESHOLD
+                ];
+            }
+        }
+
+        // Default to reject only if we can't even afford/provide the threshold
         return [
             'type' => 'reject_negotiation',
             'negotiationId' => $negotiation['id']

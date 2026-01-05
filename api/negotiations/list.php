@@ -25,12 +25,25 @@ try {
     
     $negotiations = [];
     $activeNegStates = $state['negotiationStates'] ?? [];
+    $now = time();
+    $recentThreshold = 60; // 60 seconds
     
     foreach ($activeNegStates as $negId => $negState) {
-        // Only show pending negotiations in this list
-        if (($negState['status'] ?? 'pending') === 'pending') {
-            $fullNeg = $negManager->getNegotiation($negId);
-            if ($fullNeg) {
+        $status = $negState['status'] ?? 'pending';
+        
+        // Show if pending OR if finished very recently
+        $isFinishedRecently = false;
+        $fullNeg = $negManager->getNegotiation($negId);
+        
+        if ($fullNeg) {
+            if ($status !== 'pending') {
+                $updatedAt = $fullNeg['updatedAt'] ?? 0;
+                if (($now - $updatedAt) < $recentThreshold) {
+                    $isFinishedRecently = true;
+                }
+            }
+
+            if ($status === 'pending' || $isFinishedRecently) {
                 // Ensure patience from local state is included
                 $fullNeg['patience'] = $negState['patience'] ?? 100;
                 $negotiations[] = $fullNeg;

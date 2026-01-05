@@ -61,14 +61,17 @@ export default class MarketView {
 
         <!-- Main Content -->
         <main class="flex-1 relative">
-            <!-- Market Status Banner -->
-            <div id="market-status-banner" class="hidden mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3 text-amber-800">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                    <span class="font-bold block">Market is currently Closed</span>
-                    <span class="text-sm" id="market-status-text">Waiting for trading phase...</span>
+            <!-- Market Closed Overlay -->
+            <div id="market-closed-overlay" class="hidden fixed inset-0 bg-gray-900/95 z-[100] flex flex-col items-center justify-center text-white backdrop-blur-sm">
+                <div class="text-center p-8 max-w-2xl mx-auto">
+                    <div class="mb-6 text-red-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-5xl font-bold mb-6 text-white tracking-tight">Marketplace Closed</h1>
+                    <p class="text-2xl text-gray-300 mb-8" id="market-status-text">Trading session has ended.</p>
+                    <div class="animate-pulse text-indigo-400 font-mono text-lg">Waiting for next session...</div>
                 </div>
             </div>
 
@@ -259,7 +262,7 @@ export default class MarketView {
             setPriceModal: document.getElementById('set-price-modal'),
             respondModal: document.getElementById('respond-modal'),
             counterModal: document.getElementById('counter-modal'),
-            marketStatusBanner: document.getElementById('market-status-banner'),
+            marketClosedOverlay: document.getElementById('market-closed-overlay'),
             marketStatusText: document.getElementById('market-status-text')
         };
 
@@ -286,7 +289,7 @@ export default class MarketView {
         
         // Handle Session State
         if (data.session_state) {
-            const phase = data.session_state.state;
+            const phase = data.session_state.gameStopped ? 'STOPPED' : 'TRADING'; // Prioritize gameStopped flag
             this.isTradingOpen = (phase === 'TRADING');
             this.updateMarketStatus(phase);
         }
@@ -343,12 +346,12 @@ export default class MarketView {
 
     updateMarketStatus(status) {
         if (status === 'TRADING') {
-            this.els.marketStatusBanner.classList.add('hidden');
+            this.els.marketClosedOverlay.classList.add('hidden');
             this.els.createOfferBtn.disabled = false;
             this.els.createOfferBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         } else {
-            this.els.marketStatusBanner.classList.remove('hidden');
-            this.els.marketStatusText.textContent = `Current Phase: ${status}. Trading is paused.`;
+            this.els.marketClosedOverlay.classList.remove('hidden');
+            this.els.marketStatusText.textContent = (status === 'STOPPED') ? "Game is currently stopped." : "Trading session has ended.";
             this.els.createOfferBtn.disabled = true;
             this.els.createOfferBtn.classList.add('opacity-50', 'cursor-not-allowed');
         }

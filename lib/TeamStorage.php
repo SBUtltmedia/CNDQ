@@ -215,6 +215,16 @@ class TeamStorage {
         // Cache miss or invalid - aggregate from events
         $state = $this->aggregateStateFromEvents();
 
+        // Calculate staleness level
+        $count = $state['inventory']['transactionsSinceLastShadowCalc'] ?? 0;
+        if ($count === 0) {
+            $state['inventory']['stalenessLevel'] = 'fresh';
+        } elseif ($count === 1) {
+            $state['inventory']['stalenessLevel'] = 'warning';
+        } else {
+            $state['inventory']['stalenessLevel'] = 'stale';
+        }
+
         // Get last event ID for cache validation
         $lastEvent = $this->db->queryOne(
             'SELECT id FROM team_events WHERE team_email = ? ORDER BY id DESC LIMIT 1',
@@ -284,15 +294,19 @@ class TeamStorage {
         }
 
         // Get all events since snapshot (or all if no snapshot)
-        $events = $this->db->query(
-            'SELECT event_type, payload, timestamp
+        $sql = 'SELECT event_type, payload, timestamp
              FROM team_events
-             WHERE team_email = ?
-             ORDER BY timestamp ASC',
-            [$this->teamEmail]
-        );
+             WHERE team_email = ?';
+        
+        if ($snapshot) {
+            $sql .= ' ORDER BY timestamp ASC LIMIT -1 OFFSET ' . (int)$snapshot['event_count'];
+        } else {
+            $sql .= ' ORDER BY timestamp ASC';
+        }
 
-        $state['eventsProcessed'] = count($events);
+        $events = $this->db->query($sql, [$this->teamEmail]);
+
+        $state['eventsProcessed'] = ($snapshot ? $snapshot['event_count'] : 0) + count($events);
 
         // Apply events using the NoM Aggregator logic
         foreach ($events as $event) {
@@ -338,6 +352,7 @@ class TeamStorage {
 
             case 'update_shadow_prices':
                 $state['shadowPrices'] = $payload;
+                $state['inventory']['transactionsSinceLastShadowCalc'] = 0;
                 break;
 
             case 'add_offer':
@@ -374,6 +389,10 @@ class TeamStorage {
 
             case 'add_transaction':
                 $state['transactions'][] = $payload;
+                if (!isset($state['inventory']['transactionsSinceLastShadowCalc'])) {
+                    $state['inventory']['transactionsSinceLastShadowCalc'] = 0;
+                }
+                $state['inventory']['transactionsSinceLastShadowCalc']++;
                 break;
 
             case 'add_notification':

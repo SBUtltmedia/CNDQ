@@ -39,34 +39,33 @@ try {
 
     $teamSummaries = [];
 
-    foreach ($allTeams as $team) {
-        $inventory = $team['inventory'] ?? [];
-        $offers = $team['offers'] ?? [];
+    foreach ($allTeams as $teamInfo) {
+        try {
+            $storage = new TeamStorage($teamInfo['email']);
+            $state = $storage->getState();
+            
+            $profile = $state['profile'] ?? [];
+            $inventory = $state['inventory'] ?? [];
+            $transactions = $state['transactions'] ?? [];
+            $offers = $state['offers'] ?? [];
 
-        // Count active (unsold) offers
-        $activeOffers = count(array_filter($offers, function($offer) {
-            return $offer['status'] === 'active';
-        }));
-
-        // Count completed trades
-        $totalTrades = count(array_filter($offers, function($offer) {
-            return $offer['status'] === 'sold';
-        }));
-
-        $teamSummaries[] = [
-            'email' => $team['email'],
-            'teamName' => $team['teamName'] ?? 'Unknown Team',
-            'funds' => round($team['funds'] ?? 0, 2),
-            'inventory' => [
-                'C' => max(0, round($inventory['C'] ?? 0, 4)),
-                'N' => max(0, round($inventory['N'] ?? 0, 4)),
-                'D' => max(0, round($inventory['D'] ?? 0, 4)),
-                'Q' => max(0, round($inventory['Q'] ?? 0, 4))
-            ],
-            'activeOffers' => $activeOffers,
-            'totalTrades' => $totalTrades,
-            'lastUpdated' => $inventory['updatedAt'] ?? null
-        ];
+            $teamSummaries[] = [
+                'email' => $teamInfo['email'],
+                'teamName' => $profile['teamName'] ?? $teamInfo['teamName'] ?? 'Unknown Team',
+                'funds' => round($profile['currentFunds'] ?? 0, 2),
+                'inventory' => [
+                    'C' => max(0, round($inventory['C'] ?? 0, 4)),
+                    'N' => max(0, round($inventory['N'] ?? 0, 4)),
+                    'D' => max(0, round($inventory['D'] ?? 0, 4)),
+                    'Q' => max(0, round($inventory['Q'] ?? 0, 4))
+                ],
+                'activeOffers' => count($offers),
+                'totalTrades' => count($transactions),
+                'lastUpdated' => $inventory['updatedAt'] ?? null
+            ];
+        } catch (Exception $e) {
+            continue;
+        }
     }
 
     echo json_encode([

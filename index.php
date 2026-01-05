@@ -247,7 +247,6 @@
             </div>
         </div>
     </div>
-    </div>
 
     <!-- Toast Notifications Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-[9999] space-y-2" role="region" aria-live="polite" aria-atomic="false" aria-label="Notifications"></div>
@@ -272,12 +271,7 @@
                         </div>
 
                         <!-- Notifications -->
-                        <button id="notifications-btn" class="relative bg-gray-700 hover:bg-gray-600 p-2 md:p-3 rounded-lg transition" aria-label="View notifications">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                            </svg>
-                            <span id="notif-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-label="unread notifications"></span>
-                        </button>
+                        <notification-manager id="notification-manager"></notification-manager>
 
                         <!-- Leaderboard -->
                         <button id="leaderboard-btn" class="bg-yellow-600 hover:bg-yellow-700 p-2 md:p-3 rounded-lg transition" aria-label="View leaderboard">
@@ -659,9 +653,14 @@
                                 <p class="text-[10px] text-gray-500 mt-1">If patience runs out, the deal is cancelled.</p>
                             </div>
 
-                            <div class="bg-gray-900 p-3 rounded flex justify-between items-center">
-                                <span class="text-xs text-gray-400">Total Transaction:</span>
-                                <span class="text-lg font-bold text-blue-400">$<span id="haggle-total">0.00</span></span>
+                            <div class="bg-gray-900 p-3 rounded">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-gray-400">Total Transaction:</span>
+                                    <span class="text-lg font-bold text-blue-400">$<span id="haggle-total">0.00</span></span>
+                                </div>
+                                <div id="haggle-error" class="hidden mt-2 text-[10px] text-red-400 font-bold text-center border border-red-900/50 rounded py-1 bg-red-900/10">
+                                    ⚠️ INSUFFICIENT RESOURCES
+                                </div>
                             </div>
                         </div>
 
@@ -735,63 +734,8 @@
         </div>
     </div>
 
-    <!-- Notifications Panel -->
-    <div id="notifications-panel" class="hidden fixed right-4 top-20 bg-gray-800 rounded-lg border-2 border-green-500 w-96 max-h-96 overflow-hidden z-50 shadow-2xl">
-        <div class="sticky top-0 bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
-            <h3 class="text-lg font-bold text-green-500">Notifications</h3>
-            <button id="close-notif-btn" class="text-gray-400 hover:text-white transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-        <div id="notifications-list" class="p-4 space-y-2 max-h-80 overflow-y-auto scrollbar-thin">
-            <p class="text-gray-300 text-center py-8">No notifications</p>
-        </div>
-    </div>
-
     <!-- Leaderboard Modal -->
-    <div id="leaderboard-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="leaderboard-modal-title">
-        <div class="bg-gray-800 rounded-lg p-4 md:p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border-2 border-yellow-500 shadow-2xl">
-            <div class="flex items-center justify-between mb-4 md:mb-6">
-                <h3 class="text-xl md:text-2xl lg:text-3xl font-bold text-yellow-500" id="leaderboard-modal-title">Leaderboard</h3>
-                <button id="leaderboard-modal-close-btn" class="text-gray-700 hover:text-gray-900 transition" aria-label="Close leaderboard">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="mb-4 text-gray-300 text-center">
-                <span>Session <span id="leaderboard-session" class="font-bold text-yellow-400">-</span></span>
-                <span class="mx-2">•</span>
-                <span id="leaderboard-phase" class="capitalize">-</span>
-            </div>
-
-            <div id="leaderboard-content" class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead class="bg-gray-700 border-b-2 border-yellow-500">
-                        <tr>
-                            <th class="px-4 py-3 text-yellow-100 font-bold">Rank</th>
-                            <th class="px-4 py-3 text-yellow-100 font-bold">Team</th>
-                            <th class="px-4 py-3 text-yellow-100 font-bold text-right">Current</th>
-                            <th class="px-4 py-3 text-yellow-100 font-bold text-right">Profit/Loss</th>
-                            <th class="px-4 py-3 text-yellow-100 font-bold text-right">ROI %</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body" class="divide-y divide-gray-700">
-                        <tr>
-                            <td colspan="5" class="text-center py-8 text-gray-300">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-6 text-sm text-gray-300 bg-gray-700 p-4 rounded">
-                <strong class="text-yellow-400">How scoring works:</strong> Teams are ranked by <strong>Return on Investment (ROI %)</strong> — percentage gain or loss relative to initial production revenue. This ensures fair competition regardless of starting inventory.
-            </div>
-        </div>
-    </div>
+    <leaderboard-modal id="leaderboard-modal"></leaderboard-modal>
 
     <!-- Production Guide Modal -->
     <div id="production-guide-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="production-guide-modal-title">

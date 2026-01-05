@@ -381,9 +381,66 @@ class ExpertStrategy extends NPCTradingStrategy
             }
         }
         
-        // Default to reject
-        return [
-            'type' => 'reject_negotiation',
-            'negotiationId' => $negotiation['id']
-        ];
-    }}
+                // Instead of flat rejection, try one last counter-offer at our optimal threshold.
+        
+                if ($type === 'buy') {
+        
+                    // NPC is seller.
+        
+                    $price = round($shadowPrice * self::SELL_MARGIN, 2);
+        
+                    if ($this->hasSufficientInventory($chemical, $quantity)) {
+        
+                        return [
+        
+                            'type' => 'counter_negotiation',
+        
+                            'negotiationId' => $negotiation['id'],
+        
+                            'quantity' => $quantity,
+        
+                            'price' => $price
+        
+                        ];
+        
+                    }
+        
+                } else {
+        
+                    // NPC is buyer.
+        
+                    $price = round($shadowPrice * self::BUY_MARGIN, 2);
+        
+                    if ($this->hasSufficientFunds($quantity * $price)) {
+        
+                        return [
+        
+                            'type' => 'counter_negotiation',
+        
+                            'negotiationId' => $negotiation['id'],
+        
+                            'quantity' => $quantity,
+        
+                            'price' => $price
+        
+                        ];
+        
+                    }
+        
+                }
+        
+        
+        
+                // Default to reject only if we can't even afford/provide the optimal price
+        
+                return [
+        
+                    'type' => 'reject_negotiation',
+        
+                    'negotiationId' => $negotiation['id']
+        
+                ];
+        
+            }
+        
+        }

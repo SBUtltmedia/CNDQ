@@ -27,8 +27,8 @@ try {
 
     $state = $sessionManager->getState();
 
-    // Auto-advance if time expired and auto-advance is enabled
-    if (($state['autoAdvance'] ?? false) && ($state['timeRemaining'] ?? 0) <= 0) {
+    // Auto-advance if time expired and auto-advance is enabled, AND game is not stopped
+    if (($state['autoAdvance'] ?? false) && ($state['timeRemaining'] ?? 0) <= 0 && !($state['gameStopped'] ?? false)) {
         $state = $sessionManager->advanceSession();
     }
 
@@ -38,7 +38,8 @@ try {
         'phase' => $state['phase'],
         'timeRemaining' => $state['timeRemaining'] ?? 0,
         'autoAdvance' => $state['autoAdvance'] ?? false,
-        'productionJustRan' => $state['productionJustRan'] ?? null
+        'productionJustRan' => $state['productionJustRan'] ?? null,
+        'gameStopped' => $state['gameStopped'] ?? true
     ]);
 
 } catch (Exception $e) {

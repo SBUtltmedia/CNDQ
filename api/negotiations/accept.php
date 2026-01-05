@@ -83,6 +83,17 @@ try {
         $finalOffer['price']
     );
 
+    if (!$trade['success']) {
+        error_log("Trade execution failed: " . ($trade['message'] ?? 'Unknown error'));
+        http_response_code(400);
+        echo json_encode([
+            'error' => 'Trade execution failed',
+            'message' => $trade['message'] ?? 'Unknown error',
+            'details' => $trade
+        ]);
+        exit;
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Trade executed successfully!',

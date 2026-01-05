@@ -22,134 +22,147 @@ class LPSolver {
     const DEICER_N = 0.3;
     const DEICER_D = 0.2;
     const DEICER_Q = 0.0;
-    const DEICER_PROFIT_PER_GALLON = 2.0; // $100 per 50-gallon drum
+    const DEICER_PROFIT_PER_GALLON = 2.0;
 
     const SOLVENT_C = 0.0;
     const SOLVENT_N = 0.25;
     const SOLVENT_D = 0.35;
     const SOLVENT_Q = 0.4;
-    const SOLVENT_PROFIT_PER_GALLON = 3.0; // $60 per 20-gallon drum
+    const SOLVENT_PROFIT_PER_GALLON = 3.0;
 
-    const EPSILON = 1e-9; // Floating point tolerance
+    const EPSILON = 1e-9;
 
     /**
-     * Solve LP problem to find optimal production mix
-     *
-     * @param array $inventory ['C' => float, 'N' => float, 'D' => float, 'Q' => float]
-     * @return array ['maxProfit' => float, 'deicer' => float, 'solvent' => float]
+     * Solve LP problem using the Simplex Method
+     * 
+     * Decision Variables: x1 = Deicer, x2 = Solvent
+     * Objective: Maximize 2*x1 + 3*x2
      */
     public function solve($inventory) {
-        $C = $inventory['C'];
-        $N = $inventory['N'];
-        $D = $inventory['D'];
-        $Q = $inventory['Q'];
+        // Treat negative inventory as 0 available for production
+        $C = max(0, $inventory['C']);
+        $N = max(0, $inventory['N']);
+        $D = max(0, $inventory['D']);
+        $Q = max(0, $inventory['Q']);
 
-        // Define constraint lines as ax + by = c (where x=deicer, y=solvent)
-        $lines = [
-            ['a' => 1.0, 'b' => 0.0, 'c' => 0.0],              // d = 0 (lower bound)
-            ['a' => 0.0, 'b' => 1.0, 'c' => 0.0],              // s = 0 (lower bound)
-            ['a' => self::DEICER_C, 'b' => 0.0, 'c' => $C],    // C constraint
-            ['a' => self::DEICER_N, 'b' => self::SOLVENT_N, 'c' => $N], // N constraint
-            ['a' => self::DEICER_D, 'b' => self::SOLVENT_D, 'c' => $D], // D constraint
-            ['a' => 0.0, 'b' => self::SOLVENT_Q, 'c' => $Q]    // Q constraint
+        // Tableau setup: 5 rows (obj + 4 constraints), 7 columns (2 vars + 4 slacks + RHS)
+        // Rows: 0=Obj, 1=C, 2=N, 3=D, 4=Q
+        // Cols: 0=x1, 1=x2, 2=s1, 3=s2, 4=s3, 5=s4, 6=RHS
+        $tableau = [
+            [-self::DEICER_PROFIT_PER_GALLON, -self::SOLVENT_PROFIT_PER_GALLON, 0, 0, 0, 0, 0], // Obj
+            [self::DEICER_C, 0, 1, 0, 0, 0, $C], // C constraint
+            [self::DEICER_N, self::SOLVENT_N, 0, 1, 0, 0, $N], // N constraint
+            [self::DEICER_D, self::SOLVENT_D, 0, 0, 1, 0, $D], // D constraint
+            [0, self::SOLVENT_Q, 0, 0, 0, 1, $Q]  // Q constraint
         ];
 
-        // Find all intersection points (vertices of feasible region)
-        $points = [];
+        $maxIterations = 20;
+        $iteration = 0;
 
-        for ($i = 0; $i < count($lines); $i++) {
-            for ($j = $i + 1; $j < count($lines); $j++) {
-                $l1 = $lines[$i];
-                $l2 = $lines[$j];
-
-                // Solve system using Cramer's rule
-                $det = $l1['a'] * $l2['b'] - $l2['a'] * $l1['b'];
-
-                // Skip parallel lines
-                if (abs($det) < self::EPSILON) {
-                    continue;
+        while ($iteration < $maxIterations) {
+            // 1. Find entering variable (most negative in obj row)
+            $pivotCol = -1;
+            $minVal = -self::EPSILON;
+            for ($j = 0; $j < 6; $j++) {
+                if ($tableau[0][$j] < $minVal) {
+                    $minVal = $tableau[0][$j];
+                    $pivotCol = $j;
                 }
+            }
 
-                $d = ($l1['c'] * $l2['b'] - $l2['c'] * $l1['b']) / $det;
-                $s = ($l1['a'] * $l2['c'] - $l2['a'] * $l1['c']) / $det;
+            // If no negative values, we found the optimum
+            if ($pivotCol == -1) break;
 
-                $points[] = ['d' => $d, 's' => $s];
+            // 2. Find leaving variable (Minimum ratio test)
+            $pivotRow = -1;
+            $minRatio = INF;
+            for ($i = 1; $i < 5; $i++) {
+                if ($tableau[$i][$pivotCol] > self::EPSILON) {
+                    $ratio = $tableau[$i][6] / $tableau[$i][$pivotCol];
+                    if ($ratio < $minRatio) {
+                        $minRatio = $ratio;
+                        $pivotRow = $i;
+                    }
+                }
+            }
+
+            // If no valid pivot row, problem is unbounded
+            if ($pivotRow == -1) break;
+
+            // 3. Pivot
+            $pivotVal = $tableau[$pivotRow][$pivotCol];
+            
+            // Normalize pivot row
+            for ($j = 0; $j < 7; $j++) {
+                $tableau[$pivotRow][$j] /= $pivotVal;
+            }
+
+            // Eliminate other rows
+            for ($i = 0; $i < 5; $i++) {
+                if ($i != $pivotRow) {
+                    $factor = $tableau[$i][$pivotCol];
+                    for ($j = 0; $j < 7; $j++) {
+                        $tableau[$i][$j] -= $factor * $tableau[$pivotRow][$j];
+                    }
+                }
+            }
+
+            $iteration++;
+        }
+
+        // Extract results
+        $maxProfit = $tableau[0][6];
+        
+        // Find basic variables to get production mix
+        $deicer = 0;
+        $solvent = 0;
+        
+        for ($j = 0; $j < 2; $j++) {
+            $rowCount = 0;
+            $lastRow = -1;
+            for ($i = 1; $i < 5; $i++) {
+                if (abs($tableau[$i][$j] - 1.0) < self::EPSILON) {
+                    $rowCount++;
+                    $lastRow = $i;
+                } elseif (abs($tableau[$i][$j]) > self::EPSILON) {
+                    $rowCount = 2; // Not a basic variable column
+                }
+            }
+            if ($rowCount == 1) {
+                if ($j == 0) $deicer = $tableau[$lastRow][6];
+                if ($j == 1) $solvent = $tableau[$lastRow][6];
             }
         }
 
-        // Filter to valid points (satisfy all constraints)
-        $validPoints = array_filter($points, function($p) use ($C, $N, $D, $Q) {
-            // Check non-negativity
-            if ($p['d'] < -self::EPSILON || $p['s'] < -self::EPSILON) {
-                return false;
-            }
-
-            // Check all constraints with small tolerance
-            $checkC = (self::DEICER_C * $p['d']) <= ($C + self::EPSILON);
-            $checkN = (self::DEICER_N * $p['d'] + self::SOLVENT_N * $p['s']) <= ($N + self::EPSILON);
-            $checkD = (self::DEICER_D * $p['d'] + self::SOLVENT_D * $p['s']) <= ($D + self::EPSILON);
-            $checkQ = (self::SOLVENT_Q * $p['s']) <= ($Q + self::EPSILON);
-
-            return $checkC && $checkN && $checkD && $checkQ;
-        });
-
-        // Find point with maximum profit
-        $maxProfit = -1;
-        $bestMix = ['d' => 0, 's' => 0];
-
-        foreach ($validPoints as $p) {
-            $profit = ($p['d'] * self::DEICER_PROFIT_PER_GALLON) +
-                      ($p['s'] * self::SOLVENT_PROFIT_PER_GALLON);
-
-            if ($profit > $maxProfit) {
-                $maxProfit = $profit;
-                $bestMix = $p;
-            }
-        }
+        // Shadow prices are in the objective row under the slack columns
+        $shadowPrices = [
+            'C' => round($tableau[0][2], 2),
+            'N' => round($tableau[0][3], 2),
+            'D' => round($tableau[0][4], 2),
+            'Q' => round($tableau[0][5], 2)
+        ];
 
         return [
             'maxProfit' => round($maxProfit, 2),
-            'deicer' => round($bestMix['d'], 2),
-            'solvent' => round($bestMix['s'], 2)
+            'deicer' => floor($deicer * 100) / 100,
+            'solvent' => floor($solvent * 100) / 100,
+            'shadowPrices' => $shadowPrices
         ];
     }
 
     /**
-     * Calculate shadow prices using finite differences
-     *
-     * Shadow price = (change in profit) / (change in resource)
-     *
-     * @param array $inventory ['C' => float, 'N' => float, 'D' => float, 'Q' => float]
-     * @return array ['C' => float, 'N' => float, 'D' => float, 'Q' => float]
+     * Interface-compatible method to get shadow prices
      */
     public function getShadowPrices($inventory) {
-        $baseline = $this->solve($inventory);
-        $delta = 1.0; // Small increment (1 gallon)
-
-        $prices = [];
-
-        foreach (['C', 'N', 'D', 'Q'] as $chemical) {
-            // Create new inventory with 1 more gallon of this chemical
-            $newInventory = $inventory;
-            $newInventory[$chemical] += $delta;
-
-            // Solve LP with new inventory
-            $newResult = $this->solve($newInventory);
-
-            // Shadow price = marginal value per gallon
-            $prices[$chemical] = round(
-                ($newResult['maxProfit'] - $baseline['maxProfit']) / $delta,
-                2
-            );
-        }
-
+        $result = $this->solve($inventory);
+        
         return [
-            'shadowPrices' => $prices,
+            'shadowPrices' => $result['shadowPrices'],
             'optimalMix' => [
-                'deicer' => $baseline['deicer'],
-                'solvent' => $baseline['solvent']
+                'deicer' => $result['deicer'],
+                'solvent' => $result['solvent']
             ],
-            'maxProfit' => $baseline['maxProfit']
+            'maxProfit' => $result['maxProfit']
         ];
     }
 }

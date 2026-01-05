@@ -27,6 +27,11 @@ try {
     $db = Database::getInstance();
     $errors = [];
 
+    // Capture current settings before wipe
+    $sessionManager = new SessionManager();
+    $currentState = $sessionManager->getState();
+    $preservedTradingDuration = $currentState['tradingDuration'] ?? 120;
+
     // Delete all data from database tables
     $db->beginTransaction();
     try {
@@ -73,14 +78,17 @@ try {
     // Vacuum database to reclaim space
     $db->vacuum();
 
-    // Reset session to session 1, trading phase
-    $sessionManager = new SessionManager();
-    $sessionManager->reset();
+    // Reset session to session 1, trading phase (preserving duration)
+    // $sessionManager is already instantiated above
+    $newState = $sessionManager->reset($preservedTradingDuration);
+    
+    error_log("Game Reset Complete. State: " . ($newState['gameStopped'] ? "STOPPED" : "RUNNING") . ", Duration: $preservedTradingDuration");
 
     echo json_encode([
         'success' => true,
         'message' => 'Game data completely reset! Players will get new teams when they login.',
         'teamsReset' => $teamsDeleted,
+        'sessionState' => $newState,
         'errors' => $errors
     ]);
 

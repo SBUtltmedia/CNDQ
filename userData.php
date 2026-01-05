@@ -58,6 +58,10 @@ function getCurrentUserEmail() {
 }
 
 
+/**
+ * @deprecated Legacy function for file-based storage. Use TeamStorage class instead.
+ */
+/*
 function getUserDataFilePath() {
     $email = getCurrentUserEmail();
 
@@ -74,3 +78,4 @@ function getUserDataFilePath() {
 
     return $dataDir . '/user_' . $safeEmail . '.json';
 }
+*/

@@ -27,12 +27,21 @@ try {
         if (!($state['gameStopped'] ?? false)) {
             require_once __DIR__ . '/../../lib/NPCManager.php';
             require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
+            require_once __DIR__ . '/../../lib/NoM/GlobalAggregator.php';
             
             $npcManager = new NPCManager();
             $aggregator = new MarketplaceAggregator();
+            $globalAggregator = new \NoM\GlobalAggregator();
             
             $now = time();
             $lastRun = $state['npcLastRun'] ?? 0;
+            
+            // Process reflections (sync trades to counterparties) - Run every poll
+            try {
+                $globalAggregator->processReflections();
+            } catch (Exception $e) {
+                error_log("Heartbeat: Failed to process reflections: " . $e->getMessage());
+            }
             
             // Generate snapshot frequently (every poll) to keep marketplace fresh
             $aggregator->generateSnapshot();
