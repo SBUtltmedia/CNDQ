@@ -27,11 +27,11 @@ try {
         if (!($state['gameStopped'] ?? false)) {
             require_once __DIR__ . '/../../lib/NPCManager.php';
             require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
-            require_once __DIR__ . '/../../lib/NoM/GlobalAggregator.php';
+            require_once __DIR__ . '/../../lib/GlobalAggregator.php';
             
             $npcManager = new NPCManager();
             $aggregator = new MarketplaceAggregator();
-            $globalAggregator = new \NoM\GlobalAggregator();
+            $globalAggregator = new GlobalAggregator();
             
             $now = time();
             $lastRun = $state['npcLastRun'] ?? 0;

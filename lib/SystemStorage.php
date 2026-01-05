@@ -1,7 +1,7 @@
 <?php
 /**
  * SystemStorage - Specialized storage for system-wide state.
- * Adheres to No-M philosophy by treating the 'system' as a special user.
+ * Treats the 'system' as a special user for event-sourced session data.
  */
 
 require_once __DIR__ . '/TeamStorage.php';

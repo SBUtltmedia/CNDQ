@@ -4,7 +4,7 @@
  * Useful for tests to ensure counterparties are updated immediately.
  */
 
-require_once __DIR__ . '/../../lib/NoM/GlobalAggregator.php';
+require_once __DIR__ . '/../../lib/GlobalAggregator.php';
 require_once __DIR__ . '/../../userData.php';
 
 header('Content-Type: application/json');
@@ -19,7 +19,7 @@ if (!isAdmin()) {
 */
 
 try {
-    $aggregator = new NoM\GlobalAggregator();
+    $aggregator = new GlobalAggregator();
     $count = $aggregator->processReflections();
     
     echo json_encode([

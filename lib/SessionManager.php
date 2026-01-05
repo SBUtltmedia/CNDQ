@@ -42,8 +42,8 @@ class SessionManager {
                         
                         // 1. Process reflections (ensure NPCs have latest state from previous human actions)
                         try {
-                            require_once __DIR__ . '/NoM/GlobalAggregator.php';
-                            $aggregator = new NoM\GlobalAggregator();
+                            require_once __DIR__ . '/GlobalAggregator.php';
+                            $aggregator = new GlobalAggregator();
                             $aggregator->processReflections();
                         } catch (Exception $e) {
                             error_log("SessionManager: Pre-NPC reflection processing failed: " . $e->getMessage());

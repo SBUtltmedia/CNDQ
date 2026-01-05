@@ -1,12 +1,11 @@
 <?php
 /**
- * GlobalAggregator - Aggregates state across all teams
- * SQLite Implementation
+ * GlobalAggregator - SQLite-based implementation for trade reflections.
+ * This is the ACTIVE reflection logic used by the SessionManager.
  */
-namespace NoM;
 
-require_once __DIR__ . '/../Database.php';
-require_once __DIR__ . '/../TeamStorage.php';
+require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/TeamStorage.php';
 
 class GlobalAggregator {
     private $db;
@@ -55,18 +54,22 @@ class GlobalAggregator {
         $counterpartyStorage = new \TeamStorage($counterpartyId);
         $actorStorage = new \TeamStorage($actorId);
 
-        // 1. Check if already reflected to counterparty to avoid duplicates
-        $cpState = $counterpartyStorage->getState();
-        $cpTransactions = $cpState['transactions'] ?? [];
-        foreach ($cpTransactions as $cpTxn) {
-            if (($cpTxn['transactionId'] ?? '') === $transactionId) {
-                // Already reflected, just clear the flag on actor
-                $actorStorage->emitEvent('mark_reflected', ['transactionId' => $transactionId]);
-                return;
+        // 1. Verify it is STILL pending reflection on the actor (prevents race conditions)
+        $actorState = $actorStorage->getState();
+        $isStillPending = false;
+        foreach ($actorState['transactions'] ?? [] as $actorTxn) {
+            if (($actorTxn['transactionId'] ?? '') === $transactionId && !empty($actorTxn['isPendingReflection'])) {
+                $isStillPending = true;
+                break;
             }
         }
 
-        // 2. Emit reflected event to counterparty
+        if (!$isStillPending) {
+            error_log("GlobalAggregator: Transaction $transactionId is no longer pending on $actorId. Skipping.");
+            return;
+        }
+
+        // 2. Check if already reflected to counterparty to avoid duplicate inventory/funds adjustments
         $role = ($txn['role'] === 'buyer') ? 'seller' : 'buyer';
         $quantity = $txn['quantity'];
         $chemical = $txn['chemical'];

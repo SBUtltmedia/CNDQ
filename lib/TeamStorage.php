@@ -7,7 +7,6 @@
  */
 
 require_once __DIR__ . '/Database.php';
-require_once __DIR__ . '/NoM/Aggregator.php';
 require_once __DIR__ . '/TeamNameGenerator.php';
 
 class TeamStorage {
@@ -308,7 +307,7 @@ class TeamStorage {
 
         $state['eventsProcessed'] = ($snapshot ? $snapshot['event_count'] : 0) + count($events);
 
-        // Apply events using the NoM Aggregator logic
+        // Apply events to build the current state
         foreach ($events as $event) {
             $state = $this->applyEvent($state, $event['event_type'], json_decode($event['payload'], true));
         }
@@ -317,10 +316,9 @@ class TeamStorage {
     }
 
     /**
-     * Apply a single event to state (uses NoM Aggregator logic)
+     * Apply a single event to state
      */
     private function applyEvent(array $state, string $type, array $payload): array {
-        // This mirrors the logic from NoM\Aggregator::aggregate()
         switch ($type) {
             case 'init':
                 if (isset($payload['profile'])) $state['profile'] = array_merge($state['profile'], $payload['profile']);

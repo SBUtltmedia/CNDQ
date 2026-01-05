@@ -358,28 +358,30 @@ class NegotiationManager {
                     $adOwner = (($negotiation['type'] ?? 'buy') === 'buy') ? $negotiation['initiatorId'] : $negotiation['responderId'];
 
                     $adManager = new AdvertisementManager($adOwner);
+                    
+                    // 1. Remove the public advertisement event
                     $adManager->removeAdvertisement($negotiation['adId']);
                     error_log("NegotiationManager: Automatically removed advertisement {$negotiation['adId']} after acceptance.");
 
-                    // Also remove the associated buy order if the ad owner had one for this chemical
-                    // This prevents NPCs from repeatedly responding to the same buy order
+                    // 2. ALSO remove the corresponding buy order event for this chemical
                     try {
-                        $buyerStorage = new TeamStorage($adOwner);
-                        $state = $buyerStorage->getState();
-                        $buyOrders = $state['buyOrders'] ?? [];
+                        $ownerStorage = new TeamStorage($adOwner);
+                        $buyOrdersData = $ownerStorage->getBuyOrders();
+                        $buyOrders = $buyOrdersData['interests'] ?? [];
 
                         foreach ($buyOrders as $order) {
                             if ($order['chemical'] === $negotiation['chemical']) {
-                                $buyerStorage->removeBuyOrder($order['id']);
-                                error_log("NegotiationManager: Automatically removed buy order {$order['id']} for {$negotiation['chemical']} after acceptance.");
-                                break; // Remove only one buy order per accepted negotiation
+                                $ownerStorage->removeBuyOrder($order['id']);
+                                error_log("NegotiationManager: Automatically removed buy order {$order['id']} for {$negotiation['chemical']} belonging to $adOwner.");
+                                // We stop after removing one matching buy order
+                                break; 
                             }
                         }
                     } catch (Exception $e) {
-                        error_log("NegotiationManager: Failed to remove buy order: " . $e->getMessage());
+                        error_log("NegotiationManager: Failed to remove associated buy order: " . $e->getMessage());
                     }
                 } catch (Exception $e) {
-                    error_log("NegotiationManager: Failed to remove linked advertisement {$negotiation['adId']}: " . $e->getMessage());
+                    error_log("NegotiationManager: Failed to cleanup linked advertisement/buy-order: " . $e->getMessage());
                 }
             }
 
