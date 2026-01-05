@@ -98,9 +98,11 @@ class GlobalAggregator {
             'heat' => $txn['heat'] ?? null
         ]);
 
+        $actorName = $actorStorage->getTeamName();
+
         $counterpartyStorage->addNotification([
             'type' => 'trade_completed',
-            'message' => ($role === 'seller' ? "Sold" : "Bought") . " $quantity gallons of $chemical for $" . number_format($totalAmount, 2)
+            'message' => ($role === 'seller' ? "Sold" : "Bought") . " $quantity gallons of $chemical " . ($role === 'seller' ? "to" : "from") . " $actorName for $" . number_format($totalAmount, 2)
         ]);
 
         // 3. Mark as reflected on actor

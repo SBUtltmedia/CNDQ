@@ -77,6 +77,8 @@ class TradeExecutor {
             $isHot = ($sellerGain > 0 && $buyerGain > 0);
 
             // Actor-specific events
+            $counterpartyName = $counterpartyStorage->getTeamName();
+
             if ($isBuyerActing) {
                 // Buyer is acting: they lose money, gain chemicals
                 $actorStorage->adjustChemical($chemical, $quantity);
@@ -101,7 +103,7 @@ class TradeExecutor {
                 
                 $actorStorage->addNotification([
                     'type' => 'trade_completed',
-                    'message' => ($isBuyerActing ? "Bought" : "Sold") . " $quantity gallons of $chemical for $" . number_format($totalCost, 2)
+                    'message' => "Bought $quantity gallons of $chemical from $counterpartyName for $" . number_format($totalCost, 2)
                 ]);
             } else {
                 // Seller is acting: they lose chemicals, gain money
@@ -127,7 +129,7 @@ class TradeExecutor {
 
                 $actorStorage->addNotification([
                     'type' => 'trade_completed',
-                    'message' => ($isBuyerActing ? "Bought" : "Sold") . " $quantity gallons of $chemical for $" . number_format($totalCost, 2)
+                    'message' => "Sold $quantity gallons of $chemical to $counterpartyName for $" . number_format($totalCost, 2)
                 ]);
             }
             

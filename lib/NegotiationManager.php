@@ -139,6 +139,16 @@ class NegotiationManager {
                     'counterparty' => $initiatorId,
                     'role' => 'responder'
                 ]);
+
+                // Add notifications
+                $iStorage->addNotification([
+                    'type' => 'negotiation_started',
+                    'message' => "Started a negotiation with $responderName for Chemical $chemical."
+                ]);
+                $rStorage->addNotification([
+                    'type' => 'negotiation_started',
+                    'message' => "$initiatorName started a negotiation with you for Chemical $chemical."
+                ]);
             } catch (Exception $e) {
                 error_log("NegotiationManager: Failed to emit events: " . $e->getMessage());
             }
@@ -264,6 +274,16 @@ class NegotiationManager {
                     'isFromMe' => false,
                     'offer' => $offerData
                 ]);
+
+                // Add notifications
+                $fromStorage->addNotification([
+                    'type' => 'negotiation_counter',
+                    'message' => "You sent a counter-offer to " . ($fromTeamId === $negotiation['initiatorId'] ? $negotiation['responderName'] : $negotiation['initiatorName']) . " for Chemical {$negotiation['chemical']}."
+                ]);
+                $otherStorage->addNotification([
+                    'type' => 'negotiation_counter',
+                    'message' => "$fromTeamName sent you a counter-offer for Chemical {$negotiation['chemical']}."
+                ]);
             } catch (Exception $e) {
                 error_log("NegotiationManager: Failed to emit counter-offer events: " . $e->getMessage());
             }
@@ -311,6 +331,7 @@ class NegotiationManager {
             // Emit events to both parties
             try {
                 $otherTeamId = ($acceptingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
+                $otherTeamName = ($acceptingTeamId === $negotiation['initiatorId']) ? $negotiation['responderName'] : $negotiation['initiatorName'];
                 $aStorage = new TeamStorage($acceptingTeamId);
                 $oStorage = new TeamStorage($otherTeamId);
 
@@ -320,7 +341,7 @@ class NegotiationManager {
                 // Add notifications for history
                 $aStorage->addNotification([
                     'type' => 'trade_completed',
-                    'message' => "Trade accepted! Negotiation for Chemical {$negotiation['chemical']} complete."
+                    'message' => "Trade accepted! Negotiation with $otherTeamName for Chemical {$negotiation['chemical']} complete."
                 ]);
                 // Counterparty (oStorage) notification is handled by GlobalAggregator reflection
             } catch (Exception $e) {
@@ -400,6 +421,9 @@ class NegotiationManager {
             // Emit events to both parties
             try {
                 $otherTeamId = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
+                $otherTeamName = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderName'] : $negotiation['initiatorName'];
+                $rejectingTeamName = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['initiatorName'] : $negotiation['responderName'];
+                
                 $rStorage = new TeamStorage($rejectingTeamId);
                 $oStorage = new TeamStorage($otherTeamId);
 
@@ -409,11 +433,11 @@ class NegotiationManager {
                 // Add notifications for history
                 $rStorage->addNotification([
                     'type' => 'negotiation_rejected',
-                    'message' => "You cancelled the negotiation for Chemical {$negotiation['chemical']}."
+                    'message' => "You cancelled the negotiation with $otherTeamName for Chemical {$negotiation['chemical']}."
                 ]);
                 $oStorage->addNotification([
                     'type' => 'negotiation_rejected',
-                    'message' => "The negotiation for Chemical {$negotiation['chemical']} was cancelled by the other team."
+                    'message' => "The negotiation for Chemical {$negotiation['chemical']} was cancelled by $rejectingTeamName."
                 ]);
             } catch (Exception $e) {
                 error_log("NegotiationManager: Failed to emit reject events: " . $e->getMessage());
