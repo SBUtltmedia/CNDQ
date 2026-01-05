@@ -29,7 +29,10 @@ class MarketplaceApp {
 
         // Polling
         this.pollingInterval = null;
+        this.timerInterval = null;
         this.pollingFrequency = 3000; // 3 seconds
+        this.lastServerTimeRemaining = 0;
+        this.gameStopped = true;
 
         // Modal state
         this.currentNegotiation = null;
@@ -1532,11 +1535,12 @@ class MarketplaceApp {
 
         const poll = async () => {
             try {
+                // Run these in parallel but catch individual errors so one doesn't block others
                 await Promise.all([
-                    this.loadAdvertisements(),
-                    this.loadNegotiations(),
-                    this.loadNotifications(),
-                    this.checkSessionPhase()
+                    this.loadAdvertisements().catch(e => console.error('Ad poll failed', e)),
+                    this.loadNegotiations().catch(e => console.error('Neg poll failed', e)),
+                    this.loadNotifications().catch(e => console.error('Notif poll failed', e)),
+                    this.checkSessionPhase().catch(e => console.error('Session poll failed', e))
                 ]);
             } catch (error) {
                 console.warn('⚠️ Polling error, pausing for one cycle:', error.message);
@@ -1548,6 +1552,16 @@ class MarketplaceApp {
         };
 
         this.pollingInterval = setInterval(poll, this.pollingFrequency);
+
+        // Local timer update every second
+        if (!this.timerInterval) {
+            this.timerInterval = setInterval(() => {
+                if (!this.gameStopped && this.lastServerTimeRemaining > 0) {
+                    this.lastServerTimeRemaining--;
+                    this.updateTimerDisplay(this.lastServerTimeRemaining);
+                }
+            }, 1000);
+        }
     }
 
     /**
@@ -1557,6 +1571,10 @@ class MarketplaceApp {
         if (this.pollingInterval) {
             clearInterval(this.pollingInterval);
             this.pollingInterval = null;
+        }
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
         }
     }
 
@@ -1568,6 +1586,9 @@ class MarketplaceApp {
             const data = await api.session.getStatus();
             console.log(`[Session] Polled: Session=${data.session}, Phase=${data.phase}, Time=${data.timeRemaining}, Stopped=${data.gameStopped}`);
             
+            this.gameStopped = data.gameStopped;
+            this.lastServerTimeRemaining = data.timeRemaining;
+
             // Check for game stopped state
             const closedOverlay = document.getElementById('market-closed-overlay');
             const mainApp = document.getElementById('app');
@@ -1584,10 +1605,7 @@ class MarketplaceApp {
             document.getElementById('session-num-display').textContent = data.session;
 
             // Update Timer
-            const minutes = Math.floor(data.timeRemaining / 60);
-            const seconds = data.timeRemaining % 60;
-            document.getElementById('session-timer').textContent =
-                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            this.updateTimerDisplay(data.timeRemaining);
 
             // Check for production results to display
             if (data.productionJustRan && !this.productionResultsShown) {
@@ -1604,6 +1622,18 @@ class MarketplaceApp {
 
         } catch (error) {
             console.error('Failed to check session status:', error);
+        }
+    }
+
+    /**
+     * Update the timer display
+     */
+    updateTimerDisplay(timeRemaining) {
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        const timerEl = document.getElementById('session-timer');
+        if (timerEl) {
+            timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
     }
 
