@@ -16,8 +16,8 @@ class ExpertStrategy extends NPCTradingStrategy
 {
     const BUY_MARGIN = 0.95;            // Buy at 95% of shadow price
     const SELL_MARGIN = 1.05;           // Sell at 105% of shadow price
-    const MIN_QUANTITY = 300;           // Minimum trade quantity
-    const MAX_QUANTITY = 800;           // Maximum trade quantity
+    const MIN_QUANTITY = 50;            // Minimum trade quantity
+    const MAX_QUANTITY = 500;           // Maximum trade quantity
     const RECALC_INTERVAL = 2;          // Recalculate shadow prices every N trades
 
     private $shadowPrices = null;
@@ -89,6 +89,11 @@ class ExpertStrategy extends NPCTradingStrategy
                 continue;
             }
 
+            // Check if already negotiating
+            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
+                continue;
+            }
+
             $chemical = $ad['chemical'];
             $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
             
@@ -108,7 +113,8 @@ class ExpertStrategy extends NPCTradingStrategy
                         'responderName' => $ad['buyerName'],
                         'chemical' => $chemical,
                         'quantity' => $offerQty,
-                        'price' => $offerPrice
+                        'price' => $offerPrice,
+                        'adId' => $ad['id']
                     ];
                 }
             }
@@ -217,7 +223,7 @@ class ExpertStrategy extends NPCTradingStrategy
 
         // Calculate target based on value
         $avgShadowPrice = array_sum($this->shadowPrices) / 4;
-        $relativeValue = $shadowPrice / $avgShadowPrice;
+        $relativeValue = ($avgShadowPrice > 0) ? ($shadowPrice / $avgShadowPrice) : 1.0;
 
         // More valuable chemicals get higher target inventory
         $targetInventory = 1000 + ($relativeValue * 500);
@@ -239,10 +245,10 @@ class ExpertStrategy extends NPCTradingStrategy
         $shadowPrice = $this->shadowPrices[$chemical] ?? 3.0;
 
         $avgShadowPrice = array_sum($this->shadowPrices) / 4;
-        $relativeValue = $shadowPrice / $avgShadowPrice;
+        $relativeValue = ($avgShadowPrice > 0) ? ($shadowPrice / $avgShadowPrice) : 1.0;
 
         // Less valuable chemicals can be sold more aggressively
-        $sellPercent = min(0.5, 0.3 / $relativeValue);
+        $sellPercent = min(0.5, 0.3 / max(0.1, $relativeValue));
 
         $desiredQuantity = max(
             self::MIN_QUANTITY,
@@ -303,6 +309,14 @@ class ExpertStrategy extends NPCTradingStrategy
             }
             // Counter if price is too low but within acceptable range
             if ($price < $optimalSellPrice * 0.95 && $price >= $shadowPrice * 0.9) {
+                 // Add a random reaction level (offended vs neutral)
+                 $reaction = ($price < $shadowPrice) ? rand(60, 90) : rand(10, 40);
+                 $this->npcManager->runTradingCycleAction($this->npc, [
+                    'type' => 'add_reaction',
+                    'negotiationId' => $negotiation['id'],
+                    'level' => $reaction
+                 ]);
+
                  return [
                     'type' => 'counter_negotiation',
                     'negotiationId' => $negotiation['id'],
@@ -324,6 +338,13 @@ class ExpertStrategy extends NPCTradingStrategy
                 }
                 // Counter if price is too low but we have excess and it's still profitable
                 if ($this->hasSufficientInventory($chemical, $quantity) && $price >= $shadowPrice * 0.9) {
+                    $reaction = ($price < $shadowPrice) ? rand(50, 80) : rand(0, 30);
+                    $this->npcManager->runTradingCycleAction($this->npc, [
+                        'type' => 'add_reaction',
+                        'negotiationId' => $negotiation['id'],
+                        'level' => $reaction
+                    ]);
+
                     return [
                         'type' => 'counter_negotiation',
                         'negotiationId' => $negotiation['id'],
@@ -343,6 +364,13 @@ class ExpertStrategy extends NPCTradingStrategy
                 }
                 // Counter if price is too high but we need it and can afford it at optimal price
                 if ($this->hasSufficientFunds($quantity * $price) && $price <= $shadowPrice * 1.1) {
+                    $reaction = ($price > $shadowPrice) ? rand(50, 80) : rand(0, 30);
+                    $this->npcManager->runTradingCycleAction($this->npc, [
+                        'type' => 'add_reaction',
+                        'negotiationId' => $negotiation['id'],
+                        'level' => $reaction
+                    ]);
+
                     return [
                         'type' => 'counter_negotiation',
                         'negotiationId' => $negotiation['id'],

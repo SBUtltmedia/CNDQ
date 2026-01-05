@@ -167,15 +167,16 @@ class ChemicalCard extends LitElement {
                         <div class="ads-container">
                             ${this.buyAds.length === 0
                                 ? html`<p class="empty-ads">No buy requests yet</p>`
-                                : this.buyAds.map(ad => unsafeHTML(
-                                    `<advertisement-item
-                                        teamName="${ad.teamName}"
-                                        teamId="${ad.teamId}"
+                                : this.buyAds.map(ad => html`
+                                    <advertisement-item
+                                        .adId=${ad.id}
+                                        .teamName=${ad.teamName}
+                                        .teamId=${ad.teamId}
                                         type="buy"
-                                        chemical="${this.chemical}"
-                                        ?isMyAd="${ad.teamId === this.currentUserId}"
-                                    ></advertisement-item>`
-                                ))
+                                        .chemical=${this.chemical}
+                                        ?isMyAd=${ad.teamId === this.currentUserId}
+                                    ></advertisement-item>
+                                `)
                             }
                         </div>
                     </div>

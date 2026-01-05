@@ -86,6 +86,16 @@
         </div>
     </div>
 
+    <!-- Market Closed Overlay -->
+    <div id="market-closed-overlay" class="hidden fixed inset-0 bg-gray-900 z-[130] flex flex-col items-center justify-center p-4">
+        <div class="text-center max-w-2xl">
+            <h1 class="text-6xl md:text-8xl font-black text-red-600 mb-6 tracking-tighter uppercase">Market Closed</h1>
+            <p class="text-2xl md:text-3xl text-gray-300 font-light mb-8">Trading is currently suspended.</p>
+            <div class="w-24 h-1 bg-red-600 mx-auto mb-8"></div>
+            <p class="text-gray-400 animate-pulse">Waiting for admin to start the session...</p>
+        </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50">
         <div class="text-center">
@@ -111,101 +121,128 @@
     </div>
 
     <!-- Production Results Modal -->
-    <div id="production-results-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[110] p-4">
-        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full border-2 border-green-500 shadow-2xl">
-            <!-- Production In Progress State -->
-            <div id="production-in-progress" class="hidden text-center py-8">
-                <div class="cog-container mx-auto mb-6">
-                    <svg class="cog cog-1" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
-                    <svg class="cog cog-2" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
-                    <svg class="cog cog-3" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
-                </div>
-                <h2 class="text-3xl font-bold text-green-500 font-mono animate-pulse uppercase tracking-tight">Production Running</h2>
-                <p class="text-gray-300 mt-3 text-lg">Linear programming solvers optimizing your profit...</p>
-                <p class="text-gray-400 mt-2 text-sm">Session <span id="prod-progress-session">1</span></p>
+    <div id="production-results-modal" class="hidden fixed inset-0 bg-gray-900 z-[140] flex items-center justify-center p-0">
+        <div class="bg-gray-800 w-full h-full border-none shadow-2xl overflow-y-auto flex flex-col">
+            <!-- Header (Sticky) -->
+            <div class="bg-gray-900 border-b-2 border-green-500 p-6 flex items-center justify-between sticky top-0 z-10">
+                <h3 class="text-3xl font-bold text-green-500 flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span id="prod-result-title">Production Complete - Session <span id="prod-result-session">1</span></span>
+                </h3>
+                <button id="prod-result-close" class="text-gray-400 hover:text-white text-4xl font-bold transition-colors">&times;</button>
             </div>
 
-            <!-- Production Complete State -->
-            <div id="production-complete" class="hidden">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold text-green-500 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span id="prod-result-title">Production Complete - Session <span id="prod-result-session">1</span></span>
-                    </h3>
-                    <button id="prod-result-close" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
-                </div>
-
-                <div class="space-y-6">
-                <!-- Production Output -->
-                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                    <h4 class="text-lg font-semibold text-white mb-3">Products Manufactured</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-blue-900 bg-opacity-30 p-3 rounded border border-blue-700">
-                            <div class="text-blue-400 text-sm mb-1">De-Icer</div>
-                            <div class="text-2xl font-bold text-white"><span id="prod-result-deicer">0</span> gal</div>
-                        </div>
-                        <div class="bg-purple-900 bg-opacity-30 p-3 rounded border border-purple-700">
-                            <div class="text-purple-400 text-sm mb-1">Solvent</div>
-                            <div class="text-2xl font-bold text-white"><span id="prod-result-solvent">0</span> gal</div>
-                        </div>
+            <div class="flex-1 container mx-auto max-w-4xl py-12 px-6">
+                <!-- Production In Progress State (Inside fullscreen for consistency if triggered) -->
+                <div id="production-in-progress" class="hidden text-center py-20">
+                    <div class="cog-container mx-auto mb-8 scale-150">
+                        <svg class="cog cog-1" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+                        <svg class="cog cog-2" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+                        <svg class="cog cog-3" viewBox="0 0 24 24"><path d="M19.44 12.99l-.01.02c.04-.33.08-.67.08-1.01 0-.34-.03-.66-.07-.99l.01.02 2.44-1.92-2.43-4.22-2.87.96.01.02c-.48-.42-1.03-.77-1.62-1.01l.02-.01L14.58 2h-4.85L9.32 4.86l.02.01c-.59.24-1.14.59-1.62 1.01l.01-.02-2.87-.96-2.43 4.22 2.44 1.92-.01-.02c-.04.33-.07.65-.07.99 0 .34.03.68.08 1.01l-.01-.02-2.44 1.92 2.43 4.22 2.87-.96-.01-.02c.48.42 1.03.77 1.62 1.01l-.02.01L9.73 22h4.85l.41-2.86-.02-.01c.59-.24 1.14-.59 1.62-1.01l-.01.02 2.87.96 2.43-4.22-2.44-1.9zm-7.44 3c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
                     </div>
+                    <h2 class="text-5xl font-bold text-green-500 font-mono animate-pulse uppercase tracking-tight">Production Running</h2>
+                    <p class="text-gray-300 mt-6 text-2xl">Linear programming solvers optimizing your profit...</p>
+                    <p class="text-gray-400 mt-4 text-lg">Session <span id="prod-progress-session">1</span></p>
                 </div>
 
-                <!-- Revenue -->
-                <div class="bg-green-900 bg-opacity-30 rounded-lg p-4 border-2 border-green-600">
-                    <h4 class="text-lg font-semibold text-green-400 mb-2">Revenue Earned</h4>
-                    <div class="text-3xl font-bold text-white">$<span id="prod-result-revenue">0</span></div>
-                </div>
+                <!-- Production Complete State -->
+                <div id="production-complete" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                        <!-- Left Column: Primary Stats -->
+                        <div class="space-y-8">
+                            <!-- Revenue -->
+                            <div class="bg-green-900 bg-opacity-30 rounded-2xl p-8 border-4 border-green-600 shadow-xl">
+                                <h4 class="text-xl font-semibold text-green-400 mb-4 uppercase tracking-widest">Revenue Earned</h4>
+                                <div class="text-6xl font-black text-white">$<span id="prod-result-revenue">0</span></div>
+                                <div class="mt-4 text-green-300 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                    <span>Added to your treasury</span>
+                                </div>
+                            </div>
 
-                <!-- Chemicals Consumed -->
-                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                    <h4 class="text-lg font-semibold text-white mb-3">Chemicals Consumed</h4>
-                    <div class="grid grid-cols-4 gap-2 text-center font-mono">
-                        <div class="bg-blue-600 bg-opacity-50 p-2 rounded">
-                            <div class="text-xs text-blue-200">C</div>
-                            <div class="text-lg font-bold text-white"><span id="prod-result-chem-C">0</span></div>
+                            <!-- Production Output -->
+                            <div class="bg-gray-700 rounded-2xl p-8 border border-gray-600 shadow-lg">
+                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Products Manufactured</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div class="bg-blue-900 bg-opacity-40 p-6 rounded-xl border border-blue-700">
+                                        <div class="text-blue-400 text-sm font-bold mb-2 uppercase">De-Icer</div>
+                                        <div class="text-4xl font-black text-white"><span id="prod-result-deicer">0</span> <span class="text-lg font-normal opacity-70">gal</span></div>
+                                    </div>
+                                    <div class="bg-purple-900 bg-opacity-40 p-6 rounded-xl border border-purple-700">
+                                        <div class="text-purple-400 text-sm font-bold mb-2 uppercase">Solvent</div>
+                                        <div class="text-4xl font-black text-white"><span id="prod-result-solvent">0</span> <span class="text-lg font-normal opacity-70">gal</span></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="bg-purple-600 bg-opacity-50 p-2 rounded">
-                            <div class="text-xs text-purple-200">N</div>
-                            <div class="text-lg font-bold text-white"><span id="prod-result-chem-N">0</span></div>
-                        </div>
-                        <div class="bg-yellow-600 bg-opacity-50 p-2 rounded">
-                            <div class="text-xs text-yellow-200">D</div>
-                            <div class="text-lg font-bold text-white"><span id="prod-result-chem-D">0</span></div>
-                        </div>
-                        <div class="bg-red-600 bg-opacity-50 p-2 rounded">
-                            <div class="text-xs text-red-200">Q</div>
-                            <div class="text-lg font-bold text-white"><span id="prod-result-chem-Q">0</span></div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Current Status -->
-                <div class="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                    <h4 class="text-lg font-semibold text-white mb-3">Current Status</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <div class="text-gray-400 text-sm mb-1">Funds</div>
-                            <div class="text-xl font-bold text-green-500">$<span id="prod-result-current-funds">0</span></div>
-                        </div>
-                        <div>
-                            <div class="text-gray-400 text-sm mb-1">Inventory</div>
-                            <div class="text-sm font-mono space-y-1">
-                                <div class="text-blue-400">C: <span id="prod-result-inv-C">0</span></div>
-                                <div class="text-purple-400">N: <span id="prod-result-inv-N">0</span></div>
-                                <div class="text-yellow-400">D: <span id="prod-result-inv-D">0</span></div>
-                                <div class="text-red-400">Q: <span id="prod-result-inv-Q">0</span></div>
+                        <!-- Right Column: Details & Inventory -->
+                        <div class="space-y-8">
+                            <!-- Chemicals Consumed -->
+                            <div class="bg-gray-700 rounded-2xl p-8 border border-gray-600 shadow-lg">
+                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Resources Consumed</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-blue-600 bg-opacity-20 p-4 rounded-lg flex justify-between items-center">
+                                        <span class="text-blue-400 font-bold">Chem C</span>
+                                        <span class="text-xl font-mono font-bold text-white"><span id="prod-result-chem-C">0</span></span>
+                                    </div>
+                                    <div class="bg-purple-600 bg-opacity-20 p-4 rounded-lg flex justify-between items-center">
+                                        <span class="text-purple-400 font-bold">Chem N</span>
+                                        <span class="text-xl font-mono font-bold text-white"><span id="prod-result-chem-N">0</span></span>
+                                    </div>
+                                    <div class="bg-yellow-600 bg-opacity-20 p-4 rounded-lg flex justify-between items-center">
+                                        <span class="text-yellow-400 font-bold">Chem D</span>
+                                        <span class="text-xl font-mono font-bold text-white"><span id="prod-result-chem-D">0</span></span>
+                                    </div>
+                                    <div class="bg-red-600 bg-opacity-20 p-4 rounded-lg flex justify-between items-center">
+                                        <span class="text-red-400 font-bold">Chem Q</span>
+                                        <span class="text-xl font-mono font-bold text-white"><span id="prod-result-chem-Q">0</span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Current Status -->
+                            <div class="bg-gray-900 bg-opacity-50 rounded-2xl p-8 border border-gray-700 shadow-lg">
+                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">New Balance</h4>
+                                <div class="grid grid-cols-1 gap-6">
+                                    <div class="flex justify-between items-center border-b border-gray-800 pb-4">
+                                        <span class="text-gray-400">Total Funds</span>
+                                        <span class="text-3xl font-bold text-green-500">$<span id="prod-result-current-funds">0</span></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400 block mb-4">Remaining Inventory</span>
+                                        <div class="grid grid-cols-4 gap-2 text-center">
+                                            <div class="bg-gray-800 p-2 rounded">
+                                                <div class="text-[10px] text-blue-400 font-bold">C</div>
+                                                <div class="text-sm font-bold"><span id="prod-result-inv-C">0</span></div>
+                                            </div>
+                                            <div class="bg-gray-800 p-2 rounded">
+                                                <div class="text-[10px] text-purple-400 font-bold">N</div>
+                                                <div class="text-sm font-bold"><span id="prod-result-inv-N">0</span></div>
+                                            </div>
+                                            <div class="bg-gray-800 p-2 rounded">
+                                                <div class="text-[10px] text-yellow-400 font-bold">D</div>
+                                                <div class="text-sm font-bold"><span id="prod-result-inv-D">0</span></div>
+                                            </div>
+                                            <div class="bg-gray-800 p-2 rounded">
+                                                <div class="text-[10px] text-red-400 font-bold">Q</div>
+                                                <div class="text-sm font-bold"><span id="prod-result-inv-Q">0</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Continue Button -->
-                <button id="prod-result-continue" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition text-lg">
-                    Continue to Trading
-                </button>
+                    <!-- Continue Button -->
+                    <div class="max-w-md mx-auto">
+                        <button id="prod-result-continue" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-6 px-8 rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-2xl text-2xl uppercase tracking-tighter">
+                            Enter the Market →
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

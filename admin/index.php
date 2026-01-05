@@ -81,8 +81,8 @@ if (!isAdmin()) {
 
             <!-- Phase Controls -->
             <div class="flex gap-3">
-                <button onclick="advancePhase()" class="flex-1 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
-                    Advance to Next Phase →
+                <button id="start-stop-btn" onclick="toggleGameStop()" class="flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition">
+                    Start Game
                 </button>
                 <button onclick="resetSession()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition">
                     Reset to Session 1
@@ -353,17 +353,40 @@ if (!isAdmin()) {
             if (!sessionState) return;
 
             document.getElementById('session-number').textContent = sessionState.currentSession;
-            document.getElementById('current-phase').textContent = 'Trading';
-
+            
             const phaseEl = document.getElementById('current-phase');
-            phaseEl.className = 'text-3xl font-bold capitalize text-green-400';
+            if (sessionState.gameStopped) {
+                phaseEl.textContent = 'STOPPED';
+                phaseEl.className = 'text-3xl font-bold capitalize text-red-500';
+                
+                const btn = document.getElementById('start-stop-btn');
+                btn.textContent = 'Start Game';
+                btn.className = 'flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition';
+            } else {
+                phaseEl.textContent = 'Trading';
+                phaseEl.className = 'text-3xl font-bold capitalize text-green-400';
+                
+                const btn = document.getElementById('start-stop-btn');
+                btn.textContent = 'Stop Game';
+                btn.className = 'flex-1 bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition';
+            }
 
-            document.getElementById('auto-advance').checked = sessionState.autoAdvance;
+            const autoAdvanceCheckbox = document.getElementById('auto-advance');
+            if (document.activeElement !== autoAdvanceCheckbox) {
+                autoAdvanceCheckbox.checked = sessionState.autoAdvance;
+            }
 
             // Trading session duration
             const tradeDuration = sessionState.tradingDuration || 600;
-            document.getElementById('trading-duration-minutes').value = Math.floor(tradeDuration / 60);
-            document.getElementById('trading-duration-seconds').value = tradeDuration % 60;
+            const minInput = document.getElementById('trading-duration-minutes');
+            const secInput = document.getElementById('trading-duration-seconds');
+            
+            if (document.activeElement !== minInput) {
+                minInput.value = Math.floor(tradeDuration / 60);
+            }
+            if (document.activeElement !== secInput) {
+                secInput.value = tradeDuration % 60;
+            }
 
             updateTimer();
         }
@@ -371,11 +394,45 @@ if (!isAdmin()) {
         function updateTimer() {
             if (!sessionState) return;
 
+            if (sessionState.gameStopped) {
+                 document.getElementById('time-remaining').textContent = "STOPPED";
+                 return;
+            }
+
             if (sessionState.timeRemaining !== undefined) {
                 const minutes = Math.floor(sessionState.timeRemaining / 60);
                 const seconds = sessionState.timeRemaining % 60;
                 document.getElementById('time-remaining').textContent =
                     `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+        }
+
+        async function toggleGameStop() {
+            if (!sessionState) return;
+            
+            const newState = !sessionState.gameStopped;
+            const action = newState ? 'Stop' : 'Start';
+            
+            // Only confirm for stopping
+            if (newState) {
+                const confirmed = await showConfirm('Stop the game? Market will be closed for all players.', 'Stop Game');
+                if (!confirmed) return;
+            }
+
+            try {
+                const response = await fetch(apiUrl('/api/admin/session.php'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'toggleGameStop', stopped: newState })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Game ${newState ? 'Stopped' : 'Started'}`);
+                    await loadSessionState();
+                }
+            } catch (error) {
+                showToast(`Failed to ${action} game`, 'error');
             }
         }
 
@@ -697,14 +754,16 @@ if (!isAdmin()) {
         loadTeams();
         loadNPCs(); // Load NPCs on page load
 
-        // Auto-refresh every 3 seconds
+        // Local timer update every second
         setInterval(() => {
-            loadSessionState();
-            if (sessionState && sessionState.timeRemaining) {
+            if (sessionState && typeof sessionState.timeRemaining === 'number') {
                 sessionState.timeRemaining = Math.max(0, sessionState.timeRemaining - 1);
                 updateTimer();
             }
         }, 1000);
+
+        // Server state refresh every 3 seconds
+        setInterval(loadSessionState, 3000);
 
         setInterval(loadTeams, 5000);
         setInterval(loadNPCs, 5000); // Refresh NPCs every 5 seconds

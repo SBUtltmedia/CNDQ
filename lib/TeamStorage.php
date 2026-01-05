@@ -127,8 +127,12 @@ class TeamStorage {
             'teamName' => $teamName
         ];
 
-        // Start transaction for atomic write
-        $this->db->beginTransaction();
+        // Handle nested transactions: Only begin if not already in one
+        $useTransaction = !$this->db->inTransaction();
+        if ($useTransaction) {
+            $this->db->beginTransaction();
+        }
+
         try {
             // Insert team event
             $this->db->insert(
@@ -171,9 +175,13 @@ class TeamStorage {
                 [$this->teamEmail]
             );
 
-            $this->db->commit();
+            if ($useTransaction) {
+                $this->db->commit();
+            }
         } catch (Exception $e) {
-            $this->db->rollback();
+            if ($useTransaction) {
+                $this->db->rollback();
+            }
             error_log("TeamStorage: Failed to emit event '$type' for {$this->teamEmail}: " . $e->getMessage());
             throw $e;
         }
@@ -394,6 +402,55 @@ class TeamStorage {
 
             case 'add_production':
                 $state['productions'][] = $payload;
+                break;
+
+            case 'initiate_negotiation':
+                $negId = $payload['negotiationId'];
+                if (!isset($state['negotiationStates'][$negId])) {
+                    $state['negotiationStates'][$negId] = [
+                        'id' => $negId,
+                        'patience' => 100,
+                        'lastReaction' => 0,
+                        'chemical' => $payload['chemical'],
+                        'role' => $payload['role'],
+                        'counterparty' => $payload['counterparty'],
+                        'status' => 'pending'
+                    ];
+                }
+                break;
+
+            case 'add_counter_offer':
+                $negId = $payload['negotiationId'];
+                if (!isset($state['negotiationStates'][$negId])) {
+                    $state['negotiationStates'][$negId] = ['patience' => 100, 'lastReaction' => 0];
+                }
+                $state['negotiationStates'][$negId]['id'] = $negId;
+                if (!($payload['isFromMe'] ?? false)) {
+                    $state['negotiationStates'][$negId]['patience'] = max(0, ($state['negotiationStates'][$negId]['patience'] ?? 100) - 10);
+                }
+                break;
+
+            case 'close_negotiation':
+                $negId = $payload['negotiationId'];
+                if (isset($state['negotiationStates'][$negId])) {
+                    $state['negotiationStates'][$negId]['status'] = $payload['status'];
+                }
+                break;
+
+            case 'add_reaction':
+                $negId = $payload['negotiationId'];
+                if (!isset($state['negotiationStates'][$negId])) {
+                    $state['negotiationStates'][$negId] = ['patience' => 100, 'lastReaction' => 0];
+                }
+                $state['negotiationStates'][$negId]['lastReaction'] = $payload['level'];
+                break;
+
+            case 'mark_reflected':
+                foreach ($state['transactions'] as &$txn) {
+                    if (($txn['transactionId'] ?? '') === $payload['transactionId']) {
+                        unset($txn['isPendingReflection']);
+                    }
+                }
                 break;
 
             case 'update_session':

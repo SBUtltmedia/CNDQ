@@ -32,7 +32,8 @@ class SystemStorage extends TeamStorage {
             'npcLastRun' => $session['npcLastRun'] ?? 0,
             'productionRun' => $session['productionRun'] ?? null,
             'initialProductionRun' => $session['initialProductionRun'] ?? null,
-            'productionJustRan' => $session['productionJustRan'] ?? null
+            'productionJustRan' => $session['productionJustRan'] ?? null,
+            'gameStopped' => $session['gameStopped'] ?? false
         ];
     }
 

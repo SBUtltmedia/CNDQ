@@ -93,6 +93,11 @@ class NoviceStrategy extends NPCTradingStrategy
                 continue;
             }
 
+            // Check if already negotiating
+            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
+                continue;
+            }
+
             $chemical = $ad['chemical'];
             $amount = $this->inventory[$chemical] ?? 0;
 
@@ -112,7 +117,8 @@ class NoviceStrategy extends NPCTradingStrategy
                             'responderName' => $ad['buyerName'],
                             'chemical' => $chemical,
                             'quantity' => $qty,
-                            'price' => self::SELL_THRESHOLD
+                            'price' => self::SELL_THRESHOLD,
+                            'adId' => $ad['id']
                         ];
                     }
                 }
@@ -183,6 +189,13 @@ class NoviceStrategy extends NPCTradingStrategy
             }
             // Counter if still have excess and price is below threshold
             if ($currentInventory > self::EXCESS_INVENTORY && $price < self::SELL_THRESHOLD) {
+                 $reaction = rand(40, 70); // Displeased
+                 $this->npcManager->runTradingCycleAction($this->npc, [
+                    'type' => 'add_reaction',
+                    'negotiationId' => $negotiation['id'],
+                    'level' => $reaction
+                 ]);
+
                  return [
                     'type' => 'counter_negotiation',
                     'negotiationId' => $negotiation['id'],
@@ -204,6 +217,13 @@ class NoviceStrategy extends NPCTradingStrategy
                 }
                 // Counter if we have excess and price is too low, but within a reasonable range
                 if ($currentInventory > self::EXCESS_INVENTORY && $price >= self::SELL_THRESHOLD * 0.8) {
+                    $reaction = rand(30, 60);
+                    $this->npcManager->runTradingCycleAction($this->npc, [
+                        'type' => 'add_reaction',
+                        'negotiationId' => $negotiation['id'],
+                        'level' => $reaction
+                    ]);
+
                     return [
                         'type' => 'counter_negotiation',
                         'negotiationId' => $negotiation['id'],
@@ -222,6 +242,13 @@ class NoviceStrategy extends NPCTradingStrategy
                 }
                 // Counter if we need it but price is a bit high
                 if ($currentInventory < self::LOW_INVENTORY && $price <= self::BUY_THRESHOLD * 1.2) {
+                    $reaction = rand(30, 60);
+                    $this->npcManager->runTradingCycleAction($this->npc, [
+                        'type' => 'add_reaction',
+                        'negotiationId' => $negotiation['id'],
+                        'level' => $reaction
+                    ]);
+
                     return [
                         'type' => 'counter_negotiation',
                         'negotiationId' => $negotiation['id'],

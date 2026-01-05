@@ -49,6 +49,11 @@ class BeginnerStrategy extends NPCTradingStrategy
                 continue;
             }
 
+            // Check if already negotiating with this team for this chemical
+            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
+                continue;
+            }
+
             $chemical = $ad['chemical'];
             $available = $this->inventory[$chemical] ?? 0;
 
@@ -71,7 +76,8 @@ class BeginnerStrategy extends NPCTradingStrategy
                 'responderName' => $ad['buyerName'],
                 'chemical' => $chemical,
                 'quantity' => $offerQty,
-                'price' => $offerPrice
+                'price' => $offerPrice,
+                'adId' => $ad['id']
             ];
         }
 

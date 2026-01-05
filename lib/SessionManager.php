@@ -148,8 +148,14 @@ class SessionManager {
         return $this->storage->getSystemState();
     }
 
+    public function toggleGameStop($stopped) {
+        $this->storage->setSessionData(['gameStopped' => (bool)$stopped]);
+        return $this->storage->getSystemState();
+    }
+
     public function updateNpcLastRun() {
         $this->storage->setSessionData(['npcLastRun' => time()]);
+        return $this->getState();
     }
 
     public function reset() {
@@ -161,7 +167,8 @@ class SessionManager {
             'tradingDuration' => 120,
             'phaseStartedAt' => time(),
             'productionRun' => null,
-            'productionJustRan' => time() // Set flag so modal shows initial production on first load
+            'productionJustRan' => time(), // Set flag so modal shows initial production on first load
+            'gameStopped' => true // Game starts in stopped state after reset
         ]);
         return $this->storage->getSystemState();
     }

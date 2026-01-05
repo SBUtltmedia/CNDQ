@@ -17,9 +17,31 @@ try {
         // Get current session state (public - triggers auto-advance if enabled)
         $state = $sessionManager->getState();
 
-        // Auto-advance if time expired and auto-advance is enabled
-        if (($state['autoAdvance'] ?? false) && ($state['timeRemaining'] ?? 0) <= 0) {
+        // 1. Auto-advance if time expired and auto-advance is enabled
+        if (($state['autoAdvance'] ?? false) && ($state['timeRemaining'] ?? 0) <= 0 && !($state['gameStopped'] ?? false)) {
             $state = $sessionManager->advanceSession();
+        }
+
+        // 2. TRIGGER NPC CYCLES & SNAPSHOTS (Passive Heartbeat)
+        // If the game is running, every poll has a chance to trigger NPCs
+        if (!($state['gameStopped'] ?? false)) {
+            require_once __DIR__ . '/../../lib/NPCManager.php';
+            require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
+            
+            $npcManager = new NPCManager();
+            $aggregator = new MarketplaceAggregator();
+            
+            $now = time();
+            $lastRun = $state['npcLastRun'] ?? 0;
+            
+            // Generate snapshot frequently (every poll) to keep marketplace fresh
+            $aggregator->generateSnapshot();
+            
+            // Run NPC trading cycle every 10 seconds
+            if ($now - $lastRun >= 10) {
+                $npcManager->runTradingCycle($state['currentSession']);
+                $state = $sessionManager->updateNpcLastRun(); // Update and get fresh state
+            }
         }
 
         echo json_encode([
@@ -91,6 +113,17 @@ try {
                 echo json_encode([
                     'success' => true,
                     'message' => 'Trading duration set to ' . $seconds . ' seconds',
+                    'session' => $state
+                ]);
+                break;
+
+            case 'toggleGameStop':
+                // Toggle game stopped state
+                $stopped = $input['stopped'] ?? false;
+                $state = $sessionManager->toggleGameStop($stopped);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Game ' . ($stopped ? 'stopped' : 'started'),
                     'session' => $state
                 ]);
                 break;

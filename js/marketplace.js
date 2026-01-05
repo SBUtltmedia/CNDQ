@@ -537,7 +537,7 @@ class MarketplaceApp {
     /**
      * Open respond to buy request modal
      */
-    openRespondModal(buyerTeamId, buyerTeamName, chemical) {
+    openRespondModal(buyerTeamId, buyerTeamName, chemical, adId) {
         // Don't open if production modal is visible (it should block everything)
         if (this.isProductionModalBlocking()) {
             console.log('⚠️ Production modal is open - blocking respond modal');
@@ -550,7 +550,8 @@ class MarketplaceApp {
         this.currentRespondContext = {
             buyerTeamId,
             buyerTeamName,
-            chemical
+            chemical,
+            adId
         };
 
         // Set buyer info
@@ -620,7 +621,7 @@ class MarketplaceApp {
     async submitRespondOffer() {
         if (!this.currentRespondContext) return;
 
-        const { buyerTeamId, buyerTeamName, chemical } = this.currentRespondContext;
+        const { buyerTeamId, buyerTeamName, chemical, adId } = this.currentRespondContext;
         const quantity = parseInt(document.getElementById('respond-quantity').value);
         const price = parseFloat(document.getElementById('respond-price').value);
 
@@ -639,7 +640,7 @@ class MarketplaceApp {
         try {
             // Initiate negotiation with the buyer. User is responding to a buy request,
             // so from the user's perspective (the initiator of this negotiation), it's a 'sell'.
-            const response = await api.negotiations.initiate(buyerTeamId, chemical, quantity, price, 'sell');
+            const response = await api.negotiations.initiate(buyerTeamId, chemical, quantity, price, 'sell', adId);
 
             if (response.success) {
                 this.showToast(`Offer sent to ${buyerTeamName} for ${quantity} gallons of ${chemical}`, 'success');
@@ -1247,11 +1248,11 @@ class MarketplaceApp {
 
         // Web Component Events: Negotiate (from advertisement-item)
         document.addEventListener('negotiate', (e) => {
-            const { teamId, teamName, chemical, type } = e.detail;
+            const { teamId, teamName, chemical, type, adId } = e.detail;
 
             // If responding to a buy request, use special respond modal
             if (type === 'buy') {
-                this.openRespondModal(teamId, teamName, chemical);
+                this.openRespondModal(teamId, teamName, chemical, adId);
             }
         });
 
@@ -1478,8 +1479,17 @@ class MarketplaceApp {
     async checkSessionPhase() {
         try {
             const data = await api.session.getStatus();
-            console.log(`[Session] Polled: Session=${data.session}, Phase=${data.phase}, Time=${data.timeRemaining}`);
+            console.log(`[Session] Polled: Session=${data.session}, Phase=${data.phase}, Time=${data.timeRemaining}, Stopped=${data.gameStopped}`);
             
+            // Check for game stopped state
+            const closedOverlay = document.getElementById('market-closed-overlay');
+            if (data.gameStopped) {
+                if (closedOverlay) closedOverlay.classList.remove('hidden');
+                return; // Stop processing other updates if game is stopped
+            } else {
+                if (closedOverlay) closedOverlay.classList.add('hidden');
+            }
+
             // Update UI elements
             document.getElementById('session-num-display').textContent = data.session;
 

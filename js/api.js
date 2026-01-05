@@ -243,14 +243,18 @@ class ApiClient {
          * @param {string} chemical - Chemical type
          * @param {number} quantity - Gallons
          * @param {number} price - Price per gallon
+         * @param {string} type - 'buy' or 'sell' (initiator perspective)
+         * @param {string} adId - (Optional) ID of advertisement being responded to
          * @returns {Promise<{success: boolean, negotiation: Object}>}
          */
-        initiate: async (responderId, chemical, quantity, price) => {
+        initiate: async (responderId, chemical, quantity, price, type = 'buy', adId = null) => {
             return this.post('/api/negotiations/initiate.php', {
                 responderId,
                 chemical,
                 quantity,
-                price
+                price,
+                type,
+                adId
             });
         },
 

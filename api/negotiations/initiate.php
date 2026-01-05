@@ -43,6 +43,7 @@ if (!$sessionManager->isTradingAllowed()) {
 $input = json_decode(file_get_contents('php://input'), true);
 
 $responderId = $input['responderId'] ?? null;
+$adId = $input['adId'] ?? null;
 $chemical = $input['chemical'] ?? null;
 $quantity = $input['quantity'] ?? null;
 $price = $input['price'] ?? null;
@@ -103,7 +104,8 @@ try {
             'price' => $price
         ],
         $currentSession,
-        $type
+        $type,
+        $adId
     );
 
     echo json_encode([

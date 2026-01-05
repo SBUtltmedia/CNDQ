@@ -30,12 +30,13 @@ class NegotiationManager {
             [$teamEmail, $teamEmail, 'pending']
         );
 
-        // Fetch offers for each negotiation
-        foreach ($negotiations as &$neg) {
+        $mappedNegotiations = [];
+        foreach ($negotiations as $neg) {
             $neg['offers'] = $this->getNegotiationOffers($neg['id']);
+            $mappedNegotiations[] = $this->mapNegotiation($neg);
         }
 
-        return $negotiations;
+        return $mappedNegotiations;
     }
 
     /**
@@ -54,7 +55,7 @@ class NegotiationManager {
     /**
      * Create new negotiation
      */
-    public function createNegotiation($initiatorId, $initiatorName, $responderId, $responderName, $chemical, $initialOffer, $sessionNumber = null, $type = 'buy') {
+    public function createNegotiation($initiatorId, $initiatorName, $responderId, $responderName, $chemical, $initialOffer, $sessionNumber = null, $type = 'buy', $adId = null) {
         $negotiationId = 'neg_' . time() . '_' . bin2hex(random_bytes(4));
 
         $initiatorName = $initiatorName ?: $initiatorId;
@@ -87,8 +88,8 @@ class NegotiationManager {
             $this->db->insert(
                 'INSERT INTO negotiations
                  (id, chemical, type, initiator_id, initiator_name, responder_id, responder_name,
-                  session_number, status, last_offer_by)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                  session_number, status, last_offer_by, ad_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [
                     $negotiationId,
                     $chemical,
@@ -99,7 +100,8 @@ class NegotiationManager {
                     $responderName,
                     $sessionNumber,
                     'pending',
-                    $initiatorId
+                    $initiatorId,
+                    $adId
                 ]
             );
 
@@ -137,7 +139,9 @@ class NegotiationManager {
                     'counterparty' => $initiatorId,
                     'role' => 'responder'
                 ]);
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+                error_log("NegotiationManager: Failed to emit events: " . $e->getMessage());
+            }
 
             $this->db->commit();
         } catch (Exception $e) {
@@ -164,7 +168,7 @@ class NegotiationManager {
         // Fetch offers
         $negotiation['offers'] = $this->getNegotiationOffers($negotiationId);
 
-        return $negotiation;
+        return $this->mapNegotiation($negotiation);
     }
 
     /**
@@ -178,12 +182,12 @@ class NegotiationManager {
         }
 
         // Verify team is part of this negotiation
-        if ($fromTeamId !== $negotiation['initiator_id'] && $fromTeamId !== $negotiation['responder_id']) {
+        if ($fromTeamId !== $negotiation['initiatorId'] && $fromTeamId !== $negotiation['responderId']) {
             throw new Exception('Unauthorized');
         }
 
         // Verify it's their turn (can't counter your own offer)
-        if ($negotiation['last_offer_by'] === $fromTeamId) {
+        if ($negotiation['lastOfferBy'] === $fromTeamId) {
             throw new Exception('Wait for other team to respond');
         }
 
@@ -193,8 +197,8 @@ class NegotiationManager {
 
         try {
             require_once __DIR__ . '/TeamStorage.php';
-            $iStorage = new TeamStorage($negotiation['initiator_id']);
-            $rStorage = new TeamStorage($negotiation['responder_id']);
+            $iStorage = new TeamStorage($negotiation['initiatorId']);
+            $rStorage = new TeamStorage($negotiation['responderId']);
             $iShadow = $iStorage->getShadowPrices()[$negotiation['chemical']] ?? 0;
             $rShadow = $rStorage->getShadowPrices()[$negotiation['chemical']] ?? 0;
 
@@ -235,7 +239,7 @@ class NegotiationManager {
 
             // Emit events to both parties
             try {
-                $otherTeamId = ($fromTeamId === $negotiation['initiator_id']) ? $negotiation['responder_id'] : $negotiation['initiator_id'];
+                $otherTeamId = ($fromTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
                 $fromStorage = new TeamStorage($fromTeamId);
                 $otherStorage = new TeamStorage($otherTeamId);
 
@@ -260,7 +264,9 @@ class NegotiationManager {
                     'isFromMe' => false,
                     'offer' => $offerData
                 ]);
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+                error_log("NegotiationManager: Failed to emit counter-offer events: " . $e->getMessage());
+            }
 
             $this->db->commit();
         } catch (Exception $e) {
@@ -282,12 +288,12 @@ class NegotiationManager {
         }
 
         // Verify team is part of this negotiation
-        if ($acceptingTeamId !== $negotiation['initiator_id'] && $acceptingTeamId !== $negotiation['responder_id']) {
+        if ($acceptingTeamId !== $negotiation['initiatorId'] && $acceptingTeamId !== $negotiation['responderId']) {
             throw new Exception('Unauthorized');
         }
 
         // Verify it's their turn (can only accept other team's offer)
-        if ($negotiation['last_offer_by'] === $acceptingTeamId) {
+        if ($negotiation['lastOfferBy'] === $acceptingTeamId) {
             throw new Exception('Cannot accept your own offer');
         }
 
@@ -304,13 +310,32 @@ class NegotiationManager {
 
             // Emit events to both parties
             try {
-                $otherTeamId = ($acceptingTeamId === $negotiation['initiator_id']) ? $negotiation['responder_id'] : $negotiation['initiator_id'];
+                $otherTeamId = ($acceptingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
                 $aStorage = new TeamStorage($acceptingTeamId);
                 $oStorage = new TeamStorage($otherTeamId);
 
                 $aStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
                 $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+                error_log("NegotiationManager: Failed to emit accept events: " . $e->getMessage());
+            }
+
+            // Remove associated advertisement if it exists
+            if (!empty($negotiation['adId'])) {
+                try {
+                    require_once __DIR__ . '/AdvertisementManager.php';
+                    // Determine who owned the ad
+                    // If type was 'buy' from initiator, initiator posted it.
+                    // If it was 'sell' from initiator, they were responding to a 'buy' ad from responder.
+                    $adOwner = (($negotiation['type'] ?? 'buy') === 'buy') ? $negotiation['initiatorId'] : $negotiation['responderId'];
+                    
+                    $adManager = new AdvertisementManager($adOwner);
+                    $adManager->removeAdvertisement($negotiation['adId']);
+                    error_log("NegotiationManager: Automatically removed advertisement {$negotiation['adId']} after acceptance.");
+                } catch (Exception $e) {
+                    error_log("NegotiationManager: Failed to remove linked advertisement {$negotiation['adId']}: " . $e->getMessage());
+                }
+            }
 
             $this->db->commit();
         } catch (Exception $e) {
@@ -332,7 +357,7 @@ class NegotiationManager {
         }
 
         // Verify team is part of this negotiation
-        if ($rejectingTeamId !== $negotiation['initiator_id'] && $rejectingTeamId !== $negotiation['responder_id']) {
+        if ($rejectingTeamId !== $negotiation['initiatorId'] && $rejectingTeamId !== $negotiation['responderId']) {
             throw new Exception('Unauthorized');
         }
 
@@ -349,13 +374,15 @@ class NegotiationManager {
 
             // Emit events to both parties
             try {
-                $otherTeamId = ($rejectingTeamId === $negotiation['initiator_id']) ? $negotiation['responder_id'] : $negotiation['initiator_id'];
+                $otherTeamId = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
                 $rStorage = new TeamStorage($rejectingTeamId);
                 $oStorage = new TeamStorage($otherTeamId);
 
                 $rStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
                 $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
-            } catch (Exception $e) {}
+            } catch (Exception $e) {
+                error_log("NegotiationManager: Failed to emit reject events: " . $e->getMessage());
+            }
 
             $this->db->commit();
         } catch (Exception $e) {
@@ -380,5 +407,43 @@ class NegotiationManager {
         );
 
         return $deleted;
+    }
+
+    /**
+     * Map raw database row to frontend-friendly camelCase format
+     */
+    public function mapNegotiation($neg) {
+        if (!$neg) return null;
+
+        $mapped = [
+            'id' => $neg['id'],
+            'chemical' => $neg['chemical'],
+            'type' => $neg['type'],
+            'initiatorId' => $neg['initiator_id'] ?? null,
+            'initiatorName' => $neg['initiator_name'] ?? null,
+            'responderId' => $neg['responder_id'] ?? null,
+            'responderName' => $neg['responder_name'] ?? null,
+            'sessionNumber' => $neg['session_number'] ?? null,
+            'status' => $neg['status'] ?? 'pending',
+            'lastOfferBy' => $neg['last_offer_by'] ?? null,
+            'adId' => $neg['ad_id'] ?? null,
+            'createdAt' => $neg['created_at'] ?? null,
+            'updatedAt' => $neg['updated_at'] ?? null,
+            'offers' => []
+        ];
+
+        if (!empty($neg['offers'])) {
+            foreach ($neg['offers'] as $offer) {
+                $mapped['offers'][] = [
+                    'fromTeamId' => $offer['from_team_id'] ?? null,
+                    'fromTeamName' => $offer['from_team_name'] ?? null,
+                    'quantity' => $offer['quantity'] ?? 0,
+                    'price' => $offer['price'] ?? 0,
+                    'createdAt' => $offer['created_at'] ?? null
+                ];
+            }
+        }
+
+        return $mapped;
     }
 }

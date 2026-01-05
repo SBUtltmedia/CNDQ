@@ -234,7 +234,7 @@ abstract class NPCTradingStrategy
     protected function calculateShadowPrices()
     {
         $solver = new LPSolver();
-        $result = $solver->solve($this->inventory);
+        $result = $solver->getShadowPrices($this->inventory);
 
         // Check if shadow prices exist in result
         if (!isset($result['shadowPrices']) || !is_array($result['shadowPrices'])) {
@@ -270,6 +270,28 @@ abstract class NPCTradingStrategy
     {
         $chemicals = ['C', 'N', 'D', 'Q'];
         return $chemicals[array_rand($chemicals)];
+    }
+
+    /**
+     * Check if a pending negotiation already exists with a specific team for a chemical
+     *
+     * @param string $teamId Counterparty email
+     * @param string $chemical Chemical type
+     * @return bool
+     */
+    protected function hasPendingNegotiationWith($teamId, $chemical)
+    {
+        $negotiationManager = $this->npcManager->getNegotiationManager();
+        $allNegotiations = $negotiationManager->getTeamNegotiations($this->npc['email']);
+
+        foreach ($allNegotiations as $neg) {
+            $otherId = ($neg['initiatorId'] === $this->npc['email']) ? $neg['responderId'] : $neg['initiatorId'];
+            if ($otherId === $teamId && $neg['chemical'] === $chemical && ($neg['status'] ?? 'pending') === 'pending') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

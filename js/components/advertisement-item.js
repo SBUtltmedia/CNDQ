@@ -45,6 +45,7 @@ class AdvertisementItem extends LitElement {
     static styles = componentStyles;
 
     static properties = {
+        adId: { type: String },
         teamName: { type: String },
         teamId: { type: String },
         type: { type: String },
@@ -60,6 +61,7 @@ class AdvertisementItem extends LitElement {
     handleNegotiate() {
         this.dispatchEvent(new CustomEvent('negotiate', {
             detail: {
+                adId: this.adId,
                 teamId: this.teamId,
                 teamName: this.teamName,
                 chemical: this.chemical,

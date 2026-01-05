@@ -138,6 +138,13 @@ class Database {
     }
 
     /**
+     * Check if a transaction is currently active
+     */
+    public function inTransaction() {
+        return $this->pdo->inTransaction();
+    }
+
+    /**
      * Begin a transaction
      */
     public function beginTransaction() {

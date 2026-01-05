@@ -39,10 +39,6 @@ class NPCManager
      */
     public function isEnabled()
     {
-        if (!file_exists($this->configFile)) {
-            return false;
-        }
-
         $config = $this->loadConfig();
         return $config['enabled'] ?? false;
     }
@@ -336,31 +332,54 @@ class NPCManager
      */
     private function runNPCTrade($npc, $currentSession = null)
     {
+        error_log("DEBUG: Running trade for {$npc['teamName']} ({$npc['email']})");
+        
         // Load appropriate strategy based on skill level
         $strategyClass = $this->getStrategyClass($npc['skillLevel']);
 
         if (!class_exists($strategyClass)) {
-            require_once $this->getStrategyFile($npc['skillLevel']);
+            $strategyFile = $this->getStrategyFile($npc['skillLevel']);
+            if (file_exists($strategyFile)) {
+                require_once $strategyFile;
+            } else {
+                error_log("ERROR: Strategy file not found: $strategyFile");
+                return;
+            }
+        }
+
+        if (!class_exists($strategyClass)) {
+            error_log("ERROR: Strategy class not found: $strategyClass");
+            return;
         }
 
         $storage = new TeamStorage($npc['email']);
         $strategy = new $strategyClass($storage, $npc, $this);
 
         // First, check for and respond to pending negotiations
-        $negotiationAction = $strategy->respondToNegotiations();
+        try {
+            $negotiationAction = $strategy->respondToNegotiations();
 
-        if ($negotiationAction) {
-            error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) ACTION: {$negotiationAction['type']}");
-            $this->executeNPCAction($npc, $negotiationAction, $currentSession);
-            return; // Prioritize negotiation responses over new trades
+            if ($negotiationAction) {
+                error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) NEGOTIATION ACTION: {$negotiationAction['type']}");
+                $this->executeNPCAction($npc, $negotiationAction, $currentSession);
+                return; // Prioritize negotiation responses over new trades
+            }
+        } catch (Exception $e) {
+            error_log("ERROR: respondToNegotiations failed for {$npc['email']}: " . $e->getMessage());
         }
 
         // If no negotiations to respond to, decide on regular trade action
-        $action = $strategy->decideTrade();
+        try {
+            $action = $strategy->decideTrade();
 
-        if ($action) {
-            error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) ACTION: {$action['type']}");
-            $this->executeNPCAction($npc, $action, $currentSession);
+            if ($action) {
+                error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) DECIDE ACTION: {$action['type']}");
+                $this->executeNPCAction($npc, $action, $currentSession);
+            } else {
+                error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) DECIDED: NO ACTION");
+            }
+        } catch (Exception $e) {
+            error_log("ERROR: decideTrade failed for {$npc['email']}: " . $e->getMessage());
         }
     }
 
@@ -390,6 +409,15 @@ class NPCManager
         ];
 
         return $classMap[$skillLevel] ?? __DIR__ . '/strategies/BeginnerStrategy.php';
+    }
+
+    /**
+     * Run a specific action for an NPC within a cycle
+     * Useful for multi-step actions (e.g. reacting then countering)
+     */
+    public function runTradingCycleAction($npc, $action)
+    {
+        $this->executeNPCAction($npc, $action);
     }
 
     /**
@@ -438,6 +466,11 @@ class NPCManager
                     $this->executeInitiateNegotiation($npc, $action, $storage, $currentSession);
                     break;
 
+                case 'add_reaction':
+                    // NPC is expressing a reaction (annoyance/pleasure)
+                    $this->executeAddReaction($npc, $action, $storage);
+                    break;
+
                 default:
                     error_log("Unknown NPC action type: {$action['type']}");
             }
@@ -448,8 +481,17 @@ class NPCManager
     }
 
     /**
-     * Execute initiate_negotiation action (NPC starting a negotiation as seller)
+     * Execute add_reaction action (NPC reacting to a haggle)
      */
+    private function executeAddReaction($npc, $action, $storage)
+    {
+        $storage->emitEvent('add_reaction', [
+            'negotiationId' => $action['negotiationId'],
+            'level' => $action['level']
+        ]);
+        error_log("NPC {$npc['teamName']} reacted to negotiation {$action['negotiationId']} with level {$action['level']}");
+    }
+
     private function executeInitiateNegotiation($npc, $action, $storage, $currentSession = 1)
     {
         $negotiationManager = $this->getNegotiationManager();
@@ -467,7 +509,8 @@ class NPCManager
                 'price' => $action['price']
             ],
             $currentSession,
-            'sell' // NPC is initiating a SELL negotiation
+            'sell', // NPC is initiating a SELL negotiation
+            $action['adId'] ?? null
         );
 
         error_log("NPC {$npc['teamName']} initiated sell negotiation with {$action['responderName']} for {$action['quantity']} gal of {$action['chemical']} at \${$action['price']}/gal");
