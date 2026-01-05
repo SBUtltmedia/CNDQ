@@ -29,8 +29,19 @@ class Database {
      */
     private function __construct($dbName) {
         $dataDir = __DIR__ . '/../data';
-        if (!is_dir($dataDir)) {
+
+        // Create data directory if it doesn't exist (and isn't a symlink)
+        if (!file_exists($dataDir) && !is_link($dataDir)) {
             mkdir($dataDir, 0755, true);
+        }
+
+        // If data is a symlink, make sure the target directory exists
+        if (is_link($dataDir)) {
+            $target = readlink($dataDir);
+            if (!is_dir($target)) {
+                // Create the symlink target directory if it doesn't exist
+                mkdir($target, 0755, true);
+            }
         }
 
         $this->dbPath = $dataDir . '/' . $dbName . '.db';
@@ -236,6 +247,7 @@ class Database {
         ];
 
         // Get table row counts
+        $stats['tables'] = [];
         $tables = $this->query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
         foreach ($tables as $table) {
             $tableName = $table['name'];

@@ -1,12 +1,8 @@
 .env
 
 # Data directory (symlink in production, actual directory in development)
-# Ignore everything in data/ to allow symlink setup
-/data/*
-
-# But keep essential documentation in git
-!/data/README.md
-!/data/.gitkeep
+# Ignore data directory/symlink completely
+/data
 
 node_modules
 package-lock.json
