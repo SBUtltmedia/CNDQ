@@ -188,7 +188,13 @@ class Database {
      * Initialize database schema
      */
     private function initializeSchema() {
-        $schema = file_get_contents(__DIR__ . '/../data/schema.sql');
+        $schemaFile = __DIR__ . '/schema.sql';
+
+        if (!file_exists($schemaFile)) {
+            throw new Exception("Schema file not found: $schemaFile");
+        }
+
+        $schema = file_get_contents($schemaFile);
         $this->pdo->exec($schema);
     }
 

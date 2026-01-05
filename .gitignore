@@ -1,14 +1,12 @@
 .env
 
-# SQLite database files
-data/*.db
-data/*.db-shm
-data/*.db-wal
+# Data directory (symlink in production, actual directory in development)
+# Ignore everything in data/ to allow symlink setup
+/data/*
 
-# Old filesystem-based storage (if still present)
-data/teams/
-data/marketplace/
-data/negotiations/
+# But keep essential documentation in git
+!/data/README.md
+!/data/.gitkeep
 
 node_modules
 package-lock.json

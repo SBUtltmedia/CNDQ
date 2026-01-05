@@ -3,9 +3,12 @@
 /**
  * Fix Starting Funds for Existing Teams
  *
- * This script updates existing teams' starting funds to enable proper ROI calculation.
- * It sets startingFunds = currentFunds for teams that have startingFunds = 0.
- * This effectively resets their ROI to 0% as a new baseline.
+ * Teams should have startingFunds set to their first production revenue.
+ * This script fixes existing teams by setting their startingFunds = currentFunds,
+ * which resets their ROI to 0% as a new baseline.
+ *
+ * NOTE: This is a one-time migration. New teams will automatically have
+ * startingFunds set correctly during their first production run.
  *
  * Usage:
  *   php bin/fix_starting_funds.php
@@ -19,7 +22,8 @@ echo "=============================\n\n";
 
 try {
     $db = Database::getInstance();
-    $teams = $db->query('SELECT DISTINCT team_email FROM team_events WHERE team_email != ?', ['system']);
+    // Get all teams including 'system' - we'll check if it's a real team
+    $teams = $db->query('SELECT DISTINCT team_email FROM team_events');
 
     if (empty($teams)) {
         echo "No teams found in database.\n";

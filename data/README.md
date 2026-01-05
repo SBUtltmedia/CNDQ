@@ -10,7 +10,7 @@ This directory contains the SQLite database for CNDQ.
 
 ## Schema
 
-The database schema is defined in `schema.sql` and includes:
+The database schema is defined in `lib/schema.sql` and includes:
 - Team events and state (event sourcing)
 - Marketplace offers and buy orders
 - Negotiations between teams
