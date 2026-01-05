@@ -320,7 +320,7 @@ class NegotiationManager {
                 error_log("NegotiationManager: Failed to emit accept events: " . $e->getMessage());
             }
 
-            // Remove associated advertisement if it exists
+            // Remove associated advertisement and buy order if they exist
             if (!empty($negotiation['adId'])) {
                 try {
                     require_once __DIR__ . '/AdvertisementManager.php';
@@ -328,10 +328,28 @@ class NegotiationManager {
                     // If type was 'buy' from initiator, initiator posted it.
                     // If it was 'sell' from initiator, they were responding to a 'buy' ad from responder.
                     $adOwner = (($negotiation['type'] ?? 'buy') === 'buy') ? $negotiation['initiatorId'] : $negotiation['responderId'];
-                    
+
                     $adManager = new AdvertisementManager($adOwner);
                     $adManager->removeAdvertisement($negotiation['adId']);
                     error_log("NegotiationManager: Automatically removed advertisement {$negotiation['adId']} after acceptance.");
+
+                    // Also remove the associated buy order if the ad owner had one for this chemical
+                    // This prevents NPCs from repeatedly responding to the same buy order
+                    try {
+                        $buyerStorage = new TeamStorage($adOwner);
+                        $state = $buyerStorage->getState();
+                        $buyOrders = $state['buyOrders'] ?? [];
+
+                        foreach ($buyOrders as $order) {
+                            if ($order['chemical'] === $negotiation['chemical']) {
+                                $buyerStorage->removeBuyOrder($order['id']);
+                                error_log("NegotiationManager: Automatically removed buy order {$order['id']} for {$negotiation['chemical']} after acceptance.");
+                                break; // Remove only one buy order per accepted negotiation
+                            }
+                        }
+                    } catch (Exception $e) {
+                        error_log("NegotiationManager: Failed to remove buy order: " . $e->getMessage());
+                    }
                 } catch (Exception $e) {
                     error_log("NegotiationManager: Failed to remove linked advertisement {$negotiation['adId']}: " . $e->getMessage());
                 }

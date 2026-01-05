@@ -1,0 +1,23 @@
+{
+    "currentSession": 1,
+    "phase": "trading",
+    "autoAdvance": false,
+    "productionDuration": 5,
+    "tradingDuration": 60,
+    "phaseStartedAt": 1767225428,
+    "history": [
+        {
+            "session": 1,
+            "phase": "production",
+            "endedAt": 1767225372,
+            "duration": 1
+        },
+        {
+            "session": 1,
+            "phase": "production",
+            "endedAt": 1767225422,
+            "duration": 1
+        }
+    ],
+    "npcLastRun": 1767225456
+}

@@ -1,0 +1,25 @@
+{
+    "email": "test_mail1@stonybrook.edu",
+    "displayName": "test_cn",
+    "initialCapital": 100000,
+    "startingFund": 288800,
+    "inventory": {
+        "C": 0,
+        "N": 0,
+        "D": 12,
+        "Q": 908
+    },
+    "initialInventory": {
+        "C": 800,
+        "N": 600,
+        "D": 500,
+        "Q": 1100
+    },
+    "notifications": [],
+    "lastProduction": {
+        "deicer": 1600,
+        "solvent": 480,
+        "revenue": 188800,
+        "timestamp": 1766780817
+    }
+}

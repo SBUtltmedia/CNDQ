@@ -507,9 +507,9 @@ class TeamStorage {
             $this->adjustChemical($chem, -$amount);
         }
 
-        // Set starting funds to 0, then current funds to revenue
-        // This shows immediate ROI from first production
-        $this->emitEvent('set_funds', ['amount' => 0, 'is_starting' => true]);
+        // Set starting funds to first production revenue (baseline for ROI)
+        // Current funds also set to revenue initially (ROI = 0% at start)
+        $this->emitEvent('set_funds', ['amount' => $revenue, 'is_starting' => true]);
         $this->emitEvent('set_funds', ['amount' => $revenue, 'is_starting' => false]);
 
         $this->addProduction([

@@ -1,0 +1,25 @@
+{
+    "email": "team1@example.com",
+    "displayName": "team1",
+    "initialCapital": 100000,
+    "startingFund": 400000,
+    "inventory": {
+        "C": 0,
+        "N": 0,
+        "D": 400,
+        "Q": 1100
+    },
+    "initialInventory": {
+        "C": 1500,
+        "N": 900,
+        "D": 1000,
+        "Q": 1100
+    },
+    "notifications": [],
+    "lastProduction": {
+        "deicer": 3000,
+        "solvent": 0,
+        "revenue": 300000,
+        "timestamp": 1766781444
+    }
+}

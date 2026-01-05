@@ -150,6 +150,16 @@ class NPCManager
             // Update profile with generated name via event
             $storage->setTeamName($teamName);
 
+            // Calculate shadow prices so NPC can trade immediately
+            // NPCs need shadow prices to make intelligent trading decisions
+            require_once __DIR__ . '/LPSolver.php';
+            $inventory = $storage->getInventory();
+            $solver = new LPSolver();
+            $result = $solver->getShadowPrices($inventory);
+            if (isset($result['shadowPrices'])) {
+                $storage->updateShadowPrices($result['shadowPrices']);
+            }
+
             // Add to NPC config (Central Registry)
             $npc = [
                 'id' => $npcId,
