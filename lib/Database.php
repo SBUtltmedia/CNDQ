@@ -45,7 +45,6 @@ class Database {
         }
 
         $this->dbPath = $dataDir . '/' . $dbName . '.db';
-        $isNewDatabase = !file_exists($this->dbPath);
 
         try {
             $this->pdo = new PDO('sqlite:' . $this->dbPath);
@@ -58,7 +57,18 @@ class Database {
             $this->pdo->exec('PRAGMA cache_size = -64000');       // 64MB cache
             $this->pdo->exec('PRAGMA foreign_keys = ON');         // Enforce foreign keys
 
-            if ($isNewDatabase) {
+            // Check if database needs initialization
+            // Initialize if: no tables exist OR config table doesn't exist (key indicator)
+            $needsInit = false;
+            try {
+                $result = $this->pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='config'")->fetchAll();
+                $needsInit = empty($result);
+            } catch (PDOException $e) {
+                // If query fails, assume we need to initialize
+                $needsInit = true;
+            }
+
+            if ($needsInit) {
                 $this->initializeSchema();
             }
         } catch (PDOException $e) {
