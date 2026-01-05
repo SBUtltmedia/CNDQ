@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS team_events (
     event_type TEXT NOT NULL,
     payload TEXT NOT NULL,           -- JSON payload
     timestamp REAL NOT NULL,          -- Microtime for ordering
-    created_at INTEGER DEFAULT (unixepoch())
+    created_at INTEGER DEFAULT (strftime('%s', 'now'))
 );
 
 -- Indexes for fast team event queries
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS team_state_cache (
     state TEXT NOT NULL,              -- JSON aggregated state
     last_event_id INTEGER,
     events_processed INTEGER DEFAULT 0,
-    updated_at INTEGER DEFAULT (unixepoch()),
+    updated_at INTEGER DEFAULT (strftime('%s', 'now')),
     FOREIGN KEY (last_event_id) REFERENCES team_events(id)
 );
 
@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS team_snapshots (
     team_email TEXT NOT NULL,
     state TEXT NOT NULL,              -- JSON state at snapshot time
     event_count INTEGER NOT NULL,     -- Number of events processed
-    snapshot_at INTEGER DEFAULT (unixepoch()),
-    created_at INTEGER DEFAULT (unixepoch())
+    snapshot_at INTEGER DEFAULT (strftime('%s', 'now')),
+    created_at INTEGER DEFAULT (strftime('%s', 'now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_team_snapshots_email ON team_snapshots(team_email, created_at DESC);
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS marketplace_events (
     event_type TEXT NOT NULL,         -- add_offer, remove_offer, add_buy_order, etc.
     payload TEXT NOT NULL,            -- JSON payload
     timestamp REAL NOT NULL,
-    created_at INTEGER DEFAULT (unixepoch())
+    created_at INTEGER DEFAULT (strftime('%s', 'now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_marketplace_events_type ON marketplace_events(event_type);
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS marketplace_snapshot (
     buy_orders TEXT,                  -- JSON array of active buy orders
     ads TEXT,                         -- JSON array of active ads
     last_event_id INTEGER,
-    updated_at INTEGER DEFAULT (unixepoch()),
+    updated_at INTEGER DEFAULT (strftime('%s', 'now')),
     FOREIGN KEY (last_event_id) REFERENCES marketplace_events(id)
 );
 
@@ -96,8 +96,8 @@ CREATE TABLE IF NOT EXISTS negotiations (
     last_offer_by TEXT,
     accepted_by TEXT,
     rejected_by TEXT,
-    created_at INTEGER DEFAULT (unixepoch()),
-    updated_at INTEGER DEFAULT (unixepoch()),
+    created_at INTEGER DEFAULT (strftime('%s', 'now')),
+    updated_at INTEGER DEFAULT (strftime('%s', 'now')),
     accepted_at INTEGER,
     rejected_at INTEGER,
     ad_id TEXT                        -- Reference to marketplace ad if negotiation started from ad
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS negotiation_offers (
     price REAL NOT NULL,
     heat_is_hot INTEGER DEFAULT 0,    -- Boolean: is this a mutually beneficial deal?
     heat_total REAL,                  -- Total heat (combined gain)
-    created_at INTEGER DEFAULT (unixepoch()),
+    created_at INTEGER DEFAULT (strftime('%s', 'now')),
     FOREIGN KEY (negotiation_id) REFERENCES negotiations(id) ON DELETE CASCADE
 );
 
@@ -131,7 +131,7 @@ CREATE INDEX IF NOT EXISTS idx_negotiation_offers_neg_id ON negotiation_offers(n
 CREATE TABLE IF NOT EXISTS config (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL,              -- JSON value
-    updated_at INTEGER DEFAULT (unixepoch())
+    updated_at INTEGER DEFAULT (strftime('%s', 'now'))
 );
 
 -- =============================================================================
@@ -185,7 +185,7 @@ GROUP BY event_type;
 CREATE TRIGGER IF NOT EXISTS cleanup_old_negotiations
 AFTER UPDATE ON negotiations
 WHEN NEW.status IN ('accepted', 'rejected')
-  AND NEW.updated_at < (unixepoch() - 604800)  -- 7 days in seconds
+  AND NEW.updated_at < (strftime('%s', 'now') - 604800)  -- 7 days in seconds
 BEGIN
     DELETE FROM negotiations WHERE id = NEW.id;
 END;
@@ -201,7 +201,7 @@ CREATE TABLE IF NOT EXISTS migration_log (
     source_file TEXT,
     status TEXT NOT NULL,             -- 'success', 'error', 'skipped'
     error_message TEXT,
-    migrated_at INTEGER DEFAULT (unixepoch())
+    migrated_at INTEGER DEFAULT (strftime('%s', 'now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_migration_log_type ON migration_log(migration_type, status);
