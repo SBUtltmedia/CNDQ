@@ -56,12 +56,12 @@ try {
         $teamSummaries[] = [
             'email' => $team['email'],
             'teamName' => $team['teamName'] ?? 'Unknown Team',
-            'funds' => $team['funds'] ?? 0,
+            'funds' => round($team['funds'] ?? 0, 2),
             'inventory' => [
-                'C' => $inventory['C'] ?? 0,
-                'N' => $inventory['N'] ?? 0,
-                'D' => $inventory['D'] ?? 0,
-                'Q' => $inventory['Q'] ?? 0
+                'C' => max(0, round($inventory['C'] ?? 0, 4)),
+                'N' => max(0, round($inventory['N'] ?? 0, 4)),
+                'D' => max(0, round($inventory['D'] ?? 0, 4)),
+                'Q' => max(0, round($inventory['Q'] ?? 0, 4))
             ],
             'activeOffers' => $activeOffers,
             'totalTrades' => $totalTrades,

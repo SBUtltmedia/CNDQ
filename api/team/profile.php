@@ -42,15 +42,15 @@ try {
             'profile' => [
                 'email' => $profile['email'],
                 'teamName' => $profile['teamName'],
-                'currentFunds' => $profile['currentFunds'],
-                'startingFunds' => $profile['startingFunds'],
+                'currentFunds' => round($profile['currentFunds'], 2),
+                'startingFunds' => round($profile['startingFunds'], 2),
                 'settings' => $profile['settings'] ?? []
             ],
             'inventory' => [
-                'C' => $inventory['C'],
-                'N' => $inventory['N'],
-                'D' => $inventory['D'],
-                'Q' => $inventory['Q'],
+                'C' => max(0, round($inventory['C'], 4)),
+                'N' => max(0, round($inventory['N'], 4)),
+                'D' => max(0, round($inventory['D'], 4)),
+                'Q' => max(0, round($inventory['Q'], 4)),
                 'transactionsSinceLastShadowCalc' => $transactionsSinceCalc,
                 'stalenessLevel' => $stalenessLevel
             ]

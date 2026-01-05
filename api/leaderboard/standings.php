@@ -23,14 +23,20 @@ try {
         // Skip the system team
         if ($teamStat['email'] === 'system') continue;
 
+        $inventory = $teamStat['inventory'];
         $standings[] = [
             'teamName' => $teamStat['teamName'],
             'teamId' => $teamStat['email'],
-            'startingFunds' => $teamStat['startingFunds'],
-            'currentFunds' => $teamStat['currentFunds'],
-            'profit' => $teamStat['currentFunds'] - $teamStat['startingFunds'],
+            'startingFunds' => round($teamStat['startingFunds'], 2),
+            'currentFunds' => round($teamStat['currentFunds'], 2),
+            'profit' => round($teamStat['currentFunds'] - $teamStat['startingFunds'], 2),
             'roi' => $teamStat['percentChange'],
-            'inventory' => $teamStat['inventory'],
+            'inventory' => [
+                'C' => max(0, round($inventory['C'] ?? 0, 4)),
+                'N' => max(0, round($inventory['N'] ?? 0, 4)),
+                'D' => max(0, round($inventory['D'] ?? 0, 4)),
+                'Q' => max(0, round($inventory['Q'] ?? 0, 4))
+            ],
             'totalTrades' => $teamStat['totalTrades']
         ];
     }

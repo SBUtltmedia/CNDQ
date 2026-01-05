@@ -17,6 +17,18 @@ const componentStyles = css`
     .ad-item:hover {
         background-color: #4b5563; /* Slightly lighter */
     }
+    .ad-item-mine {
+        background-color: #422006;
+        border: 1px solid #d97706;
+    }
+    .ad-item-mine:hover {
+        background-color: #5a2a0a;
+    }
+    .team-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
     .team-name {
         font-weight: 600;
         color: var(--color-text-primary, #f9fafb);
@@ -73,8 +85,9 @@ class AdvertisementItem extends LitElement {
     }
 
     render() {
+        console.log(`🎪 Rendering ad-item: ${this.teamName} (${this.adId}), isMyAd=${this.isMyAd}`);
         return html`
-            <div class="ad-item">
+            <div class="ad-item ${this.isMyAd ? 'ad-item-mine' : ''}">
                 <div class="team-info">
                     <span class="team-name">${this.teamName}</span>
                     ${this.isMyAd ? html`<span class="your-ad"> (Your Request)</span>` : ''}

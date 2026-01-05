@@ -326,12 +326,14 @@ class TeamStorage {
                 break;
 
             case 'adjust_funds':
-                $state['profile']['currentFunds'] = ($state['profile']['currentFunds'] ?? 0) + $payload['amount'];
+                // Round to 2 decimal places to prevent floating-point accumulation errors
+                $state['profile']['currentFunds'] = round(($state['profile']['currentFunds'] ?? 0) + $payload['amount'], 2);
                 break;
 
             case 'adjust_chemical':
                 $chem = $payload['chemical'];
-                $state['inventory'][$chem] = ($state['inventory'][$chem] ?? 0) + $payload['amount'];
+                // Round to 4 decimal places to prevent floating-point accumulation errors
+                $state['inventory'][$chem] = round(($state['inventory'][$chem] ?? 0) + $payload['amount'], 4);
                 break;
 
             case 'update_shadow_prices':

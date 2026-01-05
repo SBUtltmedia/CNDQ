@@ -20,14 +20,8 @@ if (!$currentUserEmail) {
 try {
     $advertisements = AdvertisementManager::getAdvertisementsByChemical();
 
-    // Filter out current user's own ads from the response (they'll see their own separately)
-    foreach ($advertisements as $chemical => &$types) {
-        foreach ($types as $type => &$ads) {
-            $ads = array_values(array_filter($ads, function($ad) use ($currentUserEmail) {
-                return $ad['teamId'] !== $currentUserEmail;
-            }));
-        }
-    }
+    // Include user's own ads so they can see their buy/sell requests
+    // The frontend will mark them with isMyAd flag for special display
 
     echo json_encode([
         'success' => true,

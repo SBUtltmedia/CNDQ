@@ -3,9 +3,9 @@
  * Single Page Application for Chemical Trading
  */
 
-// Import web components
-import './components/chemical-card.js';
-import './components/advertisement-item.js';
+// Import web components (cache-busting v4)
+import './components/chemical-card.js?v=7';
+import './components/advertisement-item.js?v=7';
 import './components/negotiation-card.js';
 import './components/offer-bubble.js';
 
@@ -328,6 +328,7 @@ class MarketplaceApp {
         try {
             const data = await api.advertisements.list();
             this.advertisements = data.advertisements;
+            console.log('📢 Loaded advertisements:', this.advertisements);
             this.renderAdvertisements();
         } catch (error) {
             console.error('Failed to load advertisements:', error);
@@ -361,7 +362,9 @@ class MarketplaceApp {
                 card.currentUserId = this.currentUser;
                 card.inventory = this.inventory[chemical];
                 card.shadowPrice = this.shadowPrices[chemical];
-                card.buyAds = this.advertisements[chemical]?.buy || [];
+                const buyAds = this.advertisements[chemical]?.buy || [];
+                console.log(`📢 Chemical ${chemical} buy ads:`, buyAds.length, buyAds);
+                card.buyAds = buyAds;
             }
         });
     }

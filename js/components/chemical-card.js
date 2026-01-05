@@ -65,6 +65,12 @@ const componentStyles = css`
     .btn:hover {
         background-color: #1d4ed8;
     }
+    .btn-revise {
+        background-color: #d97706;
+    }
+    .btn-revise:hover {
+        background-color: #b45309;
+    }
     .btn-disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -132,6 +138,8 @@ class ChemicalCard extends LitElement {
         const { border, header } = this.getChemicalColor(this.chemical);
         const hasActiveBuyAd = this.buyAds.some(ad => ad.teamId === this.currentUserId);
 
+        console.log(`🎨 Rendering Chemical ${this.chemical}: buyAds.length=${this.buyAds.length}, currentUserId=${this.currentUserId}, hasActiveBuyAd=${hasActiveBuyAd}`);
+
         return html`
             <div class="card" style="--border-color: ${border};">
                 <div class="header" style="--header-bg-color: ${header};">
@@ -152,13 +160,12 @@ class ChemicalCard extends LitElement {
                     <div style="margin-bottom: 1rem;">
                         <button
                             id="post-buy-btn"
-                            class="btn ${hasActiveBuyAd ? 'btn-disabled' : ''}"
-                            @click=${this.handlePostBuyRequest}
-                            ?disabled=${hasActiveBuyAd}>
-                            ${hasActiveBuyAd ? 'Request Posted' : '📋 Post Buy Request'}
+                            class="btn ${hasActiveBuyAd ? 'btn-revise' : ''}"
+                            @click=${this.handlePostBuyRequest}>
+                            ${hasActiveBuyAd ? '✏️ Revise Buy Request' : '📋 Post Buy Request'}
                         </button>
                         <p class="empty-ads" style="margin: 0.5rem 0 0; text-align: center;">
-                            Post what you need, teams will offer to sell.
+                            ${hasActiveBuyAd ? 'Click to update or remove your request.' : 'Post what you need, teams will offer to sell.'}
                         </p>
                     </div>
 
@@ -167,16 +174,19 @@ class ChemicalCard extends LitElement {
                         <div class="ads-container">
                             ${this.buyAds.length === 0
                                 ? html`<p class="empty-ads">No buy requests yet</p>`
-                                : this.buyAds.map(ad => html`
-                                    <advertisement-item
-                                        .adId=${ad.id}
-                                        .teamName=${ad.teamName}
-                                        .teamId=${ad.teamId}
-                                        type="buy"
-                                        .chemical=${this.chemical}
-                                        ?isMyAd=${ad.teamId === this.currentUserId}
-                                    ></advertisement-item>
-                                `)
+                                : this.buyAds.map(ad => {
+                                    console.log(`🔧 Creating ad-item for ${this.chemical}:`, ad.teamName, ad.id, ad.teamId === this.currentUserId ? '(MINE)' : '');
+                                    return html`
+                                        <advertisement-item
+                                            .adId=${ad.id}
+                                            .teamName=${ad.teamName}
+                                            .teamId=${ad.teamId}
+                                            type="buy"
+                                            .chemical=${this.chemical}
+                                            ?isMyAd=${ad.teamId === this.currentUserId}
+                                        ></advertisement-item>
+                                    `;
+                                })
                             }
                         </div>
                     </div>

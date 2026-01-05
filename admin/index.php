@@ -582,8 +582,11 @@ if (!isAdmin()) {
                 const data = await response.json();
 
                 if (data.success) {
-                    // Update system toggle
-                    document.getElementById('npc-system-enabled').checked = data.enabled;
+                    // Update system toggle (only if not currently being interacted with)
+                    const npcCheckbox = document.getElementById('npc-system-enabled');
+                    if (document.activeElement !== npcCheckbox) {
+                        npcCheckbox.checked = data.enabled;
+                    }
 
                     // Update stats
                     const npcs = data.npcs || [];

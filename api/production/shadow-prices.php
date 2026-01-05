@@ -61,10 +61,10 @@ try {
         'maxProfit' => $maxProfit,
         'calculatedAt' => time(),
         'inventory' => [
-            'C' => $inventory['C'],
-            'N' => $inventory['N'],
-            'D' => $inventory['D'],
-            'Q' => $inventory['Q']
+            'C' => max(0, round($inventory['C'], 4)),
+            'N' => max(0, round($inventory['N'], 4)),
+            'D' => max(0, round($inventory['D'], 4)),
+            'Q' => max(0, round($inventory['Q'], 4))
         ],
         'note' => 'These shadow prices are PRIVATE to your team and calculated using Linear Programming'
     ]);
