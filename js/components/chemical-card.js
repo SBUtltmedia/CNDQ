@@ -142,6 +142,7 @@ class ChemicalCard extends LitElement {
         
         const increase = this.ranges?.allowableIncrease ?? 0;
         const decrease = this.ranges?.allowableDecrease ?? 0;
+        const isRangeZero = (increase + decrease) < 1;
 
         return html`
             <div class="card" style="--border-color: ${border};">
@@ -161,7 +162,10 @@ class ChemicalCard extends LitElement {
                             <div class="flex justify-between">
                                 <span>Range:</span>
                                 <span class="text-success font-bold">
-                                    -${decrease.toFixed(0)} / +${increase >= 9000 ? '∞' : increase.toFixed(0)} gal
+                                    ${isRangeZero 
+                                        ? 'N/A (Low Inv)' 
+                                        : `-${decrease.toFixed(0)} / +${increase >= 9000 ? '∞' : increase.toFixed(0)} gal`
+                                    }
                                 </span>
                             </div>
                             <div style="opacity: 0.7; font-style: italic;">(Price stable within this range)</div>

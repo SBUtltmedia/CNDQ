@@ -226,6 +226,7 @@ class MarketplaceApp {
 
             if (data && data.shadowPrices) {
                 this.shadowPrices = data.shadowPrices;
+                this.ranges = data.ranges || {}; // Store ranges
                 console.log('Shadow prices loaded:', this.shadowPrices);
                 this.updateShadowPricesUI();
             } else {
@@ -251,6 +252,9 @@ class MarketplaceApp {
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
             if (card) {
                 card.shadowPrice = price;
+                if (this.ranges && this.ranges[chem]) {
+                    card.ranges = this.ranges[chem];
+                }
             }
         });
     }
@@ -293,6 +297,7 @@ class MarketplaceApp {
         try {
             const data = await api.production.getShadowPrices();
             this.shadowPrices = data.shadowPrices;
+            this.ranges = data.ranges || {}; // Update ranges
             this.updateShadowPricesUI();
 
             // Clear local staleness tracked state
@@ -356,7 +361,8 @@ class MarketplaceApp {
                 card.currentUserId = this.currentUser;
                 card.inventory = this.inventory[chemical];
                 card.shadowPrice = this.shadowPrices[chemical];
-                card.ranges = this.shadowPrices.ranges?.[chemical] || { allowableIncrease: 0, allowableDecrease: 0 };
+                // Access ranges from this.ranges, not this.shadowPrices
+                card.ranges = this.ranges?.[chemical] || { allowableIncrease: 0, allowableDecrease: 0 };
                 const buyAds = this.advertisements[chemical]?.buy || [];
                 card.buyAds = buyAds;
             }
@@ -802,18 +808,21 @@ class MarketplaceApp {
         historyContainer.innerHTML = negotiation.offers.map((offer, idx) => {
             const isFromMe = offer.fromTeamId === this.currentUser;
             const alignment = isFromMe ? 'ml-auto' : 'mr-auto';
-            const bgColor = isFromMe ? 'bg-blue-700' : 'bg-gray-600';
+            
+            // Use theme-aware classes
+            const bgColor = isFromMe ? 'bg-blue-900/30 border border-blue-500/50' : 'bg-gray-700 border border-gray-600';
+            const textColorClass = isFromMe ? 'text-blue-400' : 'text-primary';
 
             return `
                 <div class="max-w-xs ${alignment} ${bgColor} rounded-lg p-3">
-                    <div class="font-semibold text-sm">${offer.fromTeamName}</div>
-                    <div class="text-xs text-gray-200">
+                    <div class="font-semibold text-sm ${textColorClass}">${offer.fromTeamName}</div>
+                    <div class="text-xs text-secondary">
                         ${offer.quantity} gal @ $${offer.price.toFixed(2)}/gal
                     </div>
-                    <div class="text-xs font-bold text-green-400">
+                    <div class="text-xs font-bold text-success">
                         Total: $${(offer.quantity * offer.price).toFixed(2)}
                     </div>
-                    <div class="text-xs text-gray-300 mt-1">
+                    <div class="text-[10px] text-tertiary mt-1">
                         ${new Date(offer.createdAt * 1000).toLocaleString()}
                     </div>
                 </div>

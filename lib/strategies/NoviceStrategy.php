@@ -234,13 +234,18 @@ class NoviceStrategy extends NPCTradingStrategy
             }
             // RPC wants to sell to NPC (NPC is buyer)
             else {
+                // Infinite Capital: NPC can buy even with 0 funds (debt)
+                /*
                 if ($this->hasSufficientFunds($quantity * $price) && $currentInventory < self::LOW_INVENTORY && $price <= self::BUY_THRESHOLD) {
+                */
+                if ($currentInventory < self::LOW_INVENTORY && $price <= self::BUY_THRESHOLD) {
                     return [
                         'type' => 'accept_negotiation',
                         'negotiationId' => $negotiation['id']
                     ];
                 }
                 // Counter if we need it but price is a bit high
+                // Removed fund check
                 if ($currentInventory < self::LOW_INVENTORY && $price <= self::BUY_THRESHOLD * 1.2) {
                     $reaction = rand(30, 60);
                     $this->npcManager->runTradingCycleAction($this->npc, [
@@ -274,14 +279,16 @@ class NoviceStrategy extends NPCTradingStrategy
             }
         } else {
             // NPC is buyer. If funds are okay, counter with BUY_THRESHOLD
+            // Infinite Capital: NPC can buy even with 0 funds
+            /*
             if ($this->hasSufficientFunds($quantity * self::BUY_THRESHOLD)) {
-                return [
-                    'type' => 'counter_negotiation',
-                    'negotiationId' => $negotiation['id'],
-                    'quantity' => $quantity,
-                    'price' => self::BUY_THRESHOLD
-                ];
-            }
+            */
+            return [
+                'type' => 'counter_negotiation',
+                'negotiationId' => $negotiation['id'],
+                'quantity' => $quantity,
+                'price' => self::BUY_THRESHOLD
+            ];
         }
 
         // Default to reject only if we can't even afford/provide the threshold

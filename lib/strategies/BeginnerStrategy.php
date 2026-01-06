@@ -27,8 +27,50 @@ class BeginnerStrategy extends NPCTradingStrategy
      */
     public function decideTrade()
     {
-        // Always try to respond to market ads (sell to RPCs)
-        return $this->respondToMarketAds();
+        // 1. Try to respond to market ads first (Sell to Players)
+        $adResponse = $this->respondToMarketAds();
+        if ($adResponse) {
+            return $adResponse;
+        }
+
+        // 2. If no ads to respond to, create a "Bad" Buy Order (Buy from Players at HIGH price)
+        // 50% chance to post a buy order if we have funds
+        if (mt_rand(0, 100) < 50) {
+            return $this->createBadBuyOrder();
+        }
+
+        return null;
+    }
+
+    /**
+     * Create a buy order with a HIGH price (easy profit for players)
+     */
+    private function createBadBuyOrder()
+    {
+        $chemicals = ['C', 'N', 'D', 'Q'];
+        $chemical = $chemicals[array_rand($chemicals)];
+        
+        $quantity = mt_rand(50, 200);
+        $shadowPrices = $this->calculateShadowPrices();
+        $basePrice = $shadowPrices[$chemical] ?? 5.0;
+        
+        // "Bad" Strategy: Offer to buy at 150% - 200% of value!
+        // If shadow price is 0 (degenerate), assume a base value of $5
+        if ($basePrice <= 0.1) $basePrice = 5.0;
+        
+        $maxPrice = round($basePrice * (mt_rand(150, 200) / 100), 2);
+        
+        // Ensure we can afford it (infinite capital model allows debt, but let's be somewhat realistic? No, infinite capital!)
+        // Actually, TradeExecutor checks funds? No, I removed that.
+        // But Strategy hasSufficientFunds check?
+        // Let's bypass hasSufficientFunds for Beginner since they are meant to be liquidity providers.
+        
+        return [
+            'type' => 'create_buy_order',
+            'chemical' => $chemical,
+            'quantity' => $quantity,
+            'maxPrice' => $maxPrice
+        ];
     }
 
     /**
@@ -57,18 +99,26 @@ class BeginnerStrategy extends NPCTradingStrategy
             $chemical = $ad['chemical'];
             $available = $this->inventory[$chemical] ?? 0;
 
-            // Leniency: even with small inventory, respond in simulation
-            if ($available < 10) {
-                continue;
-            }
+            // Always respond if we have anything (or even if we don't, we can go negative? No, inventory check remains)
+            // But let's assume we have some.
+            // If we don't have enough, we can't sell.
+            if ($available < 10) continue;
 
-            // Always respond if we have anything
-            $offerPrice = round($ad['maxPrice'] * 0.9, 2); // Slightly lower than their max
-            $offerQty = min($ad['quantity'], floor($available * 0.5));
+            // "Bad" Seller Strategy: Offer to sell at LOW price!
+            // 80% of what they are asking, or 50% of shadow price, whichever is LOWER.
+            $shadowPrices = $this->calculateShadowPrices();
+            $shadowPrice = $shadowPrices[$chemical] ?? 5.0;
+            if ($shadowPrice <= 0.1) $shadowPrice = 2.0;
+
+            $theirMax = $ad['maxPrice'];
+            
+            // We undercut ourselves significantly
+            $offerPrice = round(min($theirMax * 0.8, $shadowPrice * 0.8), 2);
+            $offerQty = min($ad['quantity'], $available);
 
             if ($offerQty < 1) continue;
 
-            error_log("NPC {$this->npc['teamName']} responding to buy ad for $chemical from {$ad['buyerName']}");
+            error_log("NPC {$this->npc['teamName']} responding to buy ad for $chemical from {$ad['buyerName']} with LOW price $offerPrice");
 
             return [
                 'type' => 'initiate_negotiation',
@@ -95,6 +145,8 @@ class BeginnerStrategy extends NPCTradingStrategy
 
         $negotiation = array_values($pendingNegotiations)[0];
         $latestOffer = end($negotiation['offers']);
+        $offerCount = count($negotiation['offers']);
+        
         $chemical = $negotiation['chemical'];
         $quantity = $latestOffer['quantity'];
         $price = $latestOffer['price'];
@@ -103,15 +155,91 @@ class BeginnerStrategy extends NPCTradingStrategy
         // Check feasibility
         if ($type === 'buy') {
             // Player wants to buy from NPC (NPC is seller)
-            if (!$this->hasSufficientInventory($chemical, $quantity)) return null;
+            if (!$this->hasSufficientInventory($chemical, $quantity)) {
+                return [
+                    'type' => 'reject_negotiation',
+                    'negotiationId' => $negotiation['id']
+                ];
+            }
         } else {
             // Player wants to sell to NPC (NPC is buyer)
-            if (!$this->hasSufficientFunds($quantity * $price)) return null;
+            // Infinite Capital Model: NPCs also have infinite credit lines
+            /*
+            if (!$this->hasSufficientFunds($quantity * $price)) {
+                return [
+                    'type' => 'reject_negotiation',
+                    'negotiationId' => $negotiation['id']
+                ];
+            }
+            */
         }
         
-        return [
-            'type' => 'accept_negotiation',
-            'negotiationId' => $negotiation['id']
-        ];
+        // Determine role
+        $role = ($type === 'buy') ? 'seller' : 'buyer';
+        
+        $shadowPrices = $this->calculateShadowPrices();
+        $shadowPrice = $shadowPrices[$chemical] ?? 0;
+        if ($shadowPrice <= 0.1) $shadowPrice = 3.0; // Default base value
+
+        // FORCE HAGGLE TESTING:
+        // If this is the very first offer from the player, ALWAYS counter.
+        // This ensures the "Haggle" UI is triggered for testing purposes.
+        if ($offerCount === 1) {
+             $counterPrice = ($role === 'seller') ? ($price * 1.2) : ($price * 0.8);
+             // Ensure counter is reasonable
+             $counterPrice = round($counterPrice, 2);
+             
+             error_log("NPC FORCE COUNTER for testing: $price -> $counterPrice");
+             
+             return [
+                'type' => 'counter_negotiation',
+                'negotiationId' => $negotiation['id'],
+                'quantity' => $quantity,
+                'price' => $counterPrice
+             ];
+        }
+
+        // "Bad" Strategy Evaluation: Be very generous to players
+        $action = 'reject';
+        
+        if ($role === 'seller') {
+            // NPC is selling. 
+            // Accept anything > 50% of value (Player gets cheap goods)
+            if ($price >= $shadowPrice * 0.5) {
+                $action = 'accept';
+            } else {
+                $action = 'counter'; // Too low even for beginner
+            }
+        } else {
+            // NPC is buying.
+            // Accept anything < 150% of value (Player sells for high profit)
+            if ($price <= $shadowPrice * 1.5) {
+                $action = 'accept';
+            } else {
+                $action = 'counter'; // Too high
+            }
+        }
+        
+        if ($action === 'accept') {
+             return [
+                'type' => 'accept_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
+        } elseif ($action === 'counter') {
+             // Counter with a still-generous offer
+             $counterPrice = ($role === 'seller') ? ($shadowPrice * 0.6) : ($shadowPrice * 1.3);
+             
+             return [
+                'type' => 'counter_negotiation',
+                'negotiationId' => $negotiation['id'],
+                'quantity' => $quantity,
+                'price' => round($counterPrice, 2)
+             ];
+        } else {
+             return [
+                'type' => 'reject_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
+        }
     }
 }

@@ -264,22 +264,29 @@ class MarketplaceAggregator {
                 $state = $storage->getState();
                 
                 $startingPotential = $state['profile']['startingFunds'] ?? 0;
-                $currentPotential = $state['shadowPrices']['maxProfit'] ?? 0;
                 
+                // Calculate Potential Revenue from current inventory
+                $inventoryRevenue = $state['shadowPrices']['maxProfit'] ?? 0;
                 // If maxProfit isn't in shadowPrices, calculate it live
-                if ($currentPotential <= 0) {
+                if ($inventoryRevenue <= 0) {
                     require_once __DIR__ . '/LPSolver.php';
                     $solver = new LPSolver();
                     $res = $solver->solve($state['inventory']);
-                    $currentPotential = $res['maxProfit'];
+                    $inventoryRevenue = $res['maxProfit'];
                 }
+
+                // Value Creation = Current Cash (Debt/Profit) + Potential Inventory Revenue
+                // Since players start with $0 and go into debt to buy inventory,
+                // this correctly subtracts the cost of goods sold.
+                $currentCash = $state['profile']['currentFunds'] ?? 0;
+                $totalValueCreated = $currentCash + $inventoryRevenue;
 
                 $stats[] = [
                     'email' => $teamInfo['email'],
                     'teamName' => $state['profile']['teamName'] ?? $teamInfo['teamName'],
                     'startingFunds' => $startingPotential,
-                    'currentFunds' => $currentPotential,
-                    'percentChange' => $this->calculatePercentChange($startingPotential, $currentPotential),
+                    'currentFunds' => $totalValueCreated, // Display Total Value Created
+                    'percentChange' => $this->calculatePercentChange($startingPotential, $totalValueCreated),
                     'totalTrades' => count($state['transactions'] ?? []),
                     'inventory' => $state['inventory']
                 ];
@@ -321,6 +328,53 @@ class MarketplaceAggregator {
 
         usort($allTrades, fn($a, $b) => ($b['timestamp'] ?? 0) - ($a['timestamp'] ?? 0));
         return array_slice($allTrades, 0, $limit);
+    }
+
+    /**
+     * Get ALL transactions for reporting
+     */
+    public function getAllTransactions() {
+        $allTrades = [];
+        $teams = $this->getAllTeams();
+
+        foreach ($teams as $teamInfo) {
+            try {
+                $storage = new TeamStorage($teamInfo['email']);
+                // We only need to check one side of the trade to avoid duplicates if we iterate all teams.
+                // However, the event is stored in BOTH teams' logs.
+                // Filter: Only include if current team is the 'buyer' (or just use transactionId to dedupe).
+                $txns = $storage->getTransactions()['transactions'] ?? [];
+
+                foreach ($txns as $txn) {
+                    // Only process if this team was the BUYER to avoid duplicates
+                    // (Every trade has 1 buyer and 1 seller)
+                    if (($txn['role'] ?? '') === 'buyer') {
+                        $txn['buyerName'] = $teamInfo['teamName'];
+                        $txn['buyerEmail'] = $teamInfo['email'];
+                        
+                        // We need to fetch seller name if not in txn
+                        // Usually txn has 'counterparty' ID.
+                        if (!isset($txn['sellerName'])) {
+                            try {
+                                $sellerStorage = new TeamStorage($txn['counterparty']);
+                                $txn['sellerName'] = $sellerStorage->getTeamName();
+                                $txn['sellerEmail'] = $txn['counterparty'];
+                            } catch (Exception $e) {
+                                $txn['sellerName'] = 'Unknown';
+                            }
+                        }
+                        
+                        $allTrades[] = $txn;
+                    }
+                }
+            } catch (Exception $e) {
+                continue;
+            }
+        }
+
+        // Sort by timestamp descending
+        usort($allTrades, fn($a, $b) => ($b['timestamp'] ?? 0) - ($a['timestamp'] ?? 0));
+        return $allTrades;
     }
 
     /**

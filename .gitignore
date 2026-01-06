@@ -28,3 +28,7 @@ hung.txt
 *.log
 .DS_Store
 Thumbs.db
+
+
+vendor
+.vscode

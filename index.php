@@ -153,8 +153,8 @@
                         <!-- Left Column: Primary Stats -->
                         <div class="space-y-8">
                             <!-- Revenue -->
-                            <div class="bg-green-900 bg-opacity-30 rounded-2xl p-8 border-4 border-green-600 shadow-xl">
-                                <h4 class="text-xl font-semibold text-green-400 mb-4 uppercase tracking-widest">Revenue Earned</h4>
+                            <div class="bg-tertiary rounded-2xl p-8 border-4 border-success shadow-xl">
+                                <h4 class="text-xl font-semibold text-success mb-4 uppercase tracking-widest">Revenue Earned</h4>
                                 <div class="text-6xl font-black text-white">$<span id="prod-result-revenue">0</span></div>
                                 <div class="mt-4 text-green-300 flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
@@ -166,11 +166,11 @@
                             <div class="bg-gray-700 rounded-2xl p-8 border border-gray-600 shadow-lg">
                                 <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Products Manufactured</h4>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div class="bg-blue-900 bg-opacity-40 p-6 rounded-xl border border-blue-700">
-                                        <div class="text-blue-400 text-sm font-bold mb-2 uppercase">De-Icer</div>
+                                    <div class="bg-tertiary p-6 rounded-xl border border-info">
+                                        <div class="text-info text-sm font-bold mb-2 uppercase">De-Icer</div>
                                         <div class="text-4xl font-black text-white"><span id="prod-result-deicer">0</span> <span class="text-lg font-normal opacity-70">gal</span></div>
                                     </div>
-                                    <div class="bg-purple-900 bg-opacity-40 p-6 rounded-xl border border-purple-700">
+                                    <div class="bg-tertiary p-6 rounded-xl border border-purple-500">
                                         <div class="text-purple-400 text-sm font-bold mb-2 uppercase">Solvent</div>
                                         <div class="text-4xl font-black text-white"><span id="prod-result-solvent">0</span> <span class="text-lg font-normal opacity-70">gal</span></div>
                                     </div>
@@ -422,10 +422,10 @@
                     </div>
                 </div>
 
-                <!-- Warning if insufficient funds -->
-                <div id="insufficient-funds-warning" class="hidden bg-red-900 bg-opacity-30 border border-red-500 rounded-lg p-3">
+                <!-- Warning if insufficient funds - REMOVED (Infinite Capital) -->
+                <!-- <div id="insufficient-funds-warning" class="hidden badge-error border border-red-500 rounded-lg p-3">
                     <p class="text-red-400 text-sm font-semibold">⚠️ Insufficient funds! Reduce quantity or max price.</p>
-                </div>
+                </div> -->
             </div>
 
             <div class="flex gap-3 mt-6">
@@ -453,7 +453,7 @@
                 </div>
 
                 <!-- Your Inventory -->
-                <div class="bg-blue-900 bg-opacity-30 border border-blue-500 rounded-lg p-3">
+                <div class="bg-tertiary border border-info rounded-lg p-3">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-300">Your Inventory:</span>
                         <span class="text-white font-bold"><span id="respond-your-inventory">0</span> gallons</span>
@@ -496,7 +496,7 @@
                 </div>
 
                 <!-- Warning if exceeds inventory -->
-                <div id="insufficient-inventory-warning" class="hidden bg-red-900 bg-opacity-30 border border-red-500 rounded-lg p-3">
+                <div id="insufficient-inventory-warning" class="hidden badge-error border border-red-500 rounded-lg p-3">
                     <p class="text-red-400 text-sm font-semibold">⚠️ You don't have enough inventory! Reduce quantity.</p>
                 </div>
             </div>
@@ -539,7 +539,7 @@
         <div class="bg-gray-800 rounded-lg p-4 md:p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border-2 border-green-500 shadow-2xl">
             <div class="flex items-center justify-between mb-4 md:mb-6">
                 <h3 class="text-xl md:text-2xl font-bold text-green-500" id="negotiation-modal-title">Negotiations</h3>
-                <button id="negotiation-modal-close-btn" class="text-gray-700 hover:text-gray-900 transition" aria-label="Close negotiations">
+                <button id="negotiation-modal-close-btn" class="text-gray-700 hover:text-gray-900 transition" aria-label="Close negotiations" style="background: none; border: none; cursor: pointer; padding: 0;">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -566,7 +566,7 @@
 
             <!-- Negotiation Detail View -->
             <div id="negotiation-detail-view" class="hidden">
-                <button id="back-to-list-btn" class="mb-4 text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                <button id="back-to-list-btn" class="mb-4 text-blue-400 hover:text-blue-300 flex items-center gap-2" style="background: none; border: none; cursor: pointer; padding: 0;">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
@@ -658,7 +658,7 @@
                                     <span class="text-xs text-gray-400">Total Transaction:</span>
                                     <span class="text-lg font-bold text-blue-400">$<span id="haggle-total">0.00</span></span>
                                 </div>
-                                <div id="haggle-error" class="hidden mt-2 text-[10px] text-red-400 font-bold text-center border border-red-900/50 rounded py-1 bg-red-900/10">
+                                <div id="haggle-error" class="hidden badge-error mt-2 text-[10px] font-bold text-center border border-red-900/50 rounded py-1">
                                     ⚠️ INSUFFICIENT RESOURCES
                                 </div>
                             </div>
@@ -696,7 +696,7 @@
 
             <!-- Start New Negotiation View -->
             <div id="start-negotiation-view" class="hidden">
-                <button id="back-from-new-btn" class="mb-4 text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                <button id="back-from-new-btn" class="mb-4 text-blue-400 hover:text-blue-300 flex items-center gap-2" style="background: none; border: none; cursor: pointer; padding: 0;">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
@@ -742,7 +742,7 @@
         <div class="bg-gray-800 rounded-lg p-4 md:p-6 w-full max-w-2xl border-2 border-blue-500 shadow-2xl">
             <div class="flex items-center justify-between mb-4 md:mb-6">
                 <h3 class="text-xl md:text-2xl font-bold text-blue-500" id="production-guide-modal-title">Production Formulas</h3>
-                <button id="production-guide-close-btn" class="text-gray-700 hover:text-gray-900 transition" aria-label="Close production guide">
+                <button id="production-guide-close-btn" class="text-gray-700 hover:text-gray-900 transition" aria-label="Close production guide" style="background: none; border: none; cursor: pointer; padding: 0;">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -809,7 +809,7 @@
                 </div>
 
                 <!-- Strategy Tips -->
-                <div class="bg-blue-900 bg-opacity-20 border border-blue-500 rounded-lg p-4">
+                <div class="bg-tertiary border border-info rounded-lg p-4">
                     <h4 class="font-bold text-white-always mb-2">💡 Trading Strategy Tips</h4>
                     <ul class="text-sm text-white-always space-y-2">
                         <li>• <strong class="text-white-always">Shadow Prices</strong> show how much your profit increases per additional gallon of each chemical</li>

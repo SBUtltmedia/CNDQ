@@ -54,6 +54,7 @@ try {
             'D' => $shadowPrices['D'],
             'Q' => $shadowPrices['Q']
         ],
+        'ranges' => $result['ranges'], // Include ranges for sensitivity analysis UI
         'optimalMix' => [
             'deicer' => $optimalMix['deicer'],
             'solvent' => $optimalMix['solvent']

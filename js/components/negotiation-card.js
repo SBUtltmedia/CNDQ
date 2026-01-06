@@ -80,8 +80,8 @@ class NegotiationCard extends HTMLElement {
                         (neg.responderId === this.currentUserId && type === 'sell');
         
         const roleBadge = isBuyer ? 
-            '<span class="text-[10px] uppercase font-bold text-blue-400 bg-blue-900 bg-opacity-30 px-1.5 py-0.5 rounded border border-blue-800">Buying</span>' : 
-            '<span class="text-[10px] uppercase font-bold text-green-400 bg-green-900 bg-opacity-30 px-1.5 py-0.5 rounded border border-green-800">Selling</span>';
+            '<span class="badge badge-info text-[10px] uppercase font-bold px-1.5 py-0.5">Buying</span>' : 
+            '<span class="badge badge-success text-[10px] uppercase font-bold px-1.5 py-0.5">Selling</span>';
 
         let statusBadge = '';
         if (neg.status === 'pending') {

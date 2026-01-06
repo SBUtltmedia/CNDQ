@@ -134,11 +134,14 @@ class AccessibilityTest {
             // Second test: Open modals and test them
             const modalResults = await this.testModals(page);
 
+            // Third test: Check hidden states (Negotiation Detail, Offer, Respond)
+            const dynamicResults = await this.testNegotiationStates(page);
+
             // Combine results
             const results = {
-                violations: [...initialResults.violations, ...modalResults.violations],
-                passes: [...initialResults.passes, ...modalResults.passes],
-                incomplete: [...initialResults.incomplete, ...modalResults.incomplete]
+                violations: [...initialResults.violations, ...modalResults.violations, ...dynamicResults.violations],
+                passes: [...initialResults.passes, ...modalResults.passes, ...dynamicResults.passes],
+                incomplete: [...initialResults.incomplete, ...modalResults.incomplete, ...dynamicResults.incomplete]
             };
 
             return {
@@ -158,6 +161,65 @@ class AccessibilityTest {
                 error: error.message
             };
         }
+    }
+
+    async testNegotiationStates(page) {
+        let allViolations = [];
+        let allPasses = [];
+        let allIncomplete = [];
+
+        // Define hidden views to expose and test
+        const hiddenViews = [
+            { id: '#negotiation-detail-view', name: 'Negotiation Detail View' },
+            { id: '#offer-modal', name: 'Post Offer Modal' },
+            { id: '#respond-modal', name: 'Respond Offer Modal' }
+        ];
+
+        for (const view of hiddenViews) {
+            try {
+                // Manually expose the hidden view for testing
+                // We use evaluate to manipulate DOM directly as if the app state changed
+                await page.evaluate((selector) => {
+                    const el = document.querySelector(selector);
+                    if (el) {
+                        el.classList.remove('hidden');
+                        // Ensure it's on top if it's a modal
+                        if (selector.includes('modal')) el.style.zIndex = '99999'; 
+                    }
+                }, view.id);
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Test the revealed state
+                const results = await new AxeBuilder(page)
+                    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+                    // Only analyze the revealed section to avoid re-reporting base page issues
+                    .include(view.id) 
+                    .analyze();
+
+                allViolations = [...allViolations, ...results.violations];
+                allPasses = [...allPasses, ...results.passes];
+                allIncomplete = [...allIncomplete, ...results.incomplete];
+
+                // Hide it again
+                await page.evaluate((selector) => {
+                    const el = document.querySelector(selector);
+                    if (el) {
+                        el.classList.add('hidden');
+                        el.style.zIndex = '';
+                    }
+                }, view.id);
+
+            } catch (error) {
+                console.error(`Error testing view ${view.name}:`, error.message);
+            }
+        }
+
+        return {
+            violations: allViolations,
+            passes: allPasses,
+            incomplete: allIncomplete
+        };
     }
 
     printResults(results) {

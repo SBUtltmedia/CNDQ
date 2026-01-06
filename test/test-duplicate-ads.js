@@ -130,7 +130,7 @@ async function runTests() {
         await sleep(3500);
 
         console.log('═'.repeat(70));
-        console.log('TEST 2: Insufficient Funds Prevention');
+        console.log('TEST 2: Infinite Capital Verification (Should Succeed)');
         console.log('═'.repeat(70));
 
         // Get current funds
@@ -141,20 +141,23 @@ async function runTests() {
         console.log(`  Current funds: $${currentFunds.toFixed(2)}`);
 
         // Try to post a buy request that exceeds funds
+        // In Infinite Capital model, this SHOULD SUCCEED
         await clickPostBuyButton(page, 'N');
 
         // Fill with values that exceed funds
-        const excessiveQuantity = Math.ceil(currentFunds / 5) + 100;
-        await fillAndSubmitBuyRequest(page, excessiveQuantity, 10.00);
+        const excessiveQuantity = Math.ceil(Math.abs(currentFunds) / 5) + 1000;
+        await fillAndSubmitBuyRequest(page, excessiveQuantity, 100.00);
 
-        const foundInsufficientFunds = await waitForToast(page, 'Insufficient funds', 2000);
+        const foundInfiniteSuccess = await waitForToast(page, `Buy request posted for ${excessiveQuantity} gallons of N`);
 
-        if (foundInsufficientFunds) {
-            console.log('✓ PASS: Insufficient funds properly prevented\n');
+        if (foundInfiniteSuccess) {
+            console.log('✓ PASS: Infinite capital allowed debt spending\n');
             testsPassed++;
         } else {
-            console.log('⚠️  SKIP: Could not test insufficient funds (user may have high balance)\n');
-            // Don't fail this test as it depends on user balance
+            const toasts = await getToastText(page);
+            console.log('✗ FAIL: Infinite capital transaction failed');
+            console.log('  Toasts found:', toasts);
+            testsFailed++;
         }
 
         await sleep(2000);

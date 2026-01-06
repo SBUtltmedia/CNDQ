@@ -356,14 +356,19 @@ class ExpertStrategy extends NPCTradingStrategy
             // RPC wants to sell to NPC (type 'sell' from RPC perspective, so NPC is buyer)
             else {
                 $optimalBuyPrice = $shadowPrice * self::BUY_MARGIN;
+                // Infinite Capital: NPC can buy even with 0 funds
+                /*
                 if ($price <= $optimalBuyPrice && $this->hasSufficientFunds($quantity * $price)) {
+                */
+                if ($price <= $optimalBuyPrice) {
                     return [
                         'type' => 'accept_negotiation',
                         'negotiationId' => $negotiation['id']
                     ];
                 }
                 // Counter if price is too high but we need it and can afford it at optimal price
-                if ($this->hasSufficientFunds($quantity * $price) && $price <= $shadowPrice * 1.1) {
+                // Removed fund check
+                if ($price <= $shadowPrice * 1.1) {
                     $reaction = ($price > $shadowPrice) ? rand(50, 80) : rand(0, 30);
                     $this->npcManager->runTradingCycleAction($this->npc, [
                         'type' => 'add_reaction',
@@ -411,21 +416,22 @@ class ExpertStrategy extends NPCTradingStrategy
         
                     $price = round($shadowPrice * self::BUY_MARGIN, 2);
         
+                    // Infinite Capital: NPC can buy even with 0 funds
+                    /*
                     if ($this->hasSufficientFunds($quantity * $price)) {
+                    */
+                    // Always try to counter if we want to buy
+                    return [
         
-                        return [
+                        'type' => 'counter_negotiation',
         
-                            'type' => 'counter_negotiation',
+                        'negotiationId' => $negotiation['id'],
         
-                            'negotiationId' => $negotiation['id'],
+                        'quantity' => $quantity,
         
-                            'quantity' => $quantity,
+                        'price' => $price
         
-                            'price' => $price
-        
-                        ];
-        
-                    }
+                    ];
         
                 }
         
