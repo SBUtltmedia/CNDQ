@@ -56,82 +56,76 @@ if (!isAdmin()) {
     <div class="max-w-4xl mx-auto">
         <header class="mb-8">
             <h1 class="text-3xl font-bold text-purple-400 mb-2">CNDQ Admin Dashboard</h1>
-            <p class="text-gray-300">Session & Market Control</p>
+            <p class="text-gray-300">Market Control & Final Production</p>
         </header>
 
-        <!-- Session Status Card -->
+        <!-- Market Status Card -->
         <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-            <h2 class="text-xl font-bold mb-4">Current Session</h2>
+            <h2 class="text-xl font-bold mb-4">Market Status</h2>
 
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="bg-gray-700 p-4 rounded">
-                    <div class="text-gray-300 text-sm">Session Number</div>
-                    <div class="text-3xl font-bold text-purple-400" id="session-number">-</div>
+                    <div class="text-gray-300 text-sm">Economic Model</div>
+                    <div class="text-2xl font-bold text-purple-400">Infinite Capital</div>
                 </div>
                 <div class="bg-gray-700 p-4 rounded">
-                    <div class="text-gray-300 text-sm">Current Phase</div>
+                    <div class="text-gray-300 text-sm">Market Phase</div>
                     <div class="text-3xl font-bold capitalize" id="current-phase">-</div>
                 </div>
             </div>
 
             <div class="bg-gray-700 p-4 rounded mb-4" id="timer-container">
-                <div class="text-gray-300 text-sm mb-2">Time Remaining</div>
+                <div class="text-gray-300 text-sm mb-2">Time Until Market Close</div>
                 <div class="text-2xl font-mono font-bold text-yellow-400" id="time-remaining">--:--</div>
             </div>
 
             <!-- Phase Controls -->
             <div class="flex gap-3">
                 <button id="start-stop-btn" onclick="toggleGameStop()" class="flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition">
-                    Start Game
+                    Start Market
                 </button>
                 <button onclick="resetSession()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition">
-                    Reset to Session 1
+                    Reset Game
                 </button>
             </div>
         </div>
 
-        <!-- Direct Phase Control -->
+        <!-- End Game Control -->
         <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-            <h2 class="text-xl font-bold mb-4">Manual Session Advance</h2>
+            <h2 class="text-xl font-bold mb-4 text-red-400">End Game / Final Production</h2>
 
             <button onclick="advancePhase()" class="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
-                Advance to Next Session →
+                CLOSE MARKET & RUN FINAL PRODUCTION →
             </button>
             <p class="text-xs text-gray-300 mt-2">
-                Manually advances to the next session (runs production and increments session number)
+                This will stop the timer, consume team inventories, and calculate final ROI based on baseline improvement.
             </p>
         </div>
 
-        <!-- Auto-Advance Settings -->
+        <!-- Timer Settings -->
         <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-            <h2 class="text-xl font-bold mb-4">Auto-Advance Settings</h2>
+            <h2 class="text-xl font-bold mb-4">Market Timer Settings</h2>
 
             <div class="flex items-center justify-between mb-4">
                 <label class="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" id="auto-advance" onchange="toggleAutoAdvance()" class="w-6 h-6 rounded">
-                    <span class="text-lg">Enable Auto-Advance</span>
+                    <span class="text-lg">Auto-End when timer hits 0</span>
                 </label>
             </div>
 
             <div class="bg-blue-900/30 border border-blue-500/50 rounded p-4 mb-6">
                 <div class="text-sm text-blue-200 mb-2">
-                    <strong>Auto-Advance Flow:</strong> Trading Session → Auto Production → Next Trading Session
+                    <strong>Single Session Model:</strong>
                 </div>
                 <div class="text-xs text-blue-300 space-y-1">
-                    <p><strong>Trading Phase:</strong> Teams buy/sell chemicals on the marketplace</p>
-                    <p class="mt-2"><strong>Automatic Production:</strong> When trading time expires, LP solver runs automatically for all teams:</p>
-                    <ul class="list-disc ml-5">
-                        <li>Optimizes Deicer/Solvent production mix</li>
-                        <li>Consumes chemicals from inventory</li>
-                        <li>Credits revenue to team accounts</li>
-                        <li>Shows results modal to players</li>
-                        <li>Advances to next trading session</li>
-                    </ul>
+                    <p>Teams trade with infinite capital to optimize their inventory mix.</p>
+                    <p>Production is only projected until the game is ended.</p>
+                    <p><strong>Final Production:</strong> Consumes chemicals and establishes final ranking.</p>
                 </div>
             </div>
 
             <div>
-                <label for="trading-duration-minutes" class="block text-sm text-gray-300 mb-2">Trading Session Duration</label>
+                <label for="trading-duration-minutes" class="block text-sm text-gray-300 mb-2">Market Duration</label>
                 <div class="flex items-center gap-2">
                     <input type="number" id="trading-duration-minutes" value="10" min="0" max="60" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration minutes">
                     <span class="text-gray-300">min</span>
@@ -139,9 +133,8 @@ if (!isAdmin()) {
                     <span class="text-gray-300">sec</span>
                 </div>
                 <button onclick="updateTradingDuration()" class="mt-2 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition w-full text-sm">
-                    Update Session Duration
+                    Update Timer
                 </button>
-                <div class="text-xs text-gray-300 mt-1">Time for each trading session (production runs automatically when time expires)</div>
             </div>
         </div>
 
@@ -338,8 +331,8 @@ if (!isAdmin()) {
                                 <div class="text-sm text-gray-300">${team.email}</div>
                             </div>
                             <div class="text-right">
-                                <div class="text-green-400 font-bold">$${team.funds.toLocaleString()}</div>
-                                <div class="text-xs text-gray-300">${team.activeOffers} offers, ${team.totalTrades} trades</div>
+                                <div class="text-green-400 font-bold">$${team.funds.toLocaleString()} Improvement</div>
+                                <div class="text-xs text-gray-300">${team.totalTrades} trades, Inventory: C=${Math.round(team.inventory.C)} N=${Math.round(team.inventory.N)}</div>
                             </div>
                         </div>
                     `).join('');
@@ -351,8 +344,6 @@ if (!isAdmin()) {
 
         function updateUI() {
             if (!sessionState) return;
-
-            document.getElementById('session-number').textContent = sessionState.currentSession;
             
             const phaseEl = document.getElementById('current-phase');
             if (sessionState.gameStopped) {

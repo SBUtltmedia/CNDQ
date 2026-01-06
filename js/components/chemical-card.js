@@ -103,6 +103,7 @@ class ChemicalCard extends LitElement {
         chemical: { type: String },
         inventory: { type: Number },
         shadowPrice: { type: Number },
+        ranges: { type: Object },
         buyAds: { type: Array },
         currentUserId: { type: String }
     };
@@ -112,6 +113,7 @@ class ChemicalCard extends LitElement {
         this.chemical = '';
         this.inventory = 0;
         this.shadowPrice = 0;
+        this.ranges = { allowableIncrease: 0, allowableDecrease: 0 };
         this.buyAds = [];
         this.currentUserId = '';
     }
@@ -137,8 +139,9 @@ class ChemicalCard extends LitElement {
     render() {
         const { border, header } = this.getChemicalColor(this.chemical);
         const hasActiveBuyAd = this.buyAds.some(ad => ad.teamId === this.currentUserId);
-
-        console.log(`🎨 Rendering Chemical ${this.chemical}: buyAds.length=${this.buyAds.length}, currentUserId=${this.currentUserId}, hasActiveBuyAd=${hasActiveBuyAd}`);
+        
+        const increase = this.ranges?.allowableIncrease ?? 0;
+        const decrease = this.ranges?.allowableDecrease ?? 0;
 
         return html`
             <div class="card" style="--border-color: ${border};">
@@ -149,11 +152,19 @@ class ChemicalCard extends LitElement {
                     <div class="info-box">
                         <div class="info-label">Your Inventory</div>
                         <div id="inventory" class="info-value">${this.inventory.toLocaleString()}</div>
+                        
                         <div class="shadow-price" title="This is the internal value of 1 gallon to YOUR team. Buying below this or selling above this increases your potential profit.">
                             Shadow Price: <span id="shadow-price">$${this.shadowPrice.toFixed(2)}</span>
-                            <span style="font-size: 0.65rem; display: block; opacity: 0.8; margin-top: 2px;">
-                                (Internal value to your team)
-                            </span>
+                        </div>
+
+                        <div style="font-size: 0.65rem; color: var(--color-text-secondary); margin-top: 0.5rem; line-height: 1.2;">
+                            <div class="flex justify-between">
+                                <span>Range:</span>
+                                <span class="text-success font-bold">
+                                    -${decrease.toFixed(0)} / +${increase >= 9000 ? '∞' : increase.toFixed(0)} gal
+                                </span>
+                            </div>
+                            <div style="opacity: 0.7; font-style: italic;">(Price stable within this range)</div>
                         </div>
                     </div>
 

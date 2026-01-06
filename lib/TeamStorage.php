@@ -500,7 +500,7 @@ class TeamStorage {
     }
 
     /**
-     * Automatically run first production for new teams
+     * Automatically run first production for new teams to establish baseline
      */
     private function runAutomaticFirstProduction() {
         require_once __DIR__ . '/LPSolver.php';
@@ -509,34 +509,23 @@ class TeamStorage {
         $solver = new LPSolver();
         $result = $solver->solve($inventory);
 
-        $deicerGallons = $result['deicer'];
-        $solventGallons = $result['solvent'];
         $revenue = $result['maxProfit'];
 
-        $consumed = [
-            'C' => $deicerGallons * LPSolver::DEICER_C,
-            'N' => ($deicerGallons * LPSolver::DEICER_N) + ($solventGallons * LPSolver::SOLVENT_N),
-            'D' => ($deicerGallons * LPSolver::DEICER_D) + ($solventGallons * LPSolver::SOLVENT_D),
-            'Q' => $solventGallons * LPSolver::SOLVENT_Q
-        ];
-
-        foreach ($consumed as $chem => $amount) {
-            $this->adjustChemical($chem, -$amount);
-        }
-
-        // Set starting funds to first production revenue (baseline for ROI)
-        // Current funds also set to revenue initially (ROI = 0% at start)
+        // NEW MODEL: Inventory is NOT consumed during the session.
+        // We only record the initial potential profit as the baseline.
+        
+        // Baseline funds for ROI calculation (starting funds = baseline profit)
+        // Actual current funds start at $0 (Infinite Capital model)
         $this->emitEvent('set_funds', ['amount' => $revenue, 'is_starting' => true]);
-        $this->emitEvent('set_funds', ['amount' => $revenue, 'is_starting' => false]);
+        $this->emitEvent('set_funds', ['amount' => 0, 'is_starting' => false]);
 
         $this->addProduction([
-            'type' => 'automatic_initial',
-            'sessionNumber' => 1,  // First production is session 1
-            'deicer' => $deicerGallons,
-            'solvent' => $solventGallons,
+            'type' => 'baseline_potential',
+            'sessionNumber' => 0, 
+            'deicer' => $result['deicer'],
+            'solvent' => $result['solvent'],
             'revenue' => $revenue,
-            'chemicalsConsumed' => $consumed,
-            'note' => 'Welcome to CNDQ! Your first production run is complete.'
+            'note' => 'Initial baseline potential established. No inventory consumed.'
         ]);
     }
 

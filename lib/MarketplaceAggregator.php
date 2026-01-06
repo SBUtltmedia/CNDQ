@@ -262,16 +262,24 @@ class MarketplaceAggregator {
             try {
                 $storage = new TeamStorage($teamInfo['email']);
                 $state = $storage->getState();
+                
+                $startingPotential = $state['profile']['startingFunds'] ?? 0;
+                $currentPotential = $state['shadowPrices']['maxProfit'] ?? 0;
+                
+                // If maxProfit isn't in shadowPrices, calculate it live
+                if ($currentPotential <= 0) {
+                    require_once __DIR__ . '/LPSolver.php';
+                    $solver = new LPSolver();
+                    $res = $solver->solve($state['inventory']);
+                    $currentPotential = $res['maxProfit'];
+                }
 
                 $stats[] = [
                     'email' => $teamInfo['email'],
                     'teamName' => $state['profile']['teamName'] ?? $teamInfo['teamName'],
-                    'startingFunds' => $state['profile']['startingFunds'] ?? 0,
-                    'currentFunds' => $state['profile']['currentFunds'] ?? 0,
-                    'percentChange' => $this->calculatePercentChange(
-                        $state['profile']['startingFunds'] ?? 0,
-                        $state['profile']['currentFunds'] ?? 0
-                    ),
+                    'startingFunds' => $startingPotential,
+                    'currentFunds' => $currentPotential,
+                    'percentChange' => $this->calculatePercentChange($startingPotential, $currentPotential),
                     'totalTrades' => count($state['transactions'] ?? []),
                     'inventory' => $state['inventory']
                 ];

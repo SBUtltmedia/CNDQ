@@ -356,8 +356,8 @@ class MarketplaceApp {
                 card.currentUserId = this.currentUser;
                 card.inventory = this.inventory[chemical];
                 card.shadowPrice = this.shadowPrices[chemical];
+                card.ranges = this.shadowPrices.ranges?.[chemical] || { allowableIncrease: 0, allowableDecrease: 0 };
                 const buyAds = this.advertisements[chemical]?.buy || [];
-                console.log(`📢 Chemical ${chemical} buy ads:`, buyAds.length, buyAds);
                 card.buyAds = buyAds;
             }
         });
@@ -474,18 +474,17 @@ class MarketplaceApp {
         const total = quantity * price;
 
         document.getElementById('offer-total').textContent = total.toFixed(2);
-        document.getElementById('offer-current-funds').textContent = '$' + this.profile.currentFunds.toFixed(2);
+        
+        // Funds display in modal now shows projected profit improvement
+        document.getElementById('offer-current-funds').textContent = '$' + this.formatNumber(this.profile.currentFunds);
 
         const submitBtn = document.getElementById('offer-submit-btn');
         const warning = document.getElementById('insufficient-funds-warning');
 
-        if (total > this.profile.currentFunds) {
-            warning.classList.remove('hidden');
-            submitBtn.disabled = true;
-        } else {
-            warning.classList.add('hidden');
-            submitBtn.disabled = false;
-        }
+        // NEW MODEL: Infinite Capital. 
+        // We never disable the button or show "insufficient funds".
+        warning.classList.add('hidden');
+        submitBtn.disabled = false;
     }
 
     /**
@@ -498,12 +497,6 @@ class MarketplaceApp {
 
         if (!chemical || quantity <= 0 || maxPrice < 0) {
             this.showToast('Invalid input', 'error');
-            return;
-        }
-
-        const total = quantity * maxPrice;
-        if (total > this.profile.currentFunds) {
-            this.showToast('Insufficient funds', 'error');
             return;
         }
 
@@ -959,11 +952,8 @@ class MarketplaceApp {
                 return;
             }
         } else {
-            const currentFunds = this.profile.currentFunds || 0;
-            if (currentFunds < total) {
-                this.showToast(`Insufficient funds for this counter-offer!`, 'error');
-                return;
-            }
+            // NEW MODEL: Infinite Capital.
+            // Buyer can always send an offer regardless of funds.
         }
 
         try {
@@ -1067,11 +1057,8 @@ class MarketplaceApp {
                 return;
             }
         } else {
-            const currentFunds = this.profile.currentFunds || 0;
-            if (currentFunds < total) {
-                this.showToast(`Insufficient funds! This trade costs $${this.formatNumber(total)} but you only have $${this.formatNumber(currentFunds)}.`, 'error');
-                return;
-            }
+            // NEW MODEL: Infinite Capital. 
+            // Buyer can always accept an offer regardless of funds.
         }
 
         const confirmed = await this.showConfirm('Accept this offer and execute the trade?', 'Accept Offer');
@@ -1211,11 +1198,9 @@ class MarketplaceApp {
                 errorMsg = `⚠️ INSUFFICIENT ${this.currentNegotiation.chemical}: ${currentInv.toFixed(1)} gal available`;
             }
         } else {
-            const currentFunds = this.profile.currentFunds || 0;
-            if (total > currentFunds) {
-                hasError = true;
-                errorMsg = `⚠️ INSUFFICIENT FUNDS: $${this.formatNumber(currentFunds)} available`;
-            }
+            // NEW MODEL: Infinite Capital. 
+            // Buyer can always make an offer regardless of funds.
+            hasError = false;
         }
 
         if (hasError) {

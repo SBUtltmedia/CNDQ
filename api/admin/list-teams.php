@@ -49,10 +49,16 @@ try {
             $transactions = $state['transactions'] ?? [];
             $offers = $state['offers'] ?? [];
 
+            $startingPotential = $profile['startingFunds'] ?? 0;
+            $currentPotential = $state['shadowPrices']['maxProfit'] ?? 0;
+            
+            // Calculate improvement
+            $improvement = $currentPotential - $startingPotential;
+
             $teamSummaries[] = [
                 'email' => $teamInfo['email'],
                 'teamName' => $profile['teamName'] ?? $teamInfo['teamName'] ?? 'Unknown Team',
-                'funds' => round($profile['currentFunds'] ?? 0, 2),
+                'funds' => round($improvement, 2), // Labelled as funds for legacy compatibility but contains improvement
                 'inventory' => [
                     'C' => max(0, round($inventory['C'] ?? 0, 4)),
                     'N' => max(0, round($inventory['N'] ?? 0, 4)),

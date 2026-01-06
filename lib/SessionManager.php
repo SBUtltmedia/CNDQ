@@ -77,73 +77,71 @@ class SessionManager {
     }
 
     /**
-     * Manual session advance (for admin)
+     * End of session logic
      */
     public function advanceSession() {
         $data = $this->storage->getSystemState();
-        $db = Database::getInstance();
-
-        // CLEANUP: Clear all market activity before next session
-        try {
-            $db->beginTransaction();
-            
-            // 1. Clear Negotiations (Pending only? Or all? User said "all buy requests/negotiations should be cleared")
-            // Assuming we clear PENDING ones. Completed ones are history.
-            // But user said "cleared for all users at the start of a new session".
-            // Let's clear PENDING negotiations to stop carry-over.
-            // We can leave history if we want, but "cleared" implies visual removal.
-            // Let's stick to clearing pending ones so history remains.
-            $db->execute("DELETE FROM negotiation_offers WHERE negotiation_id IN (SELECT id FROM negotiations WHERE status = 'pending')");
-            $db->execute("DELETE FROM negotiations WHERE status = 'pending'");
-
-            // 2. Clear Marketplace (Buy Orders, Offers, Ads)
-            // We need to clear the events that build the current state.
-            // Simplest way is to clear the snapshot and emit "remove" events? 
-            // Or just wipe the active state tables/snapshot.
-            // Since `MarketplaceAggregator` uses `marketplace_events`, we should technically append "remove" events
-            // OR we can just wipe the `marketplace_snapshot` and assumes the aggregator respects it.
-            // BUT `MarketplaceAggregator` rebuilds from events if snapshot is missing.
-            // So we should probably soft-delete or add a "session_reset" event?
-            // "No-M" philosophy says events are immutable history.
-            // But "cleared at start of new session" implies a state reset.
-            
-            // Let's go with the user's request: "cleared".
-            // To effectively clear the *current view*, we update the snapshot to empty.
-            // And to prevent rebuilding from old events, we might need a "cut-off" or just wipe the old events if they are ephemeral.
-            // Marketplace ads are ephemeral.
-            
-            // Delete ephemeral marketplace events to prevent them from reappearing on rebuild
-            $db->execute("DELETE FROM marketplace_events"); 
-            
-            // Reset snapshot
-            $db->execute("UPDATE marketplace_snapshot SET offers = '[]', buy_orders = '[]', ads = '[]', updated_at = ? WHERE id = 1", [time()]);
-            
-            // Clear team buy orders/offers/ads from their local state?
-            // This is harder because it's distributed.
-            // But the UI reads from the Aggregator (MarketplaceAggregator).
-            // So clearing the Aggregator (snapshot + events) clears the global view.
-            
-            $db->commit();
-        } catch (Exception $e) {
-            $db->rollback();
-            error_log("SessionManager: Failed to clear market data: " . $e->getMessage());
-        }
-
-        // Run production for current session
-        $this->runProductionForAllTeams($data['currentSession']);
-
-        // Increment session
-        $newSession = $data['currentSession'] + 1;
-        $updates = [
-            'currentSession' => $newSession,
-            'phaseStartedAt' => time(),
+        
+        // Stop the game when session ends
+        $this->storage->setSessionData([
+            'gameStopped' => true,
             'productionJustRan' => time()
-        ];
+        ]);
 
-        $this->storage->setSessionData($updates);
-        error_log("SessionManager: Manually advanced to session {$newSession}");
+        // Run one final production for all teams (this time it IS final)
+        $this->runFinalProductionForAllTeams($data['currentSession']);
 
-        return array_merge($data, $updates);
+        return $this->storage->getSystemState();
+    }
+
+    /**
+     * Run FINAL production for all teams (consumes inventory)
+     */
+    public function runFinalProductionForAllTeams($sessionNumber) {
+        require_once __DIR__ . '/TeamStorage.php';
+        require_once __DIR__ . '/LPSolver.php';
+        require_once __DIR__ . '/Database.php';
+
+        $db = Database::getInstance();
+        $teams = $db->query('SELECT DISTINCT team_email FROM team_events');
+        
+        foreach ($teams as $teamRow) {
+            $email = $teamRow['team_email'];
+            if ($email === 'system') continue;
+
+            try {
+                $storage = new TeamStorage($email);
+                $inventory = $storage->getInventory();
+                
+                $solver = new LPSolver();
+                $result = $solver->solve($inventory);
+                $revenue = $result['maxProfit'];
+
+                // FINAL PRODUCTION: Consumes inventory and adds funds
+                $consumed = [
+                    'C' => $result['deicer'] * LPSolver::DEICER_C,
+                    'N' => ($result['deicer'] * LPSolver::DEICER_N) + ($result['solvent'] * LPSolver::SOLVENT_N),
+                    'D' => ($result['deicer'] * LPSolver::DEICER_D) + ($result['solvent'] * LPSolver::SOLVENT_D),
+                    'Q' => $result['solvent'] * LPSolver::SOLVENT_Q
+                ];
+                
+                foreach ($consumed as $chem => $amount) {
+                    if ($amount > 0) $storage->adjustChemical($chem, -$amount);
+                }
+
+                $storage->updateFunds($revenue);
+
+                $storage->addProduction([
+                    'type' => 'final_production',
+                    'sessionNumber' => $sessionNumber,
+                    'deicer' => $result['deicer'],
+                    'solvent' => $result['solvent'],
+                    'revenue' => $revenue,
+                    'chemicalsConsumed' => $consumed,
+                    'note' => "Final production run. Game over."
+                ]);
+            } catch (Exception $e) { continue; }
+        }
     }
 
     /**
@@ -170,42 +168,18 @@ class SessionManager {
 
                 $solver = new LPSolver();
                 $result = $solver->solve($inventory);
-                if ($result['maxProfit'] <= 0) continue;
-
-                $deicerGallons = $result['deicer'];
-                $solventGallons = $result['solvent'];
                 $revenue = $result['maxProfit'];
 
-                $consumed = [
-                    'C' => $deicerGallons * LPSolver::DEICER_C,
-                    'N' => ($deicerGallons * LPSolver::DEICER_N) + ($solventGallons * LPSolver::SOLVENT_N),
-                    'D' => ($deicerGallons * LPSolver::DEICER_D) + ($solventGallons * LPSolver::SOLVENT_D),
-                    'Q' => $solventGallons * LPSolver::SOLVENT_Q
-                ];
+                // NEW MODEL: In-session production is just a projection. 
+                // NO inventory is consumed and NO funds are credited until the final end of game.
                 
-                // Correction: The original code had:
-                // 'D' => ($deicerGallons * LPSolver::DEICER_D) + ($solventGallons * LPSolver::SOLVENT_D),
-                // I should keep it identical to original unless I know it's a bug.
-                // The prompt says "Make `runProductionForAllTeams` public." I should try to preserve the logic exactly.
-                
-                // Let's re-read the original file content to be safe about the 'D' line.
-                // Original: 'D' => ($deicerGallons * LPSolver::DEICER_D) + ($solventGallons * LPSolver::SOLVENT_D),
-                
-                foreach ($consumed as $chemical => $amount) {
-                    if ($amount > 0) $storage->adjustChemical($chemical, -$amount);
-                }
-
-                // Credit revenue to team
-                $storage->updateFunds($revenue);
-
                 $storage->addProduction([
-                    'type' => 'automatic_session',
+                    'type' => 'session_projection',
                     'sessionNumber' => $sessionNumber,
-                    'deicer' => $deicerGallons,
-                    'solvent' => $solventGallons,
+                    'deicer' => $result['deicer'],
+                    'solvent' => $result['solvent'],
                     'revenue' => $revenue,
-                    'chemicalsConsumed' => $consumed,
-                    'note' => "Automatic production for session $sessionNumber"
+                    'note' => "Projected potential for session $sessionNumber"
                 ]);
             } catch (Exception $e) { continue; }
         }

@@ -135,6 +135,7 @@ class LPSolver {
         }
 
         // Shadow prices are in the objective row under the slack columns
+        // Slack columns are index 2, 3, 4, 5 corresponding to C, N, D, Q
         $shadowPrices = [
             'C' => round($tableau[0][2], 2),
             'N' => round($tableau[0][3], 2),
@@ -142,11 +143,41 @@ class LPSolver {
             'Q' => round($tableau[0][5], 2)
         ];
 
+        // Sensitivity Analysis (Ranging)
+        // For each constraint, find the allowable increase/decrease for the RHS
+        // This uses the final tableau: RHS_new = RHS_old + B^-1 * delta
+        $ranges = [];
+        $slackToChem = [2 => 'C', 3 => 'N', 4 => 'D', 5 => 'Q'];
+        
+        foreach ($slackToChem as $colIdx => $chem) {
+            $minDelta = -INF;
+            $maxDelta = INF;
+            
+            for ($i = 1; $i < 5; $i++) {
+                $rhs = $tableau[$i][6];
+                $val = $tableau[$i][$colIdx];
+                
+                if ($val > self::EPSILON) {
+                    // delta >= -rhs/val
+                    $minDelta = max($minDelta, -$rhs / $val);
+                } elseif ($val < -self::EPSILON) {
+                    // delta <= -rhs/val
+                    $maxDelta = min($maxDelta, -$rhs / $val);
+                }
+            }
+            
+            $ranges[$chem] = [
+                'allowableDecrease' => ($minDelta === -INF) ? $inventory[$chem] : round(abs($minDelta), 2),
+                'allowableIncrease' => ($maxDelta === INF) ? 9999 : round($maxDelta, 2)
+            ];
+        }
+
         return [
             'maxProfit' => round($maxProfit, 2),
             'deicer' => floor($deicer * 100) / 100,
             'solvent' => floor($solvent * 100) / 100,
-            'shadowPrices' => $shadowPrices
+            'shadowPrices' => $shadowPrices,
+            'ranges' => $ranges
         ];
     }
 
@@ -158,6 +189,7 @@ class LPSolver {
         
         return [
             'shadowPrices' => $result['shadowPrices'],
+            'ranges' => $result['ranges'],
             'optimalMix' => [
                 'deicer' => $result['deicer'],
                 'solvent' => $result['solvent']
