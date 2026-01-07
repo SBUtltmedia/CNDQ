@@ -215,7 +215,6 @@ class TeamHelper {
 
     /**
      * Respond to pending negotiations
-     * If acceptanceRate is 0, it opens the detail view and returns the data for haggling.
      */
     async respondToNegotiations(page, shadowPrices, acceptanceRate = 0.7) {
         // Force refresh
@@ -225,25 +224,36 @@ class TeamHelper {
         // 1. Open Negotiation Modal
         const modalOpen = await page.evaluate(() => {
             const btn = document.getElementById('view-all-negotiations-btn');
-            if (btn) { btn.click(); return true; }
+            if (btn) { 
+                console.log('   [TeamHelper] Clicking View All Negotiations button');
+                btn.click(); 
+                return true; 
+            } 
+            console.log('   [TeamHelper] View All Negotiations button not found');
             return false;
         });
 
         if (!modalOpen) return null;
-        await this.browser.sleep(1000);
+        await this.browser.sleep(1500);
 
         // 2. Look for "Your Turn"
         const negData = await page.evaluate(() => {
             const pendingContainer = document.getElementById('pending-negotiations');
-            const cards = pendingContainer?.querySelectorAll('negotiation-card');
+            if (!pendingContainer) {
+                console.log('   [TeamHelper] Pending negotiations container not found');
+                return null;
+            }
+            const cards = pendingContainer.querySelectorAll('negotiation-card');
+            console.log(`   [TeamHelper] Found ${cards.length} negotiation cards`);
+            
             for (const card of cards) {
-                if (card.innerHTML.includes('Your Turn')) {
-                    return {
-                        id: card.getAttribute('negotiation-id'),
-                        text: card.innerText.replace(/\n/g, ' ')
-                    };
+                if (card.innerText.includes('Your Turn')) {
+                    const id = card.getAttribute('negotiation-id');
+                    console.log(`   [TeamHelper] Found active negotiation: ${id}`);
+                    return { id, text: card.innerText.replace(/\n/g, ' ') };
                 }
             }
+            console.log('   [TeamHelper] No cards marked "Your Turn" found');
             return null;
         });
 
@@ -253,14 +263,21 @@ class TeamHelper {
         }
 
         // 3. Open Detail View
+        console.log(`   [TeamHelper] Attempting to open detail view for negotiation: ${negData.id}`);
         const clicked = await page.evaluate((id) => {
             const card = document.querySelector(`negotiation-card[negotiation-id="${id}"]`);
             const btn = card?.querySelector('[role="button"]');
-            if (btn) { btn.click(); return true; }
+            if (btn) { 
+                btn.click(); 
+                return true; 
+            } 
             return false;
         }, negData.id);
 
-        if (!clicked) return null;
+        if (!clicked) {
+            console.log('   [TeamHelper] Could not click card button for detail view');
+            return null;
+        }
         await this.browser.sleep(2000);
 
         // 4. Get current data
@@ -268,41 +285,37 @@ class TeamHelper {
             const chemText = document.getElementById('detail-chemical')?.textContent || '';
             const chemical = chemText.match(/Chemical ([CNDQ])/)?.[1];
             const history = document.getElementById('offer-history');
-            const bubbles = history?.querySelectorAll('.max-w-xs');
-            const lastBubble = bubbles && bubbles.length > 0 ? bubbles[bubbles.length - 1] : null;
+            const bubbles = history?.querySelectorAll('offer-bubble');
             
-            if (lastBubble) {
-                const text = lastBubble.textContent || '';
+            if (bubbles && bubbles.length > 0) {
+                const lastBubble = bubbles[bubbles.length - 1];
+                const text = lastBubble.innerText || '';
                 const qtyMatch = text.match(/(\d+)\s*gal/);
                 const priceMatch = text.match(/\$\s*([\d,.]+)/);
+                console.log(`   [TeamHelper] Current offer: ${qtyMatch?.[1]} gal @ $${priceMatch?.[1]}`);
                 return {
                     chemical,
                     quantity: qtyMatch ? parseInt(qtyMatch[1]) : 0,
                     price: priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : 0
                 };
             }
+            console.log('   [TeamHelper] History or bubbles not found in detail view');
             return { chemical, error: "History not found" };
         });
 
-        if (acceptanceRate <= 0) {
+        if (acceptanceRate <= 0 || (details && !details.error && Math.random() > acceptanceRate)) {
             // We want to HAGGLE, so we stay in the detail view
+            console.log('   [TeamHelper] Decided to HAGGLE');
             return { action: 'haggle', ...details };
         }
 
-        const shouldAccept = Math.random() < acceptanceRate;
+        console.log('   [TeamHelper] Decided to ACCEPT');
+        const shouldAccept = true; 
         if (shouldAccept) {
             await this.explicitAccept(page);
             return { action: 'accepted', ...details };
-        } else {
-            // REJECT
-            await page.evaluate(() => {
-                const btn = document.getElementById('reject-offer-btn');
-                if (btn && !btn.classList.contains('hidden')) btn.click();
-            });
-            await this.browser.sleep(500);
-            await page.click('#confirm-ok').catch(() => {});
-            return { action: 'rejected', ...details };
         }
+        return null;
     }
 
     /**
@@ -311,12 +324,18 @@ class TeamHelper {
     async explicitAccept(page) {
         await page.evaluate(() => {
             const btn = document.getElementById('accept-offer-btn');
-            if (btn && !btn.classList.contains('hidden')) btn.click();
+            if (btn && !btn.classList.contains('hidden')) {
+                console.log('   [TeamHelper] Clicking Accept Offer button');
+                btn.click();
+            }
         });
         await this.browser.sleep(1000);
         await page.evaluate(() => {
             const btn = document.getElementById('confirm-ok');
-            if (btn) btn.click();
+            if (btn) {
+                console.log('   [TeamHelper] Clicking Confirm button');
+                btn.click();
+            }
         });
         await this.browser.sleep(2000);
     }
@@ -332,17 +351,18 @@ class TeamHelper {
         const openHaggle = await page.evaluate(() => {
             const btn = document.getElementById('show-counter-form-btn');
             if (btn && !btn.classList.contains('hidden')) {
+                console.log('   [TeamHelper] Clicking Counter-Offer button');
                 btn.click();
                 return true;
             }
+            console.log('   [TeamHelper] Counter-offer form button not found or hidden');
             return false;
         });
 
         if (!openHaggle) {
-            console.log('      - [HAGGLE] Counter-offer form button not found');
             return null;
         }
-        await this.browser.sleep(1000);
+        await this.browser.sleep(1500);
 
         // 2. Adjust Sliders (Witcher 3 Style)
         const result = await page.evaluate((sp) => {
@@ -351,22 +371,41 @@ class TeamHelper {
             const targetPrice = (sp * 0.85).toFixed(2);
             
             if (priceSlider && qtySlider) {
+                console.log(`   [TeamHelper] Adjusting sliders: Price=${targetPrice}`);
                 priceSlider.value = targetPrice;
                 priceSlider.dispatchEvent(new Event('input', { bubbles: true }));
                 const patience = document.getElementById('patience-value')?.textContent || '???';
                 return { price: targetPrice, quantity: qtySlider.value, patienceAtOffer: patience };
             }
+            console.log('   [TeamHelper] Sliders not found in counter form');
             return { error: "Sliders not found" };
         }, shadowPrice);
+
+        if (result.error) {
+            console.log(`   [TeamHelper] Haggle error: ${result.error}`);
+            return null;
+        }
 
         console.log(`      - [HAGGLE] Set price to $${result.price} (Merchant Patience: ${result.patienceAtOffer})`);
         
         // 3. Send Offer
-        await page.click('#submit-counter-btn');
-        await this.browser.sleep(2000);
+        const sent = await page.evaluate(() => {
+            const btn = document.getElementById('submit-counter-btn');
+            if (btn && !btn.disabled) {
+                console.log('   [TeamHelper] Clicking Submit Counter button');
+                btn.click();
+                return true;
+            }
+            console.log('   [TeamHelper] Submit button missing or disabled');
+            return false;
+        });
+
+        if (sent) {
+            await this.browser.sleep(2000);
+            // Close modal
+            await page.click('#negotiation-modal-close-btn').catch(() => {});
+        }
         
-        // Close modal
-        await page.click('#negotiation-modal-close-btn').catch(() => {});
         return result;
     }
 

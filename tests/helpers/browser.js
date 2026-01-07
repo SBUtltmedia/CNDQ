@@ -68,10 +68,10 @@ class BrowserHelper {
      * Login as a user
      */
     async login(page, userEmail) {
-        // dev_login.php is at the root of CNDQ project
+        // dev.php is at the root of CNDQ project
         // Remove trailing slash from baseUrl to avoid double slashes
         const baseUrl = this.config.baseUrl.replace(/\/$/, '');
-        const loginUrl = `${baseUrl}/dev_login.php?user=${userEmail}`;
+        const loginUrl = `${baseUrl}/dev.php?user=${userEmail}`;
 
         // Navigate to login page (which sets cookie and redirects)
         await page.goto(loginUrl, { waitUntil: 'networkidle2' });

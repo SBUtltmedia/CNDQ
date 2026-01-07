@@ -1648,12 +1648,15 @@ class MarketplaceApp {
             const sessionNum = data.sessionNumber || sessionNumber;
             document.getElementById('prod-result-session').textContent = sessionNum;
 
-            // Set title: "Start Session 1" for initial load, "End Session X" for session completions
+            // Set title: "Initial Potential" for initial load, "Final Results" for session completions
             const titleElement = document.getElementById('prod-result-title');
+            const revenueNote = document.getElementById('revenue-note');
             if (isInitial) {
-                titleElement.innerHTML = `Start Session <span id="prod-result-session">${sessionNum}</span>`;
+                titleElement.innerHTML = `Round Baseline Potential`;
+                if (revenueNote) revenueNote.textContent = 'Initial inventory potential';
             } else {
-                titleElement.innerHTML = `End Session <span id="prod-result-session">${sessionNum}</span>`;
+                titleElement.innerHTML = `Final Round Results`;
+                if (revenueNote) revenueNote.textContent = 'Total value after optimization';
             }
 
             document.getElementById('prod-result-deicer').textContent = this.formatNumber(data.production.deicer);

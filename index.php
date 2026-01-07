@@ -124,12 +124,13 @@
     <div id="production-results-modal" class="hidden fixed inset-0 bg-gray-900 z-[140] flex items-center justify-center p-0">
         <div class="bg-gray-800 w-full h-full border-none shadow-2xl overflow-y-auto flex flex-col">
             <!-- Header (Sticky) -->
+            <!-- Header (Sticky) -->
             <div class="bg-gray-900 border-b-2 border-green-500 p-6 flex items-center justify-between sticky top-0 z-10">
                 <h3 class="text-3xl font-bold text-green-500 flex items-center gap-3">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span id="prod-result-title">Production Complete - Session <span id="prod-result-session">1</span></span>
+                    <span id="prod-result-title">Production Results</span>
                 </h3>
                 <button id="prod-result-close" class="text-gray-400 hover:text-white text-4xl font-bold transition-colors">&times;</button>
             </div>
@@ -144,7 +145,6 @@
                     </div>
                     <h2 class="text-5xl font-bold text-green-500 font-mono animate-pulse uppercase tracking-tight">Production Running</h2>
                     <p class="text-gray-300 mt-6 text-2xl">Linear programming solvers optimizing your profit...</p>
-                    <p class="text-gray-400 mt-4 text-lg">Session <span id="prod-progress-session">1</span></p>
                 </div>
 
                 <!-- Production Complete State -->
@@ -154,17 +154,17 @@
                         <div class="space-y-8">
                             <!-- Revenue -->
                             <div class="bg-tertiary rounded-2xl p-8 border-4 border-success shadow-xl">
-                                <h4 class="text-xl font-semibold text-success mb-4 uppercase tracking-widest">Revenue Earned</h4>
+                                <h4 class="text-xl font-semibold text-success mb-4 uppercase tracking-widest">Potential Revenue</h4>
                                 <div class="text-6xl font-black text-white">$<span id="prod-result-revenue">0</span></div>
                                 <div class="mt-4 text-green-300 flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                                    <span>Added to your treasury</span>
+                                    <span id="revenue-note">Initial inventory potential</span>
                                 </div>
                             </div>
 
                             <!-- Production Output -->
                             <div class="bg-gray-700 rounded-2xl p-8 border border-gray-600 shadow-lg">
-                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Products Manufactured</h4>
+                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Optimal Product Mix</h4>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div class="bg-tertiary p-6 rounded-xl border border-info">
                                         <div class="text-info text-sm font-bold mb-2 uppercase">De-Icer</div>
@@ -181,8 +181,8 @@
                         <!-- Right Column: Details & Inventory -->
                         <div class="space-y-8">
                             <!-- Chemicals Consumed -->
-                            <div class="bg-gray-700 rounded-2xl p-8 border border-gray-600 shadow-lg">
-                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Resources Consumed</h4>
+                            <div id="resources-section" class="bg-gray-700 rounded-2xl p-8 border border-gray-600 shadow-lg">
+                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Resources Required</h4>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="bg-blue-600 bg-opacity-20 p-4 rounded-lg flex justify-between items-center">
                                         <span class="text-blue-400 font-bold">Chem C</span>
@@ -205,14 +205,14 @@
 
                             <!-- Current Status -->
                             <div class="bg-gray-900 bg-opacity-50 rounded-2xl p-8 border border-gray-700 shadow-lg">
-                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">New Balance</h4>
+                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Account Balance</h4>
                                 <div class="grid grid-cols-1 gap-6">
                                     <div class="flex justify-between items-center border-b border-gray-800 pb-4">
-                                        <span class="text-gray-400">Total Funds</span>
+                                        <span class="text-gray-400">Total Value</span>
                                         <span class="text-3xl font-bold text-green-500">$<span id="prod-result-current-funds">0</span></span>
                                     </div>
                                     <div>
-                                        <span class="text-gray-400 block mb-4">Remaining Inventory</span>
+                                        <span class="text-gray-400 block mb-4">Inventory</span>
                                         <div class="grid grid-cols-4 gap-2 text-center">
                                             <div class="bg-gray-800 p-2 rounded">
                                                 <div class="text-[10px] text-blue-400 font-bold">C</div>
@@ -240,7 +240,7 @@
                     <!-- Continue Button -->
                     <div class="max-w-md mx-auto">
                         <button id="prod-result-continue" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-6 px-8 rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-2xl text-2xl uppercase tracking-tighter">
-                            Enter the Market →
+                            Start Trading →
                         </button>
                     </div>
                 </div>
@@ -266,7 +266,7 @@
                     <div class="flex items-center gap-2 md:gap-4">
                         <!-- Funds Display -->
                         <div class="bg-gray-700 px-3 py-2 md:px-6 md:py-3 rounded-lg border border-gray-600">
-                            <span class="text-gray-300 text-xs md:text-sm block">Current Funds</span>
+                            <span class="text-gray-300 text-xs md:text-sm block">Total Value</span>
                             <span class="text-success font-bold text-lg md:text-2xl" id="current-funds">$0</span>
                         </div>
 
@@ -331,7 +331,7 @@
             <div class="bg-gray-800 border-l-4 border-purple-500 p-4 mb-6 rounded shadow-lg flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div class="bg-purple-900/30 px-3 py-1 rounded border border-purple-500/50">
-                        <span class="text-xs text-purple-300 uppercase font-bold">Session</span>
+                        <span class="text-xs text-purple-300 uppercase font-bold">Round</span>
                         <span id="session-num-display" class="text-lg font-mono ml-2">1</span>
                     </div>
                 </div>
@@ -812,7 +812,7 @@
                         <li>• <strong class="text-white-always">Shadow Prices</strong> show how much your profit increases per additional gallon of each chemical</li>
                         <li>• Buy chemicals with high shadow prices to maximize production profit</li>
                         <li>• Sell chemicals with low/zero shadow prices - you don't need them!</li>
-                        <li>• Your production automatically runs each session using these formulas</li>
+                        <li>• Your production automatically runs at the end of the round using these formulas</li>
                     </ul>
                 </div>
             </div>

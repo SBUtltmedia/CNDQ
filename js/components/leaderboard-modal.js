@@ -207,7 +207,7 @@ class LeaderboardModal extends LitElement {
                     </div>
 
                     <div class="session-info">
-                        <span>Session <strong>${this.session}</strong></span>
+                        <span>Round <strong>${this.session}</strong></span>
                         <span style="margin: 0 0.5rem">•</span>
                         <span style="text-transform: capitalize;">${this.phase}</span>
                     </div>
@@ -221,9 +221,9 @@ class LeaderboardModal extends LitElement {
                                         <tr>
                                             <th>Rank</th>
                                             <th>Team</th>
-                                            <th class="text-right">Current Wealth</th>
-                                            <th class="text-right">Profit/Loss</th>
-                                            <th class="text-right">ROI %</th>
+                                            <th class="text-right">Total Value</th>
+                                            <th class="text-right">Net Gain/Loss</th>
+                                            <th class="text-right">Improvement %</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -235,11 +235,11 @@ class LeaderboardModal extends LitElement {
                                                     <tr class="${isMe ? 'current-user' : ''}">
                                                         <td class="rank">${index + 1}</td>
                                                         <td class="team-name">${team.teamName} ${isMe ? '(You)' : ''}</td>
-                                                        <td class="text-right">${this.formatCurrency(team.currentFunds)}</td>
+                                                        <td class="text-right font-bold text-warning">${this.formatCurrency(team.currentFunds)}</td>
                                                         <td class="text-right ${team.profit >= 0 ? 'roi-positive' : 'roi-negative'}">
                                                             ${team.profit >= 0 ? '+' : ''}${this.formatCurrency(team.profit)}
                                                         </td>
-                                                        <td class="text-right font-bold ${team.roi >= 0 ? 'roi-positive' : 'roi-negative'}">
+                                                        <td class="text-right ${team.roi >= 0 ? 'roi-positive' : 'roi-negative'}">
                                                             ${team.roi >= 0 ? '+' : ''}${(team.roi || 0).toFixed(1)}%
                                                         </td>
                                                     </tr>
@@ -253,7 +253,7 @@ class LeaderboardModal extends LitElement {
 
                     <div class="footer-info">
                         <strong style="color: var(--color-warning);">How scoring works:</strong> 
-                        Teams are ranked by <strong>Return on Investment (ROI %)</strong> — percentage gain or loss relative to initial production revenue. This ensures fair competition regardless of starting inventory.
+                        Teams are ranked by <strong>Total Value Created</strong> — the combined value of your net trading cash and your potential production profit. The <strong>Improvement %</strong> shows how much you've optimized your initial inventory.
                     </div>
                 </div>
             </div>
