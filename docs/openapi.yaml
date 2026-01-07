@@ -1,0 +1,1110 @@
+openapi: 3.0.3
+info:
+  title: CNDQ Marketplace API
+  description: |
+    API for the CNDQ (Chemical Name-Drop Quote) marketplace game.
+    Players trade chemicals (C, N, D, Q), negotiate deals, and compete for the best returns.
+
+    ## Authentication
+    All endpoints (except session status) require authentication via session cookies.
+
+    ## Game Flow
+    1. **TRADING** phase - Players can create offers, negotiate, and trade
+    2. **PRODUCTION** phase - Production runs, market is locked
+    3. Sessions advance automatically or manually
+
+  version: 1.0.0
+  contact:
+    name: CNDQ API Support
+
+servers:
+  - url: /api
+    description: API endpoints
+
+tags:
+  - name: Session
+    description: Game session and phase management
+  - name: Marketplace
+    description: Public marketplace offers and buy orders
+  - name: Offers
+    description: Create and manage your offers
+  - name: Negotiations
+    description: Private negotiations between teams
+  - name: Advertisements
+    description: Marketplace advertisements
+  - name: Notifications
+    description: Team notifications
+  - name: Production
+    description: Production results and shadow prices
+  - name: Leaderboard
+    description: Team standings
+  - name: Team
+    description: Team settings and management
+  - name: Admin
+    description: Administrative endpoints (protected)
+
+components:
+  schemas:
+    Chemical:
+      type: string
+      enum: [C, N, D, Q]
+      description: Chemical type (C, N, D, or Q)
+
+    TradeType:
+      type: string
+      enum: [buy, sell]
+      description: Trade direction
+
+    GamePhase:
+      type: string
+      enum: [TRADING, PRODUCTION, STOPPED]
+      description: Current game phase
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+        sellerId:
+          type: string
+          format: email
+        sellerName:
+          type: string
+        chemical:
+          $ref: '#/components/schemas/Chemical'
+        quantity:
+          type: integer
+          minimum: 1
+        minPrice:
+          type: number
+          format: float
+          minimum: 0
+        type:
+          type: string
+          enum: [sell]
+        timestamp:
+          type: integer
+
+    BuyOrder:
+      type: object
+      properties:
+        id:
+          type: string
+        buyerId:
+          type: string
+          format: email
+        buyerName:
+          type: string
+        chemical:
+          $ref: '#/components/schemas/Chemical'
+        quantity:
+          type: integer
+          minimum: 1
+        maxPrice:
+          type: number
+          format: float
+          minimum: 0
+        type:
+          type: string
+          enum: [buy]
+        timestamp:
+          type: integer
+
+    Negotiation:
+      type: object
+      properties:
+        id:
+          type: string
+        initiatorId:
+          type: string
+          format: email
+        initiatorName:
+          type: string
+        responderId:
+          type: string
+          format: email
+        responderName:
+          type: string
+        chemical:
+          $ref: '#/components/schemas/Chemical'
+        status:
+          type: string
+          enum: [pending, accepted, rejected, countered, cancelled]
+        currentOffer:
+          type: object
+          properties:
+            quantity:
+              type: integer
+            price:
+              type: number
+        history:
+          type: array
+          items:
+            type: object
+        session:
+          type: integer
+        type:
+          $ref: '#/components/schemas/TradeType'
+
+    Advertisement:
+      type: object
+      properties:
+        id:
+          type: string
+        teamId:
+          type: string
+          format: email
+        teamName:
+          type: string
+        chemical:
+          $ref: '#/components/schemas/Chemical'
+        type:
+          $ref: '#/components/schemas/TradeType'
+        message:
+          type: string
+        timestamp:
+          type: integer
+        session:
+          type: integer
+
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+
+security:
+  - cookieAuth: []
+
+paths:
+  /session/status:
+    get:
+      tags:
+        - Session
+      summary: Get current session status
+      description: Returns current session number, phase, and time remaining. Public endpoint.
+      security: []
+      responses:
+        '200':
+          description: Session status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  session:
+                    type: integer
+                  phase:
+                    $ref: '#/components/schemas/GamePhase'
+                  timeRemaining:
+                    type: integer
+                    description: Seconds remaining in current phase
+                  autoAdvance:
+                    type: boolean
+                  productionJustRan:
+                    type: boolean
+                    nullable: true
+                  gameStopped:
+                    type: boolean
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Session
+      summary: Acknowledge production results
+      description: Clear the productionJustRan flag
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                acknowledgeProduction:
+                  type: boolean
+      responses:
+        '200':
+          description: Production acknowledged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /marketplace/offers:
+    get:
+      tags:
+        - Marketplace
+      summary: Get all marketplace offers
+      description: Returns all active sell offers and buy orders, optionally filtered by chemical
+      parameters:
+        - name: chemical
+          in: query
+          description: Filter by chemical(s), comma-separated (e.g., "C" or "C,N,D")
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Marketplace offers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  offersByChemical:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Offer'
+                  buyOrdersByChemical:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/BuyOrder'
+                  summary:
+                    type: object
+                    description: Market summary statistics
+                  timestamp:
+                    type: integer
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /offers/create:
+    post:
+      tags:
+        - Offers
+      summary: Create a new sell offer
+      description: Create a new sell offer for a chemical you have in inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chemical
+                - quantity
+                - minPrice
+              properties:
+                chemical:
+                  $ref: '#/components/schemas/Chemical'
+                quantity:
+                  type: integer
+                  minimum: 1
+                minPrice:
+                  type: number
+                  format: float
+                  minimum: 0
+      responses:
+        '200':
+          description: Offer created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  offer:
+                    $ref: '#/components/schemas/Offer'
+        '400':
+          description: Invalid request (missing fields, invalid chemical, insufficient inventory)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Trading not allowed (wrong phase)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+                  currentPhase:
+                    $ref: '#/components/schemas/GamePhase'
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /offers/cancel:
+    post:
+      tags:
+        - Offers
+      summary: Cancel an offer
+      description: Cancel one of your active offers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - offerId
+              properties:
+                offerId:
+                  type: string
+      responses:
+        '200':
+          description: Offer cancelled successfully
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized to cancel this offer
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /offers/bid:
+    post:
+      tags:
+        - Offers
+      summary: Create a buy order
+      description: Create a buy order for a chemical
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chemical
+                - quantity
+                - maxPrice
+              properties:
+                chemical:
+                  $ref: '#/components/schemas/Chemical'
+                quantity:
+                  type: integer
+                  minimum: 1
+                maxPrice:
+                  type: number
+                  format: float
+                  minimum: 0
+      responses:
+        '200':
+          description: Buy order created successfully
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Trading not allowed
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /negotiations/initiate:
+    post:
+      tags:
+        - Negotiations
+      summary: Initiate a negotiation
+      description: Start a private negotiation with another team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - responderId
+                - chemical
+                - quantity
+                - price
+              properties:
+                responderId:
+                  type: string
+                  format: email
+                  description: Email of the team to negotiate with
+                adId:
+                  type: string
+                  description: Optional advertisement ID this negotiation is responding to
+                chemical:
+                  $ref: '#/components/schemas/Chemical'
+                quantity:
+                  type: integer
+                  minimum: 1
+                price:
+                  type: number
+                  format: float
+                  minimum: 0
+                type:
+                  $ref: '#/components/schemas/TradeType'
+                  default: buy
+      responses:
+        '200':
+          description: Negotiation initiated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  negotiation:
+                    $ref: '#/components/schemas/Negotiation'
+        '400':
+          description: Invalid request (missing fields, invalid values, cannot negotiate with self)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Trading not allowed
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /negotiations/list:
+    get:
+      tags:
+        - Negotiations
+      summary: List all negotiations
+      description: Get all negotiations involving the current team
+      responses:
+        '200':
+          description: List of negotiations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  negotiations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Negotiation'
+        '401':
+          description: Not authenticated
+        '500':
+          description: Server error
+
+  /negotiations/accept:
+    post:
+      tags:
+        - Negotiations
+      summary: Accept a negotiation
+      description: Accept the current offer in a negotiation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - negotiationId
+              properties:
+                negotiationId:
+                  type: string
+      responses:
+        '200':
+          description: Negotiation accepted
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Trading not allowed or not authorized
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /negotiations/counter:
+    post:
+      tags:
+        - Negotiations
+      summary: Counter a negotiation
+      description: Make a counter-offer in a negotiation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - negotiationId
+                - quantity
+                - price
+              properties:
+                negotiationId:
+                  type: string
+                quantity:
+                  type: integer
+                  minimum: 1
+                price:
+                  type: number
+                  format: float
+                  minimum: 0
+      responses:
+        '200':
+          description: Counter-offer made
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Trading not allowed or not authorized
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /negotiations/reject:
+    post:
+      tags:
+        - Negotiations
+      summary: Reject a negotiation
+      description: Reject the current offer in a negotiation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - negotiationId
+              properties:
+                negotiationId:
+                  type: string
+      responses:
+        '200':
+          description: Negotiation rejected
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /negotiations/react:
+    post:
+      tags:
+        - Negotiations
+      summary: React to a negotiation
+      description: Send an emoji reaction to a negotiation message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - negotiationId
+                - emoji
+              properties:
+                negotiationId:
+                  type: string
+                emoji:
+                  type: string
+      responses:
+        '200':
+          description: Reaction added
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /advertisements/list:
+    get:
+      tags:
+        - Advertisements
+      summary: List all advertisements
+      description: Get all active marketplace advertisements
+      responses:
+        '200':
+          description: List of advertisements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  advertisements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Advertisement'
+        '401':
+          description: Not authenticated
+        '500':
+          description: Server error
+
+  /advertisements/post:
+    post:
+      tags:
+        - Advertisements
+      summary: Post an advertisement
+      description: Create a new marketplace advertisement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - chemical
+                - type
+                - message
+              properties:
+                chemical:
+                  $ref: '#/components/schemas/Chemical'
+                type:
+                  $ref: '#/components/schemas/TradeType'
+                message:
+                  type: string
+                  maxLength: 280
+      responses:
+        '200':
+          description: Advertisement posted
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Trading not allowed
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /advertisements/my-ads:
+    get:
+      tags:
+        - Advertisements
+      summary: Get my advertisements
+      description: Get all advertisements posted by the current team
+      responses:
+        '200':
+          description: List of your advertisements
+        '401':
+          description: Not authenticated
+        '500':
+          description: Server error
+
+  /notifications/list:
+    get:
+      tags:
+        - Notifications
+      summary: List notifications
+      description: Get all notifications for the current team
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  notifications:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          description: Not authenticated
+        '500':
+          description: Server error
+
+  /production/results:
+    get:
+      tags:
+        - Production
+      summary: Get production results
+      description: Get the latest production results for the current team
+      responses:
+        '200':
+          description: Production results
+        '401':
+          description: Not authenticated
+        '500':
+          description: Server error
+
+  /production/shadow-prices:
+    get:
+      tags:
+        - Production
+      summary: Get shadow prices
+      description: Get current shadow prices for all chemicals
+      responses:
+        '200':
+          description: Shadow prices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  shadowPrices:
+                    type: object
+                    properties:
+                      C:
+                        type: number
+                      N:
+                        type: number
+                      D:
+                        type: number
+                      Q:
+                        type: number
+        '401':
+          description: Not authenticated
+        '500':
+          description: Server error
+
+  /leaderboard/standings:
+    get:
+      tags:
+        - Leaderboard
+      summary: Get team standings
+      description: Get current leaderboard rankings
+      responses:
+        '200':
+          description: Team standings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  standings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        teamName:
+                          type: string
+                        teamId:
+                          type: string
+                        score:
+                          type: number
+                        rank:
+                          type: integer
+        '401':
+          description: Not authenticated
+        '500':
+          description: Server error
+
+  /team/settings:
+    get:
+      tags:
+        - Team
+      summary: Get team settings
+      description: Get current team settings and profile
+      responses:
+        '200':
+          description: Team settings
+        '401':
+          description: Not authenticated
+        '500':
+          description: Server error
+
+    post:
+      tags:
+        - Team
+      summary: Update team settings
+      description: Update team settings and profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                teamName:
+                  type: string
+      responses:
+        '200':
+          description: Settings updated
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /admin/session:
+    get:
+      tags:
+        - Admin
+      summary: Get admin session info
+      description: Get detailed session information (admin only)
+      responses:
+        '200':
+          description: Session information
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized (admin only)
+        '500':
+          description: Server error
+
+    post:
+      tags:
+        - Admin
+      summary: Control game session
+      description: Start, stop, or advance the game session (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [start, stop, advance, setAutoAdvance, setTimer]
+                autoAdvance:
+                  type: boolean
+                duration:
+                  type: integer
+      responses:
+        '200':
+          description: Action completed
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized (admin only)
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /admin/reset-game:
+    post:
+      tags:
+        - Admin
+      summary: Reset the game
+      description: Reset all game state (admin only)
+      responses:
+        '200':
+          description: Game reset
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized (admin only)
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /admin/npc/list:
+    get:
+      tags:
+        - Admin
+      summary: List NPCs
+      description: Get all NPC teams (admin only)
+      responses:
+        '200':
+          description: List of NPCs
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized (admin only)
+        '500':
+          description: Server error
+
+  /admin/npc/create:
+    post:
+      tags:
+        - Admin
+      summary: Create NPC
+      description: Create a new NPC team (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - teamName
+              properties:
+                teamName:
+                  type: string
+      responses:
+        '200':
+          description: NPC created
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized (admin only)
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /admin/npc/delete:
+    post:
+      tags:
+        - Admin
+      summary: Delete NPC
+      description: Delete an NPC team (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - npcId
+              properties:
+                npcId:
+                  type: string
+      responses:
+        '200':
+          description: NPC deleted
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized (admin only)
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /admin/npc/toggle:
+    post:
+      tags:
+        - Admin
+      summary: Toggle NPC active status
+      description: Enable or disable an NPC team (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - npcId
+                - isActive
+              properties:
+                npcId:
+                  type: string
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: NPC status updated
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized (admin only)
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error
+
+  /admin/npc/toggle-system:
+    post:
+      tags:
+        - Admin
+      summary: Toggle NPC system
+      description: Enable or disable the entire NPC system (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - enabled
+              properties:
+                enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: NPC system status updated
+        '400':
+          description: Invalid request
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not authorized (admin only)
+        '405':
+          description: Method not allowed
+        '500':
+          description: Server error

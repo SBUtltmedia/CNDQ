@@ -41,13 +41,10 @@ try {
         ];
     }
 
-    // Sort by ROI descending (highest ROI first)
-    // Use currentFunds as a tie-breaker if ROI is equal
+    // Sort by Total Value (currentFunds) descending
+    // This represents Production Profit + Net Cash from Trades
     usort($standings, function($a, $b) {
-        if (abs($b['roi'] - $a['roi']) < 0.0001) {
-            return $b['currentFunds'] <=> $a['currentFunds'];
-        }
-        return $b['roi'] <=> $a['roi'];
+        return $b['currentFunds'] <=> $a['currentFunds'];
     });
 
     // Add rank

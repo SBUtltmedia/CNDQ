@@ -60,14 +60,14 @@ try {
     // Remove offers from the current user (can't buy from yourself)
     foreach ($offersByChemical as $chemical => &$offers) {
         $offers = array_values(array_filter($offers, function($offer) use ($currentUserEmail) {
-            return $offer['sellerId'] !== $currentUserEmail;
+            return ($offer['teamId'] ?? $offer['sellerId'] ?? '') !== $currentUserEmail;
         }));
     }
 
     // Remove buy orders from the current user (can't sell to yourself)
     foreach ($buyOrdersByChemical as $chemical => &$buyOrders) {
         $buyOrders = array_values(array_filter($buyOrders, function($buyOrder) use ($currentUserEmail) {
-            return $buyOrder['buyerId'] !== $currentUserEmail;
+            return ($buyOrder['teamId'] ?? $buyOrder['buyerId'] ?? '') !== $currentUserEmail;
         }));
     }
 
