@@ -96,6 +96,53 @@
         </div>
     </div>
 
+    <!-- Game Over Overlay -->
+    <div id="game-over-overlay" class="hidden fixed inset-0 bg-gray-900 z-[150] flex flex-col">
+        <!-- Header -->
+        <header class="bg-gray-800 border-b-2 border-purple-500 p-6 flex items-center justify-between shadow-2xl">
+            <h2 class="text-4xl font-black text-purple-500 tracking-tighter uppercase">Simulation Complete</h2>
+            <button id="restart-game-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Restart Simulation
+            </button>
+        </header>
+
+        <!-- Tabs -->
+        <div class="bg-gray-800 flex justify-center border-b border-gray-700">
+            <button id="tab-leaderboard" class="px-12 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all">Leaderboard</button>
+            <button id="tab-history" class="px-12 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all">Event History</button>
+        </div>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-y-auto p-8 container mx-auto max-w-4xl">
+            <!-- Leaderboard Content -->
+            <div id="content-leaderboard" class="block">
+                <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-8">
+                    <h3 class="text-2xl font-bold mb-8 text-center text-gray-300">Final Performance Rankings</h3>
+                    <div id="final-leaderboard-container">
+                        <!-- Rankings will be injected here -->
+                        <div class="animate-pulse space-y-4">
+                            <div class="h-16 bg-gray-700 rounded-lg"></div>
+                            <div class="h-16 bg-gray-700 rounded-lg"></div>
+                            <div class="h-16 bg-gray-700 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Content -->
+            <div id="content-history" class="hidden">
+                <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-8">
+                    <h3 class="text-2xl font-bold mb-8 text-center text-gray-300">Your Activity Report</h3>
+                    <div id="final-history-container" class="space-y-4">
+                        <!-- Notifications will be injected here -->
+                        <p class="text-gray-500 text-center py-12 italic">Loading your activity history...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center z-50">
         <div class="text-center">

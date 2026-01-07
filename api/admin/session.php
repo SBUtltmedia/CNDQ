@@ -53,9 +53,22 @@ try {
             }
         }
 
+        // Get recent trades for global notifications
+        require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
+        $aggregator = new MarketplaceAggregator();
+        $cached = $aggregator->getCachedMarketplaceData(5);
+        $recentTrades = $cached['recentTrades'] ?? [];
+        
+        // If cache is stale/missing, get live (this also updates the snapshot)
+        if (empty($recentTrades)) {
+            $allMarket = $aggregator->getAggregatedFromEvents();
+            $recentTrades = $allMarket['recentTrades'] ?? [];
+        }
+
         echo json_encode([
             'success' => true,
-            'session' => $state
+            'session' => $state,
+            'recentTrades' => $recentTrades
         ]);
 
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {

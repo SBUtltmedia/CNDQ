@@ -69,14 +69,15 @@ CREATE TABLE IF NOT EXISTS marketplace_snapshot (
     offers TEXT,                      -- JSON array of active offers
     buy_orders TEXT,                  -- JSON array of active buy orders
     ads TEXT,                         -- JSON array of active ads
+    recent_trades TEXT,               -- JSON array of recent trades (global)
     last_event_id INTEGER,
     updated_at INTEGER DEFAULT (strftime('%s', 'now')),
     FOREIGN KEY (last_event_id) REFERENCES marketplace_events(id)
 );
 
 -- Insert singleton row
-INSERT OR IGNORE INTO marketplace_snapshot (id, offers, buy_orders, ads)
-VALUES (1, '[]', '[]', '[]');
+INSERT OR IGNORE INTO marketplace_snapshot (id, offers, buy_orders, ads, recent_trades)
+VALUES (1, '[]', '[]', '[]', '[]');
 
 -- =============================================================================
 -- NEGOTIATIONS TABLES (Future: negotiations.db)

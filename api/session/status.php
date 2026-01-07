@@ -32,6 +32,18 @@ try {
         $state = $sessionManager->advanceSession();
     }
 
+    // Get recent trades for global notifications
+    require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
+    $aggregator = new MarketplaceAggregator();
+    $cached = $aggregator->getCachedMarketplaceData(5);
+    $recentTrades = $cached['recentTrades'] ?? [];
+    
+    // If cache is stale/missing, get live (this also updates the snapshot)
+    if (empty($recentTrades)) {
+        $allMarket = $aggregator->getAggregatedFromEvents();
+        $recentTrades = $allMarket['recentTrades'] ?? [];
+    }
+
     echo json_encode([
         'success' => true,
         'session' => $state['currentSession'],
@@ -39,7 +51,9 @@ try {
         'timeRemaining' => $state['timeRemaining'] ?? 0,
         'autoAdvance' => $state['autoAdvance'] ?? false,
         'productionJustRan' => $state['productionJustRan'] ?? null,
-        'gameStopped' => $state['gameStopped'] ?? true
+        'gameStopped' => $state['gameStopped'] ?? true,
+        'gameFinished' => $state['gameFinished'] ?? false,
+        'recentTrades' => $recentTrades
     ]);
 
 } catch (Exception $e) {

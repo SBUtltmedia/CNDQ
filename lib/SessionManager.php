@@ -85,6 +85,7 @@ class SessionManager {
         // Stop the game when session ends
         $this->storage->setSessionData([
             'gameStopped' => true,
+            'gameFinished' => true,
             'productionJustRan' => time()
         ]);
 
@@ -213,13 +214,62 @@ class SessionManager {
     }
 
     public function toggleGameStop($stopped) {
-        $this->storage->setSessionData(['gameStopped' => (bool)$stopped]);
+        $updates = ['gameStopped' => (bool)$stopped];
+        
+        // If starting the game, reset the phase timer so it doesn't immediately expire
+        if (!$stopped) {
+            $updates['phaseStartedAt'] = time();
+            $updates['gameFinished'] = false; // Ensure finished is false if manually started
+        }
+        
+        $this->storage->setSessionData($updates);
         return $this->storage->getSystemState();
+    }
+
+    /**
+     * Restart the game - can be called by anyone when game is finished
+     * Preserves NPC count
+     */
+    public function restartGame() {
+        require_once __DIR__ . '/NPCManager.php';
+        require_once __DIR__ . '/Database.php';
+        
+        $npcManager = new NPCManager();
+        $npcConfig = $npcManager->loadConfig();
+        $npcSkillLevels = array_column($npcConfig['npcs'] ?? [], 'skillLevel');
+        
+        $db = Database::getInstance();
+        $db->beginTransaction();
+        try {
+            $db->getPdo()->exec('PRAGMA foreign_keys = OFF');
+            $db->execute('DELETE FROM team_state_cache');
+            $db->execute('DELETE FROM team_snapshots');
+            $db->execute('DELETE FROM team_events');
+            $db->execute('DELETE FROM marketplace_events');
+            $db->execute('UPDATE marketplace_snapshot SET offers = ?, buy_orders = ?, ads = ?, recent_trades = ?, updated_at = ? WHERE id = 1',
+                ['[]', '[]', '[]', '[]', time()]);
+            $db->execute('DELETE FROM negotiation_offers');
+            $db->execute('DELETE FROM negotiations');
+            $db->execute('DELETE FROM config WHERE key != ?', ['admin_config']);
+            $db->getPdo()->exec('PRAGMA foreign_keys = ON');
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollback();
+            throw $e;
+        }
+
+        // Recreate NPCs
+        $npcManager->toggleSystem(true);
+        foreach ($npcSkillLevels as $level) {
+            $npcManager->createNPCs($level, 1);
+        }
+
+        return $this->reset();
     }
 
     public function updateNpcLastRun() {
         $this->storage->setSessionData(['npcLastRun' => time()]);
-        return $this->getState();
+        return $this->storage->getSystemState();
     }
 
     public function reset($tradingDuration = 120) {
@@ -232,7 +282,8 @@ class SessionManager {
             'phaseStartedAt' => time(),
             'productionRun' => null,
             'productionJustRan' => time(), // Set flag so modal shows initial production on first load
-            'gameStopped' => true // Game starts in stopped state after reset
+            'gameStopped' => true, // Game starts in stopped state after reset
+            'gameFinished' => false
         ]);
         return $this->storage->getSystemState();
     }

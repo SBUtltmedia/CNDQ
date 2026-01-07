@@ -33,6 +33,7 @@ class MarketplaceApp {
         this.pollingFrequency = 3000; // 3 seconds
         this.lastServerTimeRemaining = 0;
         this.gameStopped = true;
+        this.gameFinished = false;
 
         // Modal state
         this.currentNegotiation = null;
@@ -41,6 +42,9 @@ class MarketplaceApp {
 
         // Track pending ad posts to prevent race conditions
         this.pendingAdPosts = new Set();
+
+        // Track seen global trades to avoid duplicate toasts
+        this.processedGlobalTrades = new Set();
     }
 
     /**
@@ -1503,6 +1507,32 @@ class MarketplaceApp {
         document.getElementById('prod-result-continue').addEventListener('click', () => {
             this.closeProductionResults();
         });
+
+        // Game Over Overlay event listeners
+        document.getElementById('restart-game-btn').addEventListener('click', () => {
+            this.restartGame();
+        });
+
+        const tabLeaderboard = document.getElementById('tab-leaderboard');
+        const tabHistory = document.getElementById('tab-history');
+        const contentLeaderboard = document.getElementById('content-leaderboard');
+        const contentHistory = document.getElementById('content-history');
+
+        if (tabLeaderboard && tabHistory) {
+            tabLeaderboard.addEventListener('click', () => {
+                tabLeaderboard.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all';
+                tabHistory.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all';
+                contentLeaderboard.classList.remove('hidden');
+                contentHistory.classList.add('hidden');
+            });
+
+            tabHistory.addEventListener('click', () => {
+                tabHistory.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all';
+                tabLeaderboard.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all';
+                contentHistory.classList.remove('hidden');
+                contentLeaderboard.classList.add('hidden');
+            });
+        }
     }
 
 
@@ -1568,8 +1598,21 @@ class MarketplaceApp {
             this.gameStopped = data.gameStopped;
             this.lastServerTimeRemaining = data.timeRemaining;
 
-            // Check for game stopped state
-            const closedOverlay = document.getElementById('market-closed-overlay');
+            // Check for game finished state (End Screen)
+            const gameOverOverlay = document.getElementById('game-over-overlay');
+            if (data.gameFinished) {
+                if (gameOverOverlay && gameOverOverlay.classList.contains('hidden')) {
+                    gameOverOverlay.classList.remove('hidden');
+                    this.renderGameOverStats();
+                }
+                this.gameFinished = true;
+                return; // Stop processing other updates if game is finished
+            } else {
+                if (gameOverOverlay) gameOverOverlay.classList.add('hidden');
+                this.gameFinished = false;
+            }
+
+            // Check for game stopped state (Market Closed)
             const mainApp = document.getElementById('app');
             if (data.gameStopped) {
                 if (closedOverlay) closedOverlay.classList.remove('hidden');
@@ -1582,6 +1625,33 @@ class MarketplaceApp {
 
             // Update UI elements
             document.getElementById('session-num-display').textContent = data.session;
+
+            // Process Global Trades for Toasts
+            if (data.recentTrades && Array.isArray(data.recentTrades)) {
+                // Process in reverse (oldest first) so they stack correctly
+                [...data.recentTrades].reverse().forEach(trade => {
+                    if (!this.processedGlobalTrades.has(trade.transactionId)) {
+                        this.processedGlobalTrades.add(trade.transactionId);
+
+                        // Don't toast if I was part of it (I already got a personal toast/notif)
+                        const involvesMe = trade.sellerId === this.currentUser || trade.buyerId === this.currentUser;
+                        
+                        if (!involvesMe) {
+                            const isHot = trade.heat?.isHot;
+                            const icon = isHot ? '🔥 ' : '📦 ';
+                            const message = `${icon}${trade.sellerName} sold ${this.formatNumber(trade.quantity)} gal of ${trade.chemical} to ${trade.buyerName}`;
+                            const type = isHot ? 'hot' : 'info';
+                            this.showToast(message, type, 4000);
+                        }
+                    }
+                });
+
+                // Cleanup memory: keep only last 100 IDs
+                if (this.processedGlobalTrades.size > 100) {
+                    const tradesArray = Array.from(this.processedGlobalTrades);
+                    this.processedGlobalTrades = new Set(tradesArray.slice(-100));
+                }
+            }
 
             // Update Timer
             this.updateTimerDisplay(data.timeRemaining);
@@ -1968,6 +2038,116 @@ class MarketplaceApp {
             else if (modalId === 'production-guide-modal') this.closeProductionGuide();
             else if (modalId === 'negotiation-modal') this.closeNegotiationModal();
             else if (modalId === 'offer-modal') this.closeOfferModal();
+        }
+    }
+
+    /**
+     * Render stats for the end game screen
+     */
+    async renderGameOverStats() {
+        console.log('🏁 Game Over: Rendering final results...');
+        await Promise.all([
+            this.renderFinalLeaderboard(),
+            this.renderFinalHistory()
+        ]);
+    }
+
+    /**
+     * Render the final leaderboard in end screen
+     */
+    async renderFinalLeaderboard() {
+        const container = document.getElementById('final-leaderboard-container');
+        if (!container) return;
+
+        try {
+            const data = await api.leaderboard.getStandings();
+            if (!data.success) return;
+
+            container.innerHTML = data.standings.map((team, index) => `
+                <div class="bg-gray-700/50 p-6 rounded-xl flex items-center justify-between border ${team.email === this.currentUser ? 'border-purple-500 bg-purple-900/20' : 'border-gray-600'}">
+                    <div class="flex items-center gap-6">
+                        <div class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center font-black text-2xl ${index < 3 ? 'text-yellow-400' : 'text-gray-400'}">
+                            ${index + 1}
+                        </div>
+                        <div>
+                            <div class="font-black text-xl uppercase tracking-tight">${team.teamName} ${team.email === this.currentUser ? '<span class="text-xs bg-purple-600 px-2 py-0.5 rounded ml-2">YOU</span>' : ''}</div>
+                            <div class="text-xs text-gray-400 font-mono">${team.totalTrades} trades executed</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-black ${team.percentChange >= 0 ? 'text-green-400' : 'text-red-400'} font-mono">
+                            ${team.percentChange >= 0 ? '+' : ''}${team.percentChange.toFixed(1)}%
+                        </div>
+                        <div class="text-sm font-bold text-gray-400 uppercase tracking-widest">ROI Improvement</div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Failed to load final leaderboard:', error);
+            container.innerHTML = '<p class="text-red-400 text-center">Failed to load leaderboard results</p>';
+        }
+    }
+
+    /**
+     * Render personal activity history in end screen
+     */
+    async renderFinalHistory() {
+        const container = document.getElementById('final-history-container');
+        if (!container) return;
+
+        try {
+            const data = await api.notifications.list();
+            if (!data.success || !data.notifications.length) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-12 italic">No activity recorded for this simulation.</p>';
+                return;
+            }
+
+            container.innerHTML = data.notifications.map(notif => `
+                <div class="bg-gray-700/30 p-4 rounded-lg border-l-4 border-blue-500">
+                    <div class="text-sm text-gray-200">${notif.message}</div>
+                    <div class="text-[10px] text-gray-500 mt-1 uppercase font-bold tracking-widest">${this.formatTimeAgo(notif.createdAt)}</div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Failed to load final history:', error);
+            container.innerHTML = '<p class="text-red-400 text-center">Failed to load activity history</p>';
+        }
+    }
+
+    /**
+     * Restart the game
+     */
+    async restartGame() {
+        const confirmed = await this.showConfirm(
+            'This will reset the entire simulation for ALL players and start over with the current NPC count. Are you sure?',
+            'Restart Simulation'
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const btn = document.getElementById('restart-game-btn');
+            btn.disabled = true;
+            btn.textContent = 'Restarting...';
+
+            const response = await fetch('/CNDQ/api/session/restart.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showToast('Simulation restarted! Reloading...', 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                this.showToast(data.error || 'Failed to restart', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Restart Simulation';
+            }
+        } catch (error) {
+            console.error('Restart failed:', error);
+            this.showToast('Network error during restart', 'error');
         }
     }
 

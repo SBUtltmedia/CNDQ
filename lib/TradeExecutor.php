@@ -137,6 +137,39 @@ class TradeExecutor {
                 ]);
             }
             
+            // GLOBAL MARKETPLACE EVENT: Record the trade for all to see
+            // This enables global toasts for trades we're NOT part of
+            $microtime = microtime(true);
+            $globalEvent = [
+                'transactionId' => $transactionId,
+                'chemical' => $chemical,
+                'quantity' => $quantity,
+                'pricePerGallon' => $pricePerGallon,
+                'totalAmount' => $totalCost,
+                'sellerId' => $sellerId,
+                'sellerName' => $sellerStorage->getTeamName(),
+                'buyerId' => $buyerId,
+                'buyerName' => $buyerStorage->getTeamName(),
+                'timestamp' => $microtime,
+                'heat' => [
+                    'total' => $totalHeat,
+                    'isHot' => $isHot
+                ]
+            ];
+            
+            $db = Database::getInstance();
+            $db->insert(
+                'INSERT INTO marketplace_events (team_email, team_name, event_type, payload, timestamp)
+                 VALUES (?, ?, ?, ?, ?)',
+                [
+                    $actingTeamId,
+                    $actorStorage->getTeamName(),
+                    'add_transaction',
+                    json_encode($globalEvent),
+                    $microtime
+                ]
+            );
+
             // Debug: Log post-trade state
             // Force state refresh to verify write
             $postInventory = $actorStorage->getInventory();

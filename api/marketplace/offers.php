@@ -27,11 +27,14 @@ try {
     if ($cachedData) {
         $offersByChemical = $cachedData['offersByChemical'];
         $buyOrdersByChemical = $cachedData['buyOrdersByChemical'] ?? [];
+        $recentTrades = $cachedData['recentTrades'] ?? [];
         $summary = $cachedData['summary'];
     } else {
         // Regenerate cache
         $offersByChemical = $aggregator->getOffersByChemical();
         $buyOrdersByChemical = $aggregator->getBuyOrdersByChemical();
+        $allMarket = $aggregator->getAggregatedFromEvents();
+        $recentTrades = $allMarket['recentTrades'] ?? [];
         $summary = $aggregator->getMarketplaceSummary();
 
         // Cache for next request
@@ -75,6 +78,7 @@ try {
         'success' => true,
         'offersByChemical' => $offersByChemical,
         'buyOrdersByChemical' => $buyOrdersByChemical,
+        'recentTrades' => $recentTrades,
         'summary' => $summary,
         'timestamp' => time()
     ]);

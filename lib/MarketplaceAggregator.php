@@ -25,12 +25,13 @@ class MarketplaceAggregator {
         // Update singleton snapshot record
         $this->db->execute(
             'UPDATE marketplace_snapshot
-             SET offers = ?, buy_orders = ?, ads = ?, updated_at = ?
+             SET offers = ?, buy_orders = ?, ads = ?, recent_trades = ?, updated_at = ?
              WHERE id = 1',
             [
                 json_encode($data['offers']),
                 json_encode($data['buyOrders']),
                 json_encode($data['ads']),
+                json_encode($data['recentTrades']),
                 time()
             ]
         );
@@ -43,13 +44,14 @@ class MarketplaceAggregator {
      * Falls back to live aggregation if snapshot is missing
      */
     private function getSnapshot() {
-        $snapshot = $this->db->queryOne('SELECT offers, buy_orders, ads FROM marketplace_snapshot WHERE id = 1');
+        $snapshot = $this->db->queryOne('SELECT offers, buy_orders, ads, recent_trades FROM marketplace_snapshot WHERE id = 1');
 
         if ($snapshot) {
             return [
                 'offers' => json_decode($snapshot['offers'], true) ?? [],
                 'buyOrders' => json_decode($snapshot['buy_orders'], true) ?? [],
-                'ads' => json_decode($snapshot['ads'], true) ?? []
+                'ads' => json_decode($snapshot['ads'], true) ?? [],
+                'recentTrades' => json_decode($snapshot['recent_trades'] ?? '[]', true) ?? []
             ];
         }
 
@@ -180,6 +182,7 @@ class MarketplaceAggregator {
         $offers = [];
         $buyOrders = [];
         $ads = [];
+        $recentTrades = [];
 
         foreach ($events as $event) {
             $type = $event['event_type'];
@@ -188,6 +191,15 @@ class MarketplaceAggregator {
             $teamName = $event['team_name'] ?? $teamId;
 
             switch ($type) {
+                case 'add_transaction':
+                    // Payload already contains full trade details from TradeExecutor
+                    array_unshift($recentTrades, $payload);
+                    // Keep only last 20 trades
+                    if (count($recentTrades) > 20) {
+                        array_pop($recentTrades);
+                    }
+                    break;
+
                 case 'add_offer':
                     $payload['teamId'] = $teamId;
                     $payload['sellerName'] = $teamName;
@@ -247,7 +259,8 @@ class MarketplaceAggregator {
         return [
             'offers' => array_values($offers),
             'buyOrders' => array_values($buyOrders),
-            'ads' => array_values($ads)
+            'ads' => array_values($ads),
+            'recentTrades' => $recentTrades
         ];
     }
 
@@ -400,6 +413,7 @@ class MarketplaceAggregator {
             return [
                 'offersByChemical' => $this->getOffersByChemical(),
                 'buyOrdersByChemical' => $this->getBuyOrdersByChemical(),
+                'recentTrades' => $snapshot['recentTrades'] ?? [],
                 'summary' => $this->getMarketplaceSummary()
             ];
         }
