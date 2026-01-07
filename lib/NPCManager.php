@@ -365,6 +365,22 @@ class NPCManager
         $storage = new TeamStorage($npc['email']);
         $strategy = new $strategyClass($storage, $npc, $this);
 
+        // SAFETY: If NPC has pending reflections, wait for them to be processed.
+        // This prevents "behind the scenes" instant relaying of inventory.
+        // The aggregator will finish the trade, and the NPC will act in the next cycle.
+        require_once __DIR__ . '/GlobalAggregator.php';
+        $aggregator = new GlobalAggregator();
+        // Try to process reflections for this team specifically if possible, 
+        // or just wait for the global poller.
+        // For now, we just check if it's pending.
+        $state = $storage->getState();
+        foreach ($state['transactions'] ?? [] as $txn) {
+            if (!empty($txn['isPendingReflection'])) {
+                error_log("NPC {$npc['teamName']} has pending reflections. Skipping cycle to ensure data integrity.");
+                return;
+            }
+        }
+
         // First, check for and respond to pending negotiations
         try {
             $negotiationAction = $strategy->respondToNegotiations();

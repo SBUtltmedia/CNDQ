@@ -51,6 +51,22 @@ abstract class NPCTradingStrategy
     abstract public function respondToNegotiations();
 
     /**
+     * Check if NPC has any trades pending reflection (unfinalized)
+     * 
+     * @return bool
+     */
+    protected function hasPendingReflections()
+    {
+        $state = $this->storage->getState();
+        foreach ($state['transactions'] ?? [] as $txn) {
+            if (!empty($txn['isPendingReflection'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Check if NPC should trade based on inventory levels
      *
      * @return bool
