@@ -30,8 +30,17 @@ try {
         exit;
     }
 
-    // Run the cycle
+    require_once __DIR__ . '/../../../lib/GlobalAggregator.php';
+    $globalAggregator = new GlobalAggregator();
+    
+    // 1. Process reflections (sync trades to counterparties)
+    $globalAggregator->processReflections();
+
+    // 2. Run the cycle
     $npcManager->runTradingCycle($state['currentSession']);
+    
+    // 3. Process reflections again (finalize trades)
+    $globalAggregator->processReflections();
     
     // Update last run time to prevent immediate re-triggering by heartbeat
     $sessionManager->updateNpcLastRun();

@@ -88,13 +88,13 @@ class NoviceStrategy extends NPCTradingStrategy
         $buyAds = $aggregator->getActiveBuyOrders();
 
         foreach ($buyAds as $ad) {
-            // Skip if it's an NPC (simulated players aren't NPCs)
-            if ($this->npcManager->isNPC($ad['buyerId'])) {
+            // Check if already negotiating
+            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
                 continue;
             }
 
-            // Check if already negotiating
-            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
+            // Don't trade with yourself
+            if ($ad['buyerId'] === $this->npc['email']) {
                 continue;
             }
 
@@ -137,6 +137,11 @@ class NoviceStrategy extends NPCTradingStrategy
         $highestBuyOrder = $this->findHighestBuyOrder($chemical, $buyOrders);
 
         if ($highestBuyOrder && $highestBuyOrder['maxPrice'] >= self::SELL_THRESHOLD) {
+            // Don't trade with yourself
+            if ($highestBuyOrder['buyerId'] === $this->npc['email']) {
+                return null;
+            }
+
             $currentAmount = $this->inventory[$chemical] ?? 0;
             $quantity = min($currentAmount - 10, $highestBuyOrder['quantity']);
 

@@ -265,21 +265,31 @@ class MarketplaceAggregator {
                 
                 $startingPotential = $state['profile']['startingFunds'] ?? 0;
                 
-                // Calculate Potential Revenue from current inventory
-                $inventoryRevenue = $state['shadowPrices']['maxProfit'] ?? 0;
-                // If maxProfit isn't in shadowPrices, calculate it live
-                if ($inventoryRevenue <= 0) {
-                    require_once __DIR__ . '/LPSolver.php';
-                    $solver = new LPSolver();
-                    $res = $solver->solve($state['inventory']);
-                    $inventoryRevenue = $res['maxProfit'];
-                }
-
-                // Value Creation = Current Cash (Debt/Profit) + Potential Inventory Revenue
-                // Since players start with $0 and go into debt to buy inventory,
-                // this correctly subtracts the cost of goods sold.
+                // Value Creation Logic:
+                // During Trading: Value = Cash + Projected Production Revenue
+                // After Production: Value = Final Cash (Inventory is gone, revenue is in cash)
                 $currentCash = $state['profile']['currentFunds'] ?? 0;
-                $totalValueCreated = $currentCash + $inventoryRevenue;
+                
+                // Get game state to check if production already ran
+                require_once __DIR__ . '/SystemStorage.php';
+                $system = new SystemStorage();
+                $gameStopped = $system->getSystemState()['gameStopped'] ?? true;
+
+                $totalValueCreated = $currentCash;
+                
+                // Only add projected revenue if game is still running (inventory still exists)
+                if (!$gameStopped) {
+                    // Calculate Potential Revenue from current inventory
+                    $inventoryRevenue = $state['shadowPrices']['maxProfit'] ?? 0;
+                    // If maxProfit isn't in shadowPrices, calculate it live
+                    if ($inventoryRevenue <= 0) {
+                        require_once __DIR__ . '/LPSolver.php';
+                        $solver = new LPSolver();
+                        $res = $solver->solve($state['inventory']);
+                        $inventoryRevenue = $res['maxProfit'];
+                    }
+                    $totalValueCreated += $inventoryRevenue;
+                }
 
                 $stats[] = [
                     'email' => $teamInfo['email'],

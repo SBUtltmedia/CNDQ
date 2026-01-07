@@ -86,13 +86,13 @@ class BeginnerStrategy extends NPCTradingStrategy
         }
 
         foreach ($buyAds as $ad) {
-            // Only respond to non-NPC buy requests
-            if ($this->npcManager->isNPC($ad['buyerId'])) {
+            // Check if already negotiating with this team for this chemical
+            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
                 continue;
             }
 
-            // Check if already negotiating with this team for this chemical
-            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
+            // Don't trade with yourself
+            if ($ad['buyerId'] === $this->npc['email']) {
                 continue;
             }
 

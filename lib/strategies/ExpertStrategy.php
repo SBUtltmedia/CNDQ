@@ -84,13 +84,13 @@ class ExpertStrategy extends NPCTradingStrategy
         }
 
         foreach ($buyOrders as $ad) {
-            // Skip if it's an NPC
-            if ($this->npcManager->isNPC($ad['buyerId'])) {
+            // Check if already negotiating
+            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
                 continue;
             }
 
-            // Check if already negotiating
-            if ($this->hasPendingNegotiationWith($ad['buyerId'], $ad['chemical'])) {
+            // Don't trade with yourself
+            if ($ad['buyerId'] === $this->npc['email']) {
                 continue;
             }
 
@@ -140,7 +140,7 @@ class ExpertStrategy extends NPCTradingStrategy
             $currentAmount = $this->inventory[$chemical] ?? 0;
 
             // Only post buy request if shadow price is high and inventory is low
-            if ($shadowPrice > 2.0 && $currentAmount < 1000) { 
+            if ($shadowPrice > 2.0 && $currentAmount < 2000) { 
                 $maxBuyPrice = round($shadowPrice * self::BUY_MARGIN, 2);
                 $quantity = $this->calculateBuyQuantity($chemical, $currentAmount);
 
@@ -194,6 +194,11 @@ class ExpertStrategy extends NPCTradingStrategy
                 $highestBuyOrder = $this->findHighestBuyOrder($chemical, $buyOrders);
 
                 if ($highestBuyOrder) {
+                    // Don't trade with yourself
+                    if ($highestBuyOrder['buyerId'] === $this->npc['email']) {
+                        continue;
+                    }
+                    
                     $quantity = min($surplus, $highestBuyOrder['quantity']);
                     if ($quantity >= 1 && $this->hasSufficientInventory($chemical, $quantity)) {
                         return [

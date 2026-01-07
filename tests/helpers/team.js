@@ -70,40 +70,52 @@ class TeamHelper {
         });
     }
 
-    /**
-     * Post buy request using the modal interface
-     */
     async postBuyRequest(page, chemical, shadowPrice) {
         // Force refresh to ensure button state is accurate
         await page.reload({ waitUntil: 'networkidle2' });
-        await this.browser.sleep(1000);
+        await this.browser.sleep(1500);
         
         await page.waitForSelector('#app:not(.hidden)', { timeout: 10000 });
         
-        // Check if button is already disabled (meaning we already have an ad)
-        const canPost = await page.evaluate((chem) => {
+        // Detailed check of button state
+        const buttonInfo = await page.evaluate((chem) => {
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
-            if (!card || !card.shadowRoot) return false;
+            if (!card) return { error: 'Card not found' };
+            if (!card.shadowRoot) return { error: 'ShadowRoot not found' };
+            
             const button = card.shadowRoot.querySelector('#post-buy-btn');
-            return button && !button.classList.contains('btn-disabled') && !button.disabled;
+            if (!button) return { error: 'Button not found in shadowRoot' };
+            
+            return {
+                found: true,
+                disabled: button.disabled,
+                className: button.className,
+                innerText: button.innerText,
+                isVisible: button.offsetParent !== null
+            };
         }, chemical);
 
-        if (!canPost) {
-            return; // Skip if already posted or card missing
+        console.log(`   [TeamHelper] Button info for ${chemical}:`, JSON.stringify(buttonInfo));
+
+        if (!buttonInfo.found || buttonInfo.disabled || buttonInfo.className.includes('btn-disabled')) {
+            console.log(`   [TeamHelper] Skipping postBuyRequest for ${chemical}: Button not clickable`);
+            return;
         }
 
         // Click the buy button inside the chemical card's shadow DOM
+        console.log(`   [TeamHelper] Clicking post-buy-btn for ${chemical}`);
         await page.evaluate((chem) => {
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
-            if (card && card.shadowRoot) {
-                const button = card.shadowRoot.querySelector('#post-buy-btn');
-                if (button) button.click();
-            }
+            const button = card.shadowRoot.querySelector('#post-buy-btn');
+            if (button) button.click();
         }, chemical);
 
-        await this.browser.sleep(800);
+        await this.browser.sleep(1500); // Wait for modal animation
 
         // Fill in the modal (Main DOM)
+        console.log(`   [TeamHelper] Filling offer-modal for ${chemical}`);
+        await page.waitForSelector('#offer-modal', { visible: true, timeout: 5000 });
+
         await page.evaluate((sp) => {
             const quantity = 100;
             const price = (sp * 1.2).toFixed(2);
@@ -114,7 +126,6 @@ class TeamHelper {
             if (qtyInput && priceInput) {
                 qtyInput.value = quantity;
                 priceInput.value = price;
-                // Trigger input event for validation logic
                 qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
                 priceInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
@@ -146,7 +157,9 @@ class TeamHelper {
                 const isMyAd = item.isMyAd || item.hasAttribute('ismyad') || item.hasAttribute('isMyAd');
 
                 if (type === 'buy' && !isMyAd) {
-                    return { teamId, teamName, chemical: chem };
+                    const priceText = item.shadowRoot?.querySelector('.text-blue-400')?.textContent || '$0';
+                    const maxPrice = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0;
+                    return { teamId, teamName, chemical: chem, maxPrice };
                 }
             }
             return null;
@@ -183,15 +196,20 @@ class TeamHelper {
         await this.browser.sleep(1000);
 
         // Fill in respond modal (Main DOM)
-        const subResult = await page.evaluate((sp) => {
+        const subResult = await page.evaluate((sp, targetMaxPrice) => {
             const modalInv = parseFloat(document.getElementById('respond-your-inventory').textContent.replace(/,/g, '')) || 0;
             const qtyInput = document.getElementById('respond-quantity');
             const priceInput = document.getElementById('respond-price');
             
             if (modalInv < 1) return { success: false, reason: "No inventory" };
 
-            const quantity = Math.min(50, Math.floor(modalInv));
-            const price = 5.00;
+            const quantity = Math.min(100, Math.floor(modalInv));
+            
+            // Strategic Price: If we know their max price, we should ask for it 
+            // (or slightly less to be safe), provided it's above our shadow price.
+            let price = Math.max(sp * 1.1, targetMaxPrice * 0.95);
+            if (price < 1.0) price = 2.50; // Safety floor
+            price = parseFloat(price.toFixed(2));
 
             if (qtyInput && priceInput) {
                 qtyInput.value = quantity;
@@ -201,7 +219,7 @@ class TeamHelper {
                 return { success: true, quantity, price };
             }
             return { success: false, reason: "Inputs missing" };
-        }, shadowPrice);
+        }, shadowPrice, buyRequest.maxPrice || 0);
 
         if (!subResult.success) {
             await page.click('#respond-cancel-btn');

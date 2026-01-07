@@ -81,13 +81,11 @@ abstract class NPCTradingStrategy
         $aggregator = new MarketplaceAggregator();
         $offersByChemical = $aggregator->getOffersByChemical();
 
-        // Filter out this NPC's own offers and other NPC offers
+        // Filter out this NPC's own offers
         $filteredOffers = [];
         foreach ($offersByChemical as $chemical => $offers) {
             $filteredOffers[$chemical] = array_filter($offers, function ($offer) {
-                // Exclude own offers and other NPC offers
-                return $offer['sellerId'] !== $this->npc['email'] &&
-                       !$this->npcManager->isNPC($offer['sellerId']);
+                return $offer['sellerId'] !== $this->npc['email'];
             });
         }
 
@@ -104,13 +102,11 @@ abstract class NPCTradingStrategy
         $aggregator = new MarketplaceAggregator();
         $buyOrdersByChemical = $aggregator->getBuyOrdersByChemical();
 
-        // Filter out this NPC's own buy orders and other NPCs
+        // Filter out this NPC's own buy orders
         $filteredBuyOrders = [];
         foreach ($buyOrdersByChemical as $chemical => $orders) {
             $filteredBuyOrders[$chemical] = array_filter($orders, function ($order) {
-                // Exclude own orders and other NPC orders
-                return $order['buyerId'] !== $this->npc['email'] &&
-                       !$this->npcManager->isNPC($order['buyerId']);
+                return $order['buyerId'] !== $this->npc['email'];
             });
         }
 
@@ -125,8 +121,8 @@ abstract class NPCTradingStrategy
      */
     protected function hasSufficientFunds($totalCost)
     {
-        $currentFunds = $this->profile['currentFunds'] ?? 0;
-        return $currentFunds >= $totalCost;
+        // Infinite Capital Model: Funds are unlimited, spending into debt is allowed.
+        return true;
     }
 
     /**
@@ -189,11 +185,6 @@ abstract class NPCTradingStrategy
 
         $cheapest = null;
         foreach ($offers[$chemical] as $offer) {
-            // Skip offers from other NPCs
-            if ($this->npcManager->isNPC($offer['sellerId'])) {
-                continue;
-            }
-
             if ($cheapest === null || $offer['minPrice'] < $cheapest['minPrice']) {
                 $cheapest = $offer;
             }
