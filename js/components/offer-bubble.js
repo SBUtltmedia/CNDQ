@@ -47,7 +47,13 @@ class OfferBubble extends HTMLElement {
         }
 
         const alignment = this.isFromMe ? 'ml-auto' : 'mr-auto';
-        const bgColor = this.isFromMe ? 'bg-blue-700' : 'bg-gray-600';
+        // Use theme-aware ad-mine styling for 'Me', and standard tertiary for 'Them'
+        const bgStyle = this.isFromMe ? 
+            'background-color: var(--color-bg-ad-mine, #422006); border: 1px solid var(--color-border-ad-mine, #d97706);' : 
+            'background-color: var(--color-bg-tertiary, #374151); border: 1px solid var(--color-border, #4b5563);';
+        
+        const textColorClass = this.isFromMe ? 'text-primary' : 'text-secondary';
+        
         const total = this._offer.quantity * this._offer.price;
         const date = new Date(this._offer.createdAt * 1000).toLocaleString();
         
@@ -60,19 +66,19 @@ class OfferBubble extends HTMLElement {
         ` : '';
 
         this.innerHTML = `
-            <div class="max-w-xs ${alignment} ${bgColor} rounded-lg p-3 text-white shadow-lg relative overflow-hidden">
+            <div class="max-w-xs ${alignment} rounded-lg p-3 shadow-sm relative overflow-hidden" style="${bgStyle}">
                 ${isHot ? '<div class="absolute top-0 right-0 w-16 h-16 bg-orange-400 opacity-10 rotate-45 translate-x-8 -translate-y-8"></div>' : ''}
-                <div class="font-semibold text-sm flex justify-between items-center">
+                <div class="font-semibold text-sm flex justify-between items-center ${textColorClass}">
                     <span>${this._offer.fromTeamName}</span>
                 </div>
-                <div class="text-xs text-gray-200">
+                <div class="text-xs text-secondary">
                     ${this._offer.quantity} gal @ $${this._offer.price.toFixed(2)}/gal
                 </div>
-                <div class="text-xs font-bold text-green-400">
+                <div class="text-xs font-bold text-success">
                     Total: $${total.toFixed(2)}
                 </div>
                 ${hotBadge}
-                <div class="text-[10px] text-gray-400 mt-1 italic">
+                <div class="text-[10px] text-tertiary mt-1 italic">
                     ${date}
                 </div>
             </div>

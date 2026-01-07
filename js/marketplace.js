@@ -209,8 +209,13 @@ class MarketplaceApp {
         document.getElementById('team-name').textContent = this.profile.teamName || this.profile.email;
         this.renderFunds();
 
-        // Inventory is now displayed inside chemical-card components
-        // No need to update separate inv-* elements
+        // Update inventory on chemical-card components
+        ['C', 'N', 'D', 'Q'].forEach(chem => {
+            const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+            if (card) {
+                card.inventory = this.inventory[chem];
+            }
+        });
 
         // Update staleness indicator
         this.updateStalenessIndicator(data.inventory.stalenessLevel, data.inventory.transactionsSinceLastShadowCalc);
@@ -805,29 +810,14 @@ class MarketplaceApp {
 
         // Render offer history
         const historyContainer = document.getElementById('offer-history');
-        historyContainer.innerHTML = negotiation.offers.map((offer, idx) => {
-            const isFromMe = offer.fromTeamId === this.currentUser;
-            const alignment = isFromMe ? 'ml-auto' : 'mr-auto';
-            
-            // Use theme-aware classes
-            const bgColor = isFromMe ? 'bg-blue-900/30 border border-blue-500/50' : 'bg-gray-700 border border-gray-600';
-            const textColorClass = isFromMe ? 'text-blue-400' : 'text-primary';
-
-            return `
-                <div class="max-w-xs ${alignment} ${bgColor} rounded-lg p-3">
-                    <div class="font-semibold text-sm ${textColorClass}">${offer.fromTeamName}</div>
-                    <div class="text-xs text-secondary">
-                        ${offer.quantity} gal @ $${offer.price.toFixed(2)}/gal
-                    </div>
-                    <div class="text-xs font-bold text-success">
-                        Total: $${(offer.quantity * offer.price).toFixed(2)}
-                    </div>
-                    <div class="text-[10px] text-tertiary mt-1">
-                        ${new Date(offer.createdAt * 1000).toLocaleString()}
-                    </div>
-                </div>
-            `;
-        }).join('');
+        historyContainer.innerHTML = '';
+        
+        negotiation.offers.forEach((offer) => {
+            const bubble = document.createElement('offer-bubble');
+            bubble.offer = offer;
+            bubble.isFromMe = offer.fromTeamId === this.currentUser;
+            historyContainer.appendChild(bubble);
+        });
 
         // Show/hide action buttons based on state
         const isMyTurn = negotiation.lastOfferBy !== this.currentUser && negotiation.status === 'pending';
@@ -1503,11 +1493,6 @@ class MarketplaceApp {
 
         document.getElementById('production-guide-ok-btn').addEventListener('click', () => {
             this.closeProductionGuide();
-        });
-
-        document.getElementById('manual-refresh-session').addEventListener('click', () => {
-            this.checkSessionPhase();
-            this.showToast('Session status refreshed', 'info');
         });
 
         // Production Results Modal event listeners

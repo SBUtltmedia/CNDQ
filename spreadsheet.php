@@ -114,7 +114,7 @@ class Spreadsheet{
 	public function csv($data) {
 		$fh = fopen('php://temp', 'rw'); # don't create a file, attempt
 			foreach ( $data as $row ) {
-				fputcsv($fh, $row);
+				fputcsv($fh, $row, ",", "\"", "\\");
 			}
 		rewind($fh);
 		$csv = stream_get_contents($fh);

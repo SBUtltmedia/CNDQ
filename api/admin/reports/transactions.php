@@ -56,14 +56,14 @@ try {
         
         if (!empty($report)) {
             // Header
-            fputcsv($fp, array_keys($report[0]));
+            fputcsv($fp, array_keys($report[0]), ",", "\"", "\\");
             
             // Rows
             foreach ($report as $row) {
-                fputcsv($fp, $row);
+                fputcsv($fp, $row, ",", "\"", "\\");
             }
         } else {
-            fputcsv($fp, ['No transactions found']);
+            fputcsv($fp, ['No transactions found'], ",", "\"", "\\");
         }
         
         fclose($fp);

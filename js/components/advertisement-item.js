@@ -18,11 +18,11 @@ const componentStyles = css`
         background-color: #4b5563; /* Slightly lighter */
     }
     .ad-item-mine {
-        background-color: #422006;
-        border: 1px solid #d97706;
+        background-color: var(--color-bg-ad-mine, #422006);
+        border: 1px solid var(--color-border-ad-mine, #d97706);
     }
     .ad-item-mine:hover {
-        background-color: #5a2a0a;
+        filter: brightness(1.1);
     }
     .team-info {
         display: flex;

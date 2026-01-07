@@ -42,6 +42,19 @@ class TeamHelper {
      * Get inventory from page
      */
     async getInventory(page) {
+        // Wait for at least one inventory item to be non-zero (assuming initial inventory is > 0)
+        try {
+            await page.waitForFunction(() => {
+                const card = document.querySelector('chemical-card[chemical="C"]');
+                if (!card || !card.shadowRoot) return false;
+                const el = card.shadowRoot.querySelector('#inventory');
+                const val = parseFloat(el?.textContent.replace(/,/g, '') || '0');
+                return val > 0;
+            }, { timeout: 5000 });
+        } catch (e) {
+            // If timeout, just proceed (maybe inventory really is 0)
+        }
+
         return await page.evaluate(() => {
             const inventory = {};
             ['C', 'N', 'D', 'Q'].forEach(chem => {

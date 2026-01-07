@@ -40,7 +40,7 @@ const componentStyles = css`
     .info-value {
         font-size: 1.5rem;
         font-weight: 700;
-        color: white;
+        color: var(--color-text-primary, white);
     }
     .shadow-price {
         font-size: 0.75rem;
