@@ -347,6 +347,12 @@ class TeamHelper {
     async haggleWithMerchant(page, chemical, shadowPrice) {
         console.log(`      - [HAGGLE] Starting negotiation for ${chemical}...`);
         
+        // Determine role from detail view
+        const isBuyer = await page.evaluate(() => {
+            const participantsText = document.getElementById('detail-participants')?.innerText || '';
+            return participantsText.includes('BUYING');
+        });
+
         // 1. Open Haggle Sliders (assuming detail view is already open)
         const openHaggle = await page.evaluate(() => {
             const btn = document.getElementById('show-counter-form-btn');
@@ -365,13 +371,22 @@ class TeamHelper {
         await this.browser.sleep(1500);
 
         // 2. Adjust Sliders (Witcher 3 Style)
-        const result = await page.evaluate((sp) => {
+        const result = await page.evaluate((sp, buying) => {
             const priceSlider = document.getElementById('haggle-price-slider');
             const qtySlider = document.getElementById('haggle-qty-slider');
-            const targetPrice = (sp * 0.85).toFixed(2);
+            
+            // Strategic counter-offer:
+            // If buying: offer 10% below shadow price or slightly below current ask
+            // If selling: ask for 10% above shadow price or slightly above current bid
+            let targetPrice;
+            if (buying) {
+                targetPrice = Math.max(0.5, sp * 0.9).toFixed(2);
+            } else {
+                targetPrice = Math.max(sp * 1.1, 2.0).toFixed(2);
+            }
             
             if (priceSlider && qtySlider) {
-                console.log(`   [TeamHelper] Adjusting sliders: Price=${targetPrice}`);
+                console.log(`   [TeamHelper] Adjusting sliders: Price=${targetPrice} (Buying=${buying})`);
                 priceSlider.value = targetPrice;
                 priceSlider.dispatchEvent(new Event('input', { bubbles: true }));
                 const patience = document.getElementById('patience-value')?.textContent || '???';
@@ -379,7 +394,7 @@ class TeamHelper {
             }
             console.log('   [TeamHelper] Sliders not found in counter form');
             return { error: "Sliders not found" };
-        }, shadowPrice);
+        }, shadowPrice, isBuyer);
 
         if (result.error) {
             console.log(`   [TeamHelper] Haggle error: ${result.error}`);
