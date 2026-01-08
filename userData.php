@@ -16,9 +16,15 @@ function isAdmin() {
     $currentEmail = getCurrentUserEmail();
     return in_array($currentEmail, $adminEmails);
 }
+
+function isLocalDev() {
+    return file_exists(__DIR__ . '/.env') || file_exists(dirname(__DIR__) . '/.env');
+}
+
 // Load environment variables for local development (Herd/PHP-FPM doesn't support .htaccess SetEnv)
-if (file_exists(__DIR__ . '/.env')) {
-    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+if (isLocalDev()) {
+    $envPath = file_exists(__DIR__ . '/.env') ? __DIR__ . '/.env' : dirname(__DIR__) . '/.env';
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         if (strpos(trim($line), '#') === 0 || trim($line) === '') continue;
         if (strpos($line, '=') !== false) {
@@ -32,8 +38,9 @@ if (file_exists(__DIR__ . '/.env')) {
 }
 
 function getCurrentUserEmail() {
-    // Check for cookie override (for local testing of multiple players)
-    if (isset($_COOKIE['mock_mail']) && !empty($_COOKIE['mock_mail'])) {
+    // Check for cookie override (Restricted to local dev with .env file)
+    // This prevents production users from being hijacked if they accidentally hit dev.php
+    if (isLocalDev() && isset($_COOKIE['mock_mail']) && !empty($_COOKIE['mock_mail'])) {
         return $_COOKIE['mock_mail'];
     }
 
@@ -54,6 +61,10 @@ function getCurrentUserEmail() {
     if (!empty($email)) return $email;
 
     // Default for local development (Herd/non-Shibboleth)
+    // Log a warning in production if we reach here
+    if (!isLocalDev()) {
+        error_log("AUTH WARNING: No Shibboleth attributes found in production. Falling back to dev_user@localhost. Headers: " . json_encode(array_keys($_SERVER)));
+    }
     return 'dev_user@localhost';
 }
 

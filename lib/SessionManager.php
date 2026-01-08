@@ -1,8 +1,11 @@
 <?php
 /**
- * Session Manager - Refactored for No-M (Filesystem-as-State)
+ * Session Manager - Refactored for Single-Round "Infinite Capital" Model
  * 
- * Now uses SystemStorage to manage session state via events in data/teams/system/
+ * Key Concepts:
+ * - Single Round: The game consists of one trading period followed by a final production run.
+ * - Auto-Cycle: Optional 24/7 mode where the game automatically restarts after finishing.
+ * - Finalize Game: Closes the market and runs the final production.
  */
 
 require_once __DIR__ . '/SystemStorage.php';
@@ -69,6 +72,30 @@ class SessionManager {
             }
         }
 
+        // Auto-Cycle Logic (formerly Auto-Advance)
+        // Uses 'autoAdvance' key for backward compatibility, but conceptually it is Auto-Cycle
+        if (($data['autoAdvance'] ?? false)) {
+            // 1. Auto-Finalize: If trading and time expired
+            if (!($data['gameStopped'] ?? true) && !($data['gameFinished'] ?? false) && ($data['timeRemaining'] ?? 0) <= 0) {
+                // Time ran out -> Finalize Game
+                $this->finalizeGame();
+                $data = $this->storage->getSystemState(); // Refresh local data
+            }
+            
+            // 2. Auto-Start-New-Game: If finished and time expired
+            if (($data['gameFinished'] ?? false)) {
+                $endedAt = $data['productionJustRan'] ?? 0;
+                $restartDelay = 60; // 60 seconds to view results
+                if (time() - $endedAt > $restartDelay) {
+                    $this->startNewGame();
+                    $data = $this->storage->getSystemState(); // Refresh local data
+                    
+                    // Re-calculate time remaining for the new game
+                    $calculateTimeRemaining($data);
+                }
+            }
+        }
+
         return $data;
     }
 
@@ -77,9 +104,10 @@ class SessionManager {
     }
 
     /**
-     * End of session logic
+     * Finalize Game (formerly advanceSession)
+     * Closes the market and runs the final production.
      */
-    public function advanceSession() {
+    public function finalizeGame() {
         $data = $this->storage->getSystemState();
         
         // Stop the game when session ends
@@ -94,6 +122,9 @@ class SessionManager {
 
         return $this->storage->getSystemState();
     }
+
+    // Alias for backward compatibility
+    public function advanceSession() { return $this->finalizeGame(); }
 
     /**
      * Run FINAL production for all teams (consumes inventory)
@@ -139,6 +170,9 @@ class SessionManager {
                     'solvent' => $result['solvent'],
                     'revenue' => $revenue,
                     'chemicalsConsumed' => $consumed,
+                    'constraints' => $result['constraints'],
+                    'shadowPrices' => $result['shadowPrices'],
+                    'ranges' => $result['ranges'],
                     'note' => "Final production run. Game over."
                 ]);
             } catch (Exception $e) { continue; }
@@ -146,9 +180,10 @@ class SessionManager {
     }
 
     /**
-     * Run production for all teams
+     * Update Projections (formerly runProductionForAllTeams)
+     * Calculates projected profit without consuming inventory.
      */
-    public function runProductionForAllTeams($sessionNumber) {
+    public function updateProjections($sessionNumber) {
         require_once __DIR__ . '/TeamStorage.php';
         require_once __DIR__ . '/LPSolver.php';
         require_once __DIR__ . '/Database.php';
@@ -180,25 +215,35 @@ class SessionManager {
                     'deicer' => $result['deicer'],
                     'solvent' => $result['solvent'],
                     'revenue' => $revenue,
+                    'constraints' => $result['constraints'],
+                    'shadowPrices' => $result['shadowPrices'],
+                    'ranges' => $result['ranges'],
                     'note' => "Projected potential for session $sessionNumber"
                 ]);
             } catch (Exception $e) { continue; }
         }
     }
 
+    // Alias for backward compatibility
+    public function runProductionForAllTeams($sessionNumber) { return $this->updateProjections($sessionNumber); }
+
     public function setPhase($phase) {
+        $phase = strtoupper($phase);
         $updates = ['phase' => $phase, 'phaseStartedAt' => time()];
-        if ($phase === 'production') {
+        if ($phase === 'PRODUCTION') {
             $updates['productionRun'] = null;
         }
         $this->storage->setSessionData($updates);
         return $this->storage->getSystemState();
     }
 
-    public function setAutoAdvance($enabled) {
+    public function setAutoCycleMode($enabled) {
         $this->storage->setSessionData(['autoAdvance' => (bool)$enabled]);
         return $this->storage->getSystemState();
     }
+
+    // Alias
+    public function setAutoAdvance($enabled) { return $this->setAutoCycleMode($enabled); }
 
     public function setProductionDuration($seconds) {
         $this->storage->setSessionData(['productionDuration' => (int)$seconds]);
@@ -227,10 +272,11 @@ class SessionManager {
     }
 
     /**
-     * Restart the game - can be called by anyone when game is finished
-     * Preserves NPC count
+     * Start New Game (formerly restartGame)
+     * Resets the entire world and starts a fresh session.
+     * Preserves NPC count.
      */
-    public function restartGame() {
+    public function startNewGame() {
         require_once __DIR__ . '/NPCManager.php';
         require_once __DIR__ . '/Database.php';
         
@@ -267,6 +313,9 @@ class SessionManager {
         return $this->reset();
     }
 
+    // Alias for backward compatibility
+    public function restartGame() { return $this->startNewGame(); }
+
     public function updateNpcLastRun() {
         $this->storage->setSessionData(['npcLastRun' => time()]);
         return $this->storage->getSystemState();
@@ -275,14 +324,14 @@ class SessionManager {
     public function reset($tradingDuration = 120) {
         $this->storage->setSessionData([
             'currentSession' => 1,
-            'phase' => 'trading',
+            'phase' => 'TRADING',
             'autoAdvance' => true,
             'productionDuration' => 0, // Not used in new model but kept for compatibility
             'tradingDuration' => (int)$tradingDuration,
             'phaseStartedAt' => time(),
             'productionRun' => null,
-            'productionJustRan' => time(), // Set flag so modal shows initial production on first load
-            'gameStopped' => true, // Game starts in stopped state after reset
+            'productionJustRan' => null, // Don't show modal at start
+            'gameStopped' => false, // Game starts immediately for 24/7 loop
             'gameFinished' => false
         ]);
         return $this->storage->getSystemState();

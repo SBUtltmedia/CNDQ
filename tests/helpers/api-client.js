@@ -13,12 +13,11 @@ class ApiClient {
 
     /**
      * Make an API request using the page context (with cookies)
-     * Uses RELATIVE paths as per topology.md to work in subdirectories
      */
     async request(method, endpoint, body = null, options = {}) {
-        // Use relative path - automatically works from any page location
-        // The browser resolves ./api/endpoint.php relative to current page
-        const url = endpoint.startsWith('http') ? endpoint : `./api/${endpoint.replace(/^\/api\//, '')}`;
+        // Construct absolute URL using baseUrl to be safe
+        const url = endpoint.startsWith('http') ? endpoint : 
+            `${this.baseUrl}/api/${endpoint.replace(/^\/api\//, '')}`;
 
         const result = await this.page.evaluate(async ({ url, method, body, options }) => {
             const fetchOptions = {

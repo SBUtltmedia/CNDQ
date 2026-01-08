@@ -1,0 +1,4546 @@
+[
+  {
+    "timestamp": "2026-01-08T20:54:16.695Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 120,
+        "phaseStartedAt": 1767905512,
+        "npcLastRun": 1767905512,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767905632,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 0
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905652_c94f",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905652.254357,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905652_1646",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905652.254199,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905516_c139",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905516.95065,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905512_2e6f",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905512.567219,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:16.923Z",
+    "teamId": "admin",
+    "method": "POST",
+    "url": "api/admin/reset-game.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Game data completely reset! Players will get new teams when they login.",
+      "teamsReset": 37,
+      "sessionState": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 120,
+        "phaseStartedAt": 1767905656,
+        "npcLastRun": 0,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false
+      },
+      "errors": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:17.058Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 120,
+        "phaseStartedAt": 1767905656,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 119
+      },
+      "recentTrades": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:17.064Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/list-teams.php",
+    "status": 200,
+    "data": {
+      "teams": [],
+      "totalTeams": 0,
+      "timestamp": 1767905657
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:17.069Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": true,
+      "npcs": [],
+      "count": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:17.834Z",
+    "teamId": "admin",
+    "method": "POST",
+    "url": "api/admin/npc/toggle-system.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "NPC system disabled",
+      "enabled": false
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:17.839Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": false,
+      "npcs": [],
+      "count": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:18.697Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": false,
+      "npcs": [],
+      "count": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:18.698Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/list-teams.php",
+    "status": 200,
+    "data": {
+      "teams": [
+        {
+          "email": "npc_6960197a53859@system",
+          "teamName": "Nimble Sparrow",
+          "funds": -6132.73,
+          "inventory": {
+            "C": 853,
+            "N": 649,
+            "D": 681,
+            "Q": 1123
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        }
+      ],
+      "totalTeams": 1,
+      "timestamp": 1767905658
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:18.796Z",
+    "teamId": "admin",
+    "method": "POST",
+    "url": "api/admin/npc/create.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Created 1 beginner NPC(s)",
+      "npcIds": [
+        "npc_6960197a53859"
+      ],
+      "npcs": [
+        {
+          "id": "npc_6960197a53859",
+          "email": "npc_6960197a53859@system",
+          "teamName": "Awkward Platypus",
+          "skillLevel": "beginner",
+          "active": true,
+          "createdAt": 1767905658,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 853,
+            "N": 649,
+            "D": 681,
+            "Q": 1123,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:18.801Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": false,
+      "npcs": [
+        {
+          "id": "npc_6960197a53859",
+          "email": "npc_6960197a53859@system",
+          "teamName": "Awkward Platypus",
+          "skillLevel": "beginner",
+          "active": true,
+          "createdAt": 1767905658,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 853,
+            "N": 649,
+            "D": 681,
+            "Q": 1123,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        }
+      ],
+      "count": 1
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:19.352Z",
+    "teamId": "admin",
+    "method": "POST",
+    "url": "api/admin/npc/create.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Created 1 novice NPC(s)",
+      "npcIds": [
+        "npc_6960197ad169f"
+      ],
+      "npcs": [
+        {
+          "id": "npc_6960197ad169f",
+          "email": "npc_6960197ad169f@system",
+          "teamName": "Diligent Meerkat",
+          "skillLevel": "novice",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 688,
+            "N": 779,
+            "D": 716,
+            "Q": 653,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:19.359Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": false,
+      "npcs": [
+        {
+          "id": "npc_6960197a53859",
+          "email": "npc_6960197a53859@system",
+          "teamName": "Awkward Platypus",
+          "skillLevel": "beginner",
+          "active": true,
+          "createdAt": 1767905658,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 853,
+            "N": 649,
+            "D": 681,
+            "Q": 1123,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        },
+        {
+          "id": "npc_6960197ad169f",
+          "email": "npc_6960197ad169f@system",
+          "teamName": "Diligent Meerkat",
+          "skillLevel": "novice",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 688,
+            "N": 779,
+            "D": 716,
+            "Q": 653,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        }
+      ],
+      "count": 2
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:19.696Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 120,
+        "phaseStartedAt": 1767905656,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 117
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:19.901Z",
+    "teamId": "admin",
+    "method": "POST",
+    "url": "api/admin/npc/create.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Created 1 expert NPC(s)",
+      "npcIds": [
+        "npc_6960197b5bc88"
+      ],
+      "npcs": [
+        {
+          "id": "npc_6960197b5bc88",
+          "email": "npc_6960197b5bc88@system",
+          "teamName": "Astute Panther",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 1991,
+            "N": 1459,
+            "D": 1169,
+            "Q": 1389,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:19.906Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": false,
+      "npcs": [
+        {
+          "id": "npc_6960197a53859",
+          "email": "npc_6960197a53859@system",
+          "teamName": "Awkward Platypus",
+          "skillLevel": "beginner",
+          "active": true,
+          "createdAt": 1767905658,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 853,
+            "N": 649,
+            "D": 681,
+            "Q": 1123,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        },
+        {
+          "id": "npc_6960197ad169f",
+          "email": "npc_6960197ad169f@system",
+          "teamName": "Diligent Meerkat",
+          "skillLevel": "novice",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 688,
+            "N": 779,
+            "D": 716,
+            "Q": 653,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        },
+        {
+          "id": "npc_6960197b5bc88",
+          "email": "npc_6960197b5bc88@system",
+          "teamName": "Astute Panther",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 1991,
+            "N": 1459,
+            "D": 1169,
+            "Q": 1389,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        }
+      ],
+      "count": 3
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:20.461Z",
+    "teamId": "admin",
+    "method": "POST",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Market open duration set to 300 seconds",
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:20.465Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 300
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:26.492Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail1@stonybrook.edu",
+        "teamName": "Crafty Otter",
+        "currentFunds": 0,
+        "startingFunds": 10216.57,
+        "settings": []
+      },
+      "inventory": {
+        "C": 794,
+        "N": 1991,
+        "D": 1139,
+        "Q": 1586,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:26.496Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 294
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:27.478Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905667_97d3f6c8",
+        "buyerId": "test_mail1@stonybrook.edu",
+        "createdAt": 1767905667,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:27.487Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905667_9834f5b4",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905667,
+              "teamName": "Crafty Otter"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:27.992Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:27.992Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905667_9834f5b4",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905667,
+              "teamName": "Crafty Otter"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:27.992Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:27.993Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 293,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:27.998Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:34.107Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 286
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:34.107Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail2@stonybrook.edu",
+        "teamName": "Daring Rhino",
+        "currentFunds": 0,
+        "startingFunds": 6061.14,
+        "settings": []
+      },
+      "inventory": {
+        "C": 662,
+        "N": 1241,
+        "D": 663,
+        "Q": 504,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:34.430Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905674_ec48f5e1",
+        "buyerId": "test_mail2@stonybrook.edu",
+        "createdAt": 1767905674,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:34.434Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905667_9834f5b4",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905667,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905674_c11e7476",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905674,
+              "teamName": "Daring Rhino"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:35.389Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:35.389Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905667_9834f5b4",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905667,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905674_c11e7476",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905674,
+              "teamName": "Daring Rhino"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:35.389Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:35.392Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:35.392Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 285,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:39.711Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905667_9834f5b4",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905667,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905674_c11e7476",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905674,
+              "teamName": "Daring Rhino"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:39.711Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:39.713Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:39.714Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:39.715Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 281,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:40.973Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905680_90a99c2b",
+        "buyerId": "test_mail3@stonybrook.edu",
+        "createdAt": 1767905680,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:40.981Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905667_9834f5b4",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905667,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905674_c11e7476",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905674,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905680_e1876bed",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905680,
+              "teamName": "Lucky Hawk"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:41.053Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail3@stonybrook.edu",
+        "teamName": "Lucky Hawk",
+        "currentFunds": 0,
+        "startingFunds": 11214.55,
+        "settings": []
+      },
+      "inventory": {
+        "C": 1617,
+        "N": 1352,
+        "D": 1204,
+        "Q": 1699,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:54:41.053Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 279
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:02.677Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail1@stonybrook.edu",
+        "teamName": "Crafty Otter",
+        "currentFunds": 0,
+        "startingFunds": 10216.57,
+        "settings": []
+      },
+      "inventory": {
+        "C": 794,
+        "N": 1991,
+        "D": 1139,
+        "Q": 1586,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:02.677Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 258
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:03.096Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905702_80bde8d5",
+        "buyerId": "test_mail1@stonybrook.edu",
+        "createdAt": 1767905702,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:03.101Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905674_c11e7476",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905674,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905680_e1876bed",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905680,
+              "teamName": "Lucky Hawk"
+            },
+            {
+              "id": "ad_1767905702_a875a857",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905702,
+              "teamName": "Crafty Otter"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:03.934Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905674_c11e7476",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905674,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905680_e1876bed",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905680,
+              "teamName": "Lucky Hawk"
+            },
+            {
+              "id": "ad_1767905702_a875a857",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905702,
+              "teamName": "Crafty Otter"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:03.934Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:03.936Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:03.937Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 257,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:03.937Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:09.675Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail2@stonybrook.edu",
+        "teamName": "Daring Rhino",
+        "currentFunds": 0,
+        "startingFunds": 6061.14,
+        "settings": []
+      },
+      "inventory": {
+        "C": 662,
+        "N": 1241,
+        "D": 663,
+        "Q": 504,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:09.675Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 251
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:10.000Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905709_33514236",
+        "buyerId": "test_mail2@stonybrook.edu",
+        "createdAt": 1767905709,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:10.005Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905680_e1876bed",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905680,
+              "teamName": "Lucky Hawk"
+            },
+            {
+              "id": "ad_1767905702_a875a857",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905702,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905709_c4e47c6d",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905709,
+              "teamName": "Daring Rhino"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:10.914Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:10.914Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905680_e1876bed",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905680,
+              "teamName": "Lucky Hawk"
+            },
+            {
+              "id": "ad_1767905702_a875a857",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905702,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905709_c4e47c6d",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905709,
+              "teamName": "Daring Rhino"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:10.916Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:10.916Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:10.917Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 250,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:16.612Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail3@stonybrook.edu",
+        "teamName": "Lucky Hawk",
+        "currentFunds": 0,
+        "startingFunds": 11214.55,
+        "settings": []
+      },
+      "inventory": {
+        "C": 1617,
+        "N": 1352,
+        "D": 1204,
+        "Q": 1699,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:16.613Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 244
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:17.093Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905716_15662515",
+        "buyerId": "test_mail3@stonybrook.edu",
+        "createdAt": 1767905716,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:17.100Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905702_a875a857",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905702,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905709_c4e47c6d",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905709,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905716_39ef5c40",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905716,
+              "teamName": "Lucky Hawk"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:17.824Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905702_a875a857",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905702,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905709_c4e47c6d",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905709,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905716_39ef5c40",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905716,
+              "teamName": "Lucky Hawk"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:17.824Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:17.824Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:17.826Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:17.826Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 243,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:38.542Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail1@stonybrook.edu",
+        "teamName": "Crafty Otter",
+        "currentFunds": 0,
+        "startingFunds": 10216.57,
+        "settings": []
+      },
+      "inventory": {
+        "C": 794,
+        "N": 1991,
+        "D": 1139,
+        "Q": 1586,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:38.542Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 222
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:39.047Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905738_0c1b509a",
+        "buyerId": "test_mail1@stonybrook.edu",
+        "createdAt": 1767905738,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:39.052Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905709_c4e47c6d",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905709,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905716_39ef5c40",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905716,
+              "teamName": "Lucky Hawk"
+            },
+            {
+              "id": "ad_1767905738_05c66e50",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905738,
+              "teamName": "Crafty Otter"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:39.818Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905709_c4e47c6d",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905709,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905716_39ef5c40",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905716,
+              "teamName": "Lucky Hawk"
+            },
+            {
+              "id": "ad_1767905738_05c66e50",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905738,
+              "teamName": "Crafty Otter"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:39.818Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:39.819Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:39.820Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:39.820Z",
+    "teamId": "test_mail1@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 221,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:45.505Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail2@stonybrook.edu",
+        "teamName": "Daring Rhino",
+        "currentFunds": 0,
+        "startingFunds": 6061.14,
+        "settings": []
+      },
+      "inventory": {
+        "C": 662,
+        "N": 1241,
+        "D": 663,
+        "Q": 504,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:45.505Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 215
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:45.987Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905745_9fbfd78c",
+        "buyerId": "test_mail2@stonybrook.edu",
+        "createdAt": 1767905745,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:45.993Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905716_39ef5c40",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905716,
+              "teamName": "Lucky Hawk"
+            },
+            {
+              "id": "ad_1767905738_05c66e50",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905738,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905745_51dcdeac",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905745,
+              "teamName": "Daring Rhino"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:46.790Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905716_39ef5c40",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905716,
+              "teamName": "Lucky Hawk"
+            },
+            {
+              "id": "ad_1767905738_05c66e50",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905738,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905745_51dcdeac",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905745,
+              "teamName": "Daring Rhino"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:46.790Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:46.791Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:46.792Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:46.792Z",
+    "teamId": "test_mail2@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 214,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:52.420Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 208
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:52.420Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/team/profile.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "profile": {
+        "email": "test_mail3@stonybrook.edu",
+        "teamName": "Lucky Hawk",
+        "currentFunds": 0,
+        "startingFunds": 11214.55,
+        "settings": []
+      },
+      "inventory": {
+        "C": 1617,
+        "N": 1352,
+        "D": 1204,
+        "Q": 1699,
+        "transactionsSinceLastShadowCalc": 0,
+        "stalenessLevel": "fresh"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:52.891Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "POST",
+    "url": "api/offers/bid.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 18,
+        "sessionNumber": 1,
+        "id": "buy_1767905752_26445f04",
+        "buyerId": "test_mail3@stonybrook.edu",
+        "createdAt": 1767905752,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:52.897Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905738_05c66e50",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905738,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905745_51dcdeac",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905745,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905752_1461bdf4",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905752,
+              "teamName": "Lucky Hawk"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:53.660Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/negotiations/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:53.661Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/notifications/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "notifications": [],
+      "unreadCount": 0
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:53.661Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/advertisements/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "advertisements": {
+        "C": {
+          "buy": [
+            {
+              "id": "ad_1767905738_05c66e50",
+              "teamId": "test_mail1@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905738,
+              "teamName": "Crafty Otter"
+            },
+            {
+              "id": "ad_1767905745_51dcdeac",
+              "teamId": "test_mail2@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905745,
+              "teamName": "Daring Rhino"
+            },
+            {
+              "id": "ad_1767905752_1461bdf4",
+              "teamId": "test_mail3@stonybrook.edu",
+              "chemical": "C",
+              "type": "buy",
+              "status": "active",
+              "createdAt": 1767905752,
+              "teamName": "Lucky Hawk"
+            }
+          ],
+          "sell": []
+        },
+        "N": {
+          "buy": [],
+          "sell": []
+        },
+        "D": {
+          "buy": [],
+          "sell": []
+        },
+        "Q": {
+          "buy": [],
+          "sell": []
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:53.663Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/trades/history.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "transactions": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:53.663Z",
+    "teamId": "test_mail3@stonybrook.edu",
+    "method": "GET",
+    "url": "api/session/status.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "timeRemaining": 207,
+      "autoAdvance": true,
+      "productionJustRan": null,
+      "gameStopped": false,
+      "gameFinished": false,
+      "recentTrades": [
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:55:58.549Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false,
+        "timeRemaining": 202
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905754_d8e0",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386777,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905754_4553",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386656,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:00.549Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": false,
+      "npcs": [
+        {
+          "id": "npc_6960197a53859",
+          "email": "npc_6960197a53859@system",
+          "teamName": "Awkward Platypus",
+          "skillLevel": "beginner",
+          "active": true,
+          "createdAt": 1767905658,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 6132.73,
+          "inventory": {
+            "C": 335.73,
+            "N": 0.003,
+            "D": 0.003,
+            "Q": 581.184,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        },
+        {
+          "id": "npc_6960197ad169f",
+          "email": "npc_6960197ad169f@system",
+          "teamName": "Diligent Meerkat",
+          "skillLevel": "novice",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 6530.29,
+          "inventory": {
+            "C": 0,
+            "N": 51.345,
+            "D": 0.003,
+            "Q": 149.232,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        },
+        {
+          "id": "npc_6960197b5bc88",
+          "email": "npc_6960197b5bc88@system",
+          "teamName": "Astute Panther",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 0,
+          "inventory": {
+            "C": 1991,
+            "N": 1459,
+            "D": 1169,
+            "Q": 1389,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        }
+      ],
+      "count": 3
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:00.551Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/list-teams.php",
+    "status": 200,
+    "data": {
+      "teams": [
+        {
+          "email": "admin@stonybrook.edu",
+          "teamName": "Bold Lynx",
+          "funds": -7638.18,
+          "inventory": {
+            "C": 124.185,
+            "N": 0.0035,
+            "D": 0.0035,
+            "Q": 818.548
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail3@stonybrook.edu",
+          "teamName": "Lucky Hawk",
+          "funds": -11214.55,
+          "inventory": {
+            "C": 1617,
+            "N": 1352,
+            "D": 1204,
+            "Q": 1699
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail1@stonybrook.edu",
+          "teamName": "Crafty Otter",
+          "funds": -10216.57,
+          "inventory": {
+            "C": 794,
+            "N": 1991,
+            "D": 1139,
+            "Q": 1586
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_6960197b5bc88@system",
+          "teamName": "Astute Panther",
+          "funds": -11154.55,
+          "inventory": {
+            "C": 1991,
+            "N": 1459,
+            "D": 1169,
+            "Q": 1389
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail2@stonybrook.edu",
+          "teamName": "Daring Rhino",
+          "funds": -6061.14,
+          "inventory": {
+            "C": 662,
+            "N": 1241,
+            "D": 663,
+            "Q": 504
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_6960197a53859@system",
+          "teamName": "Awkward Platypus",
+          "funds": -6132.73,
+          "inventory": {
+            "C": 335.73,
+            "N": 0.003,
+            "D": 0.003,
+            "Q": 581.184
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_6960197ad169f@system",
+          "teamName": "Diligent Meerkat",
+          "funds": -6530.29,
+          "inventory": {
+            "C": 0,
+            "N": 51.345,
+            "D": 0.003,
+            "Q": 149.232
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        }
+      ],
+      "totalTeams": 7,
+      "timestamp": 1767905760
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:01.548Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767905758,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 199
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905754_d8e0",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386777,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905754_4553",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386656,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:06.568Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767905758,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 194
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905754_d8e0",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386777,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905754_4553",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386656,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:08.034Z",
+    "teamId": "admin-finalize",
+    "method": "POST",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Market Closed. Final production run complete.",
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767905766,
+        "gameStopped": true,
+        "gameFinished": true
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:08.038Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767905766,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 192
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905754_d8e0",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386777,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905754_4553",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386656,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:08.567Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": false,
+      "npcs": [
+        {
+          "id": "npc_6960197a53859",
+          "email": "npc_6960197a53859@system",
+          "teamName": "Awkward Platypus",
+          "skillLevel": "beginner",
+          "active": true,
+          "createdAt": 1767905658,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 6132.76,
+          "inventory": {
+            "C": 335.73,
+            "N": 0.003,
+            "D": 0.003,
+            "Q": 581.184,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        },
+        {
+          "id": "npc_6960197ad169f",
+          "email": "npc_6960197ad169f@system",
+          "teamName": "Diligent Meerkat",
+          "skillLevel": "novice",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 6530.32,
+          "inventory": {
+            "C": 0,
+            "N": 51.345,
+            "D": 0.003,
+            "Q": 149.232,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        },
+        {
+          "id": "npc_6960197b5bc88",
+          "email": "npc_6960197b5bc88@system",
+          "teamName": "Astute Panther",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767905659,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 0,
+            "totalProfit": 0,
+            "lastTradeAt": 0
+          },
+          "currentFunds": 11154.6,
+          "inventory": {
+            "C": 5.55,
+            "N": 0.005,
+            "D": 0.005,
+            "Q": 960.64,
+            "transactionsSinceLastShadowCalc": 0,
+            "stalenessLevel": "fresh"
+          }
+        }
+      ],
+      "count": 3
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:08.571Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/list-teams.php",
+    "status": 200,
+    "data": {
+      "teams": [
+        {
+          "email": "admin@stonybrook.edu",
+          "teamName": "Bold Lynx",
+          "funds": -7638.18,
+          "inventory": {
+            "C": 124.185,
+            "N": 0.0035,
+            "D": 0.0035,
+            "Q": 818.548
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail3@stonybrook.edu",
+          "teamName": "Lucky Hawk",
+          "funds": -11214.55,
+          "inventory": {
+            "C": 51.55,
+            "N": 0.005,
+            "D": 0.005,
+            "Q": 1038.64
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail1@stonybrook.edu",
+          "teamName": "Crafty Otter",
+          "funds": -10216.57,
+          "inventory": {
+            "C": 0,
+            "N": 927.8875,
+            "D": 0.0025,
+            "Q": 647.26
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_6960197b5bc88@system",
+          "teamName": "Astute Panther",
+          "funds": -11154.55,
+          "inventory": {
+            "C": 5.55,
+            "N": 0.005,
+            "D": 0.005,
+            "Q": 960.64
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail2@stonybrook.edu",
+          "teamName": "Daring Rhino",
+          "funds": -6061.14,
+          "inventory": {
+            "C": 0,
+            "N": 559.3725,
+            "D": 0.0015,
+            "Q": 48.916
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_6960197a53859@system",
+          "teamName": "Awkward Platypus",
+          "funds": -6132.73,
+          "inventory": {
+            "C": 335.73,
+            "N": 0.003,
+            "D": 0.003,
+            "Q": 581.184
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_6960197ad169f@system",
+          "teamName": "Diligent Meerkat",
+          "funds": -6530.29,
+          "inventory": {
+            "C": 0,
+            "N": 51.345,
+            "D": 0.003,
+            "Q": 149.232
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        }
+      ],
+      "totalTeams": 7,
+      "timestamp": 1767905768
+    }
+  },
+  {
+    "timestamp": "2026-01-08T20:56:09.567Z",
+    "teamId": "admin-finalize",
+    "method": "GET",
+    "url": "api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 300,
+        "phaseStartedAt": 1767905660,
+        "npcLastRun": 1767905656,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767905766,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 191
+      },
+      "recentTrades": [
+        {
+          "eventId": "join_1767905754_d8e0",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386777,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905754_4553",
+          "teamName": "Bold Lynx",
+          "joinedAt": 1767905754.386656,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_15df",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067638,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905676_7f4a",
+          "teamName": "Lucky Hawk",
+          "joinedAt": 1767905676.067513,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_ce5f",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510872,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_e28d",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510881,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905661_f0fa",
+          "teamName": "Crafty Otter",
+          "joinedAt": 1767905661.510723,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_7304",
+          "teamName": "Daring Rhino",
+          "joinedAt": 1767905659.562166,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905659_fddb",
+          "teamName": "Silent Dolphin",
+          "joinedAt": 1767905659.376014,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_7249",
+          "teamName": "Focused Raven",
+          "joinedAt": 1767905658.857827,
+          "type": "join"
+        },
+        {
+          "eventId": "join_1767905658_65d3",
+          "teamName": "Nimble Sparrow",
+          "joinedAt": 1767905658.342181,
+          "type": "join"
+        }
+      ]
+    }
+  }
+]

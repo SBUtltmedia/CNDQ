@@ -143,6 +143,37 @@ class LPSolver {
             'Q' => round($tableau[0][5], 2)
         ];
 
+        // Slack Values (Excess)
+        // Check if slack variables (cols 2-5) are in the basis
+        $slacks = ['C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0];
+        $slackCols = [2 => 'C', 3 => 'N', 4 => 'D', 5 => 'Q'];
+
+        foreach ($slackCols as $col => $chem) {
+            $rowCount = 0;
+            $lastRow = -1;
+            for ($i = 1; $i < 5; $i++) {
+                if (abs($tableau[$i][$col] - 1.0) < self::EPSILON) {
+                    $rowCount++;
+                    $lastRow = $i;
+                } elseif (abs($tableau[$i][$col]) > self::EPSILON) {
+                    $rowCount = 2; // Not a basic variable column
+                }
+            }
+            if ($rowCount == 1 && $lastRow != -1) {
+                // Slack variable is in basis, value is RHS
+                $slacks[$chem] = round($tableau[$lastRow][6], 2);
+            }
+        }
+
+        // Constraint Status
+        $constraints = [];
+        foreach ($slacks as $chem => $slack) {
+            $constraints[$chem] = [
+                'slack' => $slack,
+                'status' => ($slack < 0.01) ? 'Binding' : 'Not Binding' // Tolerance for float math
+            ];
+        }
+
         // Sensitivity Analysis (Ranging)
         // For each constraint, find the allowable increase/decrease for the RHS
         // This uses the final tableau: RHS_new = RHS_old + B^-1 * delta
@@ -177,6 +208,7 @@ class LPSolver {
             'deicer' => floor($deicer * 100) / 100,
             'solvent' => floor($solvent * 100) / 100,
             'shadowPrices' => $shadowPrices,
+            'constraints' => $constraints,
             'ranges' => $ranges
         ];
     }
@@ -190,6 +222,7 @@ class LPSolver {
         return [
             'shadowPrices' => $result['shadowPrices'],
             'ranges' => $result['ranges'],
+            'constraints' => $result['constraints'],
             'optimalMix' => [
                 'deicer' => $result['deicer'],
                 'solvent' => $result['solvent']

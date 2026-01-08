@@ -191,10 +191,13 @@ class MarketplaceAggregator {
             $teamName = $event['team_name'] ?? $teamId;
 
             switch ($type) {
+                case 'team_joined':
                 case 'add_transaction':
-                    // Payload already contains full trade details from TradeExecutor
+                    // Payload already contains full details
+                    // For join: {eventId, teamName, type: 'join'}
+                    // For trade: {transactionId, chemical, ...}
                     array_unshift($recentTrades, $payload);
-                    // Keep only last 20 trades
+                    // Keep only last 20 activities
                     if (count($recentTrades) > 20) {
                         array_pop($recentTrades);
                     }

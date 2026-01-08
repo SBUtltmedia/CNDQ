@@ -24,7 +24,7 @@ class SystemStorage extends TeamStorage {
         
         return [
             'currentSession' => $session['currentSession'] ?? 1,
-            'phase' => $session['phase'] ?? 'production',
+            'phase' => $session['phase'] ?? 'PRODUCTION',
             'autoAdvance' => $session['autoAdvance'] ?? true,
             'productionDuration' => $session['productionDuration'] ?? 2,
             'tradingDuration' => $session['tradingDuration'] ?? 300,

@@ -103,6 +103,24 @@ class TeamStorage {
             ]
         );
 
+        // Emit Global 'Team Joined' Event
+        $this->db->insert(
+            'INSERT INTO marketplace_events (team_email, team_name, event_type, payload, timestamp)
+             VALUES (?, ?, ?, ?, ?)',
+            [
+                $this->teamEmail,
+                $this->teamName,
+                'team_joined',
+                json_encode([
+                    'eventId' => 'join_' . time() . '_' . bin2hex(random_bytes(2)),
+                    'teamName' => $this->teamName,
+                    'joinedAt' => $timestamp,
+                    'type' => 'join'
+                ]),
+                $timestamp
+            ]
+        );
+
         // Run "session 0" production immediately
         // User will see modal on first load showing initial production results
         $this->runAutomaticFirstProduction();

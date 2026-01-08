@@ -17,14 +17,14 @@ const UIPlayabilityTest = require('./ui-playability-test');
 const APIPlayabilityTest = require('./api-playability-test');
 
 const CONFIG = {
-    baseUrl: 'http://cndq.test/CNDQ',
+    baseUrl: 'http://cndq.test/CNDQ/',
     adminUser: 'admin@stonybrook.edu',
     testUsers: [
         'test_mail1@stonybrook.edu',
         'test_mail2@stonybrook.edu',
         'test_mail3@stonybrook.edu'
     ],
-    targetSessions: 2,
+    targetSessions: 2, // Increased to check multi-round health
     headless: process.argv.includes('--headless'),
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
     keepOpen: false // Never keep open in dual mode
@@ -70,10 +70,10 @@ class DualPlayabilityTest {
                     apiCallLog: uiTest.apiCallLog
                 };
 
-                // Wait between tests
+                // Wait between tests to let server settle
                 if (!runUiOnly) {
-                    console.log('\n⏸️  Waiting 5 seconds before API test...\n');
-                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    console.log('\n⏸️  Waiting 10 seconds before API test...\n');
+                    await new Promise(resolve => setTimeout(resolve, 10000));
                 }
             }
 

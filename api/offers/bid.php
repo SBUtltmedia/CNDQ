@@ -68,18 +68,6 @@ try {
 
     // Check if buyer has enough funds - REMOVED for Infinite Capital model
     // Players can spend into negative balance (debt)
-    /*
-    $totalCost = $quantity * $maxPrice;
-    if ($profile['currentFunds'] < $totalCost) {
-        http_response_code(400);
-        echo json_encode([
-            'error' => 'Insufficient funds',
-            'available' => $profile['currentFunds'],
-            'required' => $totalCost
-        ]);
-        exit;
-    }
-    */
 
     // Get current session number
     $sessionState = $sessionManager->getState();

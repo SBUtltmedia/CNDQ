@@ -22,22 +22,6 @@ if (!isAdmin()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Admin Dashboard</title>
 
-    <!-- Import map for Lit web components -->
-    <script type="importmap">
-    {
-        "imports": {
-            "lit": "https://cdn.jsdelivr.net/npm/lit@3/index.js",
-            "lit/": "https://cdn.jsdelivr.net/npm/lit@3/",
-            "lit-element": "https://cdn.jsdelivr.net/npm/lit-element@4/index.js",
-            "lit-element/": "https://cdn.jsdelivr.net/npm/lit-element@4/",
-            "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2/reactive-element.js",
-            "@lit/reactive-element/": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2/",
-            "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3/lit-html.js",
-            "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3/"
-        }
-    }
-    </script>
-
     <link rel="stylesheet" href="../css/styles.css">
     <style>
         /* Focus styles */
@@ -56,7 +40,7 @@ if (!isAdmin()) {
     <div class="max-w-4xl mx-auto">
         <header class="mb-8">
             <h1 class="text-3xl font-bold text-purple-400 mb-2">CNDQ Admin Dashboard</h1>
-            <p class="text-gray-300">Market Control & Final Production</p>
+            <p class="text-gray-300">Market Control & Game Cycle Management</p>
         </header>
 
         <!-- Market Status Card -->
@@ -84,48 +68,48 @@ if (!isAdmin()) {
                 <button id="start-stop-btn" onclick="toggleGameStop()" class="flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition">
                     Start Market
                 </button>
-                <button onclick="resetSession()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition">
-                    Reset Game
+                <button onclick="startNewGame()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition">
+                    Start New Game
                 </button>
             </div>
         </div>
 
         <!-- End Game Control -->
         <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-            <h2 class="text-xl font-bold mb-4 text-red-400">End Game / Final Production</h2>
+            <h2 class="text-xl font-bold mb-4 text-red-400">Manual Controls</h2>
 
-            <button onclick="advancePhase()" class="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
-                CLOSE MARKET & RUN FINAL PRODUCTION →
+            <button onclick="finalizeGame()" class="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
+                FINALIZE GAME (Close Market) →
             </button>
             <p class="text-xs text-gray-300 mt-2">
-                This will stop the timer, consume team inventories, and calculate final ROI based on baseline improvement.
+                Manually stops the timer and runs final production. Use this if you want to end the round early.
             </p>
         </div>
 
         <!-- Timer Settings -->
         <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-            <h2 class="text-xl font-bold mb-4">Market Timer Settings</h2>
+            <h2 class="text-xl font-bold mb-4">Auto-Cycle Settings</h2>
 
             <div class="flex items-center justify-between mb-4">
                 <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" id="auto-advance" onchange="toggleAutoAdvance()" class="w-6 h-6 rounded">
-                    <span class="text-lg">Auto-End when timer hits 0</span>
+                    <input type="checkbox" id="auto-advance" onchange="toggleAutoCycle()" class="w-6 h-6 rounded">
+                    <span class="text-lg">Enable Auto-Cycle (24/7 Mode)</span>
                 </label>
             </div>
 
             <div class="bg-blue-900/30 border border-blue-500/50 rounded p-4 mb-6">
                 <div class="text-sm text-blue-200 mb-2">
-                    <strong>Single Session Model:</strong>
+                    <strong>Auto-Cycle Logic:</strong>
                 </div>
                 <div class="text-xs text-blue-300 space-y-1">
-                    <p>Teams trade with infinite capital to optimize their inventory mix.</p>
-                    <p>Production is only projected until the game is ended.</p>
-                    <p><strong>Final Production:</strong> Consumes chemicals and establishes final ranking.</p>
+                    <p>1. Market runs for the duration below.</p>
+                    <p>2. Game automatically finalizes (Results shown).</p>
+                    <p>3. After 60 seconds, a <strong>New Game</strong> starts automatically (wiping previous data).</p>
                 </div>
             </div>
 
             <div>
-                <label for="trading-duration-minutes" class="block text-sm text-gray-300 mb-2">Market Duration</label>
+                <label for="trading-duration-minutes" class="block text-sm text-gray-300 mb-2">Market Open Duration</label>
                 <div class="flex items-center gap-2">
                     <input type="number" id="trading-duration-minutes" value="10" min="0" max="60" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration minutes">
                     <span class="text-gray-300">min</span>
@@ -133,7 +117,7 @@ if (!isAdmin()) {
                     <span class="text-gray-300">sec</span>
                 </div>
                 <button onclick="updateTradingDuration()" class="mt-2 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition w-full text-sm">
-                    Update Timer
+                    Update Duration
                 </button>
             </div>
         </div>
@@ -141,13 +125,13 @@ if (!isAdmin()) {
         <!-- Danger Zone -->
         <div class="bg-red-900/20 border-2 border-red-600 rounded-lg p-6 mb-6">
             <h2 class="text-xl font-bold mb-2 text-red-400">⚠️ Danger Zone</h2>
-            <p class="text-gray-300 text-sm mb-4">Irreversible action that completely wipes everything</p>
+            <p class="text-gray-300 text-sm mb-4">Irreversible actions.</p>
 
             <button onclick="resetGameData()" class="w-full bg-red-700 hover:bg-red-800 px-6 py-4 rounded font-bold transition border-2 border-red-500">
-                🗑️ RESET GAME & TEAM DATA
+                🗑️ HARD RESET (Delete All Data)
             </button>
             <p class="text-xs text-gray-300 mt-2">
-                <strong>Deletes ALL teams and game data.</strong> Connected players will automatically get new random team names when they refresh.
+                Identical to "Start New Game" but explicit.
             </p>
         </div>
 
@@ -156,24 +140,6 @@ if (!isAdmin()) {
             <h2 class="text-xl font-bold mb-4">Team Overview</h2>
             <div id="team-list" class="space-y-2">
                 <p class="text-gray-300">Loading teams...</p>
-            </div>
-        </div>
-
-        <!-- Transaction Reports -->
-        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
-            <h2 class="text-xl font-bold mb-4">Transaction Reports</h2>
-            <p class="text-gray-300 text-sm mb-4">
-                Download a full report of all player trades, including value creation evaluation based on shadow prices.
-            </p>
-            <div class="flex gap-3">
-                <a href="../api/admin/reports/transactions.php?format=csv" target="_blank" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-bold transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Download CSV Report
-                </a>
-                <a href="../api/admin/reports/transactions.php" target="_blank" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-gray-200 px-6 py-3 rounded font-bold transition border border-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                    View JSON Data
-                </a>
             </div>
         </div>
 
@@ -369,14 +335,14 @@ if (!isAdmin()) {
                 phaseEl.className = 'text-3xl font-bold capitalize text-red-500';
                 
                 const btn = document.getElementById('start-stop-btn');
-                btn.textContent = 'Start Game';
+                btn.textContent = 'Start Market';
                 btn.className = 'flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition';
             } else {
-                phaseEl.textContent = 'Trading';
+                phaseEl.textContent = 'Trading (Open)';
                 phaseEl.className = 'text-3xl font-bold capitalize text-green-400';
                 
                 const btn = document.getElementById('start-stop-btn');
-                btn.textContent = 'Stop Game';
+                btn.textContent = 'Stop Market';
                 btn.className = 'flex-1 bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition';
             }
 
@@ -424,7 +390,7 @@ if (!isAdmin()) {
             
             // Only confirm for stopping
             if (newState) {
-                const confirmed = await showConfirm('Stop the game? Market will be closed for all players.', 'Stop Game');
+                const confirmed = await showConfirm('Stop the market? Players will not be able to trade.', 'Stop Market');
                 if (!confirmed) return;
             }
 
@@ -437,7 +403,7 @@ if (!isAdmin()) {
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast(`Game ${newState ? 'Stopped' : 'Started'}`);
+                    showToast(`Market ${newState ? 'Stopped' : 'Started'}`);
                     await loadSessionState();
                 }
             } catch (error) {
@@ -445,12 +411,12 @@ if (!isAdmin()) {
             }
         }
 
-        async function advancePhase() {
+        async function finalizeGame() {
             try {
                 const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'advance' })
+                    body: JSON.stringify({ action: 'finalize' })
                 });
                 const data = await response.json();
 
@@ -459,7 +425,7 @@ if (!isAdmin()) {
                     await loadSessionState();
                 }
             } catch (error) {
-                showToast('Failed to advance phase', 'error');
+                showToast('Failed to finalize game', 'error');
             }
         }
 
@@ -480,14 +446,14 @@ if (!isAdmin()) {
             }
         }
 
-        async function toggleAutoAdvance() {
+        async function toggleAutoCycle() {
             const enabled = document.getElementById('auto-advance').checked;
 
             try {
                 const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'setAutoAdvance', enabled })
+                    body: JSON.stringify({ action: 'setAutoCycle', enabled })
                 });
                 const data = await response.json();
 
@@ -495,7 +461,7 @@ if (!isAdmin()) {
                     await loadSessionState();
                 }
             } catch (error) {
-                showToast('Failed to toggle auto-advance', 'error');
+                showToast('Failed to toggle auto-cycle', 'error');
             }
         }
 
@@ -513,16 +479,16 @@ if (!isAdmin()) {
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast('Trading duration updated to ' + minutes + 'm ' + secs + 's');
+                    showToast('Market open duration updated to ' + minutes + 'm ' + secs + 's');
                     await loadSessionState();
                 }
             } catch (error) {
-                showToast('Failed to update trading duration', 'error');
+                showToast('Failed to update duration', 'error');
             }
         }
 
-        async function resetSession() {
-            const confirmed = await showConfirm('Reset to Session 1? This will clear all session history.');
+        async function startNewGame() {
+            const confirmed = await showConfirm('START NEW GAME? This will wipe all current teams and start fresh.');
             if (!confirmed) {
                 return;
             }
@@ -531,34 +497,25 @@ if (!isAdmin()) {
                 const response = await fetch(apiUrl('/api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'reset' })
+                    body: JSON.stringify({ action: 'startNew' })
                 });
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast('Session reset to 1');
+                    showToast('New Game Started');
                     await loadSessionState();
                 }
             } catch (error) {
-                showToast('Failed to reset session', 'error');
+                showToast('Failed to start new game', 'error');
             }
         }
 
         async function resetGameData() {
             const confirmed = await showConfirm(
-                'RESET GAME & TEAM DATA? This will COMPLETELY DELETE all teams, inventories, funds, trades, and advertisements. Connected players will be assigned NEW random team names when they refresh. This cannot be undone!',
-                '⚠️ DANGER: Delete Everything'
+                'HARD RESET? This will COMPLETELY DELETE all teams, inventories, funds, trades, and advertisements. Players will be assigned NEW random team names when they refresh. This cannot be undone!',
+                '⚠️ DANGER: Hard Reset'
             );
             if (!confirmed) {
-                return;
-            }
-
-            // Second confirmation for safety
-            const doubleConfirmed = await showConfirm(
-                'Are you ABSOLUTELY sure? This DELETES ALL TEAMS. Everyone gets a fresh start with new team names!',
-                '⚠️ Final Confirmation'
-            );
-            if (!doubleConfirmed) {
                 return;
             }
 
@@ -570,7 +527,7 @@ if (!isAdmin()) {
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast(`Complete reset! ${data.teamsDeleted} teams deleted. Players will get new teams on refresh.`, 'success');
+                    showToast(`Complete reset! ${data.teamsDeleted} teams deleted.`, 'success');
                     await loadSessionState();
                     await loadTeams();
                     await loadNPCs();

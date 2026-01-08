@@ -16,14 +16,14 @@ const BrowserHelper = require('./helpers/browser');
 const ApiClient = require('./helpers/api-client');
 
 const CONFIG = {
-    baseUrl: 'http://cndq.test/CNDQ',
+    baseUrl: 'http://cndq.test/CNDQ/',
     adminUser: 'admin@stonybrook.edu',
     testUsers: [
         'test_mail1@stonybrook.edu',
         'test_mail2@stonybrook.edu',
         'test_mail3@stonybrook.edu'
     ],
-    targetSessions: 2,
+    targetSessions: 1,
     headless: process.argv.includes('--headless'),
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
     keepOpen: process.argv.includes('--keep-open')
@@ -105,10 +105,9 @@ class UIPlayabilityTest {
      * Run complete UI playability test
      */
     async run() {
-        console.log('🎮 UI Playability Test');
+        console.log('🎮 UI Playability Test (Single Long Marketplace)');
         console.log('='.repeat(80));
         console.log(`Base URL: ${this.config.baseUrl}`);
-        console.log(`Sessions to play: ${this.config.targetSessions}`);
         console.log(`Teams: ${this.config.testUsers.length} players`);
         console.log('='.repeat(80));
         console.log('');
@@ -119,12 +118,13 @@ class UIPlayabilityTest {
             // Step 1: Admin setup
             await this.setupGame();
 
-            // Step 2: Play multiple sessions
-            for (let session = 1; session <= this.config.targetSessions; session++) {
-                await this.playSession(session);
-            }
+            // Step 2: Play the marketplace run (Single Round)
+            await this.playMarketplace();
 
-            // Step 3: Print results
+            // Step 3: End game and check results
+            await this.endGameAndCheckResults();
+
+            // Step 4: Print results
             this.printResults();
 
             if (!this.config.keepOpen) {
@@ -157,274 +157,253 @@ class UIPlayabilityTest {
         await this.setupApiMonitoring(adminPage, 'admin');
 
         // Wait for admin page to load
-        await adminPage.waitForSelector('#reset-game-btn', { timeout: 10000 });
+        await adminPage.waitForSelector('button[onclick="resetGameData()"]', { timeout: 10000 });
 
         console.log('   📋 Resetting game...');
         this.results.uiActions++;
 
         // Click reset button
-        await adminPage.click('#reset-game-btn');
+        await adminPage.click('button[onclick="resetGameData()"]');
 
-        // Wait for confirmation dialog
-        await adminPage.waitForFunction(() => {
-            return window.confirm || document.querySelector('.confirm-dialog');
-        }, { timeout: 5000 }).catch(() => {});
-
-        // Handle confirmation
-        await adminPage.evaluate(() => {
-            if (window.confirm) {
-                window.confirm = () => true;
-            }
-        });
-
+        // Handle custom confirmation modal
+        await adminPage.waitForSelector('#confirm-modal:not(.hidden)', { timeout: 5000 });
+        await adminPage.click('#confirm-modal-yes');
         await this.browser.sleep(2000);
 
         console.log('   ✅ Game reset');
 
-        // Start the game
-        console.log('   🎬 Starting game...');
-        this.results.uiActions++;
-
-        await adminPage.waitForSelector('#start-game-btn', { timeout: 5000 });
-        await adminPage.click('#start-game-btn');
+        // Step 3: Enable NPCs
+        console.log('   🤖 Enabling NPCs...');
+        await adminPage.click('#npc-system-enabled');
+        await this.browser.sleep(500);
+        
+        // Add NPCs
+        await adminPage.select('#npc-skill-level', 'beginner');
+        await adminPage.click('button[onclick="createNPC()"]');
+        await this.browser.sleep(500);
+        await adminPage.select('#npc-skill-level', 'expert');
+        await adminPage.click('button[onclick="createNPC()"]');
+        
         await this.browser.sleep(1000);
-
-        console.log('   ✅ Game started');
+        console.log('   ✅ NPCs created');
 
         // Set trading duration
-        console.log('   ⏱️  Setting trading duration...');
+        console.log('   ⏱️  Setting trading duration to 10m...');
         this.results.uiActions++;
 
-        const durationInput = await adminPage.$('#trading-duration');
+        const durationInput = await adminPage.$('#trading-duration-minutes');
         if (durationInput) {
             await durationInput.click({ clickCount: 3 }); // Select all
-            await durationInput.type('300'); // 5 minutes
+            await durationInput.type('10'); // 10 minutes
 
-            // Press Enter or click update button
-            await durationInput.press('Enter').catch(() => {});
+            await adminPage.click('button[onclick="updateTradingDuration()"]');
             await this.browser.sleep(500);
         }
 
-        console.log('   ✅ Trading duration set to 300s');
+        // Start the market (if not already started by reset/startNew)
+        console.log('   🎬 Ensuring market is started...');
+        const startStopBtn = await adminPage.waitForSelector('#start-stop-btn', { timeout: 5000 });
+        const btnText = await adminPage.evaluate(el => el.textContent, startStopBtn);
+        
+        if (btnText.includes('Start')) {
+            await adminPage.click('#start-stop-btn');
+            await this.browser.sleep(1000);
+        }
+
+        console.log('   ✅ Market is running');
 
         const apiCalls = await this.getPageApiCalls(adminPage);
         console.log(`   📡 API calls captured: ${apiCalls.length}`);
-
-        if (this.config.verbose) {
-            console.log('   📝 Admin setup API calls:');
-            apiCalls.forEach(call => {
-                console.log(`      ${call.method} ${call.url}`);
-            });
-        }
 
         await adminPage.close();
     }
 
     /**
-     * Play one complete session
+     * Play the marketplace run
      */
-    async playSession(sessionNum) {
-        console.log(`\n🎮 SESSION ${sessionNum}`);
+    async playMarketplace() {
+        console.log(`\n🎮 PLAYING MARKETPLACE (Continuous)`);
         console.log('-'.repeat(80));
 
-        // Each player takes multiple actions
-        for (const userId of this.config.testUsers) {
-            await this.playerTakesActions(userId, sessionNum);
+        // Multi-turn trading within the SAME session
+        const turns = 5;
+        for (let turn = 1; turn <= turns; turn++) {
+            console.log(`\n   🔄 Turn ${turn}/${turns}...`);
+            // Each player takes multiple actions sequentially
+            for (const userId of this.config.testUsers) {
+                await this.playerTakesActions(userId, turn);
+            }
+            if (turn < turns) {
+                console.log('      ⏳ Waiting for market activity & NPC response...');
+                await this.browser.sleep(10000); // 10s between turns
+            }
         }
-
-        // Advance session (via admin UI)
-        await this.advanceSession(sessionNum);
     }
 
     /**
      * A player takes various UI actions
      */
-    async playerTakesActions(userId, sessionNum) {
+    async playerTakesActions(userId, turnNum) {
         const teamName = userId.split('@')[0];
-        console.log(`\n   👤 ${teamName} taking actions...`);
+        console.log(`      👤 ${teamName} acting...`);
 
         const page = await this.browser.loginAndNavigate(userId, '');
         await this.setupApiMonitoring(page, userId);
 
-        let actionsCount = 0;
-
         try {
-            // Action 1: Post an advertisement
-            console.log('      📢 Posting advertisement...');
-            actionsCount++;
-            this.results.uiActions++;
+            // Ensure we are in TRADING phase before acting
+            await page.waitForFunction(() => {
+                const el = document.getElementById('current-phase');
+                return el && el.textContent.toUpperCase().includes('TRADING');
+            }, { timeout: 10000 }).catch(() => {});
 
-            const adButton = await page.$('[data-action="post-ad"]');
-            if (adButton) {
-                await adButton.click();
-                await this.browser.sleep(500);
-
-                // Fill ad form
-                await page.type('#ad-chemical', 'C');
-                await page.select('#ad-type', 'sell');
-                await page.type('#ad-message', `${teamName} selling Carbon - great prices!`);
-
-                // Submit
-                await page.click('#post-ad-submit');
-                await this.browser.sleep(1000);
-
-                console.log('      ✅ Advertisement posted');
-            } else {
-                console.log('      ⏭️  Ad button not found');
-            }
-
-            // Action 2: Create a sell offer
-            console.log('      💰 Creating sell offer...');
-            actionsCount++;
-            this.results.uiActions++;
-
-            const createOfferBtn = await page.$('[data-action="create-offer"]');
-            if (createOfferBtn) {
-                await createOfferBtn.click();
-                await this.browser.sleep(500);
-
-                // Fill offer form
-                await page.select('#offer-chemical', 'C');
-                await page.type('#offer-quantity', '10');
-                await page.type('#offer-min-price', '5.50');
-
-                // Submit
-                await page.click('#create-offer-submit');
-                await this.browser.sleep(1000);
-
-                console.log('      ✅ Sell offer created');
-            } else {
-                console.log('      ⏭️  Create offer button not found');
-            }
-
-            // Action 3: View marketplace
-            console.log('      🏪 Viewing marketplace...');
-            actionsCount++;
-            this.results.uiActions++;
-
-            const marketplaceTab = await page.$('[data-tab="marketplace"]');
-            if (marketplaceTab) {
-                await marketplaceTab.click();
-                await this.browser.sleep(1000);
-
-                console.log('      ✅ Marketplace viewed');
-            }
-
-            // Action 4: Check for negotiations and respond
-            console.log('      🤝 Checking negotiations...');
-            actionsCount++;
-            this.results.uiActions++;
-
-            const negotiationsTab = await page.$('[data-tab="negotiations"]');
-            if (negotiationsTab) {
-                await negotiationsTab.click();
-                await this.browser.sleep(1000);
-
-                // Look for pending negotiations
-                const pendingNegotiations = await page.$$('.negotiation-item.pending');
-
-                if (pendingNegotiations.length > 0) {
-                    console.log(`      📋 Found ${pendingNegotiations.length} pending negotiations`);
-
-                    // Accept the first one
-                    const acceptBtn = await pendingNegotiations[0].$('[data-action="accept"]');
-                    if (acceptBtn) {
-                        await acceptBtn.click();
-                        await this.browser.sleep(1000);
-                        console.log('      ✅ Accepted negotiation');
-                    }
-                } else {
-                    console.log('      ℹ️  No pending negotiations');
+            // Action 1: Check for negotiations
+            const negotiationId = await page.evaluate(() => {
+                const card = document.querySelector('negotiation-card[context="summary"]');
+                if (card && card.innerText.includes('Your Turn')) {
+                    return card.getAttribute('negotiation-id');
                 }
-            }
-
-            // Action 5: View production results
-            console.log('      🏭 Checking production...');
-            actionsCount++;
-            this.results.uiActions++;
-
-            const productionTab = await page.$('[data-tab="production"]');
-            if (productionTab) {
-                await productionTab.click();
-                await this.browser.sleep(1000);
-
-                console.log('      ✅ Production viewed');
-            }
-
-            // Get all API calls made during this player's turn
-            const apiCalls = await this.getPageApiCalls(page);
-            console.log(`      📡 API calls: ${apiCalls.length}`);
-
-            if (this.config.verbose && apiCalls.length > 0) {
-                console.log('      📝 Detailed API calls:');
-                apiCalls.forEach(call => {
-                    const bodyStr = call.body ? JSON.stringify(call.body).substring(0, 50) : '';
-                    console.log(`         ${call.method} ${call.url} ${bodyStr}`);
-                });
-            }
-
-            console.log(`      ✅ ${teamName} completed ${actionsCount} actions`);
-
-        } catch (error) {
-            this.results.errors.push({
-                session: sessionNum,
-                user: userId,
-                error: error.message
+                return null;
             });
-            console.log(`      ❌ Error: ${error.message}`);
+
+            if (negotiationId) {
+                console.log(`         ✅ Responding to negotiation: ${negotiationId}`);
+                await page.evaluate((id) => {
+                    const card = document.querySelector(`negotiation-card[negotiation-id="${id}"]`);
+                    card.querySelector('[role="button"]').click();
+                }, negotiationId);
+                
+                await this.browser.sleep(1500);
+                
+                // Randomly accept or counter
+                const shouldAccept = Math.random() > 0.5;
+                if (shouldAccept) {
+                    await page.click('#accept-offer-btn');
+                    await this.browser.sleep(1000);
+                    await page.click('#confirm-ok');
+                    console.log('         🎉 Trade accepted!');
+                } else {
+                    console.log('         ⚖️  Sending counter-offer...');
+                    await page.click('#show-counter-form-btn');
+                    await this.browser.sleep(500);
+                    await page.click('#submit-counter-btn');
+                    console.log('         📤 Counter-offer sent');
+                }
+                await this.browser.sleep(2000);
+            }
+
+            // Action 2: Post a Buy Request for a random chemical
+            const chemicals = ['C', 'N', 'D', 'Q'];
+            const chem = chemicals[Math.floor(Math.random() * chemicals.length)];
+            
+            console.log(`         📢 Posting interest to buy ${chem}...`);
+            await page.evaluate((c) => {
+                if (window.app) window.app.openBuyRequestModal(c);
+            }, chem);
+            
+            await page.waitForSelector('#offer-modal:not(.hidden)', { timeout: 5000 });
+            await page.click('#offer-submit-btn');
+            await this.browser.sleep(1500);
+            
+            this.results.uiActions++;
+        } catch (error) {
+            this.results.errors.push({ turn: turnNum, user: userId, error: error.message });
+            console.log(`         ❌ Error: ${error.message}`);
         } finally {
             await page.close();
         }
     }
 
     /**
-     * Advance to next session via admin UI
+     * Finalize game via admin UI
      */
-    async advanceSession(currentSession) {
-        console.log(`\n   ⏩ Advancing from session ${currentSession}...`);
+    async finalizeGame() {
+        console.log(`\n   ⏩ Finalizing game...`);
 
         const adminPage = await this.browser.loginAndNavigate(this.config.adminUser, 'admin/');
-        await this.setupApiMonitoring(adminPage, 'admin-advance');
+        await this.setupApiMonitoring(adminPage, 'admin-finalize');
 
         this.results.uiActions++;
 
-        // Click advance button
-        const advanceBtn = await adminPage.$('#advance-session-btn');
-        if (advanceBtn) {
-            await advanceBtn.click();
-            await this.browser.sleep(2000);
+        // Click finalize button
+        const finalizeBtn = await adminPage.$('button[onclick="finalizeGame()"]');
+        if (finalizeBtn) {
+            await finalizeBtn.click();
+            await this.browser.sleep(3000);
 
-            // Verify session advanced
-            const sessionNum = await adminPage.evaluate(() => {
-                const el = document.querySelector('#session-number');
-                return el ? parseInt(el.textContent) : null;
+            // Verify market stopped
+            const phase = await adminPage.evaluate(() => {
+                return document.getElementById('current-phase')?.textContent?.trim();
             });
 
-            if (sessionNum === currentSession + 1) {
-                console.log(`   ✅ Advanced to session ${sessionNum}`);
+            if (phase === 'STOPPED') {
+                console.log(`   ✅ Game finalized (Market STOPPED)`);
             } else {
-                console.log(`   ⚠️  Session number unexpected: ${sessionNum}`);
-                this.results.warnings.push(`Session advance unclear: expected ${currentSession + 1}, got ${sessionNum}`);
+                console.log(`   ⚠️  Unexpected phase: ${phase}`);
             }
         } else {
-            console.log('   ❌ Advance button not found');
-            this.results.errors.push({ error: 'Advance button not found' });
-        }
-
-        const apiCalls = await this.getPageApiCalls(adminPage);
-        if (this.config.verbose) {
-            console.log(`   📡 Advance API calls: ${apiCalls.length}`);
-            apiCalls.forEach(call => {
-                console.log(`      ${call.method} ${call.url}`);
-            });
+            console.log('   ❌ Finalize button not found');
+            this.results.errors.push({ error: 'Finalize button not found' });
         }
 
         await adminPage.close();
     }
 
     /**
-     * Print test results
+     * Advance session (legacy name, now calls finalizeGame)
      */
+    async advanceSession(currentSession) {
+        return this.finalizeGame();
+    }
+
+    /**
+     * End game and check final results
+     */
+    async endGameAndCheckResults() {
+        console.log(`\n🏁 ENDING GAME & CHECKING RESULTS (UI)`);
+        console.log('-'.repeat(80));
+
+        // 1. Finalize Game
+        await this.finalizeGame();
+
+        // 2. Switch to student to see final overlay
+        const student = this.config.testUsers[0];
+        const page = await this.browser.loginAndNavigate(student, '');
+        
+        // Wait for Game Over Overlay
+        console.log('   ⌛ Waiting for Game Over overlay...');
+        await page.waitForSelector('#game-over-overlay:not(.hidden)', { timeout: 10000 });
+        await this.screenshot(page, 'game-over-overlay');
+
+        // 3. Read Leaderboard from UI
+        console.log('   🏆 Reading Leaderboard from UI...');
+        const standings = await page.evaluate(() => {
+            const rows = Array.from(document.querySelectorAll('#final-leaderboard-container > div'));
+            return rows.map(row => {
+                const name = row.querySelector('.font-black.text-xl')?.textContent?.trim();
+                const funds = row.querySelector('.text-3xl.font-black')?.textContent?.trim();
+                return { name, funds };
+            });
+        });
+
+        if (standings.length > 0) {
+            console.log(`   📊 Found ${standings.length} teams on final leaderboard:`);
+            standings.forEach((s, i) => console.log(`      ${i+1}. ${s.name}: ${s.funds}`));
+        } else {
+            console.log('   ⚠️  No teams found on final leaderboard UI');
+            this.results.warnings.push('Final leaderboard UI was empty');
+        }
+
+        await page.close();
+    }
+
+    async screenshot(page, name) {
+        if (this.config.headless) return;
+        const path = `ui-test-${name}-${Date.now()}.png`;
+        await page.screenshot({ path });
+        console.log(`   📸 Screenshot saved: ${path}`);
+    }
+
     printResults() {
         console.log('\n' + '='.repeat(80));
         console.log('📊 TEST RESULTS');

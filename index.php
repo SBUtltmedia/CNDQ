@@ -250,6 +250,25 @@
                                 </div>
                             </div>
 
+                            <!-- Sensitivity & Constraints Analysis -->
+                            <div id="sensitivity-section" class="bg-gray-800 rounded-2xl p-8 border border-gray-700 shadow-lg">
+                                <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Optimization Analysis</h4>
+                                
+                                <div class="mb-6">
+                                    <h5 class="text-sm font-bold text-gray-400 mb-3 uppercase">Constraint Status (Bottlenecks)</h5>
+                                    <div class="space-y-2 text-sm" id="prod-constraints-list">
+                                        <!-- Injected by JS -->
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h5 class="text-sm font-bold text-gray-400 mb-3 uppercase">Shadow Prices (Marginal Value)</h5>
+                                    <div class="grid grid-cols-2 gap-3" id="prod-shadow-prices-list">
+                                        <!-- Injected by JS -->
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Current Status -->
                             <div class="bg-gray-900 bg-opacity-50 rounded-2xl p-8 border border-gray-700 shadow-lg">
                                 <h4 class="text-xl font-semibold text-white mb-6 uppercase tracking-widest">Account Balance</h4>
@@ -381,6 +400,9 @@
                         <span class="text-xs text-purple-300 uppercase font-bold">Round</span>
                         <span id="session-num-display" class="text-lg font-mono ml-2">1</span>
                     </div>
+                    <div id="phase-badge" class="bg-green-900/30 px-3 py-1 rounded border border-green-500/50">
+                        <span id="current-phase" class="text-xs text-green-400 uppercase font-bold">TRADING</span>
+                    </div>
                 </div>
                 
                 <div class="flex items-center gap-3">
@@ -389,6 +411,35 @@
                         00:00
                     </div>
                 </div>
+            </div>
+
+            <!-- Financial Summary Panel -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Production Rev</span>
+                    <span class="text-xl font-mono text-green-400" id="fin-production-rev">$0.00</span>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Sales Rev</span>
+                    <span class="text-xl font-mono text-green-400" id="fin-sales-rev">$0.00</span>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Purchase Cost</span>
+                    <span class="text-xl font-mono text-red-400" id="fin-purchase-cost">$0.00</span>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-blue-600 opacity-10"></div>
+                    <span class="text-xs text-blue-300 uppercase font-bold mb-1 z-10">Net Profit</span>
+                    <span class="text-2xl font-mono font-bold text-white z-10" id="fin-net-profit">$0.00</span>
+                </div>
+            </div>
+            
+            <!-- Button to view history -->
+            <div class="flex justify-end mb-4">
+                <button id="view-history-btn" class="text-sm text-gray-400 hover:text-white flex items-center gap-1 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    View Transaction History
+                </button>
             </div>
 
             <!-- 4-Column Chemical Grid -->
@@ -866,6 +917,35 @@
 
             <div class="mt-6">
                 <button id="production-guide-ok-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded font-semibold transition">Got It!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History Modal -->
+    <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[110] p-4">
+        <div class="bg-gray-800 rounded-lg w-full max-w-4xl max-h-[85vh] flex flex-col border border-gray-700 shadow-2xl">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-white">Transaction History</h3>
+                <button id="history-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-gray-700 text-sm uppercase">
+                            <th class="py-3 font-semibold">Time</th>
+                            <th class="py-3 font-semibold">Type</th>
+                            <th class="py-3 font-semibold">Chemical</th>
+                            <th class="py-3 font-semibold text-right">Qty</th>
+                            <th class="py-3 font-semibold text-right">Price</th>
+                            <th class="py-3 font-semibold text-right">Total</th>
+                            <th class="py-3 font-semibold pl-4">Counterparty</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="text-gray-300 text-sm divide-y divide-gray-700">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+                <p id="history-empty-msg" class="hidden text-center text-gray-500 py-8">No transactions found.</p>
             </div>
         </div>
     </div>

@@ -36,11 +36,7 @@ class TradeExecutor {
             if ($isBuyerActing) {
                 // Buyer Actor: needs funds - CHECK REMOVED (Infinite Capital)
                 $funds = $actorStorage->getProfile()['currentFunds'] ?? 0;
-                /*
-                if ($funds < $totalCost) {
-                    throw new Exception("You have insufficient funds (need $" . number_format($totalCost, 2) . ", have $" . number_format($funds, 2) . ")");
-                }
-                */
+                
                 // Seller Counterparty: needs inventory
                 $inv = $counterpartyStorage->getInventory()[$chemical] ?? 0;
                 if ($inv < $quantity) {
@@ -54,11 +50,7 @@ class TradeExecutor {
                 }
                 // Buyer Counterparty: needs funds - CHECK REMOVED (Infinite Capital)
                 $funds = $counterpartyStorage->getProfile()['currentFunds'] ?? 0;
-                /*
-                if ($funds < $totalCost) {
-                    throw new Exception("The buyer has insufficient funds to fulfill this trade.");
-                }
-                */
+                
             }
 
             // Debug: Log pre-trade state
@@ -203,13 +195,20 @@ class TradeExecutor {
         $seller = new TeamStorage($sellerId);
         $buyer = new TeamStorage($buyerId);
         
-        $hasInventory = ($seller->getInventory()[$chemical] ?? 0) >= $quantity;
-        // Funds check removed for Infinite Capital model
-        //$hasFunds = ($buyer->getProfile()['currentFunds'] ?? 0) >= ($quantity * $pricePerGallon);
-
-        if (!$hasInventory) return ['valid' => false, 'reason' => 'Insufficient inventory'];
-        //if (!$hasFunds) return ['valid' => false, 'reason' => 'Insufficient funds'];
-
-        return ['valid' => true];
-    }
-}
+                $hasInventory = ($seller->getInventory()[$chemical] ?? 0) >= $quantity;
+        
+                // Funds check removed for Infinite Capital model
+        
+                
+        
+                if (!$hasInventory) return ['valid' => false, 'reason' => 'Insufficient inventory'];
+        
+        
+        
+                return ['valid' => true];
+        
+            }
+        
+        }
+        
+        

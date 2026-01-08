@@ -101,9 +101,36 @@ class BrowserHelper {
 
     /**
      * Login and navigate to a path (simplified)
+     * Now uses isolated browser contexts to prevent cookie bleeding between users.
+     * The context is stored on the page object so it can be closed when the page is closed.
      */
     async loginAndNavigate(userEmail, pathStr) {
-        const page = await this.newPage();
+        // Create an isolated browser context for this user
+        const context = await this.getBrowser().createBrowserContext();
+        const page = await context.newPage();
+        
+        // Attach context to page for easier cleanup
+        page._browserContext = context;
+        
+        // Wrap page.close to also close the context
+        const originalClose = page.close.bind(page);
+        page.close = async () => {
+            await originalClose();
+            await context.close();
+        };
+
+        // Set up error logging for this new page
+        page.on('console', msg => {
+            if (this.config.verbose) {
+                console.log(`   [Browser ${msg.type()}]:`, msg.text());
+            }
+        });
+        page.on('pageerror', err => {
+            if (this.config.verbose) {
+                console.error(`   [Page Error]:`, err.message);
+            }
+        });
+
         // dev_login.php redirects to index.php, which is our main app page.
         await this.login(page, userEmail);
 

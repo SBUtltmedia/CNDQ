@@ -78,6 +78,9 @@ try {
             'D' => 0,
             'Q' => 0
         ],
+        'constraints' => $productionResult['constraints'] ?? null,
+        'shadowPrices' => $productionResult['shadowPrices'] ?? null,
+        'ranges' => $productionResult['ranges'] ?? null,
         'note' => $productionResult['note'] ?? '',
         'timestamp' => $productionResult['timestamp'] ?? null,
         'currentInventory' => $storage->getInventory(),

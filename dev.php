@@ -1,4 +1,10 @@
 <?php
+// SECURITY: Only allow dev switcher if .env exists (Local Dev)
+if (!file_exists(__DIR__ . '/.env') && !file_exists(dirname(__DIR__) . '/.env')) {
+    http_response_code(403);
+    die('Access Denied: Dev tools are disabled in production.');
+}
+
 // Handle Login Selection
 if (isset($_GET['user'])) {
     $user = $_GET['user'];

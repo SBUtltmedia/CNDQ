@@ -75,6 +75,7 @@ class MarketplaceApp {
                 this.loadShadowPrices(),
                 this.loadAdvertisements(),
                 this.loadNegotiations(),
+                this.loadTransactions(),
                 this.loadNotifications(),
                 this.loadSettings()
             ]);
@@ -92,14 +93,14 @@ class MarketplaceApp {
 
             // Hide loading, show app
             const overlay = document.getElementById('loading-overlay');
-            if (overlay) overlay.classList.add('hidden');
+            if (overlay) overlay?.classList.add('hidden');
             console.log('✓ Marketplace initialized successfully');
 
         } catch (error) {
             console.error('Failed to initialize marketplace:', error);
             // Hide loading even on error so user can at least see what's wrong
             const overlay = document.getElementById('loading-overlay');
-            if (overlay) overlay.classList.add('hidden');
+            if (overlay) overlay?.classList.add('hidden');
             
             this.showToast('Initialization error: ' + error.message, 'error');
         }
@@ -122,7 +123,7 @@ class MarketplaceApp {
 
             titleEl.textContent = title;
             messageEl.textContent = message;
-            dialog.classList.remove('hidden');
+            dialog?.classList.remove('hidden');
             dialog.setAttribute('role', 'alertdialog');
             dialog.setAttribute('aria-modal', 'true');
             dialog.setAttribute('aria-labelledby', 'confirm-title');
@@ -132,7 +133,7 @@ class MarketplaceApp {
             setTimeout(() => cancelBtn.focus(), 100);
 
             const cleanup = () => {
-                dialog.classList.add('hidden');
+                dialog?.classList.add('hidden');
                 dialog.removeAttribute('role');
                 dialog.removeAttribute('aria-modal');
                 dialog.removeAttribute('aria-labelledby');
@@ -280,18 +281,22 @@ class MarketplaceApp {
         this.lastStalenessCount = count;
 
         if (level === 'fresh') {
-            indicator.innerHTML = '<span class="staleness-fresh">✓ Fresh</span>';
-            warning.classList.add('hidden');
+            if (indicator) indicator.innerHTML = '<span class="staleness-fresh">✓ Fresh</span>';
+            if (warning) warning?.classList.add('hidden');
         } else if (level === 'warning') {
-            indicator.innerHTML = '<span class="staleness-warning">⚠ Stale (1 trade ago)</span>';
-            warning.classList.remove('hidden');
-            warning.className = 'mt-3 p-3 rounded text-sm badge-warning';
-            warning.textContent = '💡 Tip: Your inventory changed! Shadow prices may be outdated. Click [Recalculate] to update them.';
+            if (indicator) indicator.innerHTML = '<span class="staleness-warning">⚠ Stale (1 trade ago)</span>';
+            if (warning) {
+                warning?.classList.remove('hidden');
+                warning.className = 'mt-3 p-3 rounded text-sm badge-warning';
+                warning.textContent = '💡 Tip: Your inventory changed! Shadow prices may be outdated. Click [Recalculate] to update them.';
+            }
         } else if (level === 'stale') {
-            indicator.innerHTML = `<span class="staleness-stale">✗ Very Stale (${count} trades ago)</span>`;
-            warning.classList.remove('hidden');
-            warning.className = 'mt-3 p-3 rounded text-sm badge-error';
-            warning.textContent = `⚠️ Warning: Shadow prices are very stale (last calculated before ${count} transactions). Your valuations may be inaccurate!`;
+            if (indicator) indicator.innerHTML = `<span class="staleness-stale">✗ Very Stale (${count} trades ago)</span>`;
+            if (warning) {
+                warning?.classList.remove('hidden');
+                warning.className = 'mt-3 p-3 rounded text-sm badge-error';
+                warning.textContent = `⚠️ Warning: Shadow prices are very stale (last calculated before ${count} transactions). Your valuations may be inaccurate!`;
+            }
         }
     }
 
@@ -354,6 +359,121 @@ class MarketplaceApp {
         } catch (error) {
             console.error('Failed to load negotiations:', error);
         }
+    }
+
+    /**
+     * Load transaction history
+     */
+    async loadTransactions() {
+        try {
+            const response = await fetch('/CNDQ/api/trades/history.php');
+            const data = await response.json();
+            if (data.success) {
+                this.transactions = data.transactions || [];
+                this.renderFinancialSummary();
+            }
+        } catch (error) {
+            console.error('Failed to load transactions:', error);
+        }
+    }
+
+    /**
+     * Render Financial Summary Panel
+     */
+    renderFinancialSummary() {
+        if (!this.transactions || !this.profile) return;
+
+        let salesRevenue = 0;
+        let purchaseCosts = 0;
+
+        this.transactions.forEach(t => {
+            const amount = parseFloat(t.totalAmount) || 0;
+            if (t.role === 'seller') {
+                salesRevenue += amount;
+            } else if (t.role === 'buyer') {
+                purchaseCosts += amount;
+            }
+        });
+
+        const tradingNet = salesRevenue - purchaseCosts;
+        const totalProfit = (this.profile.currentFunds || 0) - (this.profile.startingFunds || 0);
+        
+        // Production Revenue is the remainder of profit not explained by trading
+        // Note: In "Infinite Capital" model, starting funds might be 0, so totalProfit is just currentFunds
+        // But if we want to show strict "Revenue from Production", we back it out:
+        const productionRevenue = totalProfit - tradingNet;
+
+        // Update DOM
+        const els = {
+            prod: document.getElementById('fin-production-rev'),
+            sales: document.getElementById('fin-sales-rev'),
+            cost: document.getElementById('fin-purchase-cost'),
+            net: document.getElementById('fin-net-profit')
+        };
+
+        if (els.prod) els.prod.textContent = '$' + this.formatNumber(productionRevenue);
+        if (els.sales) els.sales.textContent = '$' + this.formatNumber(salesRevenue);
+        if (els.cost) els.cost.textContent = '$' + this.formatNumber(purchaseCosts);
+        
+        if (els.net) {
+            els.net.textContent = (totalProfit >= 0 ? '+' : '') + '$' + this.formatNumber(totalProfit);
+            els.net.className = `text-2xl font-mono font-bold z-10 ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        }
+    }
+
+    /**
+     * Render Transaction History Table
+     */
+    renderTransactionHistoryTable() {
+        const tbody = document.getElementById('history-table-body');
+        const emptyMsg = document.getElementById('history-empty-msg');
+        
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (!this.transactions || this.transactions.length === 0) {
+            emptyMsg?.classList.remove('hidden');
+            return;
+        }
+
+        emptyMsg?.classList.add('hidden');
+
+        // Sort by time desc
+        const sorted = [...this.transactions].sort((a, b) => b.timestamp - a.timestamp);
+
+        sorted.forEach(t => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-700/50 transition';
+            
+            const date = new Date(t.timestamp * 1000);
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            const isSale = t.role === 'seller';
+            const typeColor = isSale ? 'text-green-400' : 'text-blue-400';
+            const typeIcon = isSale ? '↗' : '↙';
+            
+            row.innerHTML = `
+                <td class="py-3 font-mono text-gray-400">${timeStr}</td>
+                <td class="py-3 font-bold ${typeColor}">${typeIcon} ${isSale ? 'SALE' : 'BUY'}</td>
+                <td class="py-3 font-bold">Chemical ${t.chemical}</td>
+                <td class="py-3 text-right font-mono">${this.formatNumber(t.quantity)}</td>
+                <td class="py-3 text-right font-mono">$${this.formatNumber(t.pricePerGallon)}</td>
+                <td class="py-3 text-right font-mono font-bold text-white">$${this.formatNumber(t.totalAmount)}</td>
+                <td class="py-3 pl-4 text-gray-400">vs ${t.counterparty || 'Unknown'}</td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    }
+
+    openTransactionHistory() {
+        this.renderTransactionHistoryTable();
+        this.openModalAccessible('history-modal');
+    }
+
+    closeTransactionHistory() {
+        this.closeModalAccessible('history-modal');
     }
 
     /**
@@ -458,6 +578,8 @@ class MarketplaceApp {
      * Open buy request modal
      */
     openBuyRequestModal(chemical) {
+        console.log(`📋 Opening Buy Request Modal for ${chemical}`);
+        window.LAST_OPENED_MODAL = chemical;
         // Don't open if production modal is visible (it should block everything)
         if (this.isProductionModalBlocking()) {
             console.log('⚠️ Production modal is open - blocking offer modal');
@@ -477,7 +599,7 @@ class MarketplaceApp {
         // Update funds and total
         this.updateBuyRequestTotal();
 
-        modal.classList.remove('hidden');
+        modal?.classList.remove('hidden');
     }
 
     /**
@@ -498,7 +620,7 @@ class MarketplaceApp {
 
         // NEW MODEL: Infinite Capital. 
         // We never disable the button or show "insufficient funds".
-        warning.classList.add('hidden');
+        warning?.classList.add('hidden');
         submitBtn.disabled = false;
     }
 
@@ -541,7 +663,7 @@ class MarketplaceApp {
      * Close offer modal
      */
     closeOfferModal() {
-        document.getElementById('offer-modal').classList.add('hidden');
+        document.getElementById('offer-modal')?.classList.add('hidden');
         this.currentOfferChemical = null;
     }
 
@@ -598,7 +720,7 @@ class MarketplaceApp {
         // Update total
         this.updateRespondTotal();
 
-        modal.classList.remove('hidden');
+        modal?.classList.remove('hidden');
     }
 
     /**
@@ -618,10 +740,10 @@ class MarketplaceApp {
         const yourInventory = this.inventory[chemical] || 0;
 
         if (quantity > yourInventory) {
-            warning.classList.remove('hidden');
+            warning?.classList.remove('hidden');
             submitBtn.disabled = true;
         } else {
-            warning.classList.add('hidden');
+            warning?.classList.add('hidden');
             submitBtn.disabled = false;
         }
     }
@@ -676,7 +798,7 @@ class MarketplaceApp {
      * Close respond modal
      */
     closeRespondModal() {
-        document.getElementById('respond-modal').classList.add('hidden');
+        document.getElementById('respond-modal')?.classList.add('hidden');
         this.currentRespondContext = null;
     }
 
@@ -685,7 +807,12 @@ class MarketplaceApp {
      */
     isProductionModalBlocking() {
         const productionModal = document.getElementById('production-results-modal');
-        return productionModal && !productionModal.classList.contains('hidden');
+        if (!productionModal || !productionModal.classList) return false;
+        const isBlocking = !productionModal?.classList.contains('hidden');
+        if (isBlocking) {
+            console.warn('⚠️ UI Blocked: Production modal is currently visible.');
+        }
+        return isBlocking;
     }
 
     /**
@@ -699,7 +826,7 @@ class MarketplaceApp {
         }
 
         const modal = document.getElementById('negotiation-modal');
-        modal.classList.remove('hidden');
+        modal?.classList.remove('hidden');
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
 
@@ -715,7 +842,7 @@ class MarketplaceApp {
      */
     closeNegotiationModal() {
         const modal = document.getElementById('negotiation-modal');
-        modal.classList.add('hidden');
+        modal?.classList.add('hidden');
         modal.removeAttribute('role');
         modal.removeAttribute('aria-modal');
     }
@@ -724,9 +851,9 @@ class MarketplaceApp {
      * Show negotiation list view in modal
      */
     showNegotiationListView() {
-        document.getElementById('negotiation-list-view').classList.remove('hidden');
-        document.getElementById('negotiation-detail-view').classList.add('hidden');
-        document.getElementById('start-negotiation-view').classList.add('hidden');
+        document.getElementById('negotiation-list-view')?.classList.remove('hidden');
+        document.getElementById('negotiation-detail-view')?.classList.add('hidden');
+        document.getElementById('start-negotiation-view')?.classList.add('hidden');
     }
 
     /**
@@ -783,9 +910,9 @@ class MarketplaceApp {
         this.currentNegotiation = negotiation;
 
         // Show detail view
-        document.getElementById('negotiation-list-view').classList.add('hidden');
-        document.getElementById('negotiation-detail-view').classList.remove('hidden');
-        document.getElementById('start-negotiation-view').classList.add('hidden');
+        document.getElementById('negotiation-list-view')?.classList.add('hidden');
+        document.getElementById('negotiation-detail-view')?.classList.remove('hidden');
+        document.getElementById('start-negotiation-view')?.classList.add('hidden');
 
         // Set header
         document.getElementById('detail-chemical').textContent = `Chemical ${negotiation.chemical}`;
@@ -829,16 +956,16 @@ class MarketplaceApp {
         const actions = document.getElementById('negotiation-actions');
         const waiting = document.getElementById('waiting-message');
 
-        counterForm.classList.add('hidden');
+        counterForm?.classList.add('hidden');
 
         if (negotiation.status !== 'pending') {
             // Negotiation is complete
-            actions.classList.add('hidden');
-            waiting.classList.add('hidden');
+            actions?.classList.add('hidden');
+            waiting?.classList.add('hidden');
         } else if (isMyTurn) {
             // My turn to respond
-            actions.classList.remove('hidden');
-            waiting.classList.add('hidden');
+            actions?.classList.remove('hidden');
+            waiting?.classList.add('hidden');
 
             // Initialize Haggle Sliders (Witcher 3 Style)
             const shadowVal = this.shadowPrices[negotiation.chemical] || 2.0;
@@ -866,8 +993,8 @@ class MarketplaceApp {
             this.updateHaggleUI(shadowVal, isBuyer);
         } else {
             // Waiting for other team
-            actions.classList.add('hidden');
-            waiting.classList.remove('hidden');
+            actions?.classList.add('hidden');
+            waiting?.classList.remove('hidden');
         }
     }
 
@@ -876,9 +1003,9 @@ class MarketplaceApp {
      */
     startNewNegotiation(teamId, teamName, chemical, type) {
         // Show start negotiation view
-        document.getElementById('negotiation-list-view').classList.add('hidden');
-        document.getElementById('negotiation-detail-view').classList.add('hidden');
-        document.getElementById('start-negotiation-view').classList.remove('hidden');
+        document.getElementById('negotiation-list-view')?.classList.add('hidden');
+        document.getElementById('negotiation-detail-view')?.classList.add('hidden');
+        document.getElementById('start-negotiation-view')?.classList.remove('hidden');
 
         // Set fields
         document.getElementById('new-neg-team').value = teamName;
@@ -1208,13 +1335,13 @@ class MarketplaceApp {
 
         if (hasError) {
             errorEl.textContent = errorMsg;
-            errorEl.classList.remove('hidden');
+            errorEl?.classList.remove('hidden');
             submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn?.classList.add('opacity-50', 'cursor-not-allowed');
         } else {
-            errorEl.classList.add('hidden');
+            errorEl?.classList.add('hidden');
             submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitBtn?.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
         // Player Reaction Label
@@ -1247,8 +1374,8 @@ class MarketplaceApp {
             // Trigger shake if they keep pushing
             const modalContent = document.querySelector('#negotiation-modal > div');
             if (modalContent) {
-                modalContent.classList.add('animate-shake');
-                setTimeout(() => modalContent.classList.remove('animate-shake'), 500);
+                modalContent?.classList.add('animate-shake');
+                setTimeout(() => modalContent?.classList.remove('animate-shake'), 500);
             }
         } else if (patiencePercent < 60) {
             patienceBar.className = "h-full bg-yellow-500";
@@ -1422,8 +1549,8 @@ class MarketplaceApp {
         });
 
         document.getElementById('show-counter-form-btn').addEventListener('click', () => {
-            document.getElementById('negotiation-actions').classList.add('hidden');
-            document.getElementById('counter-offer-form').classList.remove('hidden');
+            document.getElementById('negotiation-actions')?.classList.add('hidden');
+            document.getElementById('counter-offer-form')?.classList.remove('hidden');
         });
 
         document.getElementById('submit-counter-btn').addEventListener('click', () => {
@@ -1431,8 +1558,8 @@ class MarketplaceApp {
         });
 
         document.getElementById('cancel-counter-btn').addEventListener('click', () => {
-            document.getElementById('counter-offer-form').classList.add('hidden');
-            document.getElementById('negotiation-actions').classList.remove('hidden');
+            document.getElementById('counter-offer-form')?.classList.add('hidden');
+            document.getElementById('negotiation-actions')?.classList.remove('hidden');
         });
 
         // Haggle Slider Listeners
@@ -1513,6 +1640,21 @@ class MarketplaceApp {
             this.restartGame();
         });
 
+        // Transaction History
+        const viewHistoryBtn = document.getElementById('view-history-btn');
+        if (viewHistoryBtn) {
+            viewHistoryBtn.addEventListener('click', () => {
+                this.openTransactionHistory();
+            });
+        }
+
+        const historyCloseBtn = document.getElementById('history-close-btn');
+        if (historyCloseBtn) {
+            historyCloseBtn.addEventListener('click', () => {
+                this.closeTransactionHistory();
+            });
+        }
+
         const tabLeaderboard = document.getElementById('tab-leaderboard');
         const tabHistory = document.getElementById('tab-history');
         const contentLeaderboard = document.getElementById('content-leaderboard');
@@ -1522,15 +1664,15 @@ class MarketplaceApp {
             tabLeaderboard.addEventListener('click', () => {
                 tabLeaderboard.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all';
                 tabHistory.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all';
-                contentLeaderboard.classList.remove('hidden');
-                contentHistory.classList.add('hidden');
+                contentLeaderboard?.classList.remove('hidden');
+                contentHistory?.classList.add('hidden');
             });
 
             tabHistory.addEventListener('click', () => {
                 tabHistory.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all';
                 tabLeaderboard.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all';
-                contentHistory.classList.remove('hidden');
-                contentLeaderboard.classList.add('hidden');
+                contentHistory?.classList.remove('hidden');
+                contentLeaderboard?.classList.add('hidden');
             });
         }
     }
@@ -1549,7 +1691,8 @@ class MarketplaceApp {
                     this.loadAdvertisements().catch(e => console.error('Ad poll failed', e)),
                     this.loadNegotiations().catch(e => console.error('Neg poll failed', e)),
                     this.loadNotifications().catch(e => console.error('Notif poll failed', e)),
-                    this.checkSessionPhase().catch(e => console.error('Session poll failed', e))
+                    this.checkSessionPhase().catch(e => console.error('Session poll failed', e)),
+                    this.loadTransactions().catch(e => console.error('Txn poll failed', e))
                 ]);
             } catch (error) {
                 console.warn('⚠️ Polling error, pausing for one cycle:', error.message);
@@ -1593,6 +1736,15 @@ class MarketplaceApp {
     async checkSessionPhase() {
         try {
             const data = await api.session.getStatus();
+            await this._processSessionData(data);
+        } catch (error) {
+            console.error('🚨 CRITICAL ERROR in checkSessionPhase:', error);
+            console.error(error.stack);
+        }
+    }
+
+    async _processSessionData(data) {
+        try {
             console.log(`[Session] Polled: Session=${data.session}, Phase=${data.phase}, Time=${data.timeRemaining}, Stopped=${data.gameStopped}`);
             
             this.gameStopped = data.gameStopped;
@@ -1601,47 +1753,70 @@ class MarketplaceApp {
             // Check for game finished state (End Screen)
             const gameOverOverlay = document.getElementById('game-over-overlay');
             if (data.gameFinished) {
-                if (gameOverOverlay && gameOverOverlay.classList.contains('hidden')) {
-                    gameOverOverlay.classList.remove('hidden');
-                    this.renderGameOverStats();
+                if (gameOverOverlay && gameOverOverlay.classList && gameOverOverlay?.classList.contains('hidden')) {
+                    gameOverOverlay?.classList.remove('hidden');
+                    await this.renderGameOverStats();
                 }
                 this.gameFinished = true;
                 return; // Stop processing other updates if game is finished
             } else {
-                if (gameOverOverlay) gameOverOverlay.classList.add('hidden');
+                if (gameOverOverlay && gameOverOverlay.classList) gameOverOverlay?.classList.add('hidden');
                 this.gameFinished = false;
             }
 
             // Check for game stopped state (Market Closed)
             const mainApp = document.getElementById('app');
+            const closedOverlay = document.getElementById('market-closed-overlay');
             if (data.gameStopped) {
-                if (closedOverlay) closedOverlay.classList.remove('hidden');
-                if (mainApp) mainApp.classList.add('hidden');
+                if (closedOverlay && closedOverlay.classList) closedOverlay?.classList.remove('hidden');
+                if (mainApp && mainApp.classList) mainApp?.classList.add('hidden');
                 return; // Stop processing other updates if game is stopped
             } else {
-                if (closedOverlay) closedOverlay.classList.add('hidden');
-                if (mainApp) mainApp.classList.remove('hidden');
+                if (closedOverlay && closedOverlay.classList) closedOverlay?.classList.add('hidden');
+                if (mainApp && mainApp.classList) mainApp?.classList.remove('hidden');
             }
 
             // Update UI elements
-            document.getElementById('session-num-display').textContent = data.session;
+            const sessionDisplay = document.getElementById('session-num-display');
+            if (sessionDisplay) sessionDisplay.textContent = data.session;
 
-            // Process Global Trades for Toasts
+            const phaseEl = document.getElementById('current-phase');
+            if (phaseEl) {
+                phaseEl.textContent = data.phase;
+                if (data.gameStopped) {
+                    phaseEl.className = 'text-xs text-red-400 uppercase font-bold';
+                } else {
+                    phaseEl.className = 'text-xs text-green-400 uppercase font-bold';
+                }
+            }
+
+            // Process Global Trades/Events for Toasts
             if (data.recentTrades && Array.isArray(data.recentTrades)) {
                 // Process in reverse (oldest first) so they stack correctly
-                [...data.recentTrades].reverse().forEach(trade => {
-                    if (!this.processedGlobalTrades.has(trade.transactionId)) {
-                        this.processedGlobalTrades.add(trade.transactionId);
+                [...data.recentTrades].reverse().forEach(event => {
+                    // Support both transactionId (trades) and eventId (joins)
+                    const uniqueId = event.transactionId || event.eventId;
+                    
+                    if (uniqueId && !this.processedGlobalTrades.has(uniqueId)) {
+                        this.processedGlobalTrades.add(uniqueId);
 
-                        // Don't toast if I was part of it (I already got a personal toast/notif)
-                        const involvesMe = trade.sellerId === this.currentUser || trade.buyerId === this.currentUser;
-                        
-                        if (!involvesMe) {
-                            const isHot = trade.heat?.isHot;
-                            const icon = isHot ? '🔥 ' : '📦 ';
-                            const message = `${icon}${trade.sellerName} sold ${this.formatNumber(trade.quantity)} gal of ${trade.chemical} to ${trade.buyerName}`;
-                            const type = isHot ? 'hot' : 'info';
-                            this.showToast(message, type, 4000);
+                        if (event.type === 'join') {
+                            // Team Joined Event
+                            if (event.teamName !== (this.profile?.teamName)) { // Don't toast my own join (I know I joined)
+                                this.showToast(`👋 Team ${event.teamName} has joined the game!`, 'info', 5000);
+                            }
+                        } else {
+                            // Trade Event
+                            // Don't toast if I was part of it (I already got a personal toast/notif)
+                            const involvesMe = event.sellerId === this.currentUser || event.buyerId === this.currentUser;
+                            
+                            if (!involvesMe) {
+                                const isHot = event.heat?.isHot;
+                                const icon = isHot ? '🔥 ' : '📦 ';
+                                const message = `${icon}${event.sellerName} sold ${this.formatNumber(event.quantity)} gal of ${event.chemical} to ${event.buyerName}`;
+                                const type = isHot ? 'hot' : 'info';
+                                this.showToast(message, type, 4000);
+                            }
                         }
                     }
                 });
@@ -1668,9 +1843,9 @@ class MarketplaceApp {
                 await this.showProductionResults(productionSession, isInitial);
                 await this.loadProfile(); // Refresh to show updated inventory/funds
             }
-
         } catch (error) {
-            console.error('Failed to check session status:', error);
+            console.error('🚨 ERROR in _processSessionData:', error);
+            throw error;
         }
     }
 
@@ -1739,6 +1914,59 @@ class MarketplaceApp {
             document.getElementById('prod-result-chem-D').textContent = this.formatNumber(data.chemicalsConsumed.D);
             document.getElementById('prod-result-chem-Q').textContent = this.formatNumber(data.chemicalsConsumed.Q);
 
+            // Optimization Analysis (Sensitivity Report)
+            const constraintsList = document.getElementById('prod-constraints-list');
+            const shadowPricesList = document.getElementById('prod-shadow-prices-list');
+            
+            if (data.constraints && constraintsList) {
+                constraintsList.innerHTML = '';
+                ['C', 'N', 'D', 'Q'].forEach(chem => {
+                    const c = data.constraints[chem];
+                    const isBinding = c.status === 'Binding';
+                    const div = document.createElement('div');
+                    div.className = `flex justify-between items-center p-2 rounded ${isBinding ? 'bg-red-900/30 border border-red-800' : 'bg-green-900/30 border border-green-800'}`;
+                    
+                    div.innerHTML = `
+                        <span class="font-bold ${isBinding ? 'text-red-400' : 'text-green-400'}">Chemical ${chem}</span>
+                        <div class="text-right">
+                            <span class="text-xs text-gray-400 block">${isBinding ? 'Bottleneck (0 Excess)' : `Excess: ${this.formatNumber(c.slack)} gal`}</span>
+                            <span class="font-bold text-sm text-white">${c.status}</span>
+                        </div>
+                    `;
+                    constraintsList.appendChild(div);
+                });
+            }
+
+            if (data.shadowPrices && shadowPricesList) {
+                shadowPricesList.innerHTML = '';
+                ['C', 'N', 'D', 'Q'].forEach(chem => {
+                    const sp = data.shadowPrices[chem];
+                    const isValuable = sp > 0;
+                    const div = document.createElement('div');
+                    div.className = `p-3 rounded border ${isValuable ? 'bg-purple-900/30 border-purple-500/50' : 'bg-gray-700/50 border-gray-600'}`;
+                    
+                    // Interpret range if available
+                    let rangeInfo = '';
+                    if (data.ranges && data.ranges[chem]) {
+                        const r = data.ranges[chem];
+                        const inc = r.allowableIncrease > 9000 ? '∞' : this.formatNumber(r.allowableIncrease);
+                        rangeInfo = `<div class="text-[10px] text-gray-500 mt-1">Range: -${this.formatNumber(r.allowableDecrease)} / +${inc}</div>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="flex justify-between items-baseline mb-1">
+                            <span class="text-sm font-bold text-gray-300">Chem ${chem}</span>
+                            <span class="text-lg font-mono font-bold ${isValuable ? 'text-purple-400' : 'text-gray-500'}">$${this.formatNumber(sp)}</span>
+                        </div>
+                        <div class="text-xs ${isValuable ? 'text-purple-300' : 'text-gray-400'}">
+                            ${isValuable ? 'High Value - BUY MORE!' : 'Low Value - SELL EXCESS'}
+                        </div>
+                        ${rangeInfo}
+                    `;
+                    shadowPricesList.appendChild(div);
+                });
+            }
+
             // Current status
             document.getElementById('prod-result-current-funds').textContent = this.formatNumber(data.currentFunds);
             document.getElementById('prod-result-inv-C').textContent = this.formatNumber(data.currentInventory.C);
@@ -1751,9 +1979,9 @@ class MarketplaceApp {
             const prodInProgress = document.getElementById('production-in-progress');
             const prodComplete = document.getElementById('production-complete');
 
-            modal.classList.remove('hidden');
-            prodInProgress.classList.add('hidden');
-            prodComplete.classList.remove('hidden');
+            modal?.classList.remove('hidden');
+            prodInProgress?.classList.add('hidden');
+            prodComplete?.classList.remove('hidden');
 
             console.log('✅ Production results modal displayed (complete state)');
         } catch (error) {
@@ -1769,9 +1997,9 @@ class MarketplaceApp {
         const prodInProgress = document.getElementById('production-in-progress');
         const prodComplete = document.getElementById('production-complete');
 
-        modal.classList.add('hidden');
-        prodInProgress.classList.add('hidden');
-        prodComplete.classList.add('hidden');
+        modal?.classList.add('hidden');
+        prodInProgress?.classList.add('hidden');
+        prodComplete?.classList.add('hidden');
 
         // Acknowledge production to server (clears productionJustRan flag)
         try {
@@ -1802,9 +2030,9 @@ class MarketplaceApp {
         if (fundsEl && this.profile) {
             const newFunds = '$' + this.formatNumber(this.profile.currentFunds);
             if (fundsEl.textContent !== newFunds) {
-                fundsEl.classList.remove('animate-success-pop');
+                fundsEl?.classList.remove('animate-success-pop');
                 void fundsEl.offsetWidth; // Trigger reflow
-                fundsEl.classList.add('animate-success-pop');
+                fundsEl?.classList.add('animate-success-pop');
             }
             fundsEl.textContent = newFunds;
         }
@@ -1979,7 +2207,7 @@ class MarketplaceApp {
         this.focusBeforeModal = document.activeElement;
         const modal = document.getElementById(modalId);
         this.currentModal = modal;
-        modal.classList.remove('hidden');
+        modal?.classList.remove('hidden');
         this.trapFocus(modal);
 
         // Add active state to the button that opened this modal
@@ -1992,7 +2220,7 @@ class MarketplaceApp {
         const buttonId = buttonMap[modalId];
         if (buttonId) {
             const button = document.getElementById(buttonId);
-            button.classList.add('ring-2', 'ring-white', 'ring-opacity-50');
+            button?.classList.add('ring-2', 'ring-white', 'ring-opacity-50');
             button.setAttribute('aria-pressed', 'true');
         }
     }
@@ -2002,7 +2230,7 @@ class MarketplaceApp {
      */
     closeModalAccessible(modalId) {
         const modal = document.getElementById(modalId);
-        modal.classList.add('hidden');
+        modal?.classList.add('hidden');
         this.currentModal = null;
 
         // Remove active state from the button
@@ -2015,7 +2243,7 @@ class MarketplaceApp {
         const buttonId = buttonMap[modalId];
         if (buttonId) {
             const button = document.getElementById(buttonId);
-            button.classList.remove('ring-2', 'ring-white', 'ring-opacity-50');
+            button?.classList.remove('ring-2', 'ring-white', 'ring-opacity-50');
             button.setAttribute('aria-pressed', 'false');
         }
 

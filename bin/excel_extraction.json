@@ -1,0 +1,5142 @@
+{
+  "sheets": [
+    "Model",
+    "Answer Report 1",
+    "Sensitivity Report 1",
+    "Random CNDQ",
+    "Team 1",
+    "Team 2",
+    "Team 3",
+    "Team 4",
+    "Team 5",
+    "Team 6",
+    "Team 7",
+    "Team 8",
+    "Team 9",
+    "Team 10",
+    "Team 11",
+    "Team 12",
+    "Team 13",
+    "Team 14",
+    "Team 15",
+    "Team 16",
+    "Team 17",
+    "Team 18",
+    "Team 19",
+    "Team 20",
+    "Scoreboard"
+  ],
+  "sheets_info": {
+    "Model": {
+      "max_row": 13,
+      "max_col": 6,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": 1000,
+            "has_formula": false
+          }
+        ]
+      ]
+    },
+    "Answer Report 1": {
+      "max_row": 22,
+      "max_col": 7,
+      "sample_data": [
+        [
+          {
+            "value": "Microsoft Excel 12.0 Answer Report",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Worksheet: [Deicer and Solvent Model for Math Camp 2016.xlsx]Model",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Report Created: 7/17/2016 10:11:38 PM",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ]
+      ]
+    },
+    "Sensitivity Report 1": {
+      "max_row": 18,
+      "max_col": 8,
+      "sample_data": [
+        [
+          {
+            "value": "Microsoft Excel 12.0 Sensitivity Report",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Worksheet: [Deicer and Solvent Model for Math Camp 2016.xlsx]Model",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Report Created: 7/17/2016 10:11:38 PM",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ]
+      ]
+    },
+    "Random CNDQ": {
+      "max_row": 21,
+      "max_col": 9,
+      "sample_data": [
+        [
+          {
+            "value": "Team",
+            "has_formula": false
+          },
+          {
+            "value": "C",
+            "has_formula": false
+          },
+          {
+            "value": "N",
+            "has_formula": false
+          },
+          {
+            "value": "D",
+            "has_formula": false
+          },
+          {
+            "value": "Q",
+            "has_formula": false
+          },
+          {
+            "value": "C",
+            "has_formula": false
+          },
+          {
+            "value": "N",
+            "has_formula": false
+          },
+          {
+            "value": "D",
+            "has_formula": false
+          },
+          {
+            "value": "Q",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": 1,
+            "has_formula": false
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": 15,
+            "has_formula": false
+          },
+          {
+            "value": 18,
+            "has_formula": false
+          },
+          {
+            "value": 18,
+            "has_formula": false
+          },
+          {
+            "value": 16,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": 20,
+            "has_formula": false
+          },
+          {
+            "value": 13,
+            "has_formula": false
+          },
+          {
+            "value": 12,
+            "has_formula": false
+          },
+          {
+            "value": 16,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": 16,
+            "has_formula": false
+          },
+          {
+            "value": 14,
+            "has_formula": false
+          },
+          {
+            "value": 17,
+            "has_formula": false
+          },
+          {
+            "value": 11,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": 4,
+            "has_formula": false
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": "=RANDBETWEEN(5,20)",
+            "has_formula": true
+          },
+          {
+            "value": 13,
+            "has_formula": false
+          },
+          {
+            "value": 19,
+            "has_formula": false
+          },
+          {
+            "value": 12,
+            "has_formula": false
+          },
+          {
+            "value": 7,
+            "has_formula": false
+          }
+        ]
+      ]
+    },
+    "Team 1": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F2*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 2": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F3*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 3": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F4*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 4": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F5*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 5": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F6*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 6": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F7*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 7": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F8*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 8": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F9*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 9": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F10*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 10": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F11*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 11": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F12*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 12": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F13*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 13": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F14*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 14": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F15*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 15": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F16*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 16": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F17*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 17": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F18*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 18": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F19*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 19": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F20*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Team 20": {
+      "max_row": 31,
+      "max_col": 34,
+      "sample_data": [
+        [
+          {
+            "value": "Objective",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Total",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Profit",
+            "has_formula": false
+          },
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Constraints",
+            "has_formula": false
+          },
+          {
+            "value": "Deicer",
+            "has_formula": false
+          },
+          {
+            "value": "Solvent",
+            "has_formula": false
+          },
+          {
+            "value": "Used",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Available",
+            "has_formula": false
+          },
+          {
+            "value": "Initial",
+            "has_formula": false
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "Sales",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": "Liquid C",
+            "has_formula": false
+          },
+          {
+            "value": 0.5,
+            "has_formula": false
+          },
+          {
+            "value": 0,
+            "has_formula": false
+          },
+          {
+            "value": "=SUMPRODUCT(B5:C5,$B$11:$C$11)",
+            "has_formula": true
+          },
+          {
+            "value": "<=",
+            "has_formula": false
+          },
+          {
+            "value": "=G5-J31+V31",
+            "has_formula": true
+          },
+          {
+            "value": "='Random CNDQ'!F21*100",
+            "has_formula": true
+          },
+          {
+            "value": null,
+            "has_formula": false
+          },
+          {
+            "value": "=S31",
+            "has_formula": true
+          }
+        ]
+      ]
+    },
+    "Scoreboard": {
+      "max_row": 21,
+      "max_col": 4,
+      "sample_data": [
+        [
+          {
+            "value": "Team",
+            "has_formula": false
+          },
+          {
+            "value": "Initial Profit",
+            "has_formula": false
+          },
+          {
+            "value": "Current Profit",
+            "has_formula": false
+          },
+          {
+            "value": "% Increase",
+            "has_formula": false
+          }
+        ],
+        [
+          {
+            "value": 1,
+            "has_formula": false
+          },
+          {
+            "value": 16285.714285714284,
+            "has_formula": false
+          },
+          {
+            "value": "='Team 1'!AH7",
+            "has_formula": true
+          },
+          {
+            "value": "=(C2-B2)/B2",
+            "has_formula": true
+          }
+        ],
+        [
+          {
+            "value": 2,
+            "has_formula": false
+          },
+          {
+            "value": 11090.909090909088,
+            "has_formula": false
+          },
+          {
+            "value": "='Team 2'!AH7",
+            "has_formula": true
+          },
+          {
+            "value": "=(C3-B3)/B3",
+            "has_formula": true
+          }
+        ],
+        [
+          {
+            "value": 3,
+            "has_formula": false
+          },
+          {
+            "value": 13000,
+            "has_formula": false
+          },
+          {
+            "value": "='Team 3'!AH7",
+            "has_formula": true
+          },
+          {
+            "value": "=(C4-B4)/B4",
+            "has_formula": true
+          }
+        ],
+        [
+          {
+            "value": 4,
+            "has_formula": false
+          },
+          {
+            "value": 10450,
+            "has_formula": false
+          },
+          {
+            "value": "='Team 4'!AH7",
+            "has_formula": true
+          },
+          {
+            "value": "=(C5-B5)/B5",
+            "has_formula": true
+          }
+        ]
+      ]
+    }
+  },
+  "team_structure": {
+    "objective_section": {
+      "A1": {
+        "value": "Objective",
+        "formula": null
+      },
+      "B1": {
+        "value": "Deicer",
+        "formula": null
+      },
+      "C1": {
+        "value": "Solvent",
+        "formula": null
+      },
+      "D1": {
+        "value": "Total",
+        "formula": null
+      },
+      "A2": {
+        "value": "Profit",
+        "formula": null
+      },
+      "D2": {
+        "value": "=SUMPRODUCT(B2:C2,$B$11:$C$11)",
+        "formula": "=SUMPRODUCT(B2:C2,$B$11:$C$11)"
+      },
+      "A4": {
+        "value": "Constraints",
+        "formula": null
+      },
+      "B4": {
+        "value": "Deicer",
+        "formula": null
+      },
+      "C4": {
+        "value": "Solvent",
+        "formula": null
+      },
+      "D4": {
+        "value": "Used",
+        "formula": null
+      },
+      "F4": {
+        "value": "Available",
+        "formula": null
+      },
+      "G4": {
+        "value": "Initial",
+        "formula": null
+      },
+      "I4": {
+        "value": "Sales",
+        "formula": null
+      },
+      "J4": {
+        "value": "Gallons",
+        "formula": null
+      },
+      "N4": {
+        "value": "To Firm",
+        "formula": null
+      },
+      "O4": {
+        "value": "Unit Price",
+        "formula": null
+      },
+      "S4": {
+        "value": "Total",
+        "formula": null
+      },
+      "U4": {
+        "value": "Purchases",
+        "formula": null
+      },
+      "V4": {
+        "value": "Gallons",
+        "formula": null
+      },
+      "Z4": {
+        "value": "From Firm",
+        "formula": null
+      },
+      "AA4": {
+        "value": "Unit Price",
+        "formula": null
+      },
+      "AE4": {
+        "value": "Total",
+        "formula": null
+      },
+      "AG4": {
+        "value": "Production",
+        "formula": null
+      },
+      "AH4": {
+        "value": "=D2",
+        "formula": "=D2"
+      }
+    },
+    "constraints": [],
+    "variables": {},
+    "sales_section": {},
+    "purchases_section": {},
+    "financial_summary": {}
+  },
+  "scoreboard": {
+    "headers": [
+      {
+        "column": "A",
+        "value": "Team"
+      },
+      {
+        "column": "B",
+        "value": "Initial Profit"
+      },
+      {
+        "column": "C",
+        "value": "Current Profit"
+      },
+      {
+        "column": "D",
+        "value": "% Increase"
+      }
+    ],
+    "team_formulas": [
+      {
+        "A2": {
+          "value": 1,
+          "formula": null
+        },
+        "B2": {
+          "value": 16285.714285714284,
+          "formula": null
+        },
+        "C2": {
+          "value": "='Team 1'!AH7",
+          "formula": "='Team 1'!AH7"
+        },
+        "D2": {
+          "value": "=(C2-B2)/B2",
+          "formula": "=(C2-B2)/B2"
+        }
+      },
+      {
+        "A3": {
+          "value": 2,
+          "formula": null
+        },
+        "B3": {
+          "value": 11090.909090909088,
+          "formula": null
+        },
+        "C3": {
+          "value": "='Team 2'!AH7",
+          "formula": "='Team 2'!AH7"
+        },
+        "D3": {
+          "value": "=(C3-B3)/B3",
+          "formula": "=(C3-B3)/B3"
+        }
+      },
+      {
+        "A4": {
+          "value": 3,
+          "formula": null
+        },
+        "B4": {
+          "value": 13000,
+          "formula": null
+        },
+        "C4": {
+          "value": "='Team 3'!AH7",
+          "formula": "='Team 3'!AH7"
+        },
+        "D4": {
+          "value": "=(C4-B4)/B4",
+          "formula": "=(C4-B4)/B4"
+        }
+      },
+      {
+        "A5": {
+          "value": 4,
+          "formula": null
+        },
+        "B5": {
+          "value": 10450,
+          "formula": null
+        },
+        "C5": {
+          "value": "='Team 4'!AH7",
+          "formula": "='Team 4'!AH7"
+        },
+        "D5": {
+          "value": "=(C5-B5)/B5",
+          "formula": "=(C5-B5)/B5"
+        }
+      },
+      {
+        "A6": {
+          "value": 5,
+          "formula": null
+        },
+        "B6": {
+          "value": 6666.666666666666,
+          "formula": null
+        },
+        "C6": {
+          "value": "='Team 5'!AH7",
+          "formula": "='Team 5'!AH7"
+        },
+        "D6": {
+          "value": "=(C6-B6)/B6",
+          "formula": "=(C6-B6)/B6"
+        }
+      }
+    ]
+  },
+  "reports": {
+    "answer_report": [
+      [
+        "Microsoft Excel 12.0 Answer Report"
+      ],
+      [
+        "Worksheet: [Deicer and Solvent Model for Math Camp 2016.xlsx]Model"
+      ],
+      [
+        "Report Created: 7/17/2016 10:11:38 PM"
+      ],
+      [
+        "Target Cell (Max)"
+      ],
+      [
+        "Cell",
+        "Name",
+        "Original Value",
+        "Final Value"
+      ],
+      [
+        "$D$2",
+        "Profit Total",
+        "9090.9091"
+      ],
+      [
+        "Adjustable Cells"
+      ],
+      [
+        "Cell",
+        "Name",
+        "Original Value",
+        "Final Value"
+      ],
+      [
+        "$B$11",
+        "Gallons Deicer",
+        "1818.1818181818182"
+      ],
+      [
+        "$C$11",
+        "Gallons Solvent",
+        "1818.181818181818"
+      ],
+      [
+        "Constraints"
+      ],
+      [
+        "Cell",
+        "Name",
+        "Cell Value",
+        "Formula",
+        "Status",
+        "Slack"
+      ],
+      [
+        "$D$5",
+        "Liquid C Used",
+        "909.0909090909091",
+        "$D$5<=$F$5",
+        "Not Binding",
+        "90.90909090909088"
+      ],
+      [
+        "$D$6",
+        "Liquid N Used",
+        "1000",
+        "$D$6<=$F$6",
+        "Binding"
+      ],
+      [
+        "$D$7",
+        "Liquid D Used",
+        "1000",
+        "$D$7<=$F$7",
+        "Binding"
+      ],
+      [
+        "$D$8",
+        "Liquid Q Used",
+        "727.2727272727273",
+        "$D$8<=$F$8",
+        "Not Binding",
+        "272.72727272727275"
+      ]
+    ],
+    "sensitivity_report": [
+      [
+        "Microsoft Excel 12.0 Sensitivity Report"
+      ],
+      [
+        "Worksheet: [Deicer and Solvent Model for Math Camp 2016.xlsx]Model"
+      ],
+      [
+        "Report Created: 7/17/2016 10:11:38 PM"
+      ],
+      [
+        "Adjustable Cells"
+      ],
+      [
+        "Final",
+        "Reduced",
+        "Objective",
+        "Allowable",
+        "Allowable"
+      ],
+      [
+        "Cell",
+        "Name",
+        "Value",
+        "Cost",
+        "Coefficient",
+        "Increase",
+        "Decrease"
+      ],
+      [
+        "$B$11",
+        "Gallons Deicer",
+        "1818.1818181818182",
+        "2",
+        "1.6000000000000003",
+        "0.2857142857142857"
+      ],
+      [
+        "$C$11",
+        "Gallons Solvent",
+        "1818.181818181818",
+        "3",
+        "0.5",
+        "1.3333333333333335"
+      ],
+      [
+        "Constraints"
+      ],
+      [
+        "Final",
+        "Shadow",
+        "Constraint",
+        "Allowable",
+        "Allowable"
+      ],
+      [
+        "Cell",
+        "Name",
+        "Value",
+        "Price",
+        "R.H. Side",
+        "Increase",
+        "Decrease"
+      ],
+      [
+        "$D$5",
+        "Liquid C Used",
+        "909.0909090909091",
+        "1000",
+        "1e+30",
+        "90.90909090909088"
+      ],
+      [
+        "$D$6",
+        "Liquid N Used",
+        "1000",
+        "1.8181818181818183",
+        "1000",
+        "28.57142857142856",
+        "187.5"
+      ],
+      [
+        "$D$7",
+        "Liquid D Used",
+        "1000",
+        "7.272727272727273",
+        "1000",
+        "125.00000000000001",
+        "39.99999999999999"
+      ],
+      [
+        "$D$8",
+        "Liquid Q Used",
+        "727.2727272727273",
+        "1000",
+        "1e+30",
+        "272.72727272727275"
+      ]
+    ]
+  },
+  "vba_info": {
+    "vba_files_found": [
+      "xl/vbaProject.bin"
+    ],
+    "note": "VBA binary found. Use olevba tool to extract: pip install oletools && olevba \"file.xlsm\"",
+    "xl_structure": [
+      "xl/workbook.xml",
+      "xl/_rels/workbook.xml.rels",
+      "xl/worksheets/sheet4.xml",
+      "xl/worksheets/sheet5.xml",
+      "xl/worksheets/sheet6.xml",
+      "xl/worksheets/sheet7.xml",
+      "xl/worksheets/sheet8.xml",
+      "xl/worksheets/sheet9.xml",
+      "xl/worksheets/sheet10.xml",
+      "xl/worksheets/sheet11.xml",
+      "xl/worksheets/sheet12.xml",
+      "xl/worksheets/sheet13.xml",
+      "xl/worksheets/sheet14.xml",
+      "xl/worksheets/sheet15.xml",
+      "xl/worksheets/sheet16.xml",
+      "xl/worksheets/sheet17.xml",
+      "xl/worksheets/sheet18.xml",
+      "xl/worksheets/sheet19.xml",
+      "xl/worksheets/sheet20.xml",
+      "xl/worksheets/sheet21.xml"
+    ]
+  }
+}

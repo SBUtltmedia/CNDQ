@@ -31,6 +31,7 @@ try {
             'currentFunds' => round($teamStat['currentFunds'], 2),
             'profit' => round($teamStat['currentFunds'] - $teamStat['startingFunds'], 2),
             'roi' => $teamStat['percentChange'],
+            'percentChange' => $teamStat['percentChange'],
             'inventory' => [
                 'C' => max(0, round($inventory['C'] ?? 0, 4)),
                 'N' => max(0, round($inventory['N'] ?? 0, 4)),

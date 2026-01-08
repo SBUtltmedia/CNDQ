@@ -3,7 +3,7 @@
  * Admin Session Control API
  *
  * GET: Get current session state
- * POST: Update session (advance, set phase, toggle auto-advance)
+ * POST: Update session (finalize, startNew, setAutoCycle, toggleGameStop)
  */
 
 header('Content-Type: application/json');
@@ -15,43 +15,8 @@ $sessionManager = new SessionManager();
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Get current session state (public - triggers auto-advance if enabled)
+        // SessionManager::getState() handles NPC cycles and auto-advance logic internally.
         $state = $sessionManager->getState();
-
-        // 1. Auto-advance if time expired and auto-advance is enabled
-        if (($state['autoAdvance'] ?? false) && ($state['timeRemaining'] ?? 0) <= 0 && !($state['gameStopped'] ?? false)) {
-            $state = $sessionManager->advanceSession();
-        }
-
-        // 2. TRIGGER NPC CYCLES & SNAPSHOTS (Passive Heartbeat)
-        // If the game is running, every poll has a chance to trigger NPCs
-        if (!($state['gameStopped'] ?? false)) {
-            require_once __DIR__ . '/../../lib/NPCManager.php';
-            require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
-            require_once __DIR__ . '/../../lib/GlobalAggregator.php';
-            
-            $npcManager = new NPCManager();
-            $aggregator = new MarketplaceAggregator();
-            $globalAggregator = new GlobalAggregator();
-            
-            $now = time();
-            $lastRun = $state['npcLastRun'] ?? 0;
-            
-            // Process reflections (sync trades to counterparties) - Run every poll
-            try {
-                $globalAggregator->processReflections();
-            } catch (Exception $e) {
-                error_log("Heartbeat: Failed to process reflections: " . $e->getMessage());
-            }
-            
-            // Generate snapshot frequently (every poll) to keep marketplace fresh
-            $aggregator->generateSnapshot();
-            
-            // Run NPC trading cycle every 10 seconds
-            if ($now - $lastRun >= 10) {
-                $npcManager->runTradingCycle($state['currentSession']);
-                $state = $sessionManager->updateNpcLastRun(); // Update and get fresh state
-            }
-        }
 
         // Get recent trades for global notifications
         require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
@@ -82,12 +47,13 @@ try {
         $action = $input['action'] ?? null;
 
         switch ($action) {
-            case 'advance':
-                // Advance to next session (runs production and increments session)
-                $state = $sessionManager->advanceSession();
+            case 'finalize':
+            case 'advance': // Backward compatibility
+                // End the game (run final production)
+                $state = $sessionManager->finalizeGame();
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Advanced to session ' . $state['currentSession'],
+                    'message' => 'Market Closed. Final production run complete.',
                     'session' => $state
                 ]);
                 break;
@@ -106,24 +72,14 @@ try {
                 ]);
                 break;
 
-            case 'setAutoAdvance':
-                // Toggle auto-advance
+            case 'setAutoCycle':
+            case 'setAutoAdvance': // Backward compatibility
+                // Toggle auto-cycle (24/7 mode)
                 $enabled = $input['enabled'] ?? false;
-                $state = $sessionManager->setAutoAdvance($enabled);
+                $state = $sessionManager->setAutoCycleMode($enabled);
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Auto-advance ' . ($enabled ? 'enabled' : 'disabled'),
-                    'session' => $state
-                ]);
-                break;
-
-            case 'setProductionDuration':
-                // Set production duration
-                $seconds = $input['seconds'] ?? 60;
-                $state = $sessionManager->setProductionDuration($seconds);
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Production duration set to ' . $seconds . ' seconds',
+                    'message' => 'Auto-Cycle (24/7 Mode) ' . ($enabled ? 'enabled' : 'disabled'),
                     'session' => $state
                 ]);
                 break;
@@ -134,14 +90,16 @@ try {
                 $state = $sessionManager->setTradingDuration($seconds);
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Trading duration set to ' . $seconds . ' seconds',
+                    'message' => 'Market open duration set to ' . $seconds . ' seconds',
                     'session' => $state
                 ]);
                 break;
 
             case 'toggleGameStop':
+            case 'start': // Alias
+            case 'stop':  // Alias
                 // Toggle game stopped state
-                $stopped = $input['stopped'] ?? false;
+                $stopped = $action === 'stop' ? true : ($action === 'start' ? false : ($input['stopped'] ?? false));
                 $state = $sessionManager->toggleGameStop($stopped);
                 echo json_encode([
                     'success' => true,
@@ -150,12 +108,13 @@ try {
                 ]);
                 break;
 
-            case 'reset':
-                // Reset to session 1
-                $state = $sessionManager->reset();
+            case 'startNew':
+            case 'reset': // Backward compatibility
+                // Start a fresh game (Hard Reset)
+                $state = $sessionManager->startNewGame();
                 echo json_encode([
                     'success' => true,
-                    'message' => 'Session reset to 1',
+                    'message' => 'New Game Started (Previous data cleared)',
                     'session' => $state
                 ]);
                 break;
