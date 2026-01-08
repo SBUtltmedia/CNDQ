@@ -381,6 +381,14 @@ h1, h2, h3, h4, h5, h6 {
 .to-emerald-600 { --tw-gradient-to: #059669; }
 .from-red-500 { --tw-gradient-from: #ef4444; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(239, 68, 68, 0)); }
 .to-rose-600 { --tw-gradient-to: #e11d48; }
+.from-orange-500 { --tw-gradient-from: #f97316; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(249, 115, 22, 0)); }
+.to-red-600 { --tw-gradient-to: #dc2626; }
+.from-cyan-400 { --tw-gradient-from: #22d3ee; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(34, 211, 238, 0)); }
+.to-blue-600 { --tw-gradient-to: #2563eb; }
+
+/* Shadows for special toasts */
+.shadow-orange-500\/50 { box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.5), 0 4px 6px -2px rgba(249, 115, 22, 0.25); }
+.shadow-blue-500\/50 { box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.5), 0 4px 6px -2px rgba(37, 99, 235, 0.25); }
 
 .bg-opacity-30 { opacity: 0.3; }
 .bg-opacity-95 { background-color: rgba(17, 24, 39, 0.95); }

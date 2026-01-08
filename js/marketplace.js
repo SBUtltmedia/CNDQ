@@ -26,25 +26,13 @@ class MarketplaceApp {
         this.notifications = [];
         this.settings = { showTradingHints: false };
         this.productionResultsShown = false; // Flag to prevent showing modal multiple times
+        this.processedGlobalTrades = new Set(); // Track global trade IDs for toasts
 
-        // Polling
-        this.pollingInterval = null;
-        this.timerInterval = null;
-        this.pollingFrequency = 3000; // 3 seconds
-        this.lastServerTimeRemaining = 0;
-        this.gameStopped = true;
-        this.gameFinished = false;
-
-        // Modal state
-        this.currentNegotiation = null;
-        this.focusBeforeModal = null;
-        this.currentModal = null;
-
-        // Track pending ad posts to prevent race conditions
-        this.pendingAdPosts = new Set();
-
-        // Track seen global trades to avoid duplicate toasts
-        this.processedGlobalTrades = new Set();
+        // WebSocket
+        this.socket = null;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        this.pollingFrequency = 30000; // Default to 30s to prevent flooding
     }
 
     /**
@@ -86,7 +74,10 @@ class MarketplaceApp {
             // Check for production results
             await this.checkSessionPhase();
 
-            // Start polling
+            // Connect WebSocket
+            this.initWebSocket();
+
+            // Start polling (fallback and timer)
             this.startPolling();
             console.log('✓ Polling started');
 
@@ -102,6 +93,96 @@ class MarketplaceApp {
             if (overlay) overlay.classList.add('hidden');
             
             this.showToast('Initialization error: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Initialize WebSocket connection
+     */
+    initWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        // Connect directly to the amphp server during testing to bypass proxy issues
+        const wsUrl = `ws://127.0.0.1:8080/`;
+        
+        console.log(`📡 Connecting to WebSocket: ${wsUrl}`);
+        
+        try {
+            this.socket = new WebSocket(wsUrl);
+
+            this.socket.onopen = () => {
+                console.log('✅ WebSocket connected');
+                this.reconnectAttempts = 0;
+            };
+
+            this.socket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('📥 WS Message:', data.type);
+                    this.handleSocketMessage(data);
+                } catch (e) {
+                    console.warn('Received non-JSON WS message:', event.data);
+                }
+            };
+
+            this.socket.onclose = (e) => {
+                console.warn('❌ WebSocket disconnected', e.reason);
+                this.handleReconnect();
+            };
+
+            this.socket.onerror = (err) => {
+                console.error('⚠️ WebSocket error');
+                this.socket.close();
+            };
+        } catch (error) {
+            console.error('Failed to create WebSocket:', error);
+        }
+    }
+
+    /**
+     * Handle incoming WebSocket signals
+     */
+    handleSocketMessage(data) {
+        switch (data.type) {
+            case 'marketplace_updated':
+                // Someone posted an ad or snapshot changed
+                this.loadAdvertisements();
+                break;
+
+            case 'refresh_inventory':
+                // A trade involving me was completed
+                this.loadProfile();
+                this.loadShadowPrices();
+                this.showToast('Inventory updated!', 'success');
+                break;
+
+            case 'refresh_negotiations':
+                // New negotiation or counter-offer
+                this.loadNegotiations();
+                this.loadNotifications();
+                break;
+
+            case 'session_advanced':
+                // Round ended
+                this.checkSessionPhase();
+                break;
+                
+            case 'connection_established':
+                console.log(`👤 WS Authenticated as: ${data.user}`);
+                break;
+        }
+    }
+
+    /**
+     * Auto-reconnect logic
+     */
+    handleReconnect() {
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+            console.log(`🔄 Attempting reconnect in ${delay/1000}s (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+            setTimeout(() => this.initWebSocket(), delay);
+        } else {
+            console.log('🛑 Max WS reconnect attempts reached. Falling back to polling only.');
         }
     }
 
@@ -1541,16 +1622,37 @@ class MarketplaceApp {
      */
     startPolling() {
         if (this.pollingInterval) return;
+        if (!this.pollingFrequency) this.pollingFrequency = 30000;
 
         const poll = async () => {
             try {
-                // Run these in parallel but catch individual errors so one doesn't block others
+                let errorCount = 0;
+                const handleError = (e, context) => {
+                    console.error(`${context} poll failed`, e);
+                    errorCount++;
+                    const errStr = String(e);
+                    // Check for critical errors (500 or 404)
+                    if (errStr.includes('500') || errStr.includes('404')) {
+                        this.consecutiveCriticalErrors = (this.consecutiveCriticalErrors || 0) + 1;
+                    }
+                };
+
+                // Run these in parallel
                 await Promise.all([
-                    this.loadAdvertisements().catch(e => console.error('Ad poll failed', e)),
-                    this.loadNegotiations().catch(e => console.error('Neg poll failed', e)),
-                    this.loadNotifications().catch(e => console.error('Notif poll failed', e)),
-                    this.checkSessionPhase().catch(e => console.error('Session poll failed', e))
+                    this.loadAdvertisements().catch(e => handleError(e, 'Ad')),
+                    this.loadNegotiations().catch(e => handleError(e, 'Neg')),
+                    this.loadNotifications().catch(e => handleError(e, 'Notif')),
+                    this.checkSessionPhase().catch(e => handleError(e, 'Session'))
                 ]);
+
+                if (errorCount === 0) {
+                    this.consecutiveCriticalErrors = 0;
+                } else if (this.consecutiveCriticalErrors > 5) {
+                    console.error('🚫 Too many critical errors. Stopping polling to prevent flooding.');
+                    this.stopPolling();
+                    this.showToast('Connection lost. Please refresh the page.', 'error');
+                }
+
             } catch (error) {
                 console.warn('⚠️ Polling error, pausing for one cycle:', error.message);
                 if (error.message.includes('404')) {
@@ -1600,6 +1702,8 @@ class MarketplaceApp {
 
             // Check for game finished state (End Screen)
             const gameOverOverlay = document.getElementById('game-over-overlay');
+            const closedOverlay = document.getElementById('market-closed-overlay');
+            
             if (data.gameFinished) {
                 if (gameOverOverlay && gameOverOverlay.classList.contains('hidden')) {
                     gameOverOverlay.classList.remove('hidden');
@@ -1660,11 +1764,10 @@ class MarketplaceApp {
             if (data.productionJustRan && !this.productionResultsShown) {
                 console.log('✨ Production just completed! Showing results modal...');
                 this.productionResultsShown = true;
-                // Session 1 = "Start Session 1" (initial production)
-                // Session 2 = "End Session 1" (session 1 just ended)
-                // Session 3 = "End Session 2" (session 2 just ended)
+                // Session 1 (initial load) -> show session 0 (baseline)
+                // Session 2+ (after advance) -> show session N-1 results
                 const isInitial = data.session === 1;
-                const productionSession = data.session === 1 ? 1 : data.session - 1;
+                const productionSession = data.session === 1 ? 0 : data.session - 1;
                 await this.showProductionResults(productionSession, isInitial);
                 await this.loadProfile(); // Refresh to show updated inventory/funds
             }
@@ -1706,54 +1809,54 @@ class MarketplaceApp {
     async showProductionResults(sessionNumber, isInitial = false) {
         try {
             // Fetch production results from API
-            const response = await fetch(`/CNDQ/api/production/results.php?session=${sessionNumber}`);
-            if (!response.ok) {
-                console.error('Failed to fetch production results:', response.statusText);
-                return;
-            }
-
-            const data = await response.json();
+            const data = await api.production.getResults(sessionNumber);
 
             // Populate modal with data
             const sessionNum = data.sessionNumber || sessionNumber;
-            document.getElementById('prod-result-session').textContent = sessionNum;
+            const sessionEl = document.getElementById('prod-result-session');
+            if (sessionEl) sessionEl.textContent = sessionNum;
 
             // Set title: "Initial Potential" for initial load, "Final Results" for session completions
             const titleElement = document.getElementById('prod-result-title');
             const revenueNote = document.getElementById('revenue-note');
             if (isInitial) {
-                titleElement.innerHTML = `Round Baseline Potential`;
+                if (titleElement) titleElement.textContent = `Round Baseline Potential`;
                 if (revenueNote) revenueNote.textContent = 'Initial inventory potential';
             } else {
-                titleElement.innerHTML = `Final Round Results`;
+                if (titleElement) titleElement.textContent = `Final Round Results`;
                 if (revenueNote) revenueNote.textContent = 'Total value after optimization';
             }
 
-            document.getElementById('prod-result-deicer').textContent = this.formatNumber(data.production.deicer);
-            document.getElementById('prod-result-solvent').textContent = this.formatNumber(data.production.solvent);
-            document.getElementById('prod-result-revenue').textContent = this.formatNumber(data.revenue);
+            const setElText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            setElText('prod-result-deicer', this.formatNumber(data.production.deicer));
+            setElText('prod-result-solvent', this.formatNumber(data.production.solvent));
+            setElText('prod-result-revenue', this.formatNumber(data.revenue));
 
             // Chemicals consumed
-            document.getElementById('prod-result-chem-C').textContent = this.formatNumber(data.chemicalsConsumed.C);
-            document.getElementById('prod-result-chem-N').textContent = this.formatNumber(data.chemicalsConsumed.N);
-            document.getElementById('prod-result-chem-D').textContent = this.formatNumber(data.chemicalsConsumed.D);
-            document.getElementById('prod-result-chem-Q').textContent = this.formatNumber(data.chemicalsConsumed.Q);
+            setElText('prod-result-chem-C', this.formatNumber(data.chemicalsConsumed.C));
+            setElText('prod-result-chem-N', this.formatNumber(data.chemicalsConsumed.N));
+            setElText('prod-result-chem-D', this.formatNumber(data.chemicalsConsumed.D));
+            setElText('prod-result-chem-Q', this.formatNumber(data.chemicalsConsumed.Q));
 
             // Current status
-            document.getElementById('prod-result-current-funds').textContent = this.formatNumber(data.currentFunds);
-            document.getElementById('prod-result-inv-C').textContent = this.formatNumber(data.currentInventory.C);
-            document.getElementById('prod-result-inv-N').textContent = this.formatNumber(data.currentInventory.N);
-            document.getElementById('prod-result-inv-D').textContent = this.formatNumber(data.currentInventory.D);
-            document.getElementById('prod-result-inv-Q').textContent = this.formatNumber(data.currentInventory.Q);
+            setElText('prod-result-current-funds', this.formatNumber(data.currentFunds));
+            setElText('prod-result-inv-C', this.formatNumber(data.currentInventory.C));
+            setElText('prod-result-inv-N', this.formatNumber(data.currentInventory.N));
+            setElText('prod-result-inv-D', this.formatNumber(data.currentInventory.D));
+            setElText('prod-result-inv-Q', this.formatNumber(data.currentInventory.Q));
 
             // Transition from "in progress" to "complete" state
             const modal = document.getElementById('production-results-modal');
             const prodInProgress = document.getElementById('production-in-progress');
             const prodComplete = document.getElementById('production-complete');
 
-            modal.classList.remove('hidden');
-            prodInProgress.classList.add('hidden');
-            prodComplete.classList.remove('hidden');
+            if (modal) modal.classList.remove('hidden');
+            if (prodInProgress) prodInProgress.classList.add('hidden');
+            if (prodComplete) prodComplete.classList.remove('hidden');
 
             console.log('✅ Production results modal displayed (complete state)');
         } catch (error) {
@@ -1775,11 +1878,7 @@ class MarketplaceApp {
 
         // Acknowledge production to server (clears productionJustRan flag)
         try {
-            await fetch('/CNDQ/api/session/status.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ acknowledgeProduction: true })
-            });
+            await api.session.acknowledgeProduction();
         } catch (error) {
             console.error('Failed to acknowledge production:', error);
         }
@@ -1893,8 +1992,15 @@ class MarketplaceApp {
         const container = document.getElementById('toast-container');
         if (!container) return;
 
+        // Limit concurrent toasts to prevent "horrible" flooding
+        if (container.children.length >= 5) {
+            container.removeChild(container.firstChild);
+        }
+
         const toast = document.createElement('div');
         toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center gap-2`;
+        toast.style.maxWidth = '400px';
+        toast.style.wordBreak = 'break-word';
         toast.setAttribute('role', 'alert');
         toast.setAttribute('aria-live', 'assertive');
 
@@ -1915,17 +2021,17 @@ class MarketplaceApp {
         // Animate in
         requestAnimationFrame(() => {
             toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
+            toast.style.transform = 'translateX(100%) scale(0.9)';
             requestAnimationFrame(() => {
                 toast.style.opacity = '1';
-                toast.style.transform = 'translateX(0)';
+                toast.style.transform = 'translateX(0) scale(1)';
             });
         });
 
         // Remove after specified duration
         setTimeout(() => {
             toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
+            toast.style.transform = 'translateX(100%) scale(0.9)';
             setTimeout(() => {
                 toast.remove();
             }, 300);

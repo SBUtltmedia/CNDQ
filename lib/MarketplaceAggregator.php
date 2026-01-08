@@ -44,7 +44,16 @@ class MarketplaceAggregator {
      * Falls back to live aggregation if snapshot is missing
      */
     private function getSnapshot() {
-        $snapshot = $this->db->queryOne('SELECT offers, buy_orders, ads, recent_trades FROM marketplace_snapshot WHERE id = 1');
+        try {
+            $snapshot = $this->db->queryOne('SELECT offers, buy_orders, ads, recent_trades FROM marketplace_snapshot WHERE id = 1');
+        } catch (Exception $e) {
+            // Fallback for schema mismatch (missing recent_trades column)
+            try {
+                $snapshot = $this->db->queryOne('SELECT offers, buy_orders, ads FROM marketplace_snapshot WHERE id = 1');
+            } catch (Exception $ex) {
+                return $this->getAggregatedFromEvents();
+            }
+        }
 
         if ($snapshot) {
             return [

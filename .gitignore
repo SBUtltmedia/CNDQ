@@ -3,6 +3,7 @@
 # Data directory (symlink in production, actual directory in development)
 # Ignore data directory/symlink completely
 /data
+/userData
 
 node_modules
 package-lock.json
@@ -26,9 +27,25 @@ vba_extracted.txt
 excel_report.md
 hung.txt
 *.log
+data/*.log
 .DS_Store
 Thumbs.db
 
 
 vendor
 .vscode
+
+whoami.txt
+api-call-log-*.json
+*.png
+*.out
+test.txt
+atomicTest.md
+moveToLit.md
+decruft.md
+todoJan2_2026.md
+topology.md
+spreadsheet.php
+api-docs.php
+check_*.php
+test_*.php

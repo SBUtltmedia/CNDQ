@@ -12,15 +12,11 @@
  */
 
 require_once __DIR__ . '/../lib/SessionManager.php';
-require_once __DIR__ . '/../lib/MarketplaceAggregator.php';
-require_once __DIR__ . '/../lib/NPCManager.php';
 
 // Set unlimited execution time
 set_time_limit(0);
 
 $sessionManager = new SessionManager();
-$aggregator = new MarketplaceAggregator();
-$npcManager = new NPCManager();
 
 echo "[" . date('Y-m-d H:i:s') . "] World Turner started.\n";
 
@@ -28,35 +24,8 @@ while (true) {
     $loopStart = microtime(true);
     
     try {
-        // --- 1. MARKETPLACE AGGREGATION ---
-        // Generate the snapshot for all users to read
-        $aggregator->generateSnapshot();
-        
-        // --- 2. SESSION MANAGEMENT ---
-        $state = $sessionManager->getState();
-        
-        // Auto-advance if time expired
-        if (($state['autoAdvance'] ?? false) && ($state['timeRemaining'] ?? 0) <= 0) {
-            echo "[" . date('Y-m-d H:i:s') . "] Session {".$state['currentSession']."} complete. Advancing...\n";
-            $newState = $sessionManager->advanceSession();
-            echo "  -> New Session: {".$newState['currentSession']."}\n";
-            $state = $newState; // Update local state for NPC check
-        }
-        
-        // --- 3. NPC LOGIC ---
-        $npcSettings = $npcManager->loadConfig();
-
-        if (($npcSettings['enabled'] ?? false)) {
-            $lastRun = $state['npcLastRun'] ?? 0;
-            $now = time();
-            
-            // Run NPCs every 10 seconds
-            if ($now - $lastRun >= 10) {
-                echo "[" . date('Y-m-d H:i:s') . "] Running NPCs...\n";
-                $npcManager->runTradingCycle($state['currentSession']);
-                $sessionManager->updateNpcLastRun();
-            }
-        }
+        // --- THE UNIFIED TICK ---
+        $sessionManager->rotateWorld();
 
     } catch (Exception $e) {
         echo "[" . date('Y-m-d H:i:s') . "] ERROR: " . $e->getMessage() . "\n";

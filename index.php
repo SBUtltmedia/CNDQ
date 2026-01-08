@@ -178,6 +178,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span id="prod-result-title">Production Results</span>
+                    <span class="ml-4 px-3 py-1 bg-green-900 text-green-400 text-sm rounded-full border border-green-500/30 font-mono">Round <span id="prod-result-session">0</span></span>
                 </h3>
                 <button id="prod-result-close" class="text-gray-400 hover:text-white text-4xl font-bold transition-colors">&times;</button>
             </div>
@@ -873,6 +874,6 @@
     <!-- Main JavaScript Application -->
     <script id="main-app-script"
             type="module"
-            src="./js/marketplace.js?v=<?php echo time(); ?>"></script>
+            src="./js/marketplace.js?v=<?php echo time(); ?>_v2"></script>
 </body>
 </html>

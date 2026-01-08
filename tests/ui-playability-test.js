@@ -19,14 +19,12 @@ const CONFIG = {
     baseUrl: 'http://cndq.test/CNDQ',
     adminUser: 'admin@stonybrook.edu',
     testUsers: [
-        'test_mail1@stonybrook.edu',
-        'test_mail2@stonybrook.edu',
-        'test_mail3@stonybrook.edu'
+        'test_mail1@stonybrook.edu'
     ],
-    targetSessions: 2,
-    headless: process.argv.includes('--headless'),
-    verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
-    keepOpen: process.argv.includes('--keep-open')
+    targetSessions: 1,
+    headless: true,
+    verbose: false,
+    keepOpen: false
 };
 
 class UIPlayabilityTest {

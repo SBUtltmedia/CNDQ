@@ -69,7 +69,7 @@ if (!isAdmin()) {
                     <div class="text-2xl font-bold text-purple-400">Infinite Capital</div>
                 </div>
                 <div class="bg-gray-700 p-4 rounded">
-                    <div class="text-gray-300 text-sm">Market Phase</div>
+                    <div class="text-gray-300 text-sm">Market Phase (Session <span id="session-number">1</span>)</div>
                     <div class="text-3xl font-bold capitalize" id="current-phase">-</div>
                 </div>
             </div>
@@ -81,10 +81,10 @@ if (!isAdmin()) {
 
             <!-- Phase Controls -->
             <div class="flex gap-3">
-                <button id="start-stop-btn" onclick="toggleGameStop()" class="flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition">
+                <button id="start-game-btn" onclick="toggleGameStop()" class="flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition">
                     Start Market
                 </button>
-                <button onclick="resetSession()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition">
+                <button id="reset-session-btn" onclick="resetSession()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition">
                     Reset Game
                 </button>
             </div>
@@ -94,7 +94,7 @@ if (!isAdmin()) {
         <div class="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
             <h2 class="text-xl font-bold mb-4 text-red-400">End Game / Final Production</h2>
 
-            <button onclick="advancePhase()" class="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
+            <button id="advance-session-btn" onclick="advancePhase()" class="w-full bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded font-bold transition">
                 CLOSE MARKET & RUN FINAL PRODUCTION →
             </button>
             <p class="text-xs text-gray-300 mt-2">
@@ -132,7 +132,7 @@ if (!isAdmin()) {
                     <input type="number" id="trading-duration-seconds" value="0" min="0" max="59" class="bg-gray-700 border border-gray-600 rounded px-4 py-2 w-20 text-white" aria-label="Trading duration seconds">
                     <span class="text-gray-300">sec</span>
                 </div>
-                <button onclick="updateTradingDuration()" class="mt-2 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition w-full text-sm">
+                <button id="update-timer-btn" onclick="updateTradingDuration()" class="mt-2 bg-green-700 hover:bg-green-800 px-4 py-2 rounded font-bold transition w-full text-sm">
                     Update Timer
                 </button>
             </div>
@@ -143,7 +143,7 @@ if (!isAdmin()) {
             <h2 class="text-xl font-bold mb-2 text-red-400">⚠️ Danger Zone</h2>
             <p class="text-gray-300 text-sm mb-4">Irreversible action that completely wipes everything</p>
 
-            <button onclick="resetGameData()" class="w-full bg-red-700 hover:bg-red-800 px-6 py-4 rounded font-bold transition border-2 border-red-500">
+            <button id="reset-game-btn" onclick="resetGameData()" class="w-full bg-red-700 hover:bg-red-800 px-6 py-4 rounded font-bold transition border-2 border-red-500">
                 🗑️ RESET GAME & TEAM DATA
             </button>
             <p class="text-xs text-gray-300 mt-2">
@@ -364,24 +364,30 @@ if (!isAdmin()) {
             if (!sessionState) return;
             
             const phaseEl = document.getElementById('current-phase');
+            if (!phaseEl) return;
+
             if (sessionState.gameStopped) {
                 phaseEl.textContent = 'STOPPED';
                 phaseEl.className = 'text-3xl font-bold capitalize text-red-500';
                 
-                const btn = document.getElementById('start-stop-btn');
-                btn.textContent = 'Start Game';
-                btn.className = 'flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition';
+                const btn = document.getElementById('start-game-btn');
+                if (btn) {
+                    btn.textContent = 'Start Game';
+                    btn.className = 'flex-1 bg-green-600 hover:bg-green-700 px-6 py-3 rounded font-bold transition';
+                }
             } else {
                 phaseEl.textContent = 'Trading';
                 phaseEl.className = 'text-3xl font-bold capitalize text-green-400';
                 
-                const btn = document.getElementById('start-stop-btn');
-                btn.textContent = 'Stop Game';
-                btn.className = 'flex-1 bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition';
+                const btn = document.getElementById('start-game-btn');
+                if (btn) {
+                    btn.textContent = 'Stop Game';
+                    btn.className = 'flex-1 bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-bold transition';
+                }
             }
 
             const autoAdvanceCheckbox = document.getElementById('auto-advance');
-            if (document.activeElement !== autoAdvanceCheckbox) {
+            if (autoAdvanceCheckbox && document.activeElement !== autoAdvanceCheckbox) {
                 autoAdvanceCheckbox.checked = sessionState.autoAdvance;
             }
 
@@ -390,10 +396,10 @@ if (!isAdmin()) {
             const minInput = document.getElementById('trading-duration-minutes');
             const secInput = document.getElementById('trading-duration-seconds');
             
-            if (document.activeElement !== minInput) {
+            if (minInput && document.activeElement !== minInput) {
                 minInput.value = Math.floor(tradeDuration / 60);
             }
-            if (document.activeElement !== secInput) {
+            if (secInput && document.activeElement !== secInput) {
                 secInput.value = tradeDuration % 60;
             }
 
@@ -403,15 +409,18 @@ if (!isAdmin()) {
         function updateTimer() {
             if (!sessionState) return;
 
+            const timerEl = document.getElementById('time-remaining');
+            if (!timerEl) return;
+
             if (sessionState.gameStopped) {
-                 document.getElementById('time-remaining').textContent = "STOPPED";
+                 timerEl.textContent = "STOPPED";
                  return;
             }
 
             if (sessionState.timeRemaining !== undefined) {
                 const minutes = Math.floor(sessionState.timeRemaining / 60);
                 const seconds = sessionState.timeRemaining % 60;
-                document.getElementById('time-remaining').textContent =
+                timerEl.textContent =
                     `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             }
         }

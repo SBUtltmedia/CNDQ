@@ -1,62 +1,61 @@
 <?php
 /**
  * Public Session Status API
- * GET: Returns current session number, phase, and time remaining.
- * Triggers auto-advance logic if enabled.
  */
 
 require_once __DIR__ . '/../../lib/SessionManager.php';
+require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
 header('Content-Type: application/json');
 
+ob_start();
+
+$responseData = null;
+
 try {
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $sessionManager = new SessionManager();
 
-    // Handle POST requests to acknowledge production results
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $input = json_decode(file_get_contents('php://input'), true);
-        if (isset($input['acknowledgeProduction']) && $input['acknowledgeProduction'] === true) {
-            // Clear the productionJustRan flag
-            require_once __DIR__ . '/../../lib/SystemStorage.php';
-            $storage = new SystemStorage();
-            $storage->setSessionData(['productionJustRan' => null]);
+    // Trigger the consolidated world rotation
+    $sessionManager->rotateWorld();
 
-            echo json_encode(['success' => true, 'message' => 'Production acknowledged']);
-            exit;
-        }
-    }
-
+    // Get current state
     $state = $sessionManager->getState();
 
-    // Auto-advance if time expired and auto-advance is enabled, AND game is not stopped
-    if (($state['autoAdvance'] ?? false) && ($state['timeRemaining'] ?? 0) <= 0 && !($state['gameStopped'] ?? false)) {
-        $state = $sessionManager->advanceSession();
-    }
-
     // Get recent trades for global notifications
-    require_once __DIR__ . '/../../lib/MarketplaceAggregator.php';
     $aggregator = new MarketplaceAggregator();
     $cached = $aggregator->getCachedMarketplaceData(5);
     $recentTrades = $cached['recentTrades'] ?? [];
     
-    // If cache is stale/missing, get live (this also updates the snapshot)
+    // If cache is stale/missing, get live
     if (empty($recentTrades)) {
         $allMarket = $aggregator->getAggregatedFromEvents();
         $recentTrades = $allMarket['recentTrades'] ?? [];
     }
 
-    echo json_encode([
+    $responseData = [
         'success' => true,
-        'session' => $state['currentSession'],
-        'phase' => $state['phase'],
+        'session' => $state['currentSession'] ?? 1,
+        'phase' => $state['phase'] ?? 'trading',
         'timeRemaining' => $state['timeRemaining'] ?? 0,
         'autoAdvance' => $state['autoAdvance'] ?? false,
         'productionJustRan' => $state['productionJustRan'] ?? null,
         'gameStopped' => $state['gameStopped'] ?? true,
         'gameFinished' => $state['gameFinished'] ?? false,
         'recentTrades' => $recentTrades
-    ]);
+    ];
 
-} catch (Exception $e) {
+} catch (\Throwable $e) {
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    $responseData = [
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ];
 }
+
+$unexpectedOutput = ob_get_clean();
+if (!empty($unexpectedOutput) && trim($unexpectedOutput) !== '') {
+    error_log("Unexpected output in api/session/status.php: " . $unexpectedOutput);
+}
+
+echo json_encode($responseData);

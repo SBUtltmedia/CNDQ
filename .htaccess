@@ -11,6 +11,16 @@ SetEnv PHP_VALUE "session.save_path=/home/tltsecure/apache2/htdocs/userData/sess
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # WebSocket Proxy: Forward /ws to amphp server on port 8080
+    # Requires mod_proxy and mod_proxy_wstunnel to be enabled
+    # Pass the authenticated user email from Shibboleth to the internal server
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^ws/?(.*) ws://127.0.0.1:8080/$1 [P,L,E=REMOTE_USER:%{LA-U:REMOTE_USER}]
+    
+    # Optional: Pass user info via Header if amphp needs it specifically
+    RequestHeader set X-Remote-User %{REMOTE_USER}e env=REMOTE_USER
+
     # If the request is for a file or directory that exists, serve it directly
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

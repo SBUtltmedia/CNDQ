@@ -20,11 +20,16 @@ class AdvertisementManager {
     }
 
     public function postAdvertisement($chemical, $type) {
-        return $this->storage->addAd($chemical, $type);
+        $result = $this->storage->addAd($chemical, $type);
+        require_once __DIR__ . '/WS.php';
+        WS::marketplaceUpdated();
+        return $result;
     }
 
     public function removeAdvertisement($adId) {
         $this->storage->removeAd($adId);
+        require_once __DIR__ . '/WS.php';
+        WS::marketplaceUpdated();
         return true;
     }
 

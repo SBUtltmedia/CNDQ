@@ -168,6 +168,16 @@ class ApiClient {
          */
         getShadowPrices: async () => {
             return this.get('/api/production/shadow-prices.php');
+        },
+
+        /**
+         * Get production results for a session
+         * @param {number} session - Session number
+         * @returns {Promise<{success: boolean, production: Object}>}
+         */
+        getResults: async (session) => {
+            const query = session ? `?session=${session}` : '';
+            return this.get(`/api/production/results.php${query}`);
         }
     };
 
@@ -308,10 +318,19 @@ class ApiClient {
 
     session = {
         /**
-         * Get public session status (triggers auto-advance)
+         * Get session status
+         * @returns {Promise<{success: boolean, session: number, phase: string, timeRemaining: number}>}
          */
         getStatus: async () => {
             return this.get('/api/session/status.php');
+        },
+
+        /**
+         * Acknowledge production (clears productionJustRan flag)
+         * @returns {Promise<{success: boolean}>}
+         */
+        acknowledgeProduction: async () => {
+            return this.post('/api/session/status.php', { acknowledgeProduction: true });
         }
     };
 

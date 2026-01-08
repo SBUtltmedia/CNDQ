@@ -15,6 +15,72 @@ class SessionManager {
     }
 
     /**
+     * THE WORLD TURNER LOGIC (Consolidated)
+     * This is the "Heartbeat" of the game.
+     * It is called by the CLI daemon (1s interval) and the UI API (3s interval).
+     * Returns true if any significant change occurred.
+     */
+    public function rotateWorld() {
+        $state = $this->storage->getSystemState();
+        $changed = false;
+
+        // 1. MARKETPLACE AGGREGATION
+        // We only do this if it's been more than 2 seconds since the last one
+        // or if explicitly needed.
+        require_once __DIR__ . '/MarketplaceAggregator.php';
+        $aggregator = new MarketplaceAggregator();
+        $aggregator->generateSnapshot();
+
+        // 2. SESSION MANAGEMENT
+        // Calculate current time remaining
+        $elapsed = time() - ($state['phaseStartedAt'] ?? time());
+        $timeRemaining = max(0, ($state['tradingDuration'] ?? 120) - $elapsed);
+
+        // Auto-advance if time expired
+        if (($state['autoAdvance'] ?? false) && $timeRemaining <= 0 && !($state['gameStopped'] ?? true)) {
+            $this->advanceSession();
+            require_once __DIR__ . '/WS.php';
+            WS::push('session_advanced');
+            $changed = true;
+        }
+
+        // 3. NPC LOGIC
+        if (!($state['gameStopped'] ?? true)) {
+            $lastNpcRun = $state['npcLastRun'] ?? 0;
+            if (time() - $lastNpcRun >= 10) { // 10-second throttling
+                try {
+                    require_once __DIR__ . '/NPCManager.php';
+                    $npcManager = new NPCManager();
+                    if ($npcManager->isEnabled()) {
+                        // Update last run time BEFORE running to prevent concurrent runs
+                        $this->updateNpcLastRun();
+                        
+                        // Process reflections and run cycle
+                        require_once __DIR__ . '/GlobalAggregator.php';
+                        $globalAgg = new GlobalAggregator();
+                        $globalAgg->processReflections();
+
+                        $npcManager->runTradingCycle($state['currentSession']);
+                        
+                        $globalAgg->processReflections();
+                        $changed = true;
+                    }
+                } catch (Exception $e) {
+                    error_log("rotateWorld: NPC processing failed: " . $e->getMessage());
+                }
+            }
+        }
+
+        // If something changed, poke browsers via WS
+        if ($changed) {
+            require_once __DIR__ . '/WS.php';
+            WS::marketplaceUpdated();
+        }
+
+        return $changed;
+    }
+
+    /**
      * Get current session state
      */
     public function getState() {
@@ -28,46 +94,6 @@ class SessionManager {
 
         // Calculate initial time remaining
         $calculateTimeRemaining($data);
-
-        // Process NPCs if during trading phase and not stopped
-        if (!($data['gameStopped'] ?? true)) {
-            $lastNpcRun = $data['npcLastRun'] ?? 0;
-            if (time() - $lastNpcRun >= 10) { // 10-second throttling
-                try {
-                    require_once __DIR__ . '/NPCManager.php';
-                    $npcManager = new NPCManager();
-                    if ($npcManager->isEnabled()) {
-                        // Update last run time BEFORE running to prevent concurrent runs
-                        $this->updateNpcLastRun();
-                        
-                        // 1. Process reflections (ensure NPCs have latest state from previous human actions)
-                        try {
-                            require_once __DIR__ . '/GlobalAggregator.php';
-                            $aggregator = new GlobalAggregator();
-                            $aggregator->processReflections();
-                        } catch (Exception $e) {
-                            error_log("SessionManager: Pre-NPC reflection processing failed: " . $e->getMessage());
-                        }
-
-                        // 2. Run cycle - NPCs will react to negotiations and post ads
-                        $npcManager->runTradingCycle($data['currentSession']);
-                        
-                        // 3. Process reflections again (update human counterparties with NPC actions)
-                        try {
-                            $aggregator->processReflections();
-                        } catch (Exception $e) {
-                            error_log("SessionManager: Post-NPC reflection processing failed: " . $e->getMessage());
-                        }
-
-                        // Refresh data after NPC actions
-                        $data = $this->storage->getSystemState();
-                        $calculateTimeRemaining($data);
-                    }
-                } catch (Exception $e) {
-                    error_log("SessionManager: NPC processing failed: " . $e->getMessage());
-                }
-            }
-        }
 
         return $data;
     }

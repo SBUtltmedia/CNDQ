@@ -49,18 +49,7 @@ class BrowserHelper {
         const browser = this.getBrowser();
         const page = await browser.newPage();
 
-        // Set up error logging
-        page.on('console', msg => {
-            if (this.config.verbose) {
-                console.log(`   [Browser ${msg.type()}]:`, msg.text());
-            }
-        });
-        page.on('pageerror', err => {
-            if (this.config.verbose) {
-                console.error(`   [Page Error]:`, err.message);
-            }
-        });
-
+        // Logging disabled to prevent flood
         return page;
     }
 
@@ -74,7 +63,7 @@ class BrowserHelper {
         const loginUrl = `${baseUrl}/dev.php?user=${userEmail}`;
 
         // Navigate to login page (which sets cookie and redirects)
-        await page.goto(loginUrl, { waitUntil: 'networkidle2' });
+        await page.goto(loginUrl, { waitUntil: 'networkidle2', timeout: 60000 });
 
         // Verify cookie was set
         const cookies = await page.cookies();
@@ -95,8 +84,10 @@ class BrowserHelper {
      * Navigate to a page
      */
     async navigateTo(page, pathStr, options = {}) {
-        const url = pathStr.startsWith('http') ? pathStr : `${this.config.baseUrl}${pathStr}`;
-        await page.goto(url, { waitUntil: 'networkidle2', ...options });
+        const baseUrl = this.config.baseUrl.endsWith('/') ? this.config.baseUrl : `${this.config.baseUrl}/`;
+        const cleanPath = pathStr.startsWith('/') ? pathStr.substring(1) : pathStr;
+        const url = pathStr.startsWith('http') ? pathStr : `${baseUrl}${cleanPath}`;
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000, ...options });
     }
 
     /**

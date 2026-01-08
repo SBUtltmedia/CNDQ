@@ -154,6 +154,10 @@ class NegotiationManager {
             }
 
             $this->db->commit();
+            
+            // --- WEBSOCKET PUSH ---
+            require_once __DIR__ . '/WS.php';
+            WS::refreshNegotiations([$initiatorId, $responderId]);
         } catch (Exception $e) {
             $this->db->rollback();
             throw $e;
@@ -289,6 +293,10 @@ class NegotiationManager {
             }
 
             $this->db->commit();
+            
+            // --- WEBSOCKET PUSH ---
+            require_once __DIR__ . '/WS.php';
+            WS::refreshNegotiations([$negotiation['initiatorId'], $negotiation['responderId']]);
         } catch (Exception $e) {
             $this->db->rollback();
             throw $e;
@@ -386,6 +394,10 @@ class NegotiationManager {
             }
 
             $this->db->commit();
+            
+            // --- WEBSOCKET PUSH ---
+            require_once __DIR__ . '/WS.php';
+            WS::refreshNegotiations([$initiatorId, $responderId]);
         } catch (Exception $e) {
             $this->db->rollback();
             throw $e;
@@ -446,6 +458,10 @@ class NegotiationManager {
             }
 
             $this->db->commit();
+            
+            // --- WEBSOCKET PUSH ---
+            require_once __DIR__ . '/WS.php';
+            WS::refreshNegotiations([$negotiation['initiatorId'], $negotiation['responderId']]);
         } catch (Exception $e) {
             $this->db->rollback();
             throw $e;

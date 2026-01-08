@@ -50,6 +50,17 @@ try {
                 break;
             }
         }
+
+        // FALLBACK: If session 1 requested but not found, and we have session 0, use session 0
+        // This happens for new teams showing their initial baseline.
+        if (!$productionResult && $requestedSession == 1) {
+            foreach ($productionHistory as $prod) {
+                if (isset($prod['sessionNumber']) && $prod['sessionNumber'] == 0) {
+                    $productionResult = $prod;
+                    break;
+                }
+            }
+        }
     }
 
     if (!$productionResult) {

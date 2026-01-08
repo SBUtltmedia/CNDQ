@@ -176,7 +176,9 @@ class TradeExecutor {
             $postFunds = $actorStorage->getProfile()['currentFunds'] ?? 0;
             error_log("TradeExecutor: Post-Trade Inventory: " . json_encode($postInventory) . ", Funds: $postFunds");
 
-            // ... cleanup ...
+            // --- WEBSOCKET PUSH ---
+            require_once __DIR__ . '/WS.php';
+            WS::refreshInventory([$buyerId, $sellerId]);
 
             return [
                 'success' => true,
