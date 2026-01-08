@@ -177,15 +177,16 @@ class UIPlayabilityTest {
         await adminPage.click('#npc-system-enabled');
         await this.browser.sleep(500);
         
-        // Add NPCs
-        await adminPage.select('#npc-skill-level', 'beginner');
-        await adminPage.click('button[onclick="createNPC()"]');
-        await this.browser.sleep(500);
-        await adminPage.select('#npc-skill-level', 'expert');
-        await adminPage.click('button[onclick="createNPC()"]');
+        // Add more NPCs of different levels to encourage variety and NPC-NPC interaction
+        const npcLevels = ['expert', 'novice', 'expert', 'beginner', 'expert'];
+        for (const level of npcLevels) {
+            await adminPage.select('#npc-skill-level', level);
+            await adminPage.click('button[onclick="createNPC()"]');
+            await this.browser.sleep(500);
+        }
         
         await this.browser.sleep(1000);
-        console.log('   ✅ NPCs created');
+        console.log(`   ✅ ${npcLevels.length} NPCs created`);
 
         // Set trading duration
         console.log('   ⏱️  Setting trading duration to 10m...');

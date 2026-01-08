@@ -129,9 +129,33 @@ class DualPlayabilityTest {
         console.log(`UI Actions Performed:        ${this.uiResults.uiActions}`);
         console.log(`UI - API Calls Captured:     ${this.uiResults.apiCallsCaptured}`);
         console.log(`API - Direct API Calls:      ${this.apiResults.apiCalls}`);
-        console.log(`API - Successful Calls:      ${this.apiResults.successful} (${Math.round(this.apiResults.successful / this.apiResults.apiCalls * 100)}%)`);
+        console.log(`API - Successful Calls:      ${this.apiResults.successful} (${Math.round(this.apiResults.successful / (this.apiResults.apiCalls || 1) * 100)}%)`);
         console.log(`API - Failed Calls:          ${this.apiResults.failed}`);
         console.log('-'.repeat(80));
+
+        // Market Activity (from API test as it has more detailed results)
+        if (this.apiResults && this.apiResults.apiCallLog) {
+            const leaderboardCall = this.apiResults.apiCallLog.find(c => c.endpoint === '/api/leaderboard/standings');
+            if (leaderboardCall && leaderboardCall.response && leaderboardCall.response.data) {
+                const standings = leaderboardCall.response.data.standings || [];
+                const improved = standings.filter(t => (t.roi || 0) > 0).length;
+                const totalTrades = this.apiResults.apiCallLog.filter(c => c.endpoint === '/api/negotiations/accept' && c.response.ok).length;
+
+                console.log('\n📈 MARKET ACTIVITY SUMMARY:');
+                console.log('-'.repeat(80));
+                console.log(`Total Teams:                 ${standings.length}`);
+                console.log(`Teams with Positive ROI:     ${improved} (${Math.round(improved / (standings.length || 1) * 100)}%)`);
+                console.log(`Total Trades Executed:       ${totalTrades}`);
+                
+                if (standings.length > 0) {
+                    console.log('\nFinal Standings (Top 5):');
+                    standings.slice(0, 5).forEach((team, i) => {
+                        console.log(`   ${i + 1}. ${team.teamName.padEnd(20)} ROI: ${team.roi?.toFixed(1) || '0.0'}%`);
+                    });
+                }
+                console.log('-'.repeat(80));
+            }
+        }
 
         // Error comparison
         console.log('\n🚨 ERROR COMPARISON:');

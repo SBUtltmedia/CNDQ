@@ -1,0 +1,1770 @@
+[
+  {
+    "timestamp": "2026-01-08T21:58:13.506Z",
+    "method": "POST",
+    "endpoint": "/api/admin/reset-game",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Game data completely reset! Players will get new teams when they login.",
+        "teamsReset": 207,
+        "sessionState": {
+          "currentSession": 1,
+          "phase": "TRADING",
+          "autoAdvance": true,
+          "productionDuration": 0,
+          "tradingDuration": 600,
+          "phaseStartedAt": 1767909493,
+          "npcLastRun": 0,
+          "productionRun": null,
+          "initialProductionRun": null,
+          "productionJustRan": null,
+          "gameStopped": false,
+          "gameFinished": false
+        },
+        "errors": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:15.640Z",
+    "method": "POST",
+    "endpoint": "/api/admin/session",
+    "request": {
+      "action": "setAutoAdvance",
+      "enabled": false
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Auto-Cycle (24/7 Mode) disabled",
+        "session": {
+          "currentSession": 1,
+          "phase": "TRADING",
+          "autoAdvance": false,
+          "productionDuration": 0,
+          "tradingDuration": 600,
+          "phaseStartedAt": 1767909493,
+          "npcLastRun": 1767909494,
+          "productionRun": null,
+          "initialProductionRun": null,
+          "productionJustRan": null,
+          "gameStopped": false,
+          "gameFinished": false
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:15.697Z",
+    "method": "POST",
+    "endpoint": "/api/admin/session",
+    "request": {
+      "action": "setTradingDuration",
+      "seconds": 600
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Market open duration set to 600 seconds",
+        "session": {
+          "currentSession": 1,
+          "phase": "TRADING",
+          "autoAdvance": false,
+          "productionDuration": 0,
+          "tradingDuration": 600,
+          "phaseStartedAt": 1767909495,
+          "npcLastRun": 1767909494,
+          "productionRun": null,
+          "initialProductionRun": null,
+          "productionJustRan": null,
+          "gameStopped": false,
+          "gameFinished": false
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:15.827Z",
+    "method": "POST",
+    "endpoint": "/api/admin/session",
+    "request": {
+      "action": "start"
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Game started",
+        "session": {
+          "currentSession": 1,
+          "phase": "TRADING",
+          "autoAdvance": false,
+          "productionDuration": 0,
+          "tradingDuration": 600,
+          "phaseStartedAt": 1767909495,
+          "npcLastRun": 1767909494,
+          "productionRun": null,
+          "initialProductionRun": null,
+          "productionJustRan": null,
+          "gameStopped": false,
+          "gameFinished": false
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:19.452Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:19.457Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:19.705Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909499_1431fad9",
+          "buyerId": "test_mail1@stonybrook.edu",
+          "createdAt": 1767909499,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:24.333Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:24.338Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909499_07689f2e",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909499,
+                "teamName": "Crafty Otter"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:24.654Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909504_e1d02364",
+          "buyerId": "test_mail2@stonybrook.edu",
+          "createdAt": 1767909504,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:28.660Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:28.667Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909499_07689f2e",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909499,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909504_b8360f81",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909504,
+                "teamName": "Daring Rhino"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:29.050Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909508_d04a21ae",
+          "buyerId": "test_mail3@stonybrook.edu",
+          "createdAt": 1767909508,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:43.042Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:43.052Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909499_07689f2e",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909499,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909504_b8360f81",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909504,
+                "teamName": "Daring Rhino"
+              },
+              {
+                "id": "ad_1767909508_106412f4",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909508,
+                "teamName": "Lucky Hawk"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:43.655Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909523_37d551db",
+          "buyerId": "test_mail1@stonybrook.edu",
+          "createdAt": 1767909523,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:47.594Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:47.604Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909504_b8360f81",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909504,
+                "teamName": "Daring Rhino"
+              },
+              {
+                "id": "ad_1767909508_106412f4",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909508,
+                "teamName": "Lucky Hawk"
+              },
+              {
+                "id": "ad_1767909523_a4effd5b",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909523,
+                "teamName": "Crafty Otter"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:48.162Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909527_e2772724",
+          "buyerId": "test_mail2@stonybrook.edu",
+          "createdAt": 1767909527,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:52.272Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:52.276Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909508_106412f4",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909508,
+                "teamName": "Lucky Hawk"
+              },
+              {
+                "id": "ad_1767909523_a4effd5b",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909523,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909528_59ef1339",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909528,
+                "teamName": "Daring Rhino"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:58:52.781Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909532_0be99f9b",
+          "buyerId": "test_mail3@stonybrook.edu",
+          "createdAt": 1767909532,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:06.729Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:06.734Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909523_a4effd5b",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909523,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909528_59ef1339",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909528,
+                "teamName": "Daring Rhino"
+              },
+              {
+                "id": "ad_1767909532_3bf46c08",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909532,
+                "teamName": "Lucky Hawk"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:07.296Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909546_d430eb4e",
+          "buyerId": "test_mail1@stonybrook.edu",
+          "createdAt": 1767909546,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:11.234Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:11.242Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909528_59ef1339",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909528,
+                "teamName": "Daring Rhino"
+              },
+              {
+                "id": "ad_1767909532_3bf46c08",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909532,
+                "teamName": "Lucky Hawk"
+              },
+              {
+                "id": "ad_1767909547_8c60aa01",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909547,
+                "teamName": "Crafty Otter"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:11.756Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909551_3466956b",
+          "buyerId": "test_mail2@stonybrook.edu",
+          "createdAt": 1767909551,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:15.739Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:15.744Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909532_3bf46c08",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909532,
+                "teamName": "Lucky Hawk"
+              },
+              {
+                "id": "ad_1767909547_8c60aa01",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909547,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909551_d89eb295",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909551,
+                "teamName": "Daring Rhino"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:16.011Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909555_ed05a918",
+          "buyerId": "test_mail3@stonybrook.edu",
+          "createdAt": 1767909555,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:29.944Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:29.950Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909547_8c60aa01",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909547,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909551_d89eb295",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909551,
+                "teamName": "Daring Rhino"
+              },
+              {
+                "id": "ad_1767909555_37470898",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909555,
+                "teamName": "Lucky Hawk"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:30.435Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909570_dcdf4bf3",
+          "buyerId": "test_mail1@stonybrook.edu",
+          "createdAt": 1767909570,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:34.349Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:34.355Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909551_d89eb295",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909551,
+                "teamName": "Daring Rhino"
+              },
+              {
+                "id": "ad_1767909555_37470898",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909555,
+                "teamName": "Lucky Hawk"
+              },
+              {
+                "id": "ad_1767909570_008b7647",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909570,
+                "teamName": "Crafty Otter"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:34.713Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909574_b69f4d1a",
+          "buyerId": "test_mail2@stonybrook.edu",
+          "createdAt": 1767909574,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:38.622Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:38.627Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909555_37470898",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909555,
+                "teamName": "Lucky Hawk"
+              },
+              {
+                "id": "ad_1767909570_008b7647",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909570,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909574_b7f80da6",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909574,
+                "teamName": "Daring Rhino"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:39.180Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909578_d68d3d10",
+          "buyerId": "test_mail3@stonybrook.edu",
+          "createdAt": 1767909578,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:53.056Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:53.062Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909570_008b7647",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909570,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909574_b7f80da6",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909574,
+                "teamName": "Daring Rhino"
+              },
+              {
+                "id": "ad_1767909579_8ae888f4",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909579,
+                "teamName": "Lucky Hawk"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:53.675Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909593_afb43740",
+          "buyerId": "test_mail1@stonybrook.edu",
+          "createdAt": 1767909593,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:57.633Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:57.640Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909574_b7f80da6",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909574,
+                "teamName": "Daring Rhino"
+              },
+              {
+                "id": "ad_1767909579_8ae888f4",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909579,
+                "teamName": "Lucky Hawk"
+              },
+              {
+                "id": "ad_1767909593_e8ca9023",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909593,
+                "teamName": "Crafty Otter"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T21:59:58.073Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909597_0ee0c59c",
+          "buyerId": "test_mail2@stonybrook.edu",
+          "createdAt": 1767909597,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T22:00:01.990Z",
+    "method": "GET",
+    "endpoint": "/api/negotiations/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "negotiations": []
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T22:00:01.996Z",
+    "method": "GET",
+    "endpoint": "/api/advertisements/list",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "advertisements": {
+          "C": {
+            "buy": [
+              {
+                "id": "ad_1767909579_8ae888f4",
+                "teamId": "test_mail3@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909579,
+                "teamName": "Lucky Hawk"
+              },
+              {
+                "id": "ad_1767909593_e8ca9023",
+                "teamId": "test_mail1@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909593,
+                "teamName": "Crafty Otter"
+              },
+              {
+                "id": "ad_1767909597_c86effe3",
+                "teamId": "test_mail2@stonybrook.edu",
+                "chemical": "C",
+                "type": "buy",
+                "status": "active",
+                "createdAt": 1767909597,
+                "teamName": "Daring Rhino"
+              }
+            ],
+            "sell": []
+          },
+          "N": {
+            "buy": [],
+            "sell": []
+          },
+          "D": {
+            "buy": [],
+            "sell": []
+          },
+          "Q": {
+            "buy": [],
+            "sell": []
+          }
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T22:00:02.552Z",
+    "method": "POST",
+    "endpoint": "/api/offers/bid",
+    "request": {
+      "chemical": "C",
+      "quantity": 100,
+      "maxPrice": 18
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Buy order created successfully",
+        "buyOrder": {
+          "chemical": "C",
+          "quantity": 100,
+          "maxPrice": 18,
+          "sessionNumber": 1,
+          "id": "buy_1767909602_79747243",
+          "buyerId": "test_mail3@stonybrook.edu",
+          "createdAt": 1767909602,
+          "status": "active"
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T22:00:08.952Z",
+    "method": "POST",
+    "endpoint": "/api/admin/session",
+    "request": {
+      "action": "finalize"
+    },
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "message": "Market Closed. Final production run complete.",
+        "session": {
+          "currentSession": 1,
+          "phase": "TRADING",
+          "autoAdvance": false,
+          "productionDuration": 0,
+          "tradingDuration": 600,
+          "phaseStartedAt": 1767909495,
+          "npcLastRun": 1767909598,
+          "productionRun": null,
+          "initialProductionRun": null,
+          "productionJustRan": 1767909606,
+          "gameStopped": true,
+          "gameFinished": true
+        }
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T22:00:10.957Z",
+    "method": "GET",
+    "endpoint": "/api/session/status",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "session": 1,
+        "phase": "TRADING",
+        "timeRemaining": 485,
+        "autoAdvance": false,
+        "productionJustRan": 1767909606,
+        "gameStopped": true,
+        "gameFinished": true,
+        "recentTrades": [
+          {
+            "eventId": "join_1767909505_a4b3",
+            "teamName": "Lucky Hawk",
+            "joinedAt": 1767909505.238765,
+            "type": "join"
+          },
+          {
+            "eventId": "join_1767909505_7444",
+            "teamName": "Lucky Hawk",
+            "joinedAt": 1767909505.238813,
+            "type": "join"
+          },
+          {
+            "eventId": "join_1767909505_a647",
+            "teamName": "Lucky Hawk",
+            "joinedAt": 1767909505.238733,
+            "type": "join"
+          },
+          {
+            "eventId": "join_1767909496_7635",
+            "teamName": "Crafty Otter",
+            "joinedAt": 1767909496.359503,
+            "type": "join"
+          },
+          {
+            "eventId": "join_1767909496_17d3",
+            "teamName": "Crafty Otter",
+            "joinedAt": 1767909496.359373,
+            "type": "join"
+          },
+          {
+            "eventId": "join_1767909494_d698",
+            "teamName": "Bold Lynx",
+            "joinedAt": 1767909494.981031,
+            "type": "join"
+          },
+          {
+            "eventId": "join_1767909494_36c4",
+            "teamName": "Daring Rhino",
+            "joinedAt": 1767909494.297727,
+            "type": "join"
+          },
+          {
+            "eventId": "join_1767909494_2c7d",
+            "teamName": "Daring Rhino",
+            "joinedAt": 1767909494.297594,
+            "type": "join"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T22:00:10.964Z",
+    "method": "GET",
+    "endpoint": "/api/leaderboard/standings",
+    "request": {},
+    "response": {
+      "status": 200,
+      "ok": true,
+      "data": {
+        "success": true,
+        "session": 1,
+        "phase": "TRADING",
+        "standings": [
+          {
+            "teamName": "Crafty Otter",
+            "teamId": "test_mail1@stonybrook.edu",
+            "startingFunds": 8852.73,
+            "currentFunds": 8852.73,
+            "profit": 0,
+            "roi": 0,
+            "percentChange": 0,
+            "inventory": {
+              "C": 1236.73,
+              "N": 0.003,
+              "D": 0.003,
+              "Q": 17.184
+            },
+            "totalTrades": 0,
+            "rank": 1
+          },
+          {
+            "teamName": "Bold Lynx",
+            "teamId": "admin@stonybrook.edu",
+            "startingFunds": 6816,
+            "currentFunds": 6816,
+            "profit": 0,
+            "roi": 0,
+            "percentChange": 0,
+            "inventory": {
+              "C": 572,
+              "N": 0,
+              "D": 655.8,
+              "Q": 438.2
+            },
+            "totalTrades": 0,
+            "rank": 2
+          },
+          {
+            "teamName": "Daring Rhino",
+            "teamId": "test_mail2@stonybrook.edu",
+            "startingFunds": 5598.18,
+            "currentFunds": 5598.18,
+            "profit": 0,
+            "roi": 0,
+            "percentChange": 0,
+            "inventory": {
+              "C": 463.185,
+              "N": 0.0035,
+              "D": 0.0035,
+              "Q": 840.548
+            },
+            "totalTrades": 0,
+            "rank": 3
+          },
+          {
+            "teamName": "Lucky Hawk",
+            "teamId": "test_mail3@stonybrook.edu",
+            "startingFunds": 5240,
+            "currentFunds": 5240,
+            "profit": 0,
+            "roi": 0,
+            "percentChange": 0,
+            "inventory": {
+              "C": 538,
+              "N": 582,
+              "D": 0,
+              "Q": 1018
+            },
+            "totalTrades": 0,
+            "rank": 4
+          }
+        ],
+        "totalTeams": 4
+      }
+    }
+  }
+]
