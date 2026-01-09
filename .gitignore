@@ -26,6 +26,10 @@ vba_extracted.txt
 excel_report.md
 hung.txt
 *.log
+puppeteer.out
+api-call-log-*.json
+api-playability-log-*.json
+bin/excel_extraction.json
 .DS_Store
 Thumbs.db
 
