@@ -9,6 +9,7 @@
  */
 
 require_once __DIR__ . '/SystemStorage.php';
+require_once __DIR__ . '/NPCManager.php';
 
 class SessionManager {
     private $storage;
@@ -22,81 +23,127 @@ class SessionManager {
      */
     public function getState() {
         $data = $this->storage->getSystemState();
-
-        // Helper function to calculate time remaining
-        $calculateTimeRemaining = function(&$data) {
-            $elapsed = time() - $data['phaseStartedAt'];
-            $data['timeRemaining'] = max(0, $data['tradingDuration'] - $elapsed);
-        };
-
-        // Calculate initial time remaining
-        $calculateTimeRemaining($data);
-
-        // Process NPCs if during trading phase and not stopped
-        if (!($data['gameStopped'] ?? true)) {
-            $lastNpcRun = $data['npcLastRun'] ?? 0;
-            if (time() - $lastNpcRun >= 10) { // 10-second throttling
-                try {
-                    require_once __DIR__ . '/NPCManager.php';
-                    $npcManager = new NPCManager();
-                    if ($npcManager->isEnabled()) {
-                        // Update last run time BEFORE running to prevent concurrent runs
-                        $this->updateNpcLastRun();
-                        
-                        // 1. Process reflections (ensure NPCs have latest state from previous human actions)
-                        try {
-                            require_once __DIR__ . '/GlobalAggregator.php';
-                            $aggregator = new GlobalAggregator();
-                            $aggregator->processReflections();
-                        } catch (Exception $e) {
-                            error_log("SessionManager: Pre-NPC reflection processing failed: " . $e->getMessage());
-                        }
-
-                        // 2. Run cycle - NPCs will react to negotiations and post ads
-                        $npcManager->runTradingCycle($data['currentSession']);
-                        
-                        // 3. Process reflections again (update human counterparties with NPC actions)
-                        try {
-                            $aggregator->processReflections();
-                        } catch (Exception $e) {
-                            error_log("SessionManager: Post-NPC reflection processing failed: " . $e->getMessage());
-                        }
-
-                        // Refresh data after NPC actions
-                        $data = $this->storage->getSystemState();
-                        $calculateTimeRemaining($data);
-                    }
-                } catch (Exception $e) {
-                    error_log("SessionManager: NPC processing failed: " . $e->getMessage());
-                }
-            }
-        }
-
-        // Auto-Cycle Logic (formerly Auto-Advance)
-        // Uses 'autoAdvance' key for backward compatibility, but conceptually it is Auto-Cycle
-        if (($data['autoAdvance'] ?? false)) {
-            // 1. Auto-Finalize: If trading and time expired
-            if (!($data['gameStopped'] ?? true) && !($data['gameFinished'] ?? false) && ($data['timeRemaining'] ?? 0) <= 0) {
-                // Time ran out -> Finalize Game
-                $this->finalizeGame();
-                $data = $this->storage->getSystemState(); // Refresh local data
-            }
-            
-            // 2. Auto-Start-New-Game: If finished and time expired
-            if (($data['gameFinished'] ?? false)) {
-                $endedAt = $data['productionJustRan'] ?? 0;
-                $restartDelay = 60; // 60 seconds to view results
-                if (time() - $endedAt > $restartDelay) {
-                    $this->startNewGame();
-                    $data = $this->storage->getSystemState(); // Refresh local data
-                    
-                    // Re-calculate time remaining for the new game
-                    $calculateTimeRemaining($data);
-                }
-            }
+        
+        // Ensure defaults if missing
+        if (!isset($data['timeRemaining'])) {
+            $data['timeRemaining'] = $data['tradingDuration'] ?? 300;
         }
 
         return $data;
+    }
+
+    /**
+     * Heartbeat Tick - Drives the world forward based on client activity.
+     * Called by status.php (polling).
+     */
+    public function tick() {
+        $data = $this->storage->getSystemState();
+        $updates = [];
+        $now = time();
+        $lastTick = $data['lastTick'] ?? $now;
+        
+        // RATE LIMIT: Only allow one tick update per second to prevent DB thrashing
+        // and race conditions from multiple concurrent clients.
+        if ($now - $lastTick < 1) {
+            return;
+        }
+        
+        // RATE LIMIT: Only allow one tick update per second to prevent DB thrashing
+        // and race conditions from multiple concurrent clients.
+        if ($now - $lastTick < 1) {
+            return;
+        }
+        
+        // 1. Time Management (Freeze Logic)
+        // If the gap since last tick is small (< 10s), we are "live".
+        // If the gap is large, we were "frozen", so we don't deduct the huge gap.
+        $delta = $now - $lastTick;
+        $heartbeatThreshold = 10; 
+        
+        // Initialize timeRemaining if not present
+        $timeRemaining = $data['timeRemaining'] ?? ($data['tradingDuration'] ?? 300);
+        $originalTimeRemaining = $timeRemaining;
+
+        // Only advance time if game is not stopped and not finished
+        if (!($data['gameStopped'] ?? true) && !($data['gameFinished'] ?? false)) {
+            if ($delta > 0 && $delta < $heartbeatThreshold) {
+                // We are live, time flows
+                $timeRemaining = max(0, $timeRemaining - $delta);
+            } elseif ($delta >= $heartbeatThreshold) {
+                // We were frozen. Just resume.
+                // Optionally deduct 1 second to acknowledge the tick
+                // $timeRemaining = max(0, $timeRemaining - 1);
+            }
+        }
+        
+        $updates['timeRemaining'] = $timeRemaining;
+        $updates['lastTick'] = $now;
+
+        // 2. Marketplace Aggregation
+        // Always run this to keep the market fresh for the active user
+        try {
+            require_once __DIR__ . '/MarketplaceAggregator.php';
+            $aggregator = new MarketplaceAggregator();
+            $aggregator->generateSnapshot();
+        } catch (Exception $e) {
+            error_log("SessionManager: Aggregation failed: " . $e->getMessage());
+        }
+
+        // 3. NPC Logic
+        if (!($data['gameStopped'] ?? true) && !($data['gameFinished'] ?? false)) {
+            $npcSettings = (new NPCManager())->loadConfig();
+            if (($npcSettings['enabled'] ?? false)) {
+                $lastNpcRun = $data['npcLastRun'] ?? 0;
+                
+                // Run NPCs every 10 seconds
+                if ($now - $lastNpcRun >= 10) {
+                    try {
+                        require_once __DIR__ . '/NPCManager.php';
+                        $npcManager = new NPCManager();
+                        
+                        // Process Reflections (Pre-NPC)
+                        require_once __DIR__ . '/GlobalAggregator.php';
+                        $aggregator = new GlobalAggregator(); // Re-instantiate if needed
+                        $aggregator->processReflections();
+
+                        // Run Cycle
+                        $npcManager->runTradingCycle($data['currentSession']);
+                        
+                        // Process Reflections (Post-NPC)
+                        $aggregator->processReflections();
+
+                        $updates['npcLastRun'] = $now;
+                    } catch (Exception $e) {
+                        error_log("SessionManager: NPC logic failed: " . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        // 4. Auto-Finalize (Time Ran Out)
+        if (($data['autoAdvance'] ?? false) && $timeRemaining <= 0 && !($data['gameStopped'] ?? true) && !($data['gameFinished'] ?? false)) {
+            $this->finalizeGame();
+            // finalizeGame updates state, so we should refresh or rely on its update.
+            // But we might have pending updates in $updates array (like lastTick).
+            // We should apply them carefully.
+            // Actually, finalizeGame sets gameStopped=true.
+            return; 
+        }
+
+        // 5. Auto-Restart
+        if (($data['autoAdvance'] ?? false) && ($data['gameFinished'] ?? false)) {
+            $endedAt = $data['productionJustRan'] ?? 0;
+            if ($now - $endedAt > 60) {
+                $this->startNewGame();
+                return;
+            }
+        }
+
+        // Persist updates ONLY if something changed (to save IO/Events)
+        // We always update lastTick if delta > 0 to keep the heartbeat fresh
+        if ($delta > 0 || $timeRemaining !== $originalTimeRemaining || isset($updates['npcLastRun'])) {
+            $this->storage->setSessionData($updates);
+        }
     }
 
     public function isTradingAllowed() {
@@ -253,7 +300,8 @@ class SessionManager {
     public function setTradingDuration($seconds) {
         $this->storage->setSessionData([
             'tradingDuration' => (int)$seconds,
-            'phaseStartedAt' => time()
+            'timeRemaining' => (int)$seconds,
+            'lastTick' => time()
         ]);
         return $this->storage->getSystemState();
     }
@@ -261,9 +309,9 @@ class SessionManager {
     public function toggleGameStop($stopped) {
         $updates = ['gameStopped' => (bool)$stopped];
         
-        // If starting the game, reset the phase timer so it doesn't immediately expire
+        // If starting the game, reset the tick timer
         if (!$stopped) {
-            $updates['phaseStartedAt'] = time();
+            $updates['lastTick'] = time();
             $updates['gameFinished'] = false; // Ensure finished is false if manually started
         }
         
@@ -328,7 +376,8 @@ class SessionManager {
             'autoAdvance' => true,
             'productionDuration' => 0, // Not used in new model but kept for compatibility
             'tradingDuration' => (int)$tradingDuration,
-            'phaseStartedAt' => time(),
+            'timeRemaining' => (int)$tradingDuration,
+            'lastTick' => time(),
             'productionRun' => null,
             'productionJustRan' => null, // Don't show modal at start
             'gameStopped' => false, // Game starts immediately for 24/7 loop

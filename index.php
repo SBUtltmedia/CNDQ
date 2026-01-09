@@ -22,6 +22,7 @@
     }
     </script>
 
+    <link rel="stylesheet" href="./css/tailwind.min.css">
     <link rel="stylesheet" href="./css/styles.css">
     <style>
         /* Page-specific animations */

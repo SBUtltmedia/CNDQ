@@ -11,6 +11,9 @@ header('Content-Type: application/json');
 try {
     $sessionManager = new SessionManager();
 
+    // DRIVE THE WORLD: Tick the simulation forward based on this heartbeat
+    $sessionManager->tick();
+
     // Handle POST requests to acknowledge production results
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
