@@ -139,11 +139,24 @@ class APIPlayabilityTest {
         console.log('   ✅ Game reset');
         await this.browser.sleep(2000);
 
-        // Set auto-advance to FALSE (manual control) and duration
+        // Enable NPC System
+        console.log('   🤖 Enabling NPC System...');
+        const npcToggleResponse = await api.toggleNPCSystem(true);
+        this.logApiCall('POST', '/api/admin/npc/toggle-system', { enabled: true }, npcToggleResponse);
+
+        // Create NPCs of various levels
+        const npcLevels = ['expert', 'expert', 'novice', 'novice', 'beginner'];
+        for (const level of npcLevels) {
+            console.log(`      Adding ${level} NPC...`);
+            const createResponse = await api.createNPC(level);
+            this.logApiCall('POST', '/api/admin/npc/create', { skillLevel: level }, createResponse);
+        }
+
+        // Set auto-advance to TRUE (Continuous Mode) and duration
         console.log('   ⏱️  Setting trading duration to 600s...');
 
-        const autoAdvanceResponse = await api.setAutoAdvance(false);
-        this.logApiCall('POST', '/api/admin/session', { action: 'setAutoAdvance', enabled: false }, autoAdvanceResponse);
+        const autoAdvanceResponse = await api.setAutoAdvance(true);
+        this.logApiCall('POST', '/api/admin/session', { action: 'setAutoAdvance', enabled: true }, autoAdvanceResponse);
 
         const durationResponse = await api.setTradingDuration(600);
         this.logApiCall('POST', '/api/admin/session', { action: 'setTradingDuration', seconds: 600 }, durationResponse);
@@ -158,7 +171,7 @@ class APIPlayabilityTest {
             throw new Error(`Failed to start game: ${startResponse.data.error}`);
         }
 
-        console.log('   ✅ Game started');
+        console.log('   ✅ Game started with NPCs');
         console.log(`   📡 Admin setup API calls: ${this.results.apiCalls}`);
 
         await adminPage.close();
@@ -172,7 +185,7 @@ class APIPlayabilityTest {
         console.log('-'.repeat(80));
 
         // Multi-turn trading
-        const turns = 5;
+        const turns = 10;
         for (let turn = 1; turn <= turns; turn++) {
             console.log(`\n   🔄 Turn ${turn}/${turns}...`);
             // Each player takes multiple actions sequentially
@@ -180,8 +193,8 @@ class APIPlayabilityTest {
                 await this.playerTakesActionsViaAPI(userId);
             }
             if (turn < turns) {
-                console.log('      ⏳ Waiting for market activity & NPC response...');
-                await this.browser.sleep(10000); // 10s between turns
+                console.log('      ⏳ Waiting for market activity & NPC response (15s)...');
+                await this.browser.sleep(15000); // Increased to 15s between turns
             }
         }
     }
@@ -191,42 +204,96 @@ class APIPlayabilityTest {
      */
     async playerTakesActionsViaAPI(userId) {
         const teamName = userId.split('@')[0];
-        console.log(`      👤 ${teamName} checking (API)...`);
+        console.log(`      👤 ${teamName} acting (API)...`);
 
         const page = await this.browser.loginAndNavigate(userId, '');
         const api = new ApiClient(page, this.config.baseUrl);
 
         try {
-            // Action 1: Check negotiations and ACCEPT if possible
+            // 1. Get Shadow Prices and Inventory
+            const shadowResponse = await api.getShadowPrices();
+            this.logApiCall('GET', '/api/production/shadow-prices', {}, shadowResponse);
+            
+            const shadowPrices = shadowResponse.data.shadowPrices || { C: 0, N: 0, D: 0, Q: 0 };
+            const inventory = shadowResponse.data.inventory || { C: 0, N: 0, D: 0, Q: 0 };
+
+            // 2. Respond to Negotiations (Haggle/Accept)
             const negotiationsResponse = await api.listNegotiations();
             this.logApiCall('GET', '/api/negotiations/list', {}, negotiationsResponse);
 
             if (negotiationsResponse.ok) {
                 const negotiations = negotiationsResponse.data.negotiations || [];
-                const pending = negotiations.find(n => n.status === 'pending' && n.lastOfferBy !== userId);
-                if (pending) {
-                    console.log(`         ✅ Accepting negotiation: ${pending.id}`);
-                    const acceptResponse = await api.acceptNegotiation(pending.id);
-                    this.logApiCall('POST', '/api/negotiations/accept', { negotiationId: pending.id }, acceptResponse);
-                    if (acceptResponse.ok) console.log('         🎉 Trade accepted!');
+                const pending = negotiations.filter(n => n.status === 'pending' && n.lastOfferBy !== userId);
+                
+                for (const neg of pending) {
+                    const latestOffer = neg.offers[neg.offers.length - 1];
+                    const chem = neg.chemical;
+                    const myValuation = shadowPrices[chem] || 0;
+                    
+                    let acceptable = false;
+                    const isBuyer = (neg.type === 'buy' && neg.initiator_id === userId) || (neg.type === 'sell' && neg.initiator_id !== userId);
+
+                    if (isBuyer) {
+                        // I want to buy for LESS than my shadow price
+                        if (latestOffer.price <= myValuation * 1.05) acceptable = true;
+                    } else {
+                        // I want to sell for MORE than my shadow price
+                        if (latestOffer.price >= myValuation * 0.95) acceptable = true;
+                    }
+
+                    if (acceptable) {
+                        console.log(`         ✅ Accepting negotiation: ${neg.id} for ${chem} at $${latestOffer.price}`);
+                        const acceptResponse = await api.acceptNegotiation(neg.id);
+                        this.logApiCall('POST', '/api/negotiations/accept', { negotiationId: neg.id }, acceptResponse);
+                    } else if (neg.offers.length < 3) {
+                        // Counter-offer logic (split the difference)
+                        const targetPrice = (latestOffer.price + myValuation) / 2;
+                        console.log(`         ⚖️  Countering negotiation: ${neg.id} for ${chem} at $${targetPrice.toFixed(2)}`);
+                        const counterResponse = await api.counterNegotiation(neg.id, latestOffer.quantity, targetPrice);
+                        this.logApiCall('POST', '/api/negotiations/counter', { negotiationId: neg.id, quantity: latestOffer.quantity, price: targetPrice }, counterResponse);
+                    }
                 }
             }
 
-            // Action 2: Check active ads
+            // 3. Browse Marketplace Advertisements
             const adsResponse = await api.listAdvertisements();
             this.logApiCall('GET', '/api/advertisements/list', {}, adsResponse);
-            
-            const hasMyAd = adsResponse.ok && Object.values(adsResponse.data.advertisements || {})
-                .flat().some(ad => ad.teamId === userId && ad.type === 'buy');
 
-            if (!hasMyAd) {
-                console.log('         📝 Posting buy request for C...');
-                const buyResponse = await api.createBuyOrder('C', 100, 18.00);
-                this.logApiCall('POST', '/api/offers/bid', { chemical: 'C', quantity: 100, maxPrice: 18.00 }, buyResponse);
-                if (buyResponse.ok) console.log('         ✅ Buy request posted');
+            if (adsResponse.ok) {
+                const allAds = adsResponse.data.advertisements || {};
+                for (const [chem, chemAds] of Object.entries(allAds)) {
+                    const myValuation = shadowPrices[chem] || 0;
+
+                    // Check for interesting SELL ads (I might want to BUY)
+                    for (const ad of (chemAds.sell || [])) {
+                        if (ad.teamId === userId) continue;
+                        if (myValuation > 5 && Math.random() > 0.5) {
+                            console.log(`         🤝 Initiating BUY for ${chem} from ${ad.teamName} (Shadow: $${myValuation.toFixed(2)})`);
+                            const initResponse = await api.initiateNegotiation(ad.teamId, chem, 100, myValuation * 0.9, 'buy', ad.id);
+                            this.logApiCall('POST', '/api/negotiations/initiate', { responderId: ad.teamId, chemical: chem, price: myValuation * 0.9 }, initResponse);
+                        }
+                    }
+                }
             }
+
+            // 4. Post Maintenance Ads (Buy bottlenecks, Sell surplus)
+            for (const chem of ['C', 'N', 'D', 'Q']) {
+                const valuation = shadowPrices[chem] || 0;
+                const stock = inventory[chem] || 0;
+
+                if (valuation > 10 && Math.random() > 0.7) {
+                    console.log(`         📝 Posting BUY request for ${chem} (Shadow: $${valuation.toFixed(2)})`);
+                    const bidResponse = await api.createBuyOrder(chem, 100, valuation);
+                    this.logApiCall('POST', '/api/offers/bid', { chemical: chem, quantity: 100, maxPrice: valuation }, bidResponse);
+                } else if (valuation < 1 && stock > 300 && Math.random() > 0.7) {
+                    console.log(`         📢 Posting SELL ad for ${chem} (Stock: ${Math.round(stock)})`);
+                    const adResponse = await api.postAdvertisement(chem, 'sell', "Surplus sale!");
+                    this.logApiCall('POST', '/api/advertisements/post', { chemical: chem, type: 'sell' }, adResponse);
+                }
+            }
+
         } catch (error) {
-            console.log(`         ⚠️ Error: ${error.message}`);
+            console.log(`         ⚠️ Error acting for ${teamName}: ${error.message}`);
         } finally {
             await page.close();
         }
