@@ -1,0 +1,454 @@
+[
+  {
+    "timestamp": "2026-01-08T01:59:42.883Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "/api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "trading",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 180,
+        "phaseStartedAt": 1767837361,
+        "npcLastRun": 1767837534,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767837543,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 0
+      },
+      "recentTrades": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T01:59:44.880Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "/api/admin/list-teams.php",
+    "status": 200,
+    "data": {
+      "teams": [
+        {
+          "email": "admin@stonybrook.edu",
+          "teamName": "Bold Lynx",
+          "funds": -6732,
+          "inventory": {
+            "C": 1315,
+            "N": 0,
+            "D": 223.6,
+            "Q": 508.4
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_695def8d38f01@system",
+          "teamName": "Tactical Jaguar 2",
+          "funds": -7770,
+          "inventory": {
+            "C": 42.5,
+            "N": 448.5,
+            "D": 0,
+            "Q": 577
+          },
+          "activeOffers": 0,
+          "totalTrades": 11,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_695def8d84599@system",
+          "teamName": "Cunning Falcon",
+          "funds": -6728,
+          "inventory": {
+            "C": 0,
+            "N": 45.23,
+            "D": 0.002,
+            "Q": 37.488
+          },
+          "activeOffers": 0,
+          "totalTrades": 1,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_695def8dd0d7d@system",
+          "teamName": "Master Viper",
+          "funds": -10303.64,
+          "inventory": {
+            "C": 1290,
+            "N": 1087,
+            "D": 0,
+            "Q": 1504
+          },
+          "activeOffers": 0,
+          "totalTrades": 11,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_695def8c49cb7@system",
+          "teamName": "Tactical Jaguar",
+          "funds": -10392,
+          "inventory": {
+            "C": 242.455,
+            "N": 0.0005,
+            "D": 0.0005,
+            "Q": 1892.364
+          },
+          "activeOffers": 0,
+          "totalTrades": 8,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_695def8c94c1e@system",
+          "teamName": "Elite Hawk",
+          "funds": -13395.43,
+          "inventory": {
+            "C": 0,
+            "N": 856.515,
+            "D": 0.001,
+            "Q": 1674.344
+          },
+          "activeOffers": 0,
+          "totalTrades": 23,
+          "lastUpdated": null
+        },
+        {
+          "email": "npc_695def8ce0c92@system",
+          "teamName": "Cunning Shark",
+          "funds": -5170,
+          "inventory": {
+            "C": 127.275,
+            "N": 0.0025,
+            "D": 0.0025,
+            "Q": 1844.82
+          },
+          "activeOffers": 0,
+          "totalTrades": 4,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail3@stonybrook.edu",
+          "teamName": "Lucky Hawk",
+          "funds": -8243.43,
+          "inventory": {
+            "C": 0,
+            "N": 156.115,
+            "D": 0.001,
+            "Q": 695.744
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail2@stonybrook.edu",
+          "teamName": "Daring Rhino",
+          "funds": -10346.67,
+          "inventory": {
+            "C": 963.085,
+            "N": 0.001,
+            "D": 119.084,
+            "Q": 0
+          },
+          "activeOffers": 0,
+          "totalTrades": 3,
+          "lastUpdated": null
+        },
+        {
+          "email": "test_mail1@stonybrook.edu",
+          "teamName": "Crafty Otter",
+          "funds": -9428.57,
+          "inventory": {
+            "C": 0,
+            "N": 1007.2875,
+            "D": 0.0025,
+            "Q": 553.86
+          },
+          "activeOffers": 0,
+          "totalTrades": 0,
+          "lastUpdated": null
+        }
+      ],
+      "totalTeams": 10,
+      "timestamp": 1767837584
+    }
+  },
+  {
+    "timestamp": "2026-01-08T01:59:44.882Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "/api/admin/npc/list.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "enabled": true,
+      "npcs": [
+        {
+          "id": "npc_695def8c49cb7",
+          "email": "npc_695def8c49cb7@system",
+          "teamName": "Tactical Jaguar",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767763852,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 4,
+            "totalProfit": -10548.23,
+            "lastTradeAt": 1767764010
+          },
+          "currentFunds": 11437.22,
+          "inventory": {
+            "C": 242.455,
+            "N": 0.0005,
+            "D": 0.0005,
+            "Q": 1892.364,
+            "transactionsSinceLastShadowCalc": 8,
+            "stalenessLevel": "stale"
+          }
+        },
+        {
+          "id": "npc_695def8c94c1e",
+          "email": "npc_695def8c94c1e@system",
+          "teamName": "Elite Hawk",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767763852,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 3,
+            "totalProfit": -11970,
+            "lastTradeAt": 1767763944
+          },
+          "currentFunds": 20245.99,
+          "inventory": {
+            "C": 0,
+            "N": 856.515,
+            "D": 0.001,
+            "Q": 1674.344,
+            "transactionsSinceLastShadowCalc": 23,
+            "stalenessLevel": "stale"
+          }
+        },
+        {
+          "id": "npc_695def8ce0c92",
+          "email": "npc_695def8ce0c92@system",
+          "teamName": "Cunning Shark",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767763853,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 1,
+            "totalProfit": -5585,
+            "lastTradeAt": 1767763902
+          },
+          "currentFunds": 8837.31,
+          "inventory": {
+            "C": 127.275,
+            "N": 0.0025,
+            "D": 0.0025,
+            "Q": 1844.82,
+            "transactionsSinceLastShadowCalc": 4,
+            "stalenessLevel": "stale"
+          }
+        },
+        {
+          "id": "npc_695def8d38f01",
+          "email": "npc_695def8d38f01@system",
+          "teamName": "Tactical Jaguar 2",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767763853,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 6,
+            "totalProfit": -10618.170000000002,
+            "lastTradeAt": 1767764031
+          },
+          "currentFunds": 10282.96,
+          "inventory": {
+            "C": 42.5,
+            "N": 448.5,
+            "D": 0,
+            "Q": 577,
+            "transactionsSinceLastShadowCalc": 11,
+            "stalenessLevel": "stale"
+          }
+        },
+        {
+          "id": "npc_695def8d84599",
+          "email": "npc_695def8d84599@system",
+          "teamName": "Cunning Falcon",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767763853,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 1,
+            "totalProfit": -250,
+            "lastTradeAt": 1767763876
+          },
+          "currentFunds": 6596.9,
+          "inventory": {
+            "C": 0,
+            "N": 45.23,
+            "D": 0.002,
+            "Q": 37.488,
+            "transactionsSinceLastShadowCalc": 1,
+            "stalenessLevel": "warning"
+          }
+        },
+        {
+          "id": "npc_695def8dd0d7d",
+          "email": "npc_695def8dd0d7d@system",
+          "teamName": "Master Viper",
+          "skillLevel": "expert",
+          "active": true,
+          "createdAt": 1767763854,
+          "tradeThresholds": {
+            "lowInventory": 300,
+            "excessInventory": 1800
+          },
+          "stats": {
+            "totalTrades": 5,
+            "totalProfit": -6811.079999999999,
+            "lastTradeAt": 1767764020
+          },
+          "currentFunds": 18218.19,
+          "inventory": {
+            "C": 1290,
+            "N": 1087,
+            "D": -987,
+            "Q": 1504,
+            "transactionsSinceLastShadowCalc": 11,
+            "stalenessLevel": "stale"
+          }
+        }
+      ],
+      "count": 6
+    }
+  },
+  {
+    "timestamp": "2026-01-08T01:59:45.867Z",
+    "teamId": "admin",
+    "method": "GET",
+    "url": "/api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "trading",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 180,
+        "phaseStartedAt": 1767837361,
+        "npcLastRun": 1767837534,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767837543,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 0
+      },
+      "recentTrades": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T01:59:54.157Z",
+    "teamId": "admin-advance",
+    "method": "GET",
+    "url": "/api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "trading",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 180,
+        "phaseStartedAt": 1767837361,
+        "npcLastRun": 1767837534,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767837593,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 0
+      },
+      "recentTrades": []
+    }
+  },
+  {
+    "timestamp": "2026-01-08T01:59:55.185Z",
+    "teamId": "admin-advance",
+    "method": "POST",
+    "url": "/api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "message": "Advanced to session 1",
+      "session": {
+        "currentSession": 1,
+        "phase": "trading",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 180,
+        "phaseStartedAt": 1767837361,
+        "npcLastRun": 1767837534,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767837593,
+        "gameStopped": true,
+        "gameFinished": true
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-08T01:59:55.193Z",
+    "teamId": "admin-advance",
+    "method": "GET",
+    "url": "/api/admin/session.php",
+    "status": 200,
+    "data": {
+      "success": true,
+      "session": {
+        "currentSession": 1,
+        "phase": "trading",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 180,
+        "phaseStartedAt": 1767837361,
+        "npcLastRun": 1767837534,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767837593,
+        "gameStopped": true,
+        "gameFinished": true,
+        "timeRemaining": 0
+      },
+      "recentTrades": []
+    }
+  }
+]

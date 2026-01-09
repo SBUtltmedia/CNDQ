@@ -19,7 +19,8 @@
   "devDependencies": {
     "@axe-core/puppeteer": "^4.11.0",
     "axe-core": "^4.11.0",
-    "lighthouse": "^13.0.1"
+    "lighthouse": "^13.0.1",
+    "playwright": "^1.57.0"
   },
   "author": "",
   "license": "ISC",

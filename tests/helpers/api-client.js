@@ -246,16 +246,16 @@ class ApiClient {
         return this.get('admin/npc/list.php');
     }
 
-    async createNPC(teamName) {
-        return this.post('admin/npc/create.php', { teamName });
+    async createNPC(skillLevel, count = 1) {
+        return this.post('admin/npc/create.php', { skillLevel, count });
     }
 
     async deleteNPC(npcId) {
         return this.post('admin/npc/delete.php', { npcId });
     }
 
-    async toggleNPC(npcId, isActive) {
-        return this.post('admin/npc/toggle.php', { npcId, isActive });
+    async toggleNPC(npcId, active) {
+        return this.post('admin/npc/toggle.php', { npcId, active });
     }
 
     async toggleNPCSystem(enabled) {

@@ -1,0 +1,433 @@
+[
+  {
+    "timestamp": "2026-01-09T04:29:15.418Z",
+    "method": "POST",
+    "endpoint": "admin/reset-game",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Game data completely reset! Players will get new teams when they login.",
+      "teamsReset": 83,
+      "sessionState": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": true,
+        "productionDuration": 0,
+        "tradingDuration": 600,
+        "phaseStartedAt": 1767932955,
+        "npcLastRun": 0,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false
+      },
+      "errors": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:15.615Z",
+    "method": "POST",
+    "endpoint": "admin/session/start",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Game started",
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": false,
+        "productionDuration": 0,
+        "tradingDuration": 600,
+        "phaseStartedAt": 1767932955,
+        "npcLastRun": 0,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": null,
+        "gameStopped": false,
+        "gameFinished": false
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:15.819Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:16.083Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932955_7559afc8",
+        "buyerId": "test_mail1@stonybrook.edu",
+        "createdAt": 1767932955,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:16.284Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:16.485Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932956_10378580",
+        "buyerId": "test_mail2@stonybrook.edu",
+        "createdAt": 1767932956,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:16.688Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:16.920Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932956_4bb3d424",
+        "buyerId": "test_mail3@stonybrook.edu",
+        "createdAt": 1767932956,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:18.952Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:19.293Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932959_93146590",
+        "buyerId": "test_mail1@stonybrook.edu",
+        "createdAt": 1767932959,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:19.326Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:19.654Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932959_77302f9d",
+        "buyerId": "test_mail2@stonybrook.edu",
+        "createdAt": 1767932959,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:19.682Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:20.055Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932959_7aa1f3ab",
+        "buyerId": "test_mail3@stonybrook.edu",
+        "createdAt": 1767932959,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:22.074Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:22.401Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932962_93cc42c7",
+        "buyerId": "test_mail1@stonybrook.edu",
+        "createdAt": 1767932962,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:22.407Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:22.757Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932962_fc380708",
+        "buyerId": "test_mail2@stonybrook.edu",
+        "createdAt": 1767932962,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:22.763Z",
+    "method": "GET",
+    "endpoint": "negotiations/list",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "negotiations": []
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:23.116Z",
+    "method": "POST",
+    "endpoint": "offers/bid",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Buy order created successfully",
+      "buyOrder": {
+        "chemical": "C",
+        "quantity": 100,
+        "maxPrice": 15,
+        "sessionNumber": 1,
+        "id": "buy_1767932962_8fab95d1",
+        "buyerId": "test_mail3@stonybrook.edu",
+        "createdAt": 1767932962,
+        "status": "active"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:24.315Z",
+    "method": "POST",
+    "endpoint": "admin/session/finalize",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "message": "Market Closed. Final production run complete.",
+      "session": {
+        "currentSession": 1,
+        "phase": "TRADING",
+        "autoAdvance": false,
+        "productionDuration": 0,
+        "tradingDuration": 600,
+        "phaseStartedAt": 1767932955,
+        "npcLastRun": 1767932955,
+        "productionRun": null,
+        "initialProductionRun": null,
+        "productionJustRan": 1767932963,
+        "gameStopped": true,
+        "gameFinished": true
+      }
+    }
+  },
+  {
+    "timestamp": "2026-01-09T04:29:24.323Z",
+    "method": "GET",
+    "endpoint": "leaderboard/standings",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "success": true,
+      "session": 1,
+      "phase": "TRADING",
+      "standings": [
+        {
+          "teamName": "Crafty Otter",
+          "teamId": "test_mail1@stonybrook.edu",
+          "startingFunds": 8043.33,
+          "currentFunds": 8043.33,
+          "profit": 0,
+          "roi": 0,
+          "percentChange": 0,
+          "inventory": {
+            "C": 1653.045,
+            "N": 0.002,
+            "D": 989.543,
+            "Q": 0
+          },
+          "totalTrades": 0,
+          "rank": 1
+        },
+        {
+          "teamName": "Lucky Hawk",
+          "teamId": "test_mail3@stonybrook.edu",
+          "startingFunds": 6230,
+          "currentFunds": 6230,
+          "profit": 0,
+          "roi": 0,
+          "percentChange": 0,
+          "inventory": {
+            "C": 522.875,
+            "N": 0,
+            "D": 839.375,
+            "Q": 0
+          },
+          "totalTrades": 0,
+          "rank": 2
+        },
+        {
+          "teamName": "Daring Rhino",
+          "teamId": "test_mail2@stonybrook.edu",
+          "startingFunds": 5669.71,
+          "currentFunds": 5669.71,
+          "profit": 0,
+          "roi": 0,
+          "percentChange": 0,
+          "inventory": {
+            "C": 0,
+            "N": 461.6575,
+            "D": 0.0005,
+            "Q": 1450.772
+          },
+          "totalTrades": 0,
+          "rank": 3
+        }
+      ],
+      "totalTeams": 3
+    }
+  }
+]
