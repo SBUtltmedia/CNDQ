@@ -810,14 +810,21 @@
                             <label for="new-neg-chemical" class="block text-sm font-semibold mb-2 text-gray-300">Chemical</label>
                             <input type="text" id="new-neg-chemical" readonly class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white cursor-not-allowed">
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="new-neg-quantity" class="block text-sm font-semibold mb-2 text-gray-300">Quantity (gallons)</label>
-                                <input type="number" id="new-neg-quantity" min="1" step="1" class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white">
+                        <div>
+                            <label for="new-neg-quantity" class="block text-sm font-semibold mb-2 text-gray-300">Quantity (gallons)</label>
+                            <input type="range" id="new-neg-quantity-slider" min="1" max="2000" step="10" value="100" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-500 mb-2">
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="new-neg-qty-minus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition">−</button>
+                                <input type="number" id="new-neg-quantity" min="1" step="10" value="100" class="flex-1 bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white text-center font-bold">
+                                <button type="button" id="new-neg-qty-plus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition">+</button>
                             </div>
-                            <div>
-                                <label for="new-neg-price" class="block text-sm font-semibold mb-2 text-gray-300">Your Offer Price ($)</label>
-                                <input type="number" id="new-neg-price" min="0" step="0.01" class="w-full bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white">
+                        </div>
+                        <div>
+                            <label for="new-neg-price" class="block text-sm font-semibold mb-2 text-gray-300">Your Offer Price ($)</label>
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="new-neg-price-minus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition">−</button>
+                                <input type="number" id="new-neg-price" min="0" step="0.50" value="5.00" class="flex-1 bg-gray-600 border border-gray-500 rounded px-4 py-2 text-white text-center font-bold">
+                                <button type="button" id="new-neg-price-plus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition">+</button>
                             </div>
                         </div>
                         <p class="text-xs text-gray-300">Your Shadow Price: <span class="text-green-400 font-semibold">$<span id="new-neg-shadow-hint">0</span></span></p>

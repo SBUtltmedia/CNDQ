@@ -15,7 +15,9 @@ $sessionManager = new SessionManager();
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Get current session state (public - triggers auto-advance if enabled)
-        // SessionManager::getState() handles NPC cycles and auto-advance logic internally.
+        // Tick the simulation forward based on this heartbeat
+        $sessionManager->tick();
+
         $state = $sessionManager->getState();
 
         // Get recent trades for global notifications

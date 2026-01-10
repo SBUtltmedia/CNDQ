@@ -273,87 +273,56 @@ class UIPlayabilityTest {
                     const card = document.querySelector(`negotiation-card[negotiation-id="${id}"]`);
                     card.querySelector('[role="button"]').click();
                 }, negotiationId);
-
+                
                 await this.browser.sleep(1500);
-
-                // Use shadow price logic (like Expert NPCs) to decide
-                const tradeDecision = await page.evaluate(() => {
-                    try {
-                        // Get chemical from modal
-                        const chemText = document.querySelector('#negotiation-detail-view .text-xl')?.textContent || '';
-                        const chemical = chemText.match(/Chemical ([CNDQ])/)?.[1];
-
-                        // Get offered price
-                        const priceText = document.querySelector('.text-2xl.font-bold.text-green-400')?.textContent;
-                        const price = parseFloat(priceText?.replace('$', ''));
-
-                        // Get shadow price (from app state)
-                        const shadowPrices = window.marketplaceApp?.shadowPrices || {};
-                        const shadowPrice = shadowPrices[chemical] || 0;
-
-                        // Determine if we're buying or selling by checking UI text
-                        const modalText = document.querySelector('#negotiation-detail-view')?.textContent || '';
-                        const isBuying = modalText.includes('wants to sell') || modalText.toLowerCase().includes('seller');
-
-                        // Expert strategy: Buy < 95% shadow, Sell > 105% shadow
-                        const shouldAccept = isBuying ?
-                            (price < shadowPrice * 0.95) :
-                            (price > shadowPrice * 1.05);
-
-                        return { shouldAccept, price, shadowPrice, chemical, isBuying };
-                    } catch (e) {
-                        // If analysis fails, accept (NPCs offer good deals)
-                        return { shouldAccept: true, price: 0, shadowPrice: 0, chemical: '?', isBuying: false };
-                    }
-                });
-
-                if (tradeDecision.shouldAccept) {
+                
+                // Randomly accept or counter
+                const shouldAccept = Math.random() > 0.5;
+                if (shouldAccept) {
                     await page.click('#accept-offer-btn');
                     await this.browser.sleep(1000);
                     await page.click('#confirm-ok');
-                    console.log(`         🎉 Trade accepted! (${tradeDecision.chemical}: $${tradeDecision.price.toFixed(2)} vs shadow $${tradeDecision.shadowPrice.toFixed(2)})`);
+                    console.log('         🎉 Trade accepted!');
                 } else {
-                    // Counter at shadow price
-                    console.log(`         ⚖️  Countering at shadow price for ${tradeDecision.chemical}`);
+                    console.log('         ⚖️  Haggling: Opening counter-offer form...');
                     await page.click('#show-counter-form-btn');
                     await this.browser.sleep(500);
 
-                    await page.evaluate((targetPrice) => {
+                    // Interact with Haggle Sliders
+                    // We must use page.evaluate to trigger 'input' events so the UI updates totals
+                    await page.evaluate(() => {
+                        // 1. Adjust Quantity Slider (+10)
+                        const qtySlider = document.getElementById('haggle-qty-slider');
+                        if (qtySlider) {
+                            const currentQty = parseInt(qtySlider.value);
+                            const maxQty = parseInt(qtySlider.max);
+                            // Ensure we don't go over max
+                            qtySlider.value = Math.min(maxQty, currentQty + 10);
+                            qtySlider.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+
+                        // 2. Adjust Price Slider (Increase slightly to be competitive/annoying)
                         const priceSlider = document.getElementById('haggle-price-slider');
                         if (priceSlider) {
-                            priceSlider.value = targetPrice.toFixed(2);
+                            const currentPrice = parseFloat(priceSlider.value);
+                            const maxPrice = parseFloat(priceSlider.max);
+                            // Change price by +0.50
+                            priceSlider.value = Math.min(maxPrice, currentPrice + 0.50).toFixed(2);
                             priceSlider.dispatchEvent(new Event('input', { bubbles: true }));
                         }
-                    }, tradeDecision.shadowPrice);
-                    await this.browser.sleep(300);
 
-                    const canCounter = await page.evaluate(() => {
-                        const btn = document.getElementById('submit-counter-btn');
-                        return btn && !btn.disabled;
-                    });
-
-                    if (canCounter) {
-                        try {
-                            await page.click('#submit-counter-btn', { timeout: 1000 });
-                            console.log('         📤 Counter-offer sent');
-                        } catch (err) {
-                            // Accept if counter fails
-                            await page.click('#cancel-counter-btn');
-                            await this.browser.sleep(200);
-                            await page.click('#accept-offer-btn');
-                            await this.browser.sleep(1000);
-                            await page.click('#confirm-ok');
-                            console.log('         🎉 Accepted after counter failed');
+                        // 3. Adjust Reaction Slider (Show some emotion)
+                        const reactionSlider = document.getElementById('haggle-reaction-slider');
+                        if (reactionSlider) {
+                            reactionSlider.value = 50; // "Disappointed"
+                            reactionSlider.dispatchEvent(new Event('input', { bubbles: true }));
                         }
-                    } else {
-                        // Accept if can't counter
-                        await page.click('#cancel-counter-btn');
-                        await this.browser.sleep(200);
-                        await page.click('#accept-offer-btn');
-                        await this.browser.sleep(1000);
-                        await page.click('#confirm-ok');
-                        console.log('         🎉 Accepted (counter unavailable)');
-                    }
+                    });
+                    console.log('         🎚️  Adjusted sliders (Qty, Price, Reaction)');
+                    await this.browser.sleep(500);
+
+                    await page.click('#submit-counter-btn');
+                    console.log('         📤 Counter-offer sent');
                 }
                 await this.browser.sleep(2000);
             }
@@ -403,7 +372,7 @@ class UIPlayabilityTest {
                     const priceInput = document.getElementById('respond-price');
 
                     if (qtyInput && priceInput) {
-                        qtyInput.value = '50'; // Lower quantity to avoid inventory issues
+                        qtyInput.value = '100'; // Standard quantity
                         priceInput.value = '5.00'; // Reasonable price
                         return true;
                     }
@@ -467,8 +436,7 @@ class UIPlayabilityTest {
         const finalizeBtn = await adminPage.$('button[onclick="finalizeGame()"]');
         if (finalizeBtn) {
             await finalizeBtn.click();
-            // Wait longer for finalization: game stop + final production for all teams
-            await this.browser.sleep(5000);
+            await this.browser.sleep(3000);
 
             // Verify market stopped
             const phase = await adminPage.evaluate(() => {
@@ -512,8 +480,6 @@ class UIPlayabilityTest {
         // Wait for Game Over Overlay
         console.log('   ⌛ Waiting for Game Over overlay...');
         await page.waitForSelector('#game-over-overlay:not(.hidden)', { timeout: 10000 });
-        // Wait for final production to complete and leaderboard to refresh
-        await this.browser.sleep(3000);
         await this.screenshot(page, 'game-over-overlay');
 
         // 3. Read Leaderboard from UI

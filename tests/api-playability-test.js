@@ -110,10 +110,10 @@ class APIPlayabilityTest {
                 console.error(error.stack);
             }
             await this.browser.close();
-            process.exit(1);
+            throw error;
         }
 
-        process.exit(this.results.failed > 0 ? 1 : 0);
+        return this.results.failed === 0;
     }
 
     /**
@@ -439,7 +439,9 @@ class APIPlayabilityTest {
 // Run the test
 if (require.main === module) {
     const test = new APIPlayabilityTest(CONFIG);
-    test.run().catch(error => {
+    test.run().then(success => {
+        process.exit(success ? 0 : 1);
+    }).catch(error => {
         console.error('Fatal error:', error);
         process.exit(1);
     });

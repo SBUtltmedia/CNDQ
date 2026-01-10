@@ -16,18 +16,20 @@ class SystemStorage extends TeamStorage {
      */
     public function getSystemState() {
         $state = $this->getState();
-        
+
         // If no session events yet, provide sensible defaults
         // This ensures the first call to getState() returns a valid object
         // that SessionManager can then use or auto-reset.
         $session = $state['session'] ?? [];
-        
+
         return [
             'currentSession' => $session['currentSession'] ?? 1,
             'phase' => $session['phase'] ?? 'PRODUCTION',
             'autoAdvance' => $session['autoAdvance'] ?? true,
             'productionDuration' => $session['productionDuration'] ?? 2,
             'tradingDuration' => $session['tradingDuration'] ?? 300,
+            'timeRemaining' => $session['timeRemaining'] ?? null,
+            'lastTick' => $session['lastTick'] ?? null,
             'phaseStartedAt' => $session['phaseStartedAt'] ?? time(),
             'npcLastRun' => $session['npcLastRun'] ?? 0,
             'productionRun' => $session['productionRun'] ?? null,

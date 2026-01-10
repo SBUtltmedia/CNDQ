@@ -61,7 +61,16 @@ class SessionManager {
         $heartbeatThreshold = 10; 
         
         // Initialize timeRemaining if not present
-        $timeRemaining = $data['timeRemaining'] ?? ($data['tradingDuration'] ?? 300);
+        // CRITICAL: Only use tradingDuration as fallback if timeRemaining has NEVER been set
+        // Once set, always use the stored value to prevent reset bugs
+        if (!isset($data['timeRemaining'])) {
+            // First time initialization - use tradingDuration
+            $timeRemaining = $data['tradingDuration'] ?? 300;
+            // Force save this initialization
+            $updates['timeRemaining'] = $timeRemaining;
+        } else {
+            $timeRemaining = $data['timeRemaining'];
+        }
         $originalTimeRemaining = $timeRemaining;
 
         // Only advance time if game is not stopped and not finished
@@ -75,7 +84,7 @@ class SessionManager {
                 // $timeRemaining = max(0, $timeRemaining - 1);
             }
         }
-        
+
         $updates['timeRemaining'] = $timeRemaining;
         $updates['lastTick'] = $now;
 

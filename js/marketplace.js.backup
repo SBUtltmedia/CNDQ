@@ -1337,11 +1337,6 @@ class MarketplaceApp {
         document.getElementById('haggle-price-display').textContent = price.toFixed(2);
         document.getElementById('haggle-total').textContent = total.toFixed(2);
 
-        // Determine if user is selling
-        const type = this.currentNegotiation.type || 'buy';
-        const userIsSelling = (this.currentNegotiation.initiatorId === this.currentUser && type === 'sell') ||
-                            (this.currentNegotiation.responderId === this.currentUser && type === 'buy');
-
         // Real-time Resource Validation
         const errorEl = document.getElementById('haggle-error');
         const submitBtn = document.getElementById('submit-counter-btn');
@@ -1381,9 +1376,12 @@ class MarketplaceApp {
         // Persistent NPC Patience (Loaded from state)
         const negId = this.currentNegotiation.id;
         const negState = this.profile.negotiationStates?.[negId] || { patience: 100 };
-
+        
         // Calculate "Predicted" patience drain if we send this offer
         const ratio = price / Math.max(0.01, shadowPrice);
+        const type = this.currentNegotiation.type || 'buy';
+        const userIsSelling = (this.currentNegotiation.initiatorId === this.currentUser && type === 'sell') || 
+                            (this.currentNegotiation.responderId === this.currentUser && type === 'buy');
 
         // Show the persistent bar
         const patienceBar = document.getElementById('patience-bar');

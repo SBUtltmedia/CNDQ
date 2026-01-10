@@ -53,9 +53,28 @@ class NegotiationManager {
     }
 
     /**
+     * Helper to check if team has enough inventory
+     */
+    private function checkInventory($teamId, $chemical, $quantity) {
+        require_once __DIR__ . '/TeamStorage.php';
+        $storage = new TeamStorage($teamId);
+        $inventory = $storage->getInventory();
+        $current = $inventory[$chemical] ?? 0;
+        
+        if ($current < $quantity) {
+            throw new Exception("Insufficient inventory. You have {$current} of Chemical {$chemical}, but tried to offer {$quantity}.");
+        }
+    }
+
+    /**
      * Create new negotiation
      */
     public function createNegotiation($initiatorId, $initiatorName, $responderId, $responderName, $chemical, $initialOffer, $sessionNumber = null, $type = 'buy', $adId = null) {
+        // Validation: If selling, check inventory
+        if ($type === 'sell') {
+            $this->checkInventory($initiatorId, $chemical, $initialOffer['quantity']);
+        }
+
         $negotiationId = 'neg_' . time() . '_' . bin2hex(random_bytes(4));
 
         $initiatorName = $initiatorName ?: $initiatorId;
@@ -201,6 +220,16 @@ class NegotiationManager {
             throw new Exception('Wait for other team to respond');
         }
 
+        // Validation: If selling, check inventory
+        // If type='buy', Initiator is Buyer, Responder is Seller.
+        // If type='sell', Initiator is Seller, Responder is Buyer.
+        $isSeller = ($negotiation['type'] === 'buy' && $fromTeamId === $negotiation['responderId']) ||
+                    ($negotiation['type'] === 'sell' && $fromTeamId === $negotiation['initiatorId']);
+        
+        if ($isSeller) {
+            $this->checkInventory($fromTeamId, $negotiation['chemical'], $quantity);
+        }
+
         // Calculate heat info
         $heatIsHot = 0;
         $heatTotal = 0;
@@ -315,6 +344,30 @@ class NegotiationManager {
         // Verify it's their turn (can only accept other team's offer)
         if ($negotiation['lastOfferBy'] === $acceptingTeamId) {
             throw new Exception('Cannot accept your own offer');
+        }
+
+        // Validation: If I am accepting a 'Buy' offer (meaning I am selling), check MY inventory.
+        // If the other person offered to BUY, they are the Buyer, I am the Seller.
+        // If the other person offered to SELL, they are the Seller, I am the Buyer.
+        
+        // Who made the last offer? The OTHER person.
+        // If negotiation['type'] is 'buy':
+        //    - Initiator is Buyer. Responder is Seller.
+        //    - If I am Responder (accepting Initiator's Buy Offer), I am Seller. Check My Inv.
+        //    - If I am Initiator (accepting Responder's Sell Counter), I am Buyer.
+        // If negotiation['type'] is 'sell':
+        //    - Initiator is Seller. Responder is Buyer.
+        //    - If I am Responder (accepting Initiator's Sell Offer), I am Buyer.
+        //    - If I am Initiator (accepting Responder's Buy Counter), I am Seller. Check My Inv.
+
+        $isSeller = ($negotiation['type'] === 'buy' && $acceptingTeamId === $negotiation['responderId']) ||
+                    ($negotiation['type'] === 'sell' && $acceptingTeamId === $negotiation['initiatorId']);
+
+        if ($isSeller) {
+            // Get the last offer to know quantity
+            $offers = $this->getNegotiationOffers($negotiationId);
+            $lastOffer = end($offers);
+            $this->checkInventory($acceptingTeamId, $negotiation['chemical'], $lastOffer['quantity']);
         }
 
         // Start transaction
