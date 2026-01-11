@@ -194,7 +194,7 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
                 // Use aggressive haggling - start with lowball
                 $initialOffer = $marketPrice * (1 - self::INITIAL_LOWBALL_PERCENT);
 
-                error_log("NPC {$this->npc['teamName']}: ACQUIRE deficit {$chemical}, lowball ${initialOffer} (asking ${marketPrice})");
+                error_log("NPC {$this->npc['teamName']}: ACQUIRE deficit {$chemical}, lowball \${$initialOffer} (asking \${$marketPrice})");
 
                 return [
                     'type' => 'initiate_negotiation',
@@ -238,7 +238,7 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
                 // Start with highball
                 $initialAsk = max($marketPrice, $shadowPrice * (1 + self::INITIAL_HIGHBALL_PERCENT));
 
-                error_log("NPC {$this->npc['teamName']}: SELL excess {$chemical}, highball ${initialAsk} (bid ${marketPrice})");
+                error_log("NPC {$this->npc['teamName']}: SELL excess {$chemical}, highball \${$initialAsk} (bid \${$marketPrice})");
 
                 return [
                     'type' => 'initiate_negotiation',
@@ -399,7 +399,7 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
                 $maxAcceptable = $shadowPrice * (1.4 + $this->variability * 0.2);
 
                 if ($price <= $maxAcceptable) {
-                    error_log("NPC {$this->npc['teamName']}: ACCEPT buy deficit {$chemical} @ ${price}");
+                    error_log("NPC {$this->npc['teamName']}: ACCEPT buy deficit {$chemical} @ \${$price}");
                     return [
                         'type' => 'accept_negotiation',
                         'negotiationId' => $negotiation['id']
@@ -448,7 +448,7 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
                 $minAcceptable = $shadowPrice * (0.9 - $this->variability * 0.1);
 
                 if ($price >= $minAcceptable) {
-                    error_log("NPC {$this->npc['teamName']}: ACCEPT sell excess {$chemical} @ ${price}");
+                    error_log("NPC {$this->npc['teamName']}: ACCEPT sell excess {$chemical} @ \${$price}");
                     return [
                         'type' => 'accept_negotiation',
                         'negotiationId' => $negotiation['id']
@@ -467,7 +467,7 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
                 $minAcceptable = $shadowPrice * (1.5 - $this->variability * 0.2);
 
                 if ($price >= $minAcceptable) {
-                    error_log("NPC {$this->npc['teamName']}: ACCEPT sell (reluctantly) {$chemical} @ ${price}");
+                    error_log("NPC {$this->npc['teamName']}: ACCEPT sell (reluctantly) {$chemical} @ \${$price}");
                     return [
                         'type' => 'accept_negotiation',
                         'negotiationId' => $negotiation['id']

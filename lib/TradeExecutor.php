@@ -99,7 +99,7 @@ class TradeExecutor {
                 
                 $actorStorage->addNotification([
                     'type' => 'trade_completed',
-                    'message' => "Bought $quantity gallons of $chemical from $counterpartyName for $" . number_format($totalCost, 2)
+                    'message' => "Bought $quantity gallons of $chemical from $counterpartyName for " . ($totalCost < 0 ? '-$' : '$') . number_format(abs($totalCost), 2)
                 ]);
             } else {
                 // Seller is acting: they lose chemicals, gain money
@@ -125,7 +125,7 @@ class TradeExecutor {
 
                 $actorStorage->addNotification([
                     'type' => 'trade_completed',
-                    'message' => "Sold $quantity gallons of $chemical to $counterpartyName for $" . number_format($totalCost, 2)
+                    'message' => "Sold $quantity gallons of $chemical to $counterpartyName for " . ($totalCost < 0 ? '-$' : '$') . number_format(abs($totalCost), 2)
                 ]);
             }
             

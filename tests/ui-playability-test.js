@@ -26,13 +26,15 @@ const CONFIG = {
     targetSessions: 1,
     headless: process.argv.includes('--headless'),
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
-    keepOpen: process.argv.includes('--keep-open')
+    keepOpen: process.argv.includes('--keep-open'),
+    skillLevel: 'expert', // Default oracle skill level
+    skillLevels: null     // Optional array of skill levels for RPCs
 };
 
 class UIPlayabilityTest {
     constructor(config) {
-        this.config = config;
-        this.browser = new BrowserHelper(config);
+        this.config = { ...CONFIG, ...config }; // Merge provided config with defaults
+        this.browser = new BrowserHelper(this.config);
         this.apiCallLog = [];
         this.results = {
             uiActions: 0,
@@ -147,6 +149,204 @@ class UIPlayabilityTest {
     }
 
     /**
+     * Shadow DOM Helper to find elements across shadow boundaries
+     */
+    async findInShadow(page, selectorChain) {
+        return page.evaluateHandle((selectors) => {
+            let root = document;
+            for (const sel of selectors) {
+                if (!root) return null;
+                // If root is a document/element, query it. 
+                // If it has shadowRoot, query that.
+                const next = (root.shadowRoot || root).querySelector(sel);
+                root = next;
+            }
+            return root;
+        }, selectorChain);
+    }
+
+    /**
+     * Execute a TRADE action suggested by the Oracle
+     */
+    async executeOracleTradeAction(page, action) {
+        if (action.type === 'initiate_negotiation') {
+            const chemical = action.chemical;
+            const responderName = action.responderName;
+            
+            console.log(`         👉 Oracle: Attempting to SELL ${chemical} to ${responderName}`);
+
+            // Pierce Shadow DOM to find the specific "Sell to" button
+            const btnHandle = await this.findInShadow(page, [
+                `chemical-card[chemical="${chemical}"]`,
+                `advertisement-item[teamname="${responderName}"]`, 
+                'button.btn'
+            ]);
+
+            if (btnHandle && !await btnHandle.evaluate(el => !el)) {
+                await btnHandle.click();
+                
+                // Wait for Respond Modal
+                await page.waitForSelector('#respond-modal:not(.hidden)', { timeout: 3000 });
+                
+                // Fill Form
+                await page.evaluate((qty, price) => {
+                    const qInput = document.getElementById('respond-quantity');
+                    const pInput = document.getElementById('respond-price');
+                    if (qInput) qInput.value = qty;
+                    if (pInput) pInput.value = price;
+                    // Trigger input events
+                    qInput?.dispatchEvent(new Event('input'));
+                    pInput?.dispatchEvent(new Event('input'));
+                }, action.quantity, action.price);
+                
+                // Submit
+                await page.click('#respond-submit-btn');
+                console.log('         ✓ Submitted Sell Offer');
+                this.results.uiActions++;
+                await this.browser.sleep(1000);
+            } else {
+                console.warn(`         ⚠️ Could not find Buy Request from ${responderName} for ${chemical}`);
+            }
+
+        } else if (action.type === 'create_buy_order') {
+            const chemical = action.chemical;
+            console.log(`         👉 Oracle: Posting Buy Request for ${chemical}`);
+            
+            // Find "Post Buy Request" button in chemical card
+            const btnHandle = await this.findInShadow(page, [
+                `chemical-card[chemical="${chemical}"]`,
+                '#post-buy-btn'
+            ]);
+            
+            if (btnHandle && !await btnHandle.evaluate(el => !el)) {
+                await btnHandle.click();
+                
+                // Wait for Offer Modal
+                await page.waitForSelector('#offer-modal:not(.hidden)', { timeout: 3000 });
+                
+                // Fill Form
+                await page.evaluate((qty, price) => {
+                    const qInput = document.getElementById('offer-quantity');
+                    const slider = document.getElementById('offer-quantity-slider');
+                    const pInput = document.getElementById('offer-price');
+                    
+                    if (qInput) qInput.value = qty;
+                    if (slider) slider.value = qty;
+                    if (pInput) pInput.value = price;
+                    
+                    qInput?.dispatchEvent(new Event('input'));
+                    pInput?.dispatchEvent(new Event('input'));
+                }, action.quantity, action.maxPrice);
+                
+                // Submit
+                await page.click('#offer-submit-btn');
+                console.log('         ✓ Submitted Buy Request');
+                this.results.uiActions++;
+                await this.browser.sleep(1000);
+            }
+        }
+    }
+
+    /**
+     * Execute a NEGOTIATION RESPONSE action suggested by the Oracle
+     */
+    async executeOracleNegotiationAction(page, action) {
+        // 1. Open Negotiation List if needed (or ensure we are on the page)
+        // Ideally, we find the specific card.
+        
+        const negId = action.negotiationId;
+        
+        // Find the specific negotiation-card element
+        const cardFound = await page.evaluate(async (id) => {
+            // Check both pending and active lists
+            const cards = document.querySelectorAll('negotiation-card');
+            for (const card of cards) {
+                if (card.negotiation && card.negotiation.id === id) {
+                    // NegotiationCard uses Light DOM with role="button"
+                    const clickable = card.querySelector('[role="button"]');
+                    if (clickable) {
+                        clickable.click();
+                        return true;
+                    }
+                    card.click();
+                    return true;
+                }
+            }
+            return false;
+        }, negId);
+
+        if (!cardFound) {
+            // Try opening the "View All" modal if not already visible
+            const viewAllBtn = await page.$('#view-all-negotiations-btn');
+            if (viewAllBtn) {
+                await viewAllBtn.click();
+                await this.browser.sleep(1000);
+                // Try finding again inside modal
+                // (The evaluate above queries the whole document, so it should have found it if rendered)
+                // But maybe it wasn't rendered until modal open.
+                // Re-run find logic... (omitted for brevity, relying on main view summary for now or assume modal is managed)
+            }
+            console.warn(`         ⚠️ Negotiation card ${negId} not found`);
+            return;
+        }
+
+        // 2. Wait for Detail View
+        await page.waitForSelector('#negotiation-detail-view:not(.hidden)', { timeout: 3000 });
+
+        // 3. Perform Action
+        if (action.type === 'accept_negotiation') {
+            console.log('         👉 Oracle: Accepting Offer');
+            try {
+                await page.waitForSelector('#accept-offer-btn:not(.hidden)', { visible: true, timeout: 5000 });
+                await page.click('#accept-offer-btn');
+                
+                await page.waitForSelector('#confirm-ok', { visible: true, timeout: 2000 });
+                await page.click('#confirm-ok');
+                this.results.uiActions++;
+            } catch (e) {
+                console.error('         ❌ Failed to click accept button:', e.message);
+            }
+            
+        } else if (action.type === 'counter_negotiation') {
+            console.log(`         👉 Oracle: Countering: ${action.quantity} @ $${action.price}`);
+            
+            await page.click('#show-counter-form-btn');
+            await page.waitForSelector('#counter-offer-form:not(.hidden)');
+            
+            await page.evaluate((qty, price) => {
+                const qSlider = document.getElementById('haggle-qty-slider');
+                const pSlider = document.getElementById('haggle-price-slider');
+                
+                if (qSlider) {
+                    qSlider.value = qty;
+                    qSlider.dispatchEvent(new Event('input'));
+                }
+                if (pSlider) {
+                    pSlider.value = price;
+                    pSlider.dispatchEvent(new Event('input'));
+                }
+            }, action.quantity, action.price);
+            
+            await page.click('#submit-counter-btn');
+            this.results.uiActions++;
+            
+        } else if (action.type === 'reject_negotiation') {
+            console.log('         👉 Oracle: Rejecting');
+            await page.click('#reject-offer-btn');
+            await page.waitForSelector('#confirm-ok', { timeout: 2000 });
+            await page.click('#confirm-ok');
+            this.results.uiActions++;
+        }
+
+        // Wait/Close
+        await this.browser.sleep(1000);
+        const closeBtn = await page.$('#negotiation-modal-close-btn');
+        if (closeBtn && await closeBtn.boundingBox()) {
+            await closeBtn.click();
+        }
+    }
+
+    /**
      * Setup game via admin UI
      */
     async setupGame() {
@@ -177,8 +377,9 @@ class UIPlayabilityTest {
         await adminPage.click('#npc-system-enabled');
         await this.browser.sleep(500);
         
-        // Add more NPCs of different levels to encourage variety and NPC-NPC interaction
-        const npcLevels = ['expert', 'novice', 'expert', 'beginner', 'expert'];
+        // Add NPCs based on config (default to 3 mixed if not specified)
+        const npcLevels = this.config.npcLevels || ['beginner', 'novice', 'expert'];
+        
         for (const level of npcLevels) {
             await adminPage.select('#npc-skill-level', level);
             await adminPage.click('button[onclick="createNPC()"]');
@@ -186,16 +387,17 @@ class UIPlayabilityTest {
         }
         
         await this.browser.sleep(1000);
-        console.log(`   ✅ ${npcLevels.length} NPCs created`);
+        console.log(`   ✅ ${npcLevels.length} NPCs created (${npcLevels.join(', ')})`);
 
         // Set trading duration
-        console.log('   ⏱️  Setting trading duration to 10m...');
+        const duration = this.config.tradingDuration || 10;
+        console.log(`   ⏱️  Setting trading duration to ${duration}m...`);
         this.results.uiActions++;
 
         const durationInput = await adminPage.$('#trading-duration-minutes');
         if (durationInput) {
             await durationInput.click({ clickCount: 3 }); // Select all
-            await durationInput.type('10'); // 10 minutes
+            await durationInput.type(duration.toString());
 
             await adminPage.click('button[onclick="updateTradingDuration()"]');
             await this.browser.sleep(500);
@@ -231,8 +433,9 @@ class UIPlayabilityTest {
         for (let turn = 1; turn <= turns; turn++) {
             console.log(`\n   🔄 Turn ${turn}/${turns}...`);
             // Each player takes multiple actions sequentially
-            for (const userId of this.config.testUsers) {
-                await this.playerTakesActions(userId, turn);
+            for (let i = 0; i < this.config.testUsers.length; i++) {
+                const userId = this.config.testUsers[i];
+                await this.playerTakesActions(userId, turn, i);
             }
             if (turn < turns) {
                 console.log('      ⏳ Waiting for market activity & NPC response...');
@@ -242,11 +445,18 @@ class UIPlayabilityTest {
     }
 
     /**
-     * A player takes various UI actions
+     * A player takes various UI actions using the Strategy Oracle
      */
-    async playerTakesActions(userId, turnNum) {
+    async playerTakesActions(userId, turnNum, playerIndex = 0) {
         const teamName = userId.split('@')[0];
-        console.log(`      👤 ${teamName} acting...`);
+        
+        // Determine skill level for this specific player
+        let skill = this.config.skillLevel;
+        if (Array.isArray(this.config.skillLevels) && this.config.skillLevels[playerIndex]) {
+            skill = this.config.skillLevels[playerIndex];
+        }
+
+        console.log(`      👤 ${teamName} acting (via ${skill} Oracle)...`);
 
         const page = await this.browser.loginAndNavigate(userId, '');
         await this.setupApiMonitoring(page, userId);
@@ -258,192 +468,34 @@ class UIPlayabilityTest {
                 return el && el.textContent.toUpperCase().includes('TRADING');
             }, { timeout: 10000 }).catch(() => {});
 
-            // Action 1: Check for negotiations
-            const negotiationId = await page.evaluate(() => {
-                const card = document.querySelector('negotiation-card[context="summary"]');
-                if (card && card.innerText.includes('Your Turn')) {
-                    return card.getAttribute('negotiation-id');
+            // 1. Consult the Oracle
+            const oracleResponse = await page.evaluate(async (skill) => {
+                try {
+                    const res = await fetch(`./api/test/consult-strategy.php?skill=${skill}`);
+                    return await res.json();
+                } catch (e) {
+                    return { success: false, error: e.message };
                 }
-                return null;
-            });
+            }, skill);
 
-            if (negotiationId) {
-                console.log(`         ✅ Responding to negotiation: ${negotiationId}`);
-                await page.evaluate((id) => {
-                    const card = document.querySelector(`negotiation-card[negotiation-id="${id}"]`);
-                    card.querySelector('[role="button"]').click();
-                }, negotiationId);
-
-                await this.browser.sleep(1500);
-
-                // Use shadow price logic (like Expert NPCs) to decide
-                const tradeDecision = await page.evaluate(() => {
-                    try {
-                        // Get chemical from modal
-                        const chemText = document.querySelector('#negotiation-detail-view .text-xl')?.textContent || '';
-                        const chemical = chemText.match(/Chemical ([CNDQ])/)?.[1];
-
-                        // Get offered price
-                        const priceText = document.querySelector('.text-2xl.font-bold.text-green-400')?.textContent;
-                        const price = parseFloat(priceText?.replace('$', ''));
-
-                        // Get shadow price (from app state)
-                        const shadowPrices = window.marketplaceApp?.shadowPrices || {};
-                        const shadowPrice = shadowPrices[chemical] || 0;
-
-                        // Determine if we're buying or selling by checking UI text
-                        const modalText = document.querySelector('#negotiation-detail-view')?.textContent || '';
-                        const isBuying = modalText.includes('wants to sell') || modalText.toLowerCase().includes('seller');
-
-                        // Expert strategy: Buy < 95% shadow, Sell > 105% shadow
-                        const shouldAccept = isBuying ?
-                            (price < shadowPrice * 0.95) :
-                            (price > shadowPrice * 1.05);
-
-                        return { shouldAccept, price, shadowPrice, chemical, isBuying };
-                    } catch (e) {
-                        // If analysis fails, accept (NPCs offer good deals)
-                        return { shouldAccept: true, price: 0, shadowPrice: 0, chemical: '?', isBuying: false };
-                    }
-                });
-
-                if (tradeDecision.shouldAccept) {
-                    await page.click('#accept-offer-btn');
-                    await this.browser.sleep(1000);
-                    await page.click('#confirm-ok');
-                    console.log(`         🎉 Trade accepted! (${tradeDecision.chemical}: $${tradeDecision.price.toFixed(2)} vs shadow $${tradeDecision.shadowPrice.toFixed(2)})`);
-                } else {
-                    // Counter at shadow price
-                    console.log(`         ⚖️  Countering at shadow price for ${tradeDecision.chemical}`);
-                    await page.click('#show-counter-form-btn');
-                    await this.browser.sleep(500);
-
-                    await page.evaluate((targetPrice) => {
-                        const priceSlider = document.getElementById('haggle-price-slider');
-                        if (priceSlider) {
-                            priceSlider.value = targetPrice.toFixed(2);
-                            priceSlider.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    }, tradeDecision.shadowPrice);
-                    await this.browser.sleep(300);
-
-                    const canCounter = await page.evaluate(() => {
-                        const btn = document.getElementById('submit-counter-btn');
-                        return btn && !btn.disabled;
-                    });
-
-                    if (canCounter) {
-                        try {
-                            await page.click('#submit-counter-btn', { timeout: 1000 });
-                            console.log('         📤 Counter-offer sent');
-                        } catch (err) {
-                            // Accept if counter fails
-                            await page.click('#cancel-counter-btn');
-                            await this.browser.sleep(200);
-                            await page.click('#accept-offer-btn');
-                            await this.browser.sleep(1000);
-                            await page.click('#confirm-ok');
-                            console.log('         🎉 Accepted after counter failed');
-                        }
-                    } else {
-                        // Accept if can't counter
-                        await page.click('#cancel-counter-btn');
-                        await this.browser.sleep(200);
-                        await page.click('#accept-offer-btn');
-                        await this.browser.sleep(1000);
-                        await page.click('#confirm-ok');
-                        console.log('         🎉 Accepted (counter unavailable)');
-                    }
-                }
-                await this.browser.sleep(2000);
+            if (!oracleResponse.success) {
+                console.warn('         ⚠️ Oracle Error:', oracleResponse.error);
+                return;
             }
 
-            // Action 2: Browse advertisements and respond to BUY requests from NPCs
-            // NPCs post BUY ads at high prices - we should respond by selling to them
-            const respondedToAd = await page.evaluate(() => {
-                const chemicals = ['C', 'N', 'D', 'Q'];
+            const rec = oracleResponse.recommendation;
 
-                // Try each chemical to find a BUY advertisement from NPCs
-                for (const chem of chemicals) {
-                    // Find advertisement items for this chemical
-                    const chemCard = document.querySelector(`chemical-card[chemical="${chem}"]`);
-                    if (!chemCard) continue;
-
-                    // Look for "buy" ads (NPCs want to buy from us - we should sell)
-                    const buyAds = chemCard.renderRoot?.querySelectorAll('advertisement-item[type="buy"]') || [];
-
-                    console.log(`Found ${buyAds.length} buy ads for ${chem}`);
-
-                    // Find ads that aren't ours (from NPCs)
-                    for (const adItem of buyAds) {
-                        if (adItem.isMyAd) continue;
-
-                        // Click the "Sell to" button to respond to their buy request
-                        const btn = adItem.renderRoot?.querySelector('.btn');
-                        if (btn) {
-                            console.log(`Clicking to sell ${chem} to ${adItem.teamName}`);
-                            btn.click();
-                            return { success: true, chemical: chem, teamName: adItem.teamName };
-                        }
-                    }
-                }
-                return { success: false };
-            });
-
-            if (respondedToAd.success) {
-                console.log(`         💰 Responding to buy request for ${respondedToAd.chemical} from ${respondedToAd.teamName}`);
-
-                // Wait for respond modal to open
-                await page.waitForSelector('#respond-modal:not(.hidden)', { timeout: 3000 }).catch(() => {});
-                await this.browser.sleep(1000);
-
-                // Fill in response form (offering to sell to them)
-                const formFilled = await page.evaluate(() => {
-                    const qtyInput = document.getElementById('respond-quantity');
-                    const priceInput = document.getElementById('respond-price');
-
-                    if (qtyInput && priceInput) {
-                        qtyInput.value = '50'; // Lower quantity to avoid inventory issues
-                        priceInput.value = '5.00'; // Reasonable price
-                        return true;
-                    }
-                    return false;
-                });
-
-                if (formFilled) {
-                    await page.click('#respond-submit-btn').catch(() => {});
-                    await this.browser.sleep(1000);
-                    console.log(`         📤 Sell offer submitted`);
-                    this.results.uiActions++;
-                }
+            // 2. Execute Oracle Recommendation
+            if (rec.negotiation_action) {
+                console.log(`         🧠 Oracle Rec: Respond to Negotiation (${rec.negotiation_action.type})`);
+                await this.executeOracleNegotiationAction(page, rec.negotiation_action);
+            } else if (rec.trade_action) {
+                console.log(`         🧠 Oracle Rec: New Trade (${rec.trade_action.type})`);
+                await this.executeOracleTradeAction(page, rec.trade_action);
+            } else {
+                console.log('         💤 Oracle Rec: Wait / No profitable moves');
             }
 
-            // Action 3: Post a Buy Request for a random chemical (as fallback)
-            const chemicals = ['C', 'N', 'D', 'Q'];
-            const chem = chemicals[Math.floor(Math.random() * chemicals.length)];
-
-            console.log(`         📢 Posting interest to buy ${chem}...`);
-            await page.evaluate((c) => {
-                if (window.app) window.app.openBuyRequestModal(c);
-            }, chem);
-
-            await page.waitForSelector('#offer-modal:not(.hidden)', { timeout: 5000 });
-
-            // Interact with new UI controls (sliders/buttons)
-            // Increase quantity by 20 (click + twice)
-            await page.click('#quantity-plus');
-            await this.browser.sleep(100);
-            await page.click('#quantity-plus');
-            await this.browser.sleep(100);
-
-            // Decrease price by 0.50 (click - once)
-            await page.click('#price-minus');
-            await this.browser.sleep(100);
-
-            await page.click('#offer-submit-btn');
-            await this.browser.sleep(1500);
-
-            this.results.uiActions++;
         } catch (error) {
             this.results.errors.push({ turn: turnNum, user: userId, error: error.message });
             console.log(`         ❌ Error: ${error.message}`);

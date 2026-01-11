@@ -25,10 +25,12 @@ foreach ($teams as $row) {
     $teamName = $profile['teamName'] ?? 'Unknown';
     $type = strpos($email, 'npc_') === 0 ? ' [NPC]' : '';
 
-    printf("%-30s $%13.2f $%13.2f %+9.2f%%\n",
+    $startStr = ($starting < 0 ? '-$' : '$') . number_format(abs($starting), 2);
+    $currStr = ($current < 0 ? '-$' : '$') . number_format(abs($current), 2);
+    printf("%-30s %15s %15s %+9.2f%%\n",
         substr($teamName . $type, 0, 30),
-        $starting,
-        $current,
+        $startStr,
+        $currStr,
         $roi
     );
 }

@@ -1,0 +1,5447 @@
+{
+  "timestamp": "2026-01-11T04:29:00.731Z",
+  "passed": false,
+  "roiValidation": {
+    "passed": false,
+    "failures": [
+      "Only 0 trade(s) executed (minimum: 3)"
+    ],
+    "warnings": [
+      "Less than half of teams (1/7) achieved positive ROI"
+    ],
+    "criteria": {
+      "minPositiveRoiTeams": 1,
+      "minAverageRoi": -50,
+      "minTotalTrades": 3,
+      "maxAcceptableErrors": 2
+    },
+    "actual": {
+      "positiveRoiTeams": 1,
+      "averageRoi": -14.112385754258682,
+      "totalTrades": 0,
+      "totalErrors": 0,
+      "standings": [
+        {
+          "teamName": "Crafty Otter",
+          "teamId": "test_mail1@stonybrook.edu",
+          "startingFunds": 17129.71,
+          "currentFunds": 17129.71,
+          "profit": 0,
+          "roi": 0,
+          "percentChange": 0,
+          "inventory": {
+            "C": 0,
+            "N": 24.6575,
+            "D": 0.0005,
+            "Q": 8.772
+          },
+          "totalTrades": 0,
+          "rank": 1
+        },
+        {
+          "teamName": "Shrewd Viper",
+          "teamId": "npc_6963260e19172@system",
+          "startingFunds": 9276,
+          "currentFunds": 9536.7,
+          "profit": 260.7,
+          "roi": 2.8104786545925045,
+          "percentChange": 2.8104786545925045,
+          "inventory": {
+            "C": 0,
+            "N": 320.3,
+            "D": 314.7,
+            "Q": 0
+          },
+          "totalTrades": 8,
+          "rank": 2
+        },
+        {
+          "teamName": "Diligent Fox",
+          "teamId": "npc_6963260dbe3f4@system",
+          "startingFunds": 10487.43,
+          "currentFunds": 7727.78,
+          "profit": -2759.65,
+          "roi": -26.31388242877426,
+          "percentChange": -26.31388242877426,
+          "inventory": {
+            "C": 730,
+            "N": 0,
+            "D": 612,
+            "Q": 1241
+          },
+          "totalTrades": 12,
+          "rank": 3
+        },
+        {
+          "teamName": "Daring Rhino",
+          "teamId": "test_mail2@stonybrook.edu",
+          "startingFunds": 9693,
+          "currentFunds": 7230.6,
+          "profit": -2462.4,
+          "roi": -25.403899721448465,
+          "percentChange": -25.403899721448465,
+          "inventory": {
+            "C": 0,
+            "N": 610.05,
+            "D": 660.95,
+            "Q": 0
+          },
+          "totalTrades": 1,
+          "rank": 4
+        },
+        {
+          "teamName": "Bold Lynx",
+          "teamId": "admin@stonybrook.edu",
+          "startingFunds": 6720,
+          "currentFunds": 6720,
+          "profit": 0,
+          "roi": 0,
+          "percentChange": 0,
+          "inventory": {
+            "C": 1785,
+            "N": 0,
+            "D": 292,
+            "Q": 34
+          },
+          "totalTrades": 0,
+          "rank": 5
+        },
+        {
+          "teamName": "Dizzy Manatee",
+          "teamId": "npc_6963260d6ef28@system",
+          "startingFunds": 7068,
+          "currentFunds": 5628,
+          "profit": -1440,
+          "roi": -20.37351443123939,
+          "percentChange": -20.37351443123939,
+          "inventory": {
+            "C": 659,
+            "N": 0,
+            "D": 1230.4,
+            "Q": 1751.6
+          },
+          "totalTrades": 1,
+          "rank": 6
+        },
+        {
+          "teamName": "Lucky Hawk",
+          "teamId": "test_mail3@stonybrook.edu",
+          "startingFunds": 6460,
+          "currentFunds": 4553.92,
+          "profit": -1906.08,
+          "roi": -29.505882352941175,
+          "percentChange": -29.505882352941175,
+          "inventory": {
+            "C": 0,
+            "N": 408.3,
+            "D": 367.7,
+            "Q": 0
+          },
+          "totalTrades": 6,
+          "rank": 7
+        }
+      ]
+    }
+  },
+  "uiResults": {
+    "uiActions": 6,
+    "apiCallsCaptured": 60,
+    "errors": [],
+    "warnings": [],
+    "apiCallLog": [
+      {
+        "timestamp": "2026-01-11T04:22:30.990Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105350,
+            "phaseStartedAt": 1768105350,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": true,
+            "gameFinished": false
+          },
+          "recentTrades": [
+            {
+              "eventId": "join_1768105346_db39",
+              "teamName": "Bold Lynx",
+              "joinedAt": 1768105346.681427,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105196_36d3",
+              "teamName": "Clever Shark",
+              "joinedAt": 1768105196.238883,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105196_36b1",
+              "teamName": "Agile Panther",
+              "joinedAt": 1768105196.05174,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105195_4d4d",
+              "teamName": "Alert Raccoon",
+              "joinedAt": 1768105195.913115,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105195_789c",
+              "teamName": "Expert Jaguar",
+              "joinedAt": 1768105195.866563,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105195_2361",
+              "teamName": "Crafty Otter",
+              "joinedAt": 1768105195.680441,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105195_72af",
+              "teamName": "Snappy Unicorn",
+              "joinedAt": 1768105195.602053,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105195_97b7",
+              "teamName": "Daring Rhino",
+              "joinedAt": 1768105195.492128,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105195_c3b8",
+              "teamName": "Lucky Hawk",
+              "joinedAt": 1768105195.307591,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105195_b95b",
+              "teamName": "Silent Lion",
+              "joinedAt": 1768105195.294859,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:31.047Z",
+        "teamId": "admin",
+        "method": "POST",
+        "url": "api/admin/reset-game.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Game data completely reset! Players will get new teams when they login.",
+          "teamsReset": 54,
+          "sessionState": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105350,
+            "phaseStartedAt": 1768105351,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": true,
+            "gameFinished": false
+          },
+          "errors": []
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:31.115Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105351,
+            "phaseStartedAt": 1768105351,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": true,
+            "gameFinished": false
+          },
+          "recentTrades": []
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:31.122Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/list-teams.php",
+        "status": 200,
+        "data": {
+          "teams": [],
+          "totalTeams": 0,
+          "timestamp": 1768105351
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:31.129Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/npc/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "enabled": true,
+          "npcs": [],
+          "count": 0
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:32.924Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/list-teams.php",
+        "status": 200,
+        "data": {
+          "teams": [],
+          "totalTeams": 0,
+          "timestamp": 1768105352
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:32.928Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/npc/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "enabled": true,
+          "npcs": [],
+          "count": 0
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:33.024Z",
+        "teamId": "admin",
+        "method": "POST",
+        "url": "api/admin/npc/toggle-system.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "NPC system disabled",
+          "enabled": false
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:33.028Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/npc/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "enabled": false,
+          "npcs": [],
+          "count": 0
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:33.847Z",
+        "teamId": "admin",
+        "method": "POST",
+        "url": "api/admin/npc/create.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Created 1 beginner NPC(s)",
+          "npcIds": [
+            "npc_6963258981815"
+          ],
+          "npcs": [
+            {
+              "id": "npc_6963258981815",
+              "email": "npc_6963258981815@system",
+              "teamName": "Erratic Tortoise",
+              "skillLevel": "beginner",
+              "active": true,
+              "createdAt": 1768105353,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1824,
+                "N": 579,
+                "D": 1549,
+                "Q": 737,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:33.853Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/npc/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "enabled": false,
+          "npcs": [
+            {
+              "id": "npc_6963258981815",
+              "email": "npc_6963258981815@system",
+              "teamName": "Erratic Tortoise",
+              "skillLevel": "beginner",
+              "active": true,
+              "createdAt": 1768105353,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1824,
+                "N": 579,
+                "D": 1549,
+                "Q": 737,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            }
+          ],
+          "count": 1
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:33.968Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105353,
+            "phaseStartedAt": 1768105353,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": true,
+            "gameFinished": false
+          },
+          "recentTrades": [
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:34.383Z",
+        "teamId": "admin",
+        "method": "POST",
+        "url": "api/admin/npc/create.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Created 1 novice NPC(s)",
+          "npcIds": [
+            "npc_6963258a0f60b"
+          ],
+          "npcs": [
+            {
+              "id": "npc_6963258a0f60b",
+              "email": "npc_6963258a0f60b@system",
+              "teamName": "Careful Badger",
+              "skillLevel": "novice",
+              "active": true,
+              "createdAt": 1768105354,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1118,
+                "N": 1844,
+                "D": 1114,
+                "Q": 1642,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:34.388Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/npc/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "enabled": false,
+          "npcs": [
+            {
+              "id": "npc_6963258981815",
+              "email": "npc_6963258981815@system",
+              "teamName": "Erratic Tortoise",
+              "skillLevel": "beginner",
+              "active": true,
+              "createdAt": 1768105353,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1824,
+                "N": 579,
+                "D": 1549,
+                "Q": 737,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            },
+            {
+              "id": "npc_6963258a0f60b",
+              "email": "npc_6963258a0f60b@system",
+              "teamName": "Careful Badger",
+              "skillLevel": "novice",
+              "active": true,
+              "createdAt": 1768105354,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1118,
+                "N": 1844,
+                "D": 1114,
+                "Q": 1642,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            }
+          ],
+          "count": 2
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:34.897Z",
+        "teamId": "admin",
+        "method": "POST",
+        "url": "api/admin/npc/create.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Created 1 expert NPC(s)",
+          "npcIds": [
+            "npc_6963258a8d55c"
+          ],
+          "npcs": [
+            {
+              "id": "npc_6963258a8d55c",
+              "email": "npc_6963258a8d55c@system",
+              "teamName": "Brilliant Falcon",
+              "skillLevel": "expert",
+              "active": true,
+              "createdAt": 1768105354,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1924,
+                "N": 1650,
+                "D": 639,
+                "Q": 1851,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:34.902Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/npc/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "enabled": false,
+          "npcs": [
+            {
+              "id": "npc_6963258981815",
+              "email": "npc_6963258981815@system",
+              "teamName": "Erratic Tortoise",
+              "skillLevel": "beginner",
+              "active": true,
+              "createdAt": 1768105353,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1824,
+                "N": 579,
+                "D": 1549,
+                "Q": 737,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            },
+            {
+              "id": "npc_6963258a0f60b",
+              "email": "npc_6963258a0f60b@system",
+              "teamName": "Careful Badger",
+              "skillLevel": "novice",
+              "active": true,
+              "createdAt": 1768105354,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1118,
+                "N": 1844,
+                "D": 1114,
+                "Q": 1642,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            },
+            {
+              "id": "npc_6963258a8d55c",
+              "email": "npc_6963258a8d55c@system",
+              "teamName": "Brilliant Falcon",
+              "skillLevel": "expert",
+              "active": true,
+              "createdAt": 1768105354,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 0,
+              "inventory": {
+                "C": 1924,
+                "N": 1650,
+                "D": 639,
+                "Q": 1851,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            }
+          ],
+          "count": 3
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:36.205Z",
+        "teamId": "admin",
+        "method": "POST",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Market open duration set to 3600 seconds",
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105356,
+            "phaseStartedAt": 1768105356,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": true,
+            "gameFinished": false
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:36.210Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105356,
+            "phaseStartedAt": 1768105356,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": true,
+            "gameFinished": false
+          },
+          "recentTrades": [
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:36.715Z",
+        "teamId": "admin",
+        "method": "POST",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Game started",
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105356,
+            "phaseStartedAt": 1768105356,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": false,
+            "gameFinished": false
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:36.743Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105356,
+            "phaseStartedAt": 1768105356,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": false,
+            "gameFinished": false
+          },
+          "recentTrades": [
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:36.928Z",
+        "teamId": "admin",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3600,
+            "lastTick": 1768105356,
+            "phaseStartedAt": 1768105356,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": false,
+            "gameFinished": false
+          },
+          "recentTrades": [
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:41.067Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail1@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": null
+          },
+          "debug": {
+            "inventory": {
+              "C": 1117,
+              "N": 1920,
+              "D": 504,
+              "Q": 1796,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:44.480Z",
+        "teamId": "test_mail2@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail2@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": null
+          },
+          "debug": {
+            "inventory": {
+              "C": 1990,
+              "N": 1941,
+              "D": 977,
+              "Q": 896,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:22:47.860Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail3@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": {
+              "type": "create_offer",
+              "chemical": "D",
+              "quantity": 156,
+              "minPrice": 0
+            }
+          },
+          "debug": {
+            "inventory": {
+              "C": 934,
+              "N": 1437,
+              "D": 1086,
+              "Q": 556,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 4,
+              "N": 0,
+              "D": 0,
+              "Q": 7.5
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:01.321Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail1@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": {
+              "type": "create_offer",
+              "chemical": "N",
+              "quantity": 236,
+              "minPrice": 0
+            }
+          },
+          "debug": {
+            "inventory": {
+              "C": 1117,
+              "N": 1920,
+              "D": 504,
+              "Q": 1796,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:04.733Z",
+        "teamId": "test_mail2@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail2@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": null
+          },
+          "debug": {
+            "inventory": {
+              "C": 1990,
+              "N": 1941,
+              "D": 977,
+              "Q": 896,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:08.179Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail3@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": null
+          },
+          "debug": {
+            "inventory": {
+              "C": 934,
+              "N": 1437,
+              "D": 1086,
+              "Q": 556,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 4,
+              "N": 0,
+              "D": 0,
+              "Q": 7.5
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:21.611Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail1@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": null
+          },
+          "debug": {
+            "inventory": {
+              "C": 1117,
+              "N": 1920,
+              "D": 504,
+              "Q": 1796,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:25.271Z",
+        "teamId": "test_mail2@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail2@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": {
+              "type": "create_buy_order",
+              "chemical": "C",
+              "quantity": 243,
+              "maxPrice": 0.48
+            }
+          },
+          "debug": {
+            "inventory": {
+              "C": 1990,
+              "N": 1941,
+              "D": 977,
+              "Q": 896,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:25.285Z",
+        "teamId": "test_mail2@stonybrook.edu",
+        "method": "GET",
+        "url": "api/session/status.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": 1,
+          "phase": "TRADING",
+          "timeRemaining": 3575,
+          "autoAdvance": true,
+          "productionJustRan": null,
+          "gameStopped": false,
+          "gameFinished": false,
+          "recentTrades": [
+            {
+              "eventId": "join_1768105364_0631",
+              "teamName": "Lucky Hawk",
+              "joinedAt": 1768105364.752786,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105361_9100",
+              "teamName": "Daring Rhino",
+              "joinedAt": 1768105361.388992,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105357_8bd0",
+              "teamName": "Crafty Otter",
+              "joinedAt": 1768105357.965617,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:25.525Z",
+        "teamId": "test_mail2@stonybrook.edu",
+        "method": "POST",
+        "url": "api/offers/bid.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Buy order created successfully",
+          "buyOrder": {
+            "chemical": "C",
+            "quantity": 243,
+            "maxPrice": 0.48,
+            "sessionNumber": 1,
+            "id": "buy_1768105405_256f278b",
+            "buyerId": "test_mail2@stonybrook.edu",
+            "createdAt": 1768105405,
+            "status": "active"
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:25.531Z",
+        "teamId": "test_mail2@stonybrook.edu",
+        "method": "GET",
+        "url": "api/advertisements/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "advertisements": {
+            "C": {
+              "buy": [
+                {
+                  "id": "ad_1768105405_c0050c90",
+                  "teamId": "test_mail2@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105405,
+                  "teamName": "Daring Rhino"
+                }
+              ],
+              "sell": []
+            },
+            "N": {
+              "buy": [],
+              "sell": []
+            },
+            "D": {
+              "buy": [],
+              "sell": []
+            },
+            "Q": {
+              "buy": [],
+              "sell": []
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:29.760Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail3@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": {
+              "type": "create_offer",
+              "chemical": "D",
+              "quantity": 272,
+              "minPrice": 0
+            }
+          },
+          "debug": {
+            "inventory": {
+              "C": 934,
+              "N": 1437,
+              "D": 1086,
+              "Q": 556,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 4,
+              "N": 0,
+              "D": 0,
+              "Q": 7.5
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:43.388Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/session/status.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": 1,
+          "phase": "TRADING",
+          "timeRemaining": 3571,
+          "autoAdvance": true,
+          "productionJustRan": null,
+          "gameStopped": false,
+          "gameFinished": false,
+          "recentTrades": [
+            {
+              "eventId": "join_1768105364_0631",
+              "teamName": "Lucky Hawk",
+              "joinedAt": 1768105364.752786,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105361_9100",
+              "teamName": "Daring Rhino",
+              "joinedAt": 1768105361.388992,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105357_8bd0",
+              "teamName": "Crafty Otter",
+              "joinedAt": 1768105357.965617,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:43.421Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail1@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": null
+          },
+          "debug": {
+            "inventory": {
+              "C": 1117,
+              "N": 1920,
+              "D": 504,
+              "Q": 1796,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:46.957Z",
+        "teamId": "test_mail2@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail2@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": {
+              "type": "create_offer",
+              "chemical": "N",
+              "quantity": 282,
+              "minPrice": 0
+            }
+          },
+          "debug": {
+            "inventory": {
+              "C": 1990,
+              "N": 1941,
+              "D": 977,
+              "Q": 896,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:23:50.465Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail3@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": null
+          },
+          "debug": {
+            "inventory": {
+              "C": 934,
+              "N": 1437,
+              "D": 1086,
+              "Q": 556,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 4,
+              "N": 0,
+              "D": 0,
+              "Q": 7.5
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:04.004Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail1@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": {
+              "type": "create_buy_order",
+              "chemical": "C",
+              "quantity": 166,
+              "maxPrice": 0.47
+            }
+          },
+          "debug": {
+            "inventory": {
+              "C": 1117,
+              "N": 1920,
+              "D": 504,
+              "Q": 1796,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:04.172Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/negotiations/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "negotiations": []
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:04.172Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/notifications/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "notifications": [],
+          "unreadCount": 0
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:04.175Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/trades/history.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "transactions": []
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:04.186Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/advertisements/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "advertisements": {
+            "C": {
+              "buy": [
+                {
+                  "id": "ad_1768105405_c0050c90",
+                  "teamId": "test_mail2@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105405,
+                  "teamName": "Daring Rhino"
+                }
+              ],
+              "sell": []
+            },
+            "N": {
+              "buy": [],
+              "sell": []
+            },
+            "D": {
+              "buy": [],
+              "sell": []
+            },
+            "Q": {
+              "buy": [],
+              "sell": []
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:04.234Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/session/status.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": 1,
+          "phase": "TRADING",
+          "timeRemaining": 3550,
+          "autoAdvance": true,
+          "productionJustRan": null,
+          "gameStopped": false,
+          "gameFinished": false,
+          "recentTrades": [
+            {
+              "eventId": "join_1768105364_0631",
+              "teamName": "Lucky Hawk",
+              "joinedAt": 1768105364.752786,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105361_9100",
+              "teamName": "Daring Rhino",
+              "joinedAt": 1768105361.388992,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105357_8bd0",
+              "teamName": "Crafty Otter",
+              "joinedAt": 1768105357.965617,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:04.255Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "POST",
+        "url": "api/offers/bid.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Buy order created successfully",
+          "buyOrder": {
+            "chemical": "C",
+            "quantity": 166,
+            "maxPrice": 0.47,
+            "sessionNumber": 1,
+            "id": "buy_1768105444_c5b933e2",
+            "buyerId": "test_mail1@stonybrook.edu",
+            "createdAt": 1768105444,
+            "status": "active"
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:04.262Z",
+        "teamId": "test_mail1@stonybrook.edu",
+        "method": "GET",
+        "url": "api/advertisements/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "advertisements": {
+            "C": {
+              "buy": [
+                {
+                  "id": "ad_1768105405_c0050c90",
+                  "teamId": "test_mail2@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105405,
+                  "teamName": "Daring Rhino"
+                },
+                {
+                  "id": "ad_1768105444_5da09891",
+                  "teamId": "test_mail1@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105444,
+                  "teamName": "Crafty Otter"
+                }
+              ],
+              "sell": []
+            },
+            "N": {
+              "buy": [],
+              "sell": []
+            },
+            "D": {
+              "buy": [],
+              "sell": []
+            },
+            "Q": {
+              "buy": [],
+              "sell": []
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:08.594Z",
+        "teamId": "test_mail2@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail2@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": null
+          },
+          "debug": {
+            "inventory": {
+              "C": 1990,
+              "N": 1941,
+              "D": 977,
+              "Q": 896,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 0.57,
+              "N": 0,
+              "D": 8.57,
+              "Q": 0
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:12.005Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/test/consult-strategy.php?skill=expert",
+        "status": 200,
+        "data": {
+          "success": true,
+          "user": "test_mail3@stonybrook.edu",
+          "strategy": "RecipeBalancingStrategy",
+          "recommendation": {
+            "negotiation_action": null,
+            "trade_action": {
+              "type": "create_buy_order",
+              "chemical": "C",
+              "quantity": 272,
+              "maxPrice": 3.37
+            }
+          },
+          "debug": {
+            "inventory": {
+              "C": 934,
+              "N": 1437,
+              "D": 1086,
+              "Q": 556,
+              "transactionsSinceLastShadowCalc": 0,
+              "stalenessLevel": "fresh"
+            },
+            "shadow_prices": {
+              "C": 4,
+              "N": 0,
+              "D": 0,
+              "Q": 7.5
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:12.131Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/advertisements/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "advertisements": {
+            "C": {
+              "buy": [
+                {
+                  "id": "ad_1768105405_c0050c90",
+                  "teamId": "test_mail2@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105405,
+                  "teamName": "Daring Rhino"
+                },
+                {
+                  "id": "ad_1768105444_5da09891",
+                  "teamId": "test_mail1@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105444,
+                  "teamName": "Crafty Otter"
+                }
+              ],
+              "sell": []
+            },
+            "N": {
+              "buy": [],
+              "sell": []
+            },
+            "D": {
+              "buy": [],
+              "sell": []
+            },
+            "Q": {
+              "buy": [],
+              "sell": []
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:12.131Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/negotiations/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "negotiations": []
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:12.138Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/notifications/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "notifications": [],
+          "unreadCount": 0
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:12.138Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/trades/history.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "transactions": []
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:12.188Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/session/status.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": 1,
+          "phase": "TRADING",
+          "timeRemaining": 3542,
+          "autoAdvance": true,
+          "productionJustRan": null,
+          "gameStopped": false,
+          "gameFinished": false,
+          "recentTrades": [
+            {
+              "eventId": "join_1768105364_0631",
+              "teamName": "Lucky Hawk",
+              "joinedAt": 1768105364.752786,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105361_9100",
+              "teamName": "Daring Rhino",
+              "joinedAt": 1768105361.388992,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105357_8bd0",
+              "teamName": "Crafty Otter",
+              "joinedAt": 1768105357.965617,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:12.243Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "POST",
+        "url": "api/offers/bid.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Buy order created successfully",
+          "buyOrder": {
+            "chemical": "C",
+            "quantity": 272,
+            "maxPrice": 3.37,
+            "sessionNumber": 1,
+            "id": "buy_1768105452_e2484315",
+            "buyerId": "test_mail3@stonybrook.edu",
+            "createdAt": 1768105452,
+            "status": "active"
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:12.250Z",
+        "teamId": "test_mail3@stonybrook.edu",
+        "method": "GET",
+        "url": "api/advertisements/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "advertisements": {
+            "C": {
+              "buy": [
+                {
+                  "id": "ad_1768105405_c0050c90",
+                  "teamId": "test_mail2@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105405,
+                  "teamName": "Daring Rhino"
+                },
+                {
+                  "id": "ad_1768105444_5da09891",
+                  "teamId": "test_mail1@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105444,
+                  "teamName": "Crafty Otter"
+                },
+                {
+                  "id": "ad_1768105452_cfb7b939",
+                  "teamId": "test_mail3@stonybrook.edu",
+                  "chemical": "C",
+                  "type": "buy",
+                  "status": "active",
+                  "createdAt": 1768105452,
+                  "teamName": "Lucky Hawk"
+                }
+              ],
+              "sell": []
+            },
+            "N": {
+              "buy": [],
+              "sell": []
+            },
+            "D": {
+              "buy": [],
+              "sell": []
+            },
+            "Q": {
+              "buy": [],
+              "sell": []
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:17.529Z",
+        "teamId": "admin-finalize",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3537,
+            "lastTick": 1768105457,
+            "phaseStartedAt": 1768105457,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": null,
+            "gameStopped": false,
+            "gameFinished": false
+          },
+          "recentTrades": [
+            {
+              "eventId": "join_1768105453_75dc",
+              "teamName": "Bold Lynx",
+              "joinedAt": 1768105453.359915,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105364_0631",
+              "teamName": "Lucky Hawk",
+              "joinedAt": 1768105364.752786,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105361_9100",
+              "teamName": "Daring Rhino",
+              "joinedAt": 1768105361.388992,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105357_8bd0",
+              "teamName": "Crafty Otter",
+              "joinedAt": 1768105357.965617,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:19.486Z",
+        "teamId": "admin-finalize",
+        "method": "GET",
+        "url": "api/admin/npc/list.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "enabled": false,
+          "npcs": [
+            {
+              "id": "npc_6963258981815",
+              "email": "npc_6963258981815@system",
+              "teamName": "Erratic Tortoise",
+              "skillLevel": "beginner",
+              "active": true,
+              "createdAt": 1768105353,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 6316.67,
+              "inventory": {
+                "C": 1626.71,
+                "N": 0.001,
+                "D": 825.209,
+                "Q": 0,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            },
+            {
+              "id": "npc_6963258a0f60b",
+              "email": "npc_6963258a0f60b@system",
+              "teamName": "Careful Badger",
+              "skillLevel": "novice",
+              "active": true,
+              "createdAt": 1768105354,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 10187.43,
+              "inventory": {
+                "C": 0,
+                "N": 696.915,
+                "D": 0.001,
+                "Q": 879.944,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            },
+            {
+              "id": "npc_6963258a8d55c",
+              "email": "npc_6963258a8d55c@system",
+              "teamName": "Brilliant Falcon",
+              "skillLevel": "expert",
+              "active": true,
+              "createdAt": 1768105354,
+              "tradeThresholds": {
+                "lowInventory": 300,
+                "excessInventory": 1800
+              },
+              "stats": {
+                "totalTrades": 0,
+                "totalProfit": 0,
+                "lastTradeAt": 0
+              },
+              "currentFunds": 6390,
+              "inventory": {
+                "C": 326.505,
+                "N": 691.503,
+                "D": 0.002,
+                "Q": 1851,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              }
+            }
+          ],
+          "count": 3
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:19.488Z",
+        "teamId": "admin-finalize",
+        "method": "GET",
+        "url": "api/admin/list-teams.php",
+        "status": 200,
+        "data": {
+          "teams": [
+            {
+              "email": "admin@stonybrook.edu",
+              "teamName": "Bold Lynx",
+              "funds": -10545.5,
+              "inventory": {
+                "C": 0,
+                "N": 386.675,
+                "D": 585.825,
+                "Q": 0
+              },
+              "activeOffers": 0,
+              "totalTrades": 0,
+              "lastUpdated": null
+            },
+            {
+              "email": "test_mail3@stonybrook.edu",
+              "teamName": "Lucky Hawk",
+              "funds": -7906,
+              "inventory": {
+                "C": 934,
+                "N": 1437,
+                "D": 1086,
+                "Q": 556
+              },
+              "activeOffers": 0,
+              "totalTrades": 0,
+              "lastUpdated": null
+            },
+            {
+              "email": "test_mail2@stonybrook.edu",
+              "teamName": "Daring Rhino",
+              "funds": -9511.43,
+              "inventory": {
+                "C": 0,
+                "N": 1941,
+                "D": 977,
+                "Q": 896
+              },
+              "activeOffers": 0,
+              "totalTrades": 0,
+              "lastUpdated": null
+            },
+            {
+              "email": "test_mail1@stonybrook.edu",
+              "teamName": "Crafty Otter",
+              "funds": -4958.29,
+              "inventory": {
+                "C": 0,
+                "N": 1208.945,
+                "D": 0.003,
+                "Q": 1730.632
+              },
+              "activeOffers": 0,
+              "totalTrades": 0,
+              "lastUpdated": null
+            },
+            {
+              "email": "npc_6963258a0f60b@system",
+              "teamName": "Careful Badger",
+              "funds": -10187.43,
+              "inventory": {
+                "C": 0,
+                "N": 696.915,
+                "D": 0.001,
+                "Q": 879.944
+              },
+              "activeOffers": 0,
+              "totalTrades": 0,
+              "lastUpdated": null
+            },
+            {
+              "email": "npc_6963258a8d55c@system",
+              "teamName": "Brilliant Falcon",
+              "funds": -6390,
+              "inventory": {
+                "C": 326.505,
+                "N": 691.503,
+                "D": 0.002,
+                "Q": 1851
+              },
+              "activeOffers": 0,
+              "totalTrades": 0,
+              "lastUpdated": null
+            },
+            {
+              "email": "npc_6963258981815@system",
+              "teamName": "Erratic Tortoise",
+              "funds": -6316.67,
+              "inventory": {
+                "C": 1626.71,
+                "N": 0.001,
+                "D": 825.209,
+                "Q": 0
+              },
+              "activeOffers": 0,
+              "totalTrades": 0,
+              "lastUpdated": null
+            }
+          ],
+          "totalTeams": 7,
+          "timestamp": 1768105459
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:20.126Z",
+        "teamId": "admin-finalize",
+        "method": "POST",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "message": "Market Closed. Final production run complete.",
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3537,
+            "lastTick": 1768105457,
+            "phaseStartedAt": 1768105460,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": 1768105457,
+            "gameStopped": true,
+            "gameFinished": true
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:20.202Z",
+        "teamId": "admin-finalize",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3537,
+            "lastTick": 1768105460,
+            "phaseStartedAt": 1768105460,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": 1768105457,
+            "gameStopped": true,
+            "gameFinished": true
+          },
+          "recentTrades": [
+            {
+              "eventId": "join_1768105453_75dc",
+              "teamName": "Bold Lynx",
+              "joinedAt": 1768105453.359915,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105364_0631",
+              "teamName": "Lucky Hawk",
+              "joinedAt": 1768105364.752786,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105361_9100",
+              "teamName": "Daring Rhino",
+              "joinedAt": 1768105361.388992,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105357_8bd0",
+              "teamName": "Crafty Otter",
+              "joinedAt": 1768105357.965617,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:20.468Z",
+        "teamId": "admin-finalize",
+        "method": "GET",
+        "url": "api/admin/session.php",
+        "status": 200,
+        "data": {
+          "success": true,
+          "session": {
+            "currentSession": 1,
+            "phase": "TRADING",
+            "autoAdvance": true,
+            "productionDuration": 0,
+            "tradingDuration": 3600,
+            "timeRemaining": 3537,
+            "lastTick": 1768105460,
+            "phaseStartedAt": 1768105460,
+            "npcLastRun": 0,
+            "productionRun": null,
+            "initialProductionRun": null,
+            "productionJustRan": 1768105457,
+            "gameStopped": true,
+            "gameFinished": true
+          },
+          "recentTrades": [
+            {
+              "eventId": "join_1768105453_75dc",
+              "teamName": "Bold Lynx",
+              "joinedAt": 1768105453.359915,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105364_0631",
+              "teamName": "Lucky Hawk",
+              "joinedAt": 1768105364.752786,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105361_9100",
+              "teamName": "Daring Rhino",
+              "joinedAt": 1768105361.388992,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105357_8bd0",
+              "teamName": "Crafty Otter",
+              "joinedAt": 1768105357.965617,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_a44c",
+              "teamName": "Clever Narwhal",
+              "joinedAt": 1768105354.57894,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105354_749f",
+              "teamName": "Expert Shark",
+              "joinedAt": 1768105354.063017,
+              "type": "join"
+            },
+            {
+              "eventId": "join_1768105353_94f3",
+              "teamName": "Hardy Fox",
+              "joinedAt": 1768105353.530486,
+              "type": "join"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "apiResults": {
+    "apiCalls": 64,
+    "successful": 63,
+    "failed": 1,
+    "errors": [],
+    "warnings": [],
+    "apiCallLog": [
+      {
+        "timestamp": "2026-01-11T04:24:43.411Z",
+        "method": "POST",
+        "endpoint": "/api/admin/reset-game",
+        "request": {},
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Game data completely reset! Players will get new teams when they login.",
+            "teamsReset": 156,
+            "sessionState": {
+              "currentSession": 1,
+              "phase": "TRADING",
+              "autoAdvance": true,
+              "productionDuration": 0,
+              "tradingDuration": 3600,
+              "timeRemaining": 3600,
+              "lastTick": 1768105483,
+              "phaseStartedAt": 1768105483,
+              "npcLastRun": 0,
+              "productionRun": null,
+              "initialProductionRun": null,
+              "productionJustRan": null,
+              "gameStopped": true,
+              "gameFinished": false
+            },
+            "errors": []
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:45.433Z",
+        "method": "POST",
+        "endpoint": "/api/admin/npc/toggle-system",
+        "request": {
+          "enabled": true
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "NPC system enabled",
+            "enabled": true
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:45.772Z",
+        "method": "POST",
+        "endpoint": "/api/admin/npc/create",
+        "request": {
+          "skillLevel": "beginner"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Created 1 beginner NPC(s)",
+            "npcIds": [
+              "npc_6963260d6ef28"
+            ],
+            "npcs": [
+              {
+                "id": "npc_6963260d6ef28",
+                "email": "npc_6963260d6ef28@system",
+                "teamName": "Dizzy Manatee",
+                "skillLevel": "beginner",
+                "active": true,
+                "createdAt": 1768105485,
+                "tradeThresholds": {
+                  "lowInventory": 300,
+                  "excessInventory": 1800
+                },
+                "stats": {
+                  "totalTrades": 0,
+                  "totalProfit": 0,
+                  "lastTradeAt": 0
+                },
+                "currentFunds": 0,
+                "inventory": {
+                  "C": 659,
+                  "N": 589,
+                  "D": 1355,
+                  "Q": 1894,
+                  "transactionsSinceLastShadowCalc": 0,
+                  "stalenessLevel": "fresh"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:46.097Z",
+        "method": "POST",
+        "endpoint": "/api/admin/npc/create",
+        "request": {
+          "skillLevel": "novice"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Created 1 novice NPC(s)",
+            "npcIds": [
+              "npc_6963260dbe3f4"
+            ],
+            "npcs": [
+              {
+                "id": "npc_6963260dbe3f4",
+                "email": "npc_6963260dbe3f4@system",
+                "teamName": "Diligent Fox",
+                "skillLevel": "novice",
+                "active": true,
+                "createdAt": 1768105486,
+                "tradeThresholds": {
+                  "lowInventory": 300,
+                  "excessInventory": 1800
+                },
+                "stats": {
+                  "totalTrades": 0,
+                  "totalProfit": 0,
+                  "lastTradeAt": 0
+                },
+                "currentFunds": 0,
+                "inventory": {
+                  "C": 1463,
+                  "N": 1640,
+                  "D": 1126,
+                  "Q": 1257,
+                  "transactionsSinceLastShadowCalc": 0,
+                  "stalenessLevel": "fresh"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:46.425Z",
+        "method": "POST",
+        "endpoint": "/api/admin/npc/create",
+        "request": {
+          "skillLevel": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Created 1 expert NPC(s)",
+            "npcIds": [
+              "npc_6963260e19172"
+            ],
+            "npcs": [
+              {
+                "id": "npc_6963260e19172",
+                "email": "npc_6963260e19172@system",
+                "teamName": "Shrewd Viper",
+                "skillLevel": "expert",
+                "active": true,
+                "createdAt": 1768105486,
+                "tradeThresholds": {
+                  "lowInventory": 300,
+                  "excessInventory": 1800
+                },
+                "stats": {
+                  "totalTrades": 0,
+                  "totalProfit": 0,
+                  "lastTradeAt": 0
+                },
+                "currentFunds": 0,
+                "inventory": {
+                  "C": 634,
+                  "N": 773,
+                  "D": 1485,
+                  "Q": 1284,
+                  "transactionsSinceLastShadowCalc": 0,
+                  "stalenessLevel": "fresh"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:46.496Z",
+        "method": "POST",
+        "endpoint": "/api/admin/session",
+        "request": {
+          "action": "setAutoAdvance",
+          "enabled": true
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Auto-Cycle (24/7 Mode) enabled",
+            "session": {
+              "currentSession": 1,
+              "phase": "TRADING",
+              "autoAdvance": true,
+              "productionDuration": 0,
+              "tradingDuration": 3600,
+              "timeRemaining": 3600,
+              "lastTick": 1768105485,
+              "phaseStartedAt": 1768105486,
+              "npcLastRun": 0,
+              "productionRun": null,
+              "initialProductionRun": null,
+              "productionJustRan": null,
+              "gameStopped": true,
+              "gameFinished": false
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:46.559Z",
+        "method": "POST",
+        "endpoint": "/api/admin/session",
+        "request": {
+          "action": "setTradingDuration",
+          "seconds": 3600
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Market open duration set to 3600 seconds",
+            "session": {
+              "currentSession": 1,
+              "phase": "TRADING",
+              "autoAdvance": true,
+              "productionDuration": 0,
+              "tradingDuration": 3600,
+              "timeRemaining": 3600,
+              "lastTick": 1768105486,
+              "phaseStartedAt": 1768105486,
+              "npcLastRun": 0,
+              "productionRun": null,
+              "initialProductionRun": null,
+              "productionJustRan": null,
+              "gameStopped": true,
+              "gameFinished": false
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:46.623Z",
+        "method": "POST",
+        "endpoint": "/api/admin/session",
+        "request": {
+          "action": "start"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Game started",
+            "session": {
+              "currentSession": 1,
+              "phase": "TRADING",
+              "autoAdvance": true,
+              "productionDuration": 0,
+              "tradingDuration": 3600,
+              "timeRemaining": 3600,
+              "lastTick": 1768105486,
+              "phaseStartedAt": 1768105486,
+              "npcLastRun": 0,
+              "productionRun": null,
+              "initialProductionRun": null,
+              "productionJustRan": null,
+              "gameStopped": false,
+              "gameFinished": false
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:49.999Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:53.387Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "npc_6963260e19172@system",
+                "responderName": "Shrewd Viper",
+                "chemical": "N",
+                "quantity": 216,
+                "price": 11.4,
+                "adId": "buy_1768105487_b029627e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1373,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:53.663Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "npc_6963260e19172@system",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105493_34ccee2b",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "npc_6963260e19172@system",
+              "responderName": "Shrewd Viper",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105487_b029627e",
+              "createdAt": 1768105493,
+              "updatedAt": 1768105493,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 216,
+                  "price": 11.4,
+                  "createdAt": 1768105493
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:57.070Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "create_buy_order",
+                "chemical": "N",
+                "quantity": 124,
+                "maxPrice": 5.57
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 703,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0,
+                "N": 6.67,
+                "D": 0,
+                "Q": 3.33
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:24:57.281Z",
+        "method": "POST",
+        "endpoint": "/api/offers/bid",
+        "request": {
+          "chemical": "N",
+          "quantity": 124,
+          "maxPrice": 5.57
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Buy order created successfully",
+            "buyOrder": {
+              "chemical": "N",
+              "quantity": 124,
+              "maxPrice": 5.57,
+              "sessionNumber": 1,
+              "id": "buy_1768105497_4fbd4c0e",
+              "buyerId": "test_mail3@stonybrook.edu",
+              "createdAt": 1768105497,
+              "status": "active"
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:15.728Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:19.366Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1373,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:19.627Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105519_4fc64338",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105519,
+              "updatedAt": 1768105519,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105519
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:23.054Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "counter_negotiation",
+                "negotiationId": "neg_1768105519_4fc64338",
+                "quantity": 124,
+                "price": 6.41
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 703,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0,
+                "N": 6.67,
+                "D": 0,
+                "Q": 3.33
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:23.311Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/counter",
+        "request": {
+          "negotiationId": "neg_1768105519_4fc64338",
+          "quantity": 124,
+          "price": 6.41
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Counter-offer sent",
+            "negotiation": {
+              "id": "neg_1768105519_4fc64338",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail3@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105519,
+              "updatedAt": 1768105523,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105519
+                },
+                {
+                  "fromTeamId": "test_mail3@stonybrook.edu",
+                  "fromTeamName": "Lucky Hawk",
+                  "quantity": 124,
+                  "price": 6.41,
+                  "createdAt": 1768105523
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:41.732Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:41.998Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105541_4175842f",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail1@stonybrook.edu",
+              "initiatorName": "Crafty Otter",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail1@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105541,
+              "updatedAt": 1768105541,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail1@stonybrook.edu",
+                  "fromTeamName": "Crafty Otter",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105541
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:45.507Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1373,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:45.758Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105545_fadedb75",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105545,
+              "updatedAt": 1768105545,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105545
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:49.316Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "counter_negotiation",
+                "negotiationId": "neg_1768105545_fadedb75",
+                "quantity": 124,
+                "price": 6.41
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 951,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0,
+                "N": 6.67,
+                "D": 0,
+                "Q": 3.33
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:25:49.585Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/counter",
+        "request": {
+          "negotiationId": "neg_1768105545_fadedb75",
+          "quantity": 124,
+          "price": 6.41
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Counter-offer sent",
+            "negotiation": {
+              "id": "neg_1768105545_fadedb75",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail3@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105545,
+              "updatedAt": 1768105549,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105545
+                },
+                {
+                  "fromTeamId": "test_mail3@stonybrook.edu",
+                  "fromTeamName": "Lucky Hawk",
+                  "quantity": 124,
+                  "price": 6.41,
+                  "createdAt": 1768105549
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:07.965Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:08.246Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105567_7c86fb79",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail1@stonybrook.edu",
+              "initiatorName": "Crafty Otter",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail1@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105567,
+              "updatedAt": 1768105567,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail1@stonybrook.edu",
+                  "fromTeamName": "Crafty Otter",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105567
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:11.661Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1589,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:11.907Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105571_f42a3ecf",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105571,
+              "updatedAt": 1768105571,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105571
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:15.555Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "counter_negotiation",
+                "negotiationId": "neg_1768105571_f42a3ecf",
+                "quantity": 124,
+                "price": 6.41
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 1075,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:15.817Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/counter",
+        "request": {
+          "negotiationId": "neg_1768105571_f42a3ecf",
+          "quantity": 124,
+          "price": 6.41
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Counter-offer sent",
+            "negotiation": {
+              "id": "neg_1768105571_f42a3ecf",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail3@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105571,
+              "updatedAt": 1768105575,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105571
+                },
+                {
+                  "fromTeamId": "test_mail3@stonybrook.edu",
+                  "fromTeamName": "Lucky Hawk",
+                  "quantity": 124,
+                  "price": 6.41,
+                  "createdAt": 1768105575
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:34.215Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:37.861Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1589,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:38.111Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105597_3886a796",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105597,
+              "updatedAt": 1768105597,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105597
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:41.504Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "counter_negotiation",
+                "negotiationId": "neg_1768105597_3886a796",
+                "quantity": 124,
+                "price": 6.41
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 1199,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:26:41.751Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/counter",
+        "request": {
+          "negotiationId": "neg_1768105597_3886a796",
+          "quantity": 124,
+          "price": 6.41
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Counter-offer sent",
+            "negotiation": {
+              "id": "neg_1768105597_3886a796",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail3@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105597,
+              "updatedAt": 1768105601,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105597
+                },
+                {
+                  "fromTeamId": "test_mail3@stonybrook.edu",
+                  "fromTeamName": "Lucky Hawk",
+                  "quantity": 124,
+                  "price": 6.41,
+                  "createdAt": 1768105601
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:00.188Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:03.621Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1589,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:03.882Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105623_1bf0fc81",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105623,
+              "updatedAt": 1768105623,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105623
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:07.344Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "counter_negotiation",
+                "negotiationId": "neg_1768105623_1bf0fc81",
+                "quantity": 124,
+                "price": 6.41
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 1323,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:07.597Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/counter",
+        "request": {
+          "negotiationId": "neg_1768105623_1bf0fc81",
+          "quantity": 124,
+          "price": 6.41
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Counter-offer sent",
+            "negotiation": {
+              "id": "neg_1768105623_1bf0fc81",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail3@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105623,
+              "updatedAt": 1768105627,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105623
+                },
+                {
+                  "fromTeamId": "test_mail3@stonybrook.edu",
+                  "fromTeamName": "Lucky Hawk",
+                  "quantity": 124,
+                  "price": 6.41,
+                  "createdAt": 1768105627
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:26.020Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:26.281Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105646_3e5068fb",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail1@stonybrook.edu",
+              "initiatorName": "Crafty Otter",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail1@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105646,
+              "updatedAt": 1768105646,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail1@stonybrook.edu",
+                  "fromTeamName": "Crafty Otter",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105646
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:29.792Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1589,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:30.041Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105649_c7a3d774",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105649,
+              "updatedAt": 1768105649,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105649
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:33.484Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "counter_negotiation",
+                "negotiationId": "neg_1768105649_c7a3d774",
+                "quantity": 124,
+                "price": 6.41
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 1447,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:33.749Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/counter",
+        "request": {
+          "negotiationId": "neg_1768105649_c7a3d774",
+          "quantity": 124,
+          "price": 6.41
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Counter-offer sent",
+            "negotiation": {
+              "id": "neg_1768105649_c7a3d774",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail3@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105649,
+              "updatedAt": 1768105653,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105649
+                },
+                {
+                  "fromTeamId": "test_mail3@stonybrook.edu",
+                  "fromTeamName": "Lucky Hawk",
+                  "quantity": 124,
+                  "price": 6.41,
+                  "createdAt": 1768105653
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:52.312Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "npc_6963260e19172@system",
+                "responderName": "Shrewd Viper",
+                "chemical": "N",
+                "quantity": 153,
+                "price": 6.34,
+                "adId": "buy_1768105653_f4ce8a69"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:52.577Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "npc_6963260e19172@system",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105672_9ae1afbd",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail1@stonybrook.edu",
+              "initiatorName": "Crafty Otter",
+              "responderId": "npc_6963260e19172@system",
+              "responderName": "Shrewd Viper",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail1@stonybrook.edu",
+              "adId": "buy_1768105653_f4ce8a69",
+              "createdAt": 1768105672,
+              "updatedAt": 1768105672,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail1@stonybrook.edu",
+                  "fromTeamName": "Crafty Otter",
+                  "quantity": 153,
+                  "price": 6.34,
+                  "createdAt": 1768105672
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:56.222Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1589,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:56.485Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105676_af62c02e",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105676,
+              "updatedAt": 1768105676,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105676
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:27:59.996Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "counter_negotiation",
+                "negotiationId": "neg_1768105676_af62c02e",
+                "quantity": 124,
+                "price": 6.41
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 1447,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:00.246Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/counter",
+        "request": {
+          "negotiationId": "neg_1768105676_af62c02e",
+          "quantity": 124,
+          "price": 6.41
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Counter-offer sent",
+            "negotiation": {
+              "id": "neg_1768105676_af62c02e",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail3@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105676,
+              "updatedAt": 1768105680,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105676
+                },
+                {
+                  "fromTeamId": "test_mail3@stonybrook.edu",
+                  "fromTeamName": "Lucky Hawk",
+                  "quantity": 124,
+                  "price": 6.41,
+                  "createdAt": 1768105680
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:18.958Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:22.456Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "initiate_negotiation",
+                "responderId": "test_mail3@stonybrook.edu",
+                "responderName": "Lucky Hawk",
+                "chemical": "N",
+                "quantity": 124,
+                "price": 5.57,
+                "adId": "buy_1768105497_4fbd4c0e"
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1589,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:22.725Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/initiate",
+        "request": {
+          "responderId": "test_mail3@stonybrook.edu",
+          "chemical": "N"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Negotiation initiated",
+            "negotiation": {
+              "id": "neg_1768105702_e910ed18",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail2@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105702,
+              "updatedAt": 1768105702,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105702
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:26.242Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "counter_negotiation",
+                "negotiationId": "neg_1768105702_e910ed18",
+                "quantity": 124,
+                "price": 6.41
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 1447,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:26.518Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/counter",
+        "request": {
+          "negotiationId": "neg_1768105702_e910ed18",
+          "quantity": 124,
+          "price": 6.41
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Counter-offer sent",
+            "negotiation": {
+              "id": "neg_1768105702_e910ed18",
+              "chemical": "N",
+              "type": "buy",
+              "initiatorId": "test_mail2@stonybrook.edu",
+              "initiatorName": "Daring Rhino",
+              "responderId": "test_mail3@stonybrook.edu",
+              "responderName": "Lucky Hawk",
+              "sessionNumber": 1,
+              "status": "pending",
+              "lastOfferBy": "test_mail3@stonybrook.edu",
+              "adId": "buy_1768105497_4fbd4c0e",
+              "createdAt": 1768105702,
+              "updatedAt": 1768105706,
+              "offers": [
+                {
+                  "fromTeamId": "test_mail2@stonybrook.edu",
+                  "fromTeamName": "Daring Rhino",
+                  "quantity": 124,
+                  "price": 5.57,
+                  "createdAt": 1768105702
+                },
+                {
+                  "fromTeamId": "test_mail3@stonybrook.edu",
+                  "fromTeamName": "Lucky Hawk",
+                  "quantity": 124,
+                  "price": 6.41,
+                  "createdAt": 1768105706
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:45.320Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail1@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1252,
+                "N": 1786,
+                "D": 1915,
+                "Q": 1625,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 0.57,
+                "N": 0,
+                "D": 8.57,
+                "Q": 0
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:48.798Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail2@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": null,
+              "trade_action": {
+                "type": "create_offer",
+                "chemical": "D",
+                "quantity": 102,
+                "minPrice": 0
+              }
+            },
+            "debug": {
+              "inventory": {
+                "C": 642,
+                "N": 1589,
+                "D": 1749,
+                "Q": 950,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:52.443Z",
+        "method": "GET",
+        "endpoint": "/api/test/consult-strategy",
+        "request": {
+          "skill": "expert"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "user": "test_mail3@stonybrook.edu",
+            "strategy": "RecipeBalancingStrategy",
+            "recommendation": {
+              "negotiation_action": {
+                "type": "accept_negotiation",
+                "negotiationId": "neg_1768105702_e910ed18"
+              },
+              "trade_action": null
+            },
+            "debug": {
+              "inventory": {
+                "C": 1177,
+                "N": 1447,
+                "D": 1304,
+                "Q": 532,
+                "transactionsSinceLastShadowCalc": 0,
+                "stalenessLevel": "fresh"
+              },
+              "shadow_prices": {
+                "C": 4,
+                "N": 0,
+                "D": 0,
+                "Q": 7.5
+              }
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:52.450Z",
+        "method": "POST",
+        "endpoint": "/api/negotiations/accept",
+        "request": {
+          "negotiationId": "neg_1768105702_e910ed18"
+        },
+        "response": {
+          "status": 400,
+          "ok": false,
+          "data": {
+            "error": "Failed to execute trade",
+            "message": "Cannot accept your own offer"
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:28:58.452Z",
+        "method": "POST",
+        "endpoint": "/api/admin/session",
+        "request": {
+          "action": "finalize"
+        },
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "message": "Market Closed. Final production run complete.",
+            "session": {
+              "currentSession": 1,
+              "phase": "TRADING",
+              "autoAdvance": true,
+              "productionDuration": 0,
+              "tradingDuration": 3600,
+              "timeRemaining": 3485,
+              "lastTick": 1768105737,
+              "phaseStartedAt": 1768105738,
+              "npcLastRun": 1768105732,
+              "productionRun": null,
+              "initialProductionRun": null,
+              "productionJustRan": 1768105735,
+              "gameStopped": true,
+              "gameFinished": true
+            }
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:29:00.523Z",
+        "method": "GET",
+        "endpoint": "/api/session/status",
+        "request": {},
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "session": 1,
+            "phase": "TRADING",
+            "timeRemaining": 3485,
+            "autoAdvance": true,
+            "productionJustRan": 1768105735,
+            "gameStopped": true,
+            "gameFinished": true,
+            "recentTrades": [
+              {
+                "transactionId": "trade_1768105696_1e0f67d6",
+                "chemical": "C",
+                "quantity": 267,
+                "pricePerGallon": 4.9,
+                "totalAmount": 1308.3000000000002,
+                "sellerId": "npc_6963260e19172@system",
+                "sellerName": "Shrewd Viper",
+                "buyerId": "npc_6963260dbe3f4@system",
+                "buyerName": "Diligent Fox",
+                "timestamp": 1768105696.56852,
+                "heat": {
+                  "total": 152.19000000000008,
+                  "isHot": false
+                }
+              },
+              {
+                "transactionId": "trade_1768105669_1f2d698a",
+                "chemical": "N",
+                "quantity": 386,
+                "pricePerGallon": 2,
+                "totalAmount": 772,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "npc_6963260e19172@system",
+                "buyerName": "Shrewd Viper",
+                "timestamp": 1768105670.162065,
+                "heat": {
+                  "total": 4632,
+                  "isHot": true
+                }
+              },
+              {
+                "transactionId": "trade_1768105643_a22b9794",
+                "chemical": "C",
+                "quantity": 500,
+                "pricePerGallon": 2,
+                "totalAmount": 1000,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "npc_6963260e19172@system",
+                "buyerName": "Shrewd Viper",
+                "timestamp": 1768105643.854099,
+                "heat": {
+                  "total": -284.99999999999994,
+                  "isHot": false
+                }
+              },
+              {
+                "transactionId": "trade_1768105627_de37bf51",
+                "chemical": "N",
+                "quantity": 124,
+                "pricePerGallon": 5.57,
+                "totalAmount": 690.6800000000001,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "test_mail3@stonybrook.edu",
+                "buyerName": "Lucky Hawk",
+                "timestamp": 1768105627.859566,
+                "heat": {
+                  "total": 0,
+                  "isHot": false
+                }
+              },
+              {
+                "transactionId": "trade_1768105615_490dadc6",
+                "chemical": "D",
+                "quantity": 500,
+                "pricePerGallon": 2,
+                "totalAmount": 1000,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "npc_6963260e19172@system",
+                "buyerName": "Shrewd Viper",
+                "timestamp": 1768105616.095308,
+                "heat": {
+                  "total": -4285,
+                  "isHot": false
+                }
+              },
+              {
+                "transactionId": "trade_1768105601_8a7713a9",
+                "chemical": "N",
+                "quantity": 124,
+                "pricePerGallon": 5.57,
+                "totalAmount": 690.6800000000001,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "test_mail3@stonybrook.edu",
+                "buyerName": "Lucky Hawk",
+                "timestamp": 1768105602.009871,
+                "heat": {
+                  "total": 0,
+                  "isHot": false
+                }
+              },
+              {
+                "transactionId": "trade_1768105591_9de19e4c",
+                "chemical": "N",
+                "quantity": 500,
+                "pricePerGallon": 2,
+                "totalAmount": 1000,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "npc_6963260e19172@system",
+                "buyerName": "Shrewd Viper",
+                "timestamp": 1768105592.099147,
+                "heat": {
+                  "total": 6000,
+                  "isHot": true
+                }
+              },
+              {
+                "transactionId": "trade_1768105575_0b0e8bb4",
+                "chemical": "N",
+                "quantity": 124,
+                "pricePerGallon": 5.57,
+                "totalAmount": 690.6800000000001,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "test_mail3@stonybrook.edu",
+                "buyerName": "Lucky Hawk",
+                "timestamp": 1768105576.041799,
+                "heat": {
+                  "total": 0,
+                  "isHot": false
+                }
+              },
+              {
+                "transactionId": "trade_1768105565_0b825365",
+                "chemical": "N",
+                "quantity": 216,
+                "pricePerGallon": 11.4,
+                "totalAmount": 2462.4,
+                "sellerId": "npc_6963260e19172@system",
+                "sellerName": "Shrewd Viper",
+                "buyerId": "test_mail2@stonybrook.edu",
+                "buyerName": "Daring Rhino",
+                "timestamp": 1768105565.777051,
+                "heat": {
+                  "total": -2592,
+                  "isHot": false
+                }
+              },
+              {
+                "transactionId": "trade_1768105565_59986d57",
+                "chemical": "N",
+                "quantity": 124,
+                "pricePerGallon": 5.57,
+                "totalAmount": 690.6800000000001,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "test_mail3@stonybrook.edu",
+                "buyerName": "Lucky Hawk",
+                "timestamp": 1768105565.282601,
+                "heat": {
+                  "total": 827.08,
+                  "isHot": true
+                }
+              },
+              {
+                "transactionId": "trade_1768105550_ef0a8eb9",
+                "chemical": "C",
+                "quantity": 500,
+                "pricePerGallon": 2,
+                "totalAmount": 1000,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "npc_6963260e19172@system",
+                "buyerName": "Shrewd Viper",
+                "timestamp": 1768105550.404505,
+                "heat": {
+                  "total": -284.99999999999994,
+                  "isHot": false
+                }
+              },
+              {
+                "transactionId": "trade_1768105538_b58e3ccc",
+                "chemical": "N",
+                "quantity": 124,
+                "pricePerGallon": 5.57,
+                "totalAmount": 690.6800000000001,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "test_mail3@stonybrook.edu",
+                "buyerName": "Lucky Hawk",
+                "timestamp": 1768105539.06606,
+                "heat": {
+                  "total": 827.08,
+                  "isHot": true
+                }
+              },
+              {
+                "transactionId": "trade_1768105523_e08a86e3",
+                "chemical": "N",
+                "quantity": 124,
+                "pricePerGallon": 5.57,
+                "totalAmount": 690.6800000000001,
+                "sellerId": "npc_6963260dbe3f4@system",
+                "sellerName": "Diligent Fox",
+                "buyerId": "test_mail3@stonybrook.edu",
+                "buyerName": "Lucky Hawk",
+                "timestamp": 1768105523.829272,
+                "heat": {
+                  "total": 827.08,
+                  "isHot": true
+                }
+              },
+              {
+                "transactionId": "trade_1768105498_54639c67",
+                "chemical": "N",
+                "quantity": 500,
+                "pricePerGallon": 9.12,
+                "totalAmount": 4560,
+                "sellerId": "npc_6963260d6ef28@system",
+                "sellerName": "Dizzy Manatee",
+                "buyerId": "npc_6963260e19172@system",
+                "buyerName": "Shrewd Viper",
+                "timestamp": 1768105498.35064,
+                "heat": {
+                  "total": 0,
+                  "isHot": false
+                }
+              },
+              {
+                "eventId": "join_1768105493_6845",
+                "teamName": "Lucky Hawk",
+                "joinedAt": 1768105493.984619,
+                "type": "join"
+              },
+              {
+                "eventId": "join_1768105490_1732",
+                "teamName": "Daring Rhino",
+                "joinedAt": 1768105490.278099,
+                "type": "join"
+              },
+              {
+                "eventId": "join_1768105486_b1a6",
+                "teamName": "Crafty Otter",
+                "joinedAt": 1768105486.924106,
+                "type": "join"
+              },
+              {
+                "eventId": "join_1768105486_2eed",
+                "teamName": "Alert Rhino",
+                "joinedAt": 1768105486.102803,
+                "type": "join"
+              },
+              {
+                "eventId": "join_1768105485_898c",
+                "teamName": "Smooth Owl",
+                "joinedAt": 1768105485.779283,
+                "type": "join"
+              },
+              {
+                "eventId": "join_1768105485_c94b",
+                "teamName": "Quick Zebra",
+                "joinedAt": 1768105485.454471,
+                "type": "join"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "timestamp": "2026-01-11T04:29:00.536Z",
+        "method": "GET",
+        "endpoint": "/api/leaderboard/standings",
+        "request": {},
+        "response": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "success": true,
+            "session": 1,
+            "phase": "TRADING",
+            "standings": [
+              {
+                "teamName": "Crafty Otter",
+                "teamId": "test_mail1@stonybrook.edu",
+                "startingFunds": 17129.71,
+                "currentFunds": 17129.71,
+                "profit": 0,
+                "roi": 0,
+                "percentChange": 0,
+                "inventory": {
+                  "C": 0,
+                  "N": 24.6575,
+                  "D": 0.0005,
+                  "Q": 8.772
+                },
+                "totalTrades": 0,
+                "rank": 1
+              },
+              {
+                "teamName": "Shrewd Viper",
+                "teamId": "npc_6963260e19172@system",
+                "startingFunds": 9276,
+                "currentFunds": 9536.7,
+                "profit": 260.7,
+                "roi": 2.8104786545925045,
+                "percentChange": 2.8104786545925045,
+                "inventory": {
+                  "C": 0,
+                  "N": 320.3,
+                  "D": 314.7,
+                  "Q": 0
+                },
+                "totalTrades": 8,
+                "rank": 2
+              },
+              {
+                "teamName": "Diligent Fox",
+                "teamId": "npc_6963260dbe3f4@system",
+                "startingFunds": 10487.43,
+                "currentFunds": 7727.78,
+                "profit": -2759.65,
+                "roi": -26.31388242877426,
+                "percentChange": -26.31388242877426,
+                "inventory": {
+                  "C": 730,
+                  "N": 0,
+                  "D": 612,
+                  "Q": 1241
+                },
+                "totalTrades": 12,
+                "rank": 3
+              },
+              {
+                "teamName": "Daring Rhino",
+                "teamId": "test_mail2@stonybrook.edu",
+                "startingFunds": 9693,
+                "currentFunds": 7230.6,
+                "profit": -2462.4,
+                "roi": -25.403899721448465,
+                "percentChange": -25.403899721448465,
+                "inventory": {
+                  "C": 0,
+                  "N": 610.05,
+                  "D": 660.95,
+                  "Q": 0
+                },
+                "totalTrades": 1,
+                "rank": 4
+              },
+              {
+                "teamName": "Bold Lynx",
+                "teamId": "admin@stonybrook.edu",
+                "startingFunds": 6720,
+                "currentFunds": 6720,
+                "profit": 0,
+                "roi": 0,
+                "percentChange": 0,
+                "inventory": {
+                  "C": 1785,
+                  "N": 0,
+                  "D": 292,
+                  "Q": 34
+                },
+                "totalTrades": 0,
+                "rank": 5
+              },
+              {
+                "teamName": "Dizzy Manatee",
+                "teamId": "npc_6963260d6ef28@system",
+                "startingFunds": 7068,
+                "currentFunds": 5628,
+                "profit": -1440,
+                "roi": -20.37351443123939,
+                "percentChange": -20.37351443123939,
+                "inventory": {
+                  "C": 659,
+                  "N": 0,
+                  "D": 1230.4,
+                  "Q": 1751.6
+                },
+                "totalTrades": 1,
+                "rank": 6
+              },
+              {
+                "teamName": "Lucky Hawk",
+                "teamId": "test_mail3@stonybrook.edu",
+                "startingFunds": 6460,
+                "currentFunds": 4553.92,
+                "profit": -1906.08,
+                "roi": -29.505882352941175,
+                "percentChange": -29.505882352941175,
+                "inventory": {
+                  "C": 0,
+                  "N": 408.3,
+                  "D": 367.7,
+                  "Q": 0
+                },
+                "totalTrades": 6,
+                "rank": 7
+              }
+            ],
+            "totalTeams": 7
+          }
+        }
+      }
+    ]
+  },
+  "comparison": {
+    "commonEndpoints": 0,
+    "apiOnlyEndpoints": 11,
+    "uiEndpointsCovered": 13,
+    "apiEndpointsTested": 11,
+    "totalErrors": 0,
+    "totalWarnings": 0
+  }
+}

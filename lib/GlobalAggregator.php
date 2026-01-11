@@ -105,7 +105,7 @@ class GlobalAggregator {
 
         $counterpartyStorage->addNotification([
             'type' => 'trade_completed',
-            'message' => ($role === 'seller' ? "Sold" : "Bought") . " $quantity gallons of $chemical " . ($role === 'seller' ? "to" : "from") . " $actorName for $" . number_format($totalAmount, 2)
+            'message' => ($role === 'seller' ? "Sold" : "Bought") . " $quantity gallons of $chemical " . ($role === 'seller' ? "to" : "from") . " $actorName for " . ($totalAmount < 0 ? '-$' : '$') . number_format(abs($totalAmount), 2)
         ]);
 
         // 3. Mark as reflected on actor

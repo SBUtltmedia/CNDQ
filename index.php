@@ -203,7 +203,7 @@
                             <!-- Revenue -->
                             <div class="bg-tertiary rounded-2xl p-8 border-4 border-success shadow-xl">
                                 <h4 class="text-xl font-semibold text-success mb-4 uppercase tracking-widest">Potential Revenue</h4>
-                                <div class="text-6xl font-black text-white">$<span id="prod-result-revenue">0</span></div>
+                                <div class="text-6xl font-black text-white"><span id="prod-result-revenue">$0</span></div>
                                 <div class="mt-4 text-green-300 flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                                     <span id="revenue-note">Initial inventory potential</span>
@@ -276,7 +276,7 @@
                                 <div class="grid grid-cols-1 gap-6">
                                     <div class="flex justify-between items-center border-b border-gray-800 pb-4">
                                         <span class="text-gray-400">Total Value</span>
-                                        <span class="text-3xl font-bold text-green-500">$<span id="prod-result-current-funds">0</span></span>
+                                        <span class="text-3xl font-bold text-green-500"><span id="prod-result-current-funds">$0</span></span>
                                     </div>
                                     <div>
                                         <span class="text-gray-400 block mb-4">Inventory</span>
@@ -373,10 +373,10 @@
                                 <span id="staleness-indicator" class="ml-2 text-xs"></span>
                             </div>
                             <div class="grid grid-cols-2 lg:flex gap-2 md:gap-3 font-mono text-sm md:text-base lg:text-lg w-full lg:w-auto">
-                                <span class="bg-blue-600 text-white px-2 md:px-3 py-1 rounded min-w-[90px] md:min-w-[110px] text-center">C: $<span id="shadow-C">0</span></span>
-                                <span class="bg-purple-600 text-white px-2 md:px-3 py-1 rounded min-w-[90px] md:min-w-[110px] text-center">N: $<span id="shadow-N">0</span></span>
-                                <span class="bg-yellow-600 text-white px-2 md:px-3 py-1 rounded min-w-[90px] md:min-w-[110px] text-center">D: $<span id="shadow-D">0</span></span>
-                                <span class="bg-red-600 text-white px-2 md:px-3 py-1 rounded min-w-[90px] md:min-w-[110px] text-center">Q: $<span id="shadow-Q">0</span></span>
+                                <span class="bg-blue-600 text-white px-2 md:px-3 py-1 rounded min-w-[90px] md:min-w-[110px] text-center">C: <span id="shadow-C">$0</span></span>
+                                <span class="bg-purple-600 text-white px-2 md:px-3 py-1 rounded min-w-[90px] md:min-w-[110px] text-center">N: <span id="shadow-N">$0</span></span>
+                                <span class="bg-yellow-600 text-white px-2 md:px-3 py-1 rounded min-w-[90px] md:min-w-[110px] text-center">D: <span id="shadow-D">$0</span></span>
+                                <span class="bg-red-600 text-white px-2 md:px-3 py-1 rounded min-w-[90px] md:min-w-[110px] text-center">Q: <span id="shadow-Q">$0</span></span>
                             </div>
                         </div>
                         <button id="recalc-shadow-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-6 md:py-2 rounded-lg text-sm md:text-base font-semibold transition shadow-lg w-full md:w-auto flex items-center justify-center gap-2">
@@ -398,7 +398,7 @@
             <div class="bg-gray-800 border-l-4 border-purple-500 p-4 mb-6 rounded shadow-lg flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div class="bg-purple-900/30 px-3 py-1 rounded border border-purple-500/50">
-                        <span class="text-xs text-purple-300 uppercase font-bold">Round</span>
+                        <span class="text-xs text-purple-300 uppercase font-bold">Session</span>
                         <span id="session-num-display" class="text-lg font-mono ml-2">1</span>
                     </div>
                     <div id="phase-badge" class="bg-green-900/30 px-3 py-1 rounded border border-green-500/50">
@@ -417,7 +417,7 @@
             <!-- Financial Summary Panel -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
-                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Production Rev</span>
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Production Value</span>
                     <span class="text-xl font-mono text-green-400" id="fin-production-rev">$0.00</span>
                 </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
@@ -495,6 +495,7 @@
                         <input type="number" id="offer-quantity" min="1" step="10" value="100" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white text-lg text-center font-bold" aria-label="Quantity in gallons">
                         <button type="button" id="quantity-plus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition" aria-label="Increase quantity">+</button>
                     </div>
+                    <p id="offer-sensitivity-warning" class="hidden text-[10px] text-yellow-500 mt-1">⚠️ This quantity exceeds the stable range. Shadow price may change.</p>
                 </div>
 
                 <div>
@@ -504,16 +505,20 @@
                         <input type="number" id="offer-price" min="0" step="0.50" value="5.00" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white text-lg text-center font-bold" aria-label="Max price per gallon">
                         <button type="button" id="price-plus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition" aria-label="Increase price">+</button>
                     </div>
-                    <p class="text-xs text-gray-300 mt-1">💡 Your Shadow Price: <span class="text-green-400 font-semibold">$<span id="offer-shadow-hint">0</span></span> (value to you)</p>
+                    <p class="text-xs text-gray-300 mt-1">💡 Your Shadow Price: <span class="text-green-400 font-semibold"><span id="offer-shadow-hint">$0</span></span> (value to you)</p>
                 </div>
 
                 <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-sm text-gray-300"><strong>Total Cost:</strong></span>
-                        <span class="text-blue-400 font-bold text-xl">$<span id="offer-total">0.00</span></span>
+                        <span class="text-blue-400 font-bold text-xl"><span id="offer-total">$0.00</span></span>
                     </div>
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="text-gray-400">Your Available Funds:</span>
+                    <div class="flex justify-between items-center text-xs mb-2">
+                        <span class="text-gray-400">Projected Profit Change:</span>
+                        <span class="font-bold" id="offer-profit-delta">$0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs opacity-70">
+                        <span class="text-gray-400">Your Current Funds:</span>
                         <span class="font-semibold" id="offer-current-funds">$0.00</span>
                     </div>
                 </div>
@@ -544,7 +549,7 @@
                         <div class="text-gray-300">They want:</div>
                         <div class="text-white font-semibold"><span id="respond-requested-qty">0</span> gallons</div>
                         <div class="text-gray-300">Max price:</div>
-                        <div class="text-blue-400 font-semibold">$<span id="respond-max-price">0</span>/gal</div>
+                        <div class="text-blue-400 font-semibold"><span id="respond-max-price">$0</span>/gal</div>
                     </div>
                 </div>
 
@@ -556,7 +561,7 @@
                     </div>
                     <div class="flex justify-between text-xs mt-1">
                         <span class="text-gray-400">Your Shadow Price:</span>
-                        <span class="text-green-400 font-semibold">$<span id="respond-shadow-price">0</span>/gal</span>
+                        <span class="text-green-400 font-semibold"><span id="respond-shadow-price">$0</span>/gal</span>
                     </div>
                 </div>
 
@@ -569,6 +574,7 @@
                         <input type="number" id="respond-quantity" min="1" step="10" value="100" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white text-lg text-center font-bold">
                         <button type="button" id="respond-qty-plus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition">+</button>
                     </div>
+                    <p id="respond-sensitivity-warning" class="hidden text-[10px] text-yellow-500 mt-1">⚠️ This quantity exceeds the stable range. Shadow price may change.</p>
                     <p class="text-xs text-gray-400 mt-1">💡 Sell only what you don't need for production</p>
                 </div>
 
@@ -585,9 +591,13 @@
 
                 <!-- Total Revenue -->
                 <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
-                    <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center mb-2">
                         <span class="text-sm text-gray-300"><strong>Your Revenue:</strong></span>
-                        <span class="text-green-400 font-bold text-xl">$<span id="respond-total">0.00</span></span>
+                        <span class="text-green-400 font-bold text-xl"><span id="respond-total">$0.00</span></span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400">Projected Profit Change:</span>
+                        <span class="font-bold" id="respond-profit-delta">$0.00</span>
                     </div>
                 </div>
 
@@ -709,13 +719,14 @@
                                     <span>Min: 1</span>
                                     <span>Max: <span id="haggle-qty-max">0</span></span>
                                 </div>
+                                <p id="haggle-sensitivity-warning" class="hidden text-[10px] text-yellow-500 mt-1 text-center">⚠️ Quantity exceeds stable range.</p>
                             </div>
 
                             <!-- Price Slider (The Greed Bar) -->
                             <div>
                                 <div class="flex justify-between text-sm mb-2">
                                     <label class="text-gray-300 font-semibold">Offer Price</label>
-                                    <span class="text-white font-mono">$<span id="haggle-price-display">0.00</span>/gal</span>
+                                    <span class="text-white font-mono"><span id="haggle-price-display">$0.00</span>/gal</span>
                                 </div>
                                 <input type="range" id="haggle-price-slider" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500">
                                 <div class="flex justify-between text-[10px] text-gray-500 mt-1">
@@ -750,9 +761,13 @@
                             </div>
 
                             <div class="bg-gray-900 p-3 rounded">
-                                <div class="flex justify-between items-center">
+                                <div class="flex justify-between items-center mb-1">
                                     <span class="text-xs text-gray-400">Total Transaction:</span>
-                                    <span class="text-lg font-bold text-blue-400">$<span id="haggle-total">0.00</span></span>
+                                    <span class="text-lg font-bold text-blue-400"><span id="haggle-total">$0.00</span></span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-gray-400">Projected Profit Change:</span>
+                                    <span class="font-bold" id="haggle-profit-delta">$0.00</span>
                                 </div>
                                 <div id="haggle-error" class="hidden badge-error mt-2 text-[10px] font-bold text-center border border-red-900/50 rounded py-1">
                                     ⚠️ INSUFFICIENT RESOURCES
@@ -827,7 +842,7 @@
                                 <button type="button" id="new-neg-price-plus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition">+</button>
                             </div>
                         </div>
-                        <p class="text-xs text-gray-300">Your Shadow Price: <span class="text-green-400 font-semibold">$<span id="new-neg-shadow-hint">0</span></span></p>
+                        <p class="text-xs text-gray-300">Your Shadow Price: <span class="text-green-400 font-semibold"><span id="new-neg-shadow-hint">$0</span></span></p>
                         <button id="submit-new-negotiation-btn" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold transition">
                             Send Initial Offer
                         </button>
@@ -918,7 +933,7 @@
                         <li>• <strong class="text-white-always">Shadow Prices</strong> show how much your profit increases per additional gallon of each chemical</li>
                         <li>• Buy chemicals with high shadow prices to maximize production profit</li>
                         <li>• Sell chemicals with low/zero shadow prices - you don't need them!</li>
-                        <li>• Your production automatically runs at the end of the round using these formulas</li>
+                        <li>• Your production automatically runs at the end of the session using these formulas</li>
                     </ul>
                 </div>
             </div>

@@ -256,7 +256,7 @@ class MarketplaceApp {
         ['C', 'N', 'D', 'Q'].forEach(chem => {
             const price = this.shadowPrices[chem] || 0;
             // Update header shadow prices
-            document.getElementById(`shadow-${chem}`).textContent = this.formatNumber(price);
+            document.getElementById(`shadow-${chem}`).textContent = this.formatCurrency(price);
 
             // Update chemical card shadow prices via component properties
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
@@ -366,11 +366,10 @@ class MarketplaceApp {
      */
     async loadTransactions() {
         try {
-            const response = await fetch('/CNDQ/api/trades/history.php');
-            const data = await response.json();
+            const data = await api.get('api/trades/history.php');
             if (data.success) {
-                this.transactions = data.transactions || [];
-                this.renderFinancialSummary();
+                // Check for new global trades (notifications)
+                this.checkNewGlobalTrades(data.transactions);
             }
         } catch (error) {
             console.error('Failed to load transactions:', error);
@@ -411,12 +410,12 @@ class MarketplaceApp {
             net: document.getElementById('fin-net-profit')
         };
 
-        if (els.prod) els.prod.textContent = '$' + this.formatNumber(productionRevenue);
-        if (els.sales) els.sales.textContent = '$' + this.formatNumber(salesRevenue);
-        if (els.cost) els.cost.textContent = '$' + this.formatNumber(purchaseCosts);
+        if (els.prod) els.prod.textContent = this.formatCurrency(productionRevenue);
+        if (els.sales) els.sales.textContent = this.formatCurrency(salesRevenue);
+        if (els.cost) els.cost.textContent = this.formatCurrency(purchaseCosts);
         
         if (els.net) {
-            els.net.textContent = (totalProfit >= 0 ? '+' : '') + '$' + this.formatNumber(totalProfit);
+            els.net.textContent = (totalProfit >= 0 ? '+' : '') + this.formatCurrency(totalProfit);
             els.net.className = `text-2xl font-mono font-bold z-10 ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`;
         }
     }
@@ -458,8 +457,8 @@ class MarketplaceApp {
                 <td class="py-3 font-bold ${typeColor}">${typeIcon} ${isSale ? 'SALE' : 'BUY'}</td>
                 <td class="py-3 font-bold">Chemical ${t.chemical}</td>
                 <td class="py-3 text-right font-mono">${this.formatNumber(t.quantity)}</td>
-                <td class="py-3 text-right font-mono">$${this.formatNumber(t.pricePerGallon)}</td>
-                <td class="py-3 text-right font-mono font-bold text-white">$${this.formatNumber(t.totalAmount)}</td>
+                <td class="py-3 text-right font-mono">${this.formatCurrency(t.pricePerGallon)}</td>
+                <td class="py-3 text-right font-mono font-bold text-white">${this.formatCurrency(t.totalAmount)}</td>
                 <td class="py-3 pl-4 text-gray-400">vs ${t.counterparty || 'Unknown'}</td>
             `;
             
@@ -588,7 +587,7 @@ class MarketplaceApp {
 
         const modal = document.getElementById('offer-modal');
         document.getElementById('offer-chemical').value = `Chemical ${chemical}`;
-        document.getElementById('offer-shadow-hint').textContent = this.shadowPrices[chemical].toFixed(2);
+        document.getElementById('offer-shadow-hint').textContent = this.formatCurrency(this.shadowPrices[chemical]);
         document.getElementById('offer-quantity').value = 100;
         document.getElementById('offer-quantity-slider').value = 100;
         document.getElementById('offer-price').value = '5.00';
@@ -597,6 +596,7 @@ class MarketplaceApp {
         this.currentOfferChemical = chemical;
 
         // Update funds and total
+        document.getElementById('offer-current-funds').textContent = this.formatCurrency(this.profile.currentFunds);
         this.updateBuyRequestTotal();
 
         modal?.classList.remove('hidden');
@@ -610,10 +610,30 @@ class MarketplaceApp {
         const price = parseFloat(document.getElementById('offer-price').value) || 0;
         const total = quantity * price;
 
-        document.getElementById('offer-total').textContent = total.toFixed(2);
+        document.getElementById('offer-total').textContent = this.formatCurrency(total);
         
+        // Calculate Profit Delta (Buying: (ShadowPrice - Price) * Quantity)
+        const shadowPrice = this.shadowPrices[this.currentOfferChemical] || 0;
+        const profitDelta = (shadowPrice - price) * quantity;
+        const deltaEl = document.getElementById('offer-profit-delta');
+        if (deltaEl) {
+            deltaEl.textContent = (profitDelta >= 0 ? '+' : '') + this.formatCurrency(profitDelta);
+            deltaEl.className = `font-bold ${profitDelta >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        }
+
+        // Sensitivity Warning (Buying: check allowableIncrease)
+        const range = this.ranges?.[this.currentOfferChemical];
+        const warningEl = document.getElementById('offer-sensitivity-warning');
+        if (range && warningEl) {
+            if (quantity > range.allowableIncrease) {
+                warningEl?.classList.remove('hidden');
+            } else {
+                warningEl?.classList.add('hidden');
+            }
+        }
+
         // Funds display in modal now shows projected profit improvement
-        document.getElementById('offer-current-funds').textContent = '$' + this.formatNumber(this.profile.currentFunds);
+        document.getElementById('offer-current-funds').textContent = this.formatCurrency(this.profile.currentFunds);
 
         const submitBtn = document.getElementById('offer-submit-btn');
         const warning = document.getElementById('insufficient-funds-warning');
@@ -705,7 +725,7 @@ class MarketplaceApp {
         const yourShadowPrice = this.shadowPrices[chemical] || 0;
 
         document.getElementById('respond-your-inventory').textContent = yourInventory.toLocaleString();
-        document.getElementById('respond-shadow-price').textContent = yourShadowPrice.toFixed(2);
+        document.getElementById('respond-shadow-price').textContent = this.formatCurrency(yourShadowPrice);
 
         // Set slider max to inventory
         document.getElementById('respond-quantity-slider').max = yourInventory;
@@ -731,12 +751,32 @@ class MarketplaceApp {
         const price = parseFloat(document.getElementById('respond-price').value) || 0;
         const total = quantity * price;
 
-        document.getElementById('respond-total').textContent = total.toFixed(2);
+        document.getElementById('respond-total').textContent = this.formatCurrency(total);
+
+        // Calculate Profit Delta (Selling: (Price - ShadowPrice) * Quantity)
+        const chemical = this.currentRespondContext?.chemical;
+        const shadowPrice = this.shadowPrices[chemical] || 0;
+        const profitDelta = (price - shadowPrice) * quantity;
+        const deltaEl = document.getElementById('respond-profit-delta');
+        if (deltaEl) {
+            deltaEl.textContent = (profitDelta >= 0 ? '+' : '') + this.formatCurrency(profitDelta);
+            deltaEl.className = `font-bold ${profitDelta >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        }
+
+        // Sensitivity Warning (Selling: check allowableDecrease)
+        const range = this.ranges?.[chemical];
+        const warningEl = document.getElementById('respond-sensitivity-warning');
+        if (range && warningEl) {
+            if (quantity > range.allowableDecrease) {
+                warningEl?.classList.remove('hidden');
+            } else {
+                warningEl?.classList.add('hidden');
+            }
+        }
 
         const submitBtn = document.getElementById('respond-submit-btn');
         const warning = document.getElementById('insufficient-inventory-warning');
 
-        const chemical = this.currentRespondContext?.chemical;
         const yourInventory = this.inventory[chemical] || 0;
 
         if (quantity > yourInventory) {
@@ -988,7 +1028,7 @@ class MarketplaceApp {
             priceSlider.max = Math.ceil(shadowVal * 3);
             priceSlider.step = 0.1;
             priceSlider.value = latestOffer.price;
-            document.getElementById('haggle-price-display').textContent = latestOffer.price.toFixed(2);
+            document.getElementById('haggle-price-display').textContent = this.formatCurrency(latestOffer.price);
 
             this.updateHaggleUI(shadowVal, isBuyer);
         } else {
@@ -1011,7 +1051,7 @@ class MarketplaceApp {
         document.getElementById('new-neg-team').value = teamName;
         document.getElementById('new-neg-chemical').value = chemical;
         const shadowPrice = this.shadowPrices[chemical] || 0;
-        document.getElementById('new-neg-shadow-hint').textContent = shadowPrice.toFixed(2);
+        document.getElementById('new-neg-shadow-hint').textContent = this.formatCurrency(shadowPrice);
 
         // Store in temp state
         this.tempNegotiation = { teamId, teamName, chemical, type };
@@ -1110,7 +1150,7 @@ class MarketplaceApp {
 
         try {
             // First send the reaction (ghost player event)
-            await api.post('/api/negotiations/react.php', {
+            await api.post('api/negotiations/react.php', {
                 negotiationId: this.currentNegotiation.id,
                 level: reaction
             });
@@ -1222,9 +1262,9 @@ class MarketplaceApp {
 
             if (heat) {
                 if (heat.isHot) {
-                    this.showToast(`🔥 HOT TRADE! Value created: $${this.formatNumber(heat.total)}`, 'hot', 5000);
+                    this.showToast(`🔥 HOT TRADE! Value created: ${this.formatCurrency(heat.total)}`, 'hot', 5000);
                 } else if (heat.isCold) {
-                    this.showToast(`❄️ COLD TRADE! Value destroyed: $${this.formatNumber(Math.abs(heat.total))}`, 'cold', 5000);
+                    this.showToast(`❄️ COLD TRADE! Value destroyed: ${this.formatCurrency(Math.abs(heat.total))}`, 'cold', 5000);
                 } else {
                     this.showToast('Trade executed successfully!', 'success');
                 }
@@ -1334,13 +1374,32 @@ class MarketplaceApp {
         const total = qty * price;
 
         document.getElementById('haggle-qty-display').textContent = qty;
-        document.getElementById('haggle-price-display').textContent = price.toFixed(2);
-        document.getElementById('haggle-total').textContent = total.toFixed(2);
+        document.getElementById('haggle-price-display').textContent = this.formatCurrency(price);
+        document.getElementById('haggle-total').textContent = this.formatCurrency(total);
 
-        // Determine if user is selling
+        // Calculate Profit Delta
         const type = this.currentNegotiation.type || 'buy';
         const userIsSelling = (this.currentNegotiation.initiatorId === this.currentUser && type === 'sell') ||
                             (this.currentNegotiation.responderId === this.currentUser && type === 'buy');
+        
+        const profitDelta = userIsSelling ? (price - shadowPrice) * qty : (shadowPrice - price) * qty;
+        const deltaEl = document.getElementById('haggle-profit-delta');
+        if (deltaEl) {
+            deltaEl.textContent = (profitDelta >= 0 ? '+' : '') + this.formatCurrency(profitDelta);
+            deltaEl.className = `font-bold ${profitDelta >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        }
+
+        // Sensitivity Warning
+        const range = this.ranges?.[this.currentNegotiation.chemical];
+        const warningEl = document.getElementById('haggle-sensitivity-warning');
+        if (range && warningEl) {
+            const limit = userIsSelling ? range.allowableDecrease : range.allowableIncrease;
+            if (qty > limit) {
+                warningEl?.classList.remove('hidden');
+            } else {
+                warningEl?.classList.add('hidden');
+            }
+        }
 
         // Real-time Resource Validation
         const errorEl = document.getElementById('haggle-error');
@@ -1812,6 +1871,15 @@ class MarketplaceApp {
         try {
             console.log(`[Session] Polled: Session=${data.session}, Phase=${data.phase}, Time=${data.timeRemaining}, Stopped=${data.gameStopped}`);
             
+            // DETECT HARD RESET: If current session is 1 but we thought we were further ahead,
+            // or if we have profile data but the server session is 1 and we haven't handled a reset yet.
+            if (this.lastSessionNumber && data.session < this.lastSessionNumber && data.session === 1) {
+                console.log('🔄 Session reset detected (New Game started). Reloading UI...');
+                window.location.reload();
+                return;
+            }
+            this.lastSessionNumber = data.session;
+
             this.gameStopped = data.gameStopped;
             this.lastServerTimeRemaining = data.timeRemaining;
 
@@ -1946,13 +2014,7 @@ class MarketplaceApp {
     async showProductionResults(sessionNumber, isInitial = false) {
         try {
             // Fetch production results from API
-            const response = await fetch(`/CNDQ/api/production/results.php?session=${sessionNumber}`);
-            if (!response.ok) {
-                console.error('Failed to fetch production results:', response.statusText);
-                return;
-            }
-
-            const data = await response.json();
+            const data = await api.get(`api/production/results.php?session=${sessionNumber}`);
 
             // Populate modal with data
             const sessionNum = data.sessionNumber || sessionNumber;
@@ -1971,7 +2033,7 @@ class MarketplaceApp {
 
             document.getElementById('prod-result-deicer').textContent = this.formatNumber(data.production.deicer);
             document.getElementById('prod-result-solvent').textContent = this.formatNumber(data.production.solvent);
-            document.getElementById('prod-result-revenue').textContent = this.formatNumber(data.revenue);
+            document.getElementById('prod-result-revenue').textContent = this.formatCurrency(data.revenue);
 
             // Chemicals consumed
             document.getElementById('prod-result-chem-C').textContent = this.formatNumber(data.chemicalsConsumed.C);
@@ -2021,7 +2083,7 @@ class MarketplaceApp {
                     div.innerHTML = `
                         <div class="flex justify-between items-baseline mb-1">
                             <span class="text-sm font-bold text-gray-300">Chem ${chem}</span>
-                            <span class="text-lg font-mono font-bold ${isValuable ? 'text-purple-400' : 'text-gray-500'}">$${this.formatNumber(sp)}</span>
+                            <span class="text-lg font-mono font-bold ${isValuable ? 'text-purple-400' : 'text-gray-500'}">${this.formatCurrency(sp)}</span>
                         </div>
                         <div class="text-xs ${isValuable ? 'text-purple-300' : 'text-gray-400'}">
                             ${isValuable ? 'High Value - BUY MORE!' : 'Low Value - SELL EXCESS'}
@@ -2033,7 +2095,7 @@ class MarketplaceApp {
             }
 
             // Current status
-            document.getElementById('prod-result-current-funds').textContent = this.formatNumber(data.currentFunds);
+            document.getElementById('prod-result-current-funds').textContent = this.formatCurrency(data.currentFunds);
             document.getElementById('prod-result-inv-C').textContent = this.formatNumber(data.currentInventory.C);
             document.getElementById('prod-result-inv-N').textContent = this.formatNumber(data.currentInventory.N);
             document.getElementById('prod-result-inv-D').textContent = this.formatNumber(data.currentInventory.D);
@@ -2068,11 +2130,7 @@ class MarketplaceApp {
 
         // Acknowledge production to server (clears productionJustRan flag)
         try {
-            await fetch('/CNDQ/api/session/status.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ acknowledgeProduction: true })
-            });
+            await api.post('api/session/status.php', { acknowledgeProduction: true });
         } catch (error) {
             console.error('Failed to acknowledge production:', error);
         }
@@ -2093,7 +2151,7 @@ class MarketplaceApp {
     renderFunds() {
         const fundsEl = document.getElementById('current-funds');
         if (fundsEl && this.profile) {
-            const newFunds = '$' + this.formatNumber(this.profile.currentFunds);
+            const newFunds = this.formatCurrency(this.profile.currentFunds);
             if (fundsEl.textContent !== newFunds) {
                 fundsEl?.classList.remove('animate-success-pop');
                 void fundsEl.offsetWidth; // Trigger reflow
@@ -2423,12 +2481,7 @@ class MarketplaceApp {
             btn.disabled = true;
             btn.textContent = 'Restarting...';
 
-            const response = await fetch('/CNDQ/api/session/restart.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            const data = await response.json();
+            const data = await api.post('api/session/restart.php');
 
             if (data.success) {
                 this.showToast('Simulation restarted! Reloading...', 'success');
@@ -2460,6 +2513,21 @@ class MarketplaceApp {
     }
 
     /**
+     * Format currency with correct negative sign placement (-$100 vs $-100)
+     */
+    formatCurrency(num) {
+        if (num === null || num === undefined) return '$0.00';
+        const parsed = parseFloat(num);
+        if (isNaN(parsed)) return '$0.00';
+        const value = Object.is(parsed, -0) ? 0 : parsed;
+        const formatted = Math.abs(value).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        return (value < 0 ? '-$' : '$') + formatted;
+    }
+
+    /**
      * Format time ago
      */
     formatTimeAgo(timestamp) {
@@ -2484,7 +2552,12 @@ const startMarketplace = () => {
     // Health check - detect team wipe
     setInterval(async () => {
         try {
-            await api.team.getProfile();
+            const data = await api.team.getProfile();
+            // Detect if team was reset (new creation date)
+            if (window.app && window.app.profile && data.profile.createdAt > window.app.profile.createdAt) {
+                console.log('🔄 Team reset detected (New Game). Reloading...');
+                window.location.reload();
+            }
         } catch (error) {
             console.log('⚠️ Session lost or team deleted - reloading...');
             window.location.reload();

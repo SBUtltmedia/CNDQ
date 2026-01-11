@@ -189,12 +189,15 @@ class LeaderboardModal extends LitElement {
         }
     }
 
-    formatCurrency(value) {
-        if (value === undefined || value === null || isNaN(value)) return '$0.00';
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(value);
+    formatCurrency(num) {
+        if (num === null || num === undefined || isNaN(num)) return '$0.00';
+        const parsed = parseFloat(num);
+        const value = Object.is(parsed, -0) ? 0 : parsed;
+        const formatted = Math.abs(value).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        return (value < 0 ? '-$' : '$') + formatted;
     }
 
     render() {

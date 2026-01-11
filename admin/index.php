@@ -289,7 +289,7 @@ if (!isAdmin()) {
 
         async function loadSessionState() {
             try {
-                const response = await fetch(apiUrl('/api/admin/session.php'));
+                const response = await fetch(apiUrl('api/admin/session.php'));
                 const data = await response.json();
 
                 if (data.success) {
@@ -303,7 +303,7 @@ if (!isAdmin()) {
 
         async function loadTeams() {
             try {
-                const response = await fetch(apiUrl('/api/admin/list-teams.php'));
+                const response = await fetch(apiUrl('api/admin/list-teams.php'));
                 const data = await response.json();
 
                 if (data.teams) {
@@ -395,7 +395,7 @@ if (!isAdmin()) {
             }
 
             try {
-                const response = await fetch(apiUrl('/api/admin/session.php'), {
+                const response = await fetch(apiUrl('api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'toggleGameStop', stopped: newState })
@@ -413,7 +413,7 @@ if (!isAdmin()) {
 
         async function finalizeGame() {
             try {
-                const response = await fetch(apiUrl('/api/admin/session.php'), {
+                const response = await fetch(apiUrl('api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'finalize' })
@@ -431,7 +431,7 @@ if (!isAdmin()) {
 
         async function setPhase(phase) {
             try {
-                const response = await fetch(apiUrl('/api/admin/session.php'), {
+                const response = await fetch(apiUrl('api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'setPhase', phase })
@@ -450,7 +450,7 @@ if (!isAdmin()) {
             const enabled = document.getElementById('auto-advance').checked;
 
             try {
-                const response = await fetch(apiUrl('/api/admin/session.php'), {
+                const response = await fetch(apiUrl('api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'setAutoCycle', enabled })
@@ -471,7 +471,7 @@ if (!isAdmin()) {
             const totalSeconds = (minutes * 60) + secs;
 
             try {
-                const response = await fetch(apiUrl('/api/admin/session.php'), {
+                const response = await fetch(apiUrl('api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'setTradingDuration', seconds: totalSeconds })
@@ -494,7 +494,7 @@ if (!isAdmin()) {
             }
 
             try {
-                const response = await fetch(apiUrl('/api/admin/session.php'), {
+                const response = await fetch(apiUrl('api/admin/session.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'startNew' })
@@ -504,6 +504,8 @@ if (!isAdmin()) {
                 if (data.success) {
                     showToast('New Game Started');
                     await loadSessionState();
+                    await loadTeams();
+                    await loadNPCs();
                 }
             } catch (error) {
                 showToast('Failed to start new game', 'error');
@@ -520,7 +522,7 @@ if (!isAdmin()) {
             }
 
             try {
-                const response = await fetch(apiUrl('/api/admin/reset-game.php'), {
+                const response = await fetch(apiUrl('api/admin/reset-game.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -544,7 +546,7 @@ if (!isAdmin()) {
 
         async function loadNPCs() {
             try {
-                const response = await fetch(apiUrl('/api/admin/npc/list.php'));
+                const response = await fetch(apiUrl('api/admin/npc/list.php'));
                 const data = await response.json();
 
                 if (data.success) {
@@ -563,7 +565,8 @@ if (!isAdmin()) {
                     document.getElementById('npc-total').textContent = npcs.length;
                     document.getElementById('npc-active').textContent = activeNPCs;
                     document.getElementById('npc-trades').textContent = totalTrades;
-                    document.getElementById('npc-profit').textContent = '$' + (isNaN(totalProfit) ? '0.00' : totalProfit.toFixed(2));
+                    const totalProfitVal = parseFloat(data.totalProfit);
+                    document.getElementById('npc-profit').textContent = (totalProfitVal < 0 ? '-$' : '$') + Math.abs(isNaN(totalProfitVal) ? 0 : totalProfitVal).toFixed(2);
 
                     // Render NPC list
                     const npcListEl = document.getElementById('npc-list');
@@ -620,7 +623,7 @@ if (!isAdmin()) {
             const enabled = document.getElementById('npc-system-enabled').checked;
 
             try {
-                const response = await fetch(apiUrl('/api/admin/npc/toggle-system.php'), {
+                const response = await fetch(apiUrl('api/admin/npc/toggle-system.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ enabled })
@@ -652,7 +655,7 @@ if (!isAdmin()) {
             }
 
             try {
-                const response = await fetch(apiUrl('/api/admin/npc/create.php'), {
+                const response = await fetch(apiUrl('api/admin/npc/create.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ skillLevel, count })
@@ -672,7 +675,7 @@ if (!isAdmin()) {
 
         async function toggleNPC(npcId, active) {
             try {
-                const response = await fetch(apiUrl('/api/admin/npc/toggle.php'), {
+                const response = await fetch(apiUrl('api/admin/npc/toggle.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ npcId, active })
@@ -698,7 +701,7 @@ if (!isAdmin()) {
             if (!confirmed) return;
 
             try {
-                const response = await fetch(apiUrl('/api/admin/npc/delete.php'), {
+                const response = await fetch(apiUrl('api/admin/npc/delete.php'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ npcId, deleteTeamData: false })

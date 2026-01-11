@@ -38,12 +38,12 @@ try {
             'Seller' => $txn['sellerName'],
             'Chemical' => $txn['chemical'],
             'Quantity' => $txn['quantity'],
-            'Price' => '$' . number_format($txn['pricePerGallon'], 2),
-            'Total' => '$' . number_format($txn['totalAmount'], 2),
-            'Value Created' => '$' . number_format($heat['total'] ?? 0, 2),
+            'Price' => ($txn['pricePerGallon'] < 0 ? '-$' : '$') . number_format(abs($txn['pricePerGallon']), 2),
+            'Total' => ($txn['totalAmount'] < 0 ? '-$' : '$') . number_format(abs($txn['totalAmount']), 2),
+            'Value Created' => (($heat['total'] ?? 0) < 0 ? '-$' : '$') . number_format(abs($heat['total'] ?? 0), 2),
             'Quality' => $quality,
-            'Buyer Gain' => '$' . number_format($heat['buyerGain'] ?? 0, 2),
-            'Seller Gain' => '$' . number_format($heat['sellerGain'] ?? 0, 2)
+            'Buyer Gain' => (($heat['buyerGain'] ?? 0) < 0 ? '-$' : '$') . number_format(abs($heat['buyerGain'] ?? 0), 2),
+            'Seller Gain' => (($heat['sellerGain'] ?? 0) < 0 ? '-$' : '$') . number_format(abs($heat['sellerGain'] ?? 0), 2)
         ];
     }
 

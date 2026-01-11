@@ -10,6 +10,7 @@
  */
 
 require_once __DIR__ . '/../NPCTradingStrategy.php';
+require_once __DIR__ . '/../MarketplaceAggregator.php';
 
 class BeginnerStrategy extends NPCTradingStrategy
 {

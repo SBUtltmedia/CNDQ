@@ -25,13 +25,15 @@ const CONFIG = {
     ],
     headless: process.argv.includes('--headless'),
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
-    keepOpen: process.argv.includes('--keep-open')
+    keepOpen: process.argv.includes('--keep-open'),
+    skillLevel: 'expert', // Default oracle skill level
+    skillLevels: null     // Optional array of skill levels for RPCs
 };
 
 class APIPlayabilityTest {
     constructor(config) {
-        this.config = config;
-        this.browser = new BrowserHelper(config);
+        this.config = { ...CONFIG, ...config };
+        this.browser = new BrowserHelper(this.config);
         this.apiCallLog = [];
         this.results = {
             apiCalls: 0,
@@ -145,7 +147,7 @@ class APIPlayabilityTest {
         this.logApiCall('POST', '/api/admin/npc/toggle-system', { enabled: true }, npcToggleResponse);
 
         // Create NPCs of various levels
-        const npcLevels = ['expert', 'expert', 'novice', 'novice', 'beginner'];
+        const npcLevels = this.config.npcLevels || ['expert', 'expert', 'novice', 'novice', 'beginner'];
         for (const level of npcLevels) {
             console.log(`      Adding ${level} NPC...`);
             const createResponse = await api.createNPC(level);
@@ -153,13 +155,14 @@ class APIPlayabilityTest {
         }
 
         // Set auto-advance to TRUE (Continuous Mode) and duration
-        console.log('   ⏱️  Setting trading duration to 600s...');
+        const durationSec = (this.config.tradingDuration || 10) * 60;
+        console.log(`   ⏱️  Setting trading duration to ${durationSec}s...`);
 
         const autoAdvanceResponse = await api.setAutoAdvance(true);
         this.logApiCall('POST', '/api/admin/session', { action: 'setAutoAdvance', enabled: true }, autoAdvanceResponse);
 
-        const durationResponse = await api.setTradingDuration(600);
-        this.logApiCall('POST', '/api/admin/session', { action: 'setTradingDuration', seconds: 600 }, durationResponse);
+        const durationResponse = await api.setTradingDuration(durationSec);
+        this.logApiCall('POST', '/api/admin/session', { action: 'setTradingDuration', seconds: durationSec }, durationResponse);
 
         // Start the game
         console.log('   🎬 Starting game...');
@@ -189,8 +192,9 @@ class APIPlayabilityTest {
         for (let turn = 1; turn <= turns; turn++) {
             console.log(`\n   🔄 Turn ${turn}/${turns}...`);
             // Each player takes multiple actions sequentially
-            for (const userId of this.config.testUsers) {
-                await this.playerTakesActionsViaAPI(userId);
+            for (let i = 0; i < this.config.testUsers.length; i++) {
+                const userId = this.config.testUsers[i];
+                await this.playerTakesActionsViaAPI(userId, i);
             }
             if (turn < turns) {
                 console.log('      ⏳ Waiting for market activity & NPC response (15s)...');
@@ -202,94 +206,83 @@ class APIPlayabilityTest {
     /**
      * A player takes actions
      */
-    async playerTakesActionsViaAPI(userId) {
+    async playerTakesActionsViaAPI(userId, playerIndex = 0) {
         const teamName = userId.split('@')[0];
-        console.log(`      👤 ${teamName} acting (API)...`);
+        
+        // Determine skill level for this specific player
+        let skill = this.config.skillLevel;
+        if (Array.isArray(this.config.skillLevels) && this.config.skillLevels[playerIndex]) {
+            skill = this.config.skillLevels[playerIndex];
+        }
+
+        console.log(`      👤 ${teamName} acting (API via ${skill} Oracle)...`);
 
         const page = await this.browser.loginAndNavigate(userId, '');
         const api = new ApiClient(page, this.config.baseUrl);
 
         try {
-            // 1. Get Shadow Prices and Inventory
-            const shadowResponse = await api.getShadowPrices();
-            this.logApiCall('GET', '/api/production/shadow-prices', {}, shadowResponse);
+            // 1. Consult the Oracle (Server-Side Strategy)
+            const oracleResponse = await api.consultStrategy(skill);
             
-            const shadowPrices = shadowResponse.data.shadowPrices || { C: 0, N: 0, D: 0, Q: 0 };
-            const inventory = shadowResponse.data.inventory || { C: 0, N: 0, D: 0, Q: 0 };
+            this.logApiCall('GET', '/api/test/consult-strategy', { skill: skill }, oracleResponse);
 
-            // 2. Respond to Negotiations (Haggle/Accept)
-            const negotiationsResponse = await api.listNegotiations();
-            this.logApiCall('GET', '/api/negotiations/list', {}, negotiationsResponse);
+            if (!oracleResponse.ok || !oracleResponse.data.success) {
+                console.log(`         ⚠️ Oracle Error: ${oracleResponse.data.error || 'Unknown error'}`);
+                return;
+            }
 
-            if (negotiationsResponse.ok) {
-                const negotiations = negotiationsResponse.data.negotiations || [];
-                const pending = negotiations.filter(n => n.status === 'pending' && n.lastOfferBy !== userId);
+            const rec = oracleResponse.data.recommendation;
+
+            // 2. Execute Negotiation Action (if any)
+            if (rec.negotiation_action) {
+                const action = rec.negotiation_action;
+                const negId = action.negotiationId;
                 
-                for (const neg of pending) {
-                    const latestOffer = neg.offers[neg.offers.length - 1];
-                    const chem = neg.chemical;
-                    const myValuation = shadowPrices[chem] || 0;
+                if (action.type === 'accept_negotiation') {
+                    console.log(`         👉 Oracle: Accepting negotiation ${negId}`);
+                    const res = await api.acceptNegotiation(negId);
+                    this.logApiCall('POST', '/api/negotiations/accept', { negotiationId: negId }, res);
                     
-                    let acceptable = false;
-                    const isBuyer = (neg.type === 'buy' && neg.initiator_id === userId) || (neg.type === 'sell' && neg.initiator_id !== userId);
-
-                    if (isBuyer) {
-                        // I want to buy for LESS than my shadow price
-                        if (latestOffer.price <= myValuation * 1.05) acceptable = true;
-                    } else {
-                        // I want to sell for MORE than my shadow price
-                        if (latestOffer.price >= myValuation * 0.95) acceptable = true;
-                    }
-
-                    if (acceptable) {
-                        console.log(`         ✅ Accepting negotiation: ${neg.id} for ${chem} at $${latestOffer.price}`);
-                        const acceptResponse = await api.acceptNegotiation(neg.id);
-                        this.logApiCall('POST', '/api/negotiations/accept', { negotiationId: neg.id }, acceptResponse);
-                    } else if (neg.offers.length < 3) {
-                        // Counter-offer logic (split the difference)
-                        const targetPrice = (latestOffer.price + myValuation) / 2;
-                        console.log(`         ⚖️  Countering negotiation: ${neg.id} for ${chem} at $${targetPrice.toFixed(2)}`);
-                        const counterResponse = await api.counterNegotiation(neg.id, latestOffer.quantity, targetPrice);
-                        this.logApiCall('POST', '/api/negotiations/counter', { negotiationId: neg.id, quantity: latestOffer.quantity, price: targetPrice }, counterResponse);
-                    }
+                } else if (action.type === 'counter_negotiation') {
+                    console.log(`         👉 Oracle: Countering ${negId} (${action.quantity} @ $${action.price})`);
+                    const res = await api.counterNegotiation(negId, action.quantity, action.price);
+                    this.logApiCall('POST', '/api/negotiations/counter', { negotiationId: negId, quantity: action.quantity, price: action.price }, res);
+                    
+                } else if (action.type === 'reject_negotiation') {
+                    console.log(`         👉 Oracle: Rejecting negotiation ${negId}`);
+                    const res = await api.rejectNegotiation(negId);
+                    this.logApiCall('POST', '/api/negotiations/reject', { negotiationId: negId }, res);
                 }
-            }
-
-            // 3. Browse Marketplace Advertisements
-            const adsResponse = await api.listAdvertisements();
-            this.logApiCall('GET', '/api/advertisements/list', {}, adsResponse);
-
-            if (adsResponse.ok) {
-                const allAds = adsResponse.data.advertisements || {};
-                for (const [chem, chemAds] of Object.entries(allAds)) {
-                    const myValuation = shadowPrices[chem] || 0;
-
-                    // Check for interesting SELL ads (I might want to BUY)
-                    for (const ad of (chemAds.sell || [])) {
-                        if (ad.teamId === userId) continue;
-                        if (myValuation > 5 && Math.random() > 0.5) {
-                            console.log(`         🤝 Initiating BUY for ${chem} from ${ad.teamName} (Shadow: $${myValuation.toFixed(2)})`);
-                            const initResponse = await api.initiateNegotiation(ad.teamId, chem, 100, myValuation * 0.9, 'buy', ad.id);
-                            this.logApiCall('POST', '/api/negotiations/initiate', { responderId: ad.teamId, chemical: chem, price: myValuation * 0.9 }, initResponse);
-                        }
-                    }
+            } 
+            
+            // 3. Execute New Trade Action (if any)
+            else if (rec.trade_action) {
+                const action = rec.trade_action;
+                
+                if (action.type === 'initiate_negotiation') {
+                    console.log(`         👉 Oracle: Initiating trade for ${action.chemical} with ${action.responderName}`);
+                    const res = await api.initiateNegotiation(
+                        action.responderId, 
+                        action.chemical, 
+                        action.quantity, 
+                        action.price, 
+                        'buy', // Oracle usually suggests buying from advertisements
+                        action.adId
+                    );
+                    this.logApiCall('POST', '/api/negotiations/initiate', { responderId: action.responderId, chemical: action.chemical }, res);
+                    
+                } else if (action.type === 'create_buy_order') {
+                    console.log(`         👉 Oracle: Creating Buy Order for ${action.chemical} ($${action.maxPrice})`);
+                    const res = await api.createBuyOrder(action.chemical, action.quantity, action.maxPrice);
+                    this.logApiCall('POST', '/api/offers/bid', { chemical: action.chemical, quantity: action.quantity, maxPrice: action.maxPrice }, res);
+                    
+                } else if (action.type === 'create_sell_offer') {
+                     console.log(`         👉 Oracle: Creating Sell Offer for ${action.chemical} ($${action.minPrice})`);
+                     const res = await api.createOffer(action.chemical, action.quantity, action.minPrice);
+                     this.logApiCall('POST', '/api/offers/create', { chemical: action.chemical, quantity: action.quantity, minPrice: action.minPrice }, res);
                 }
-            }
-
-            // 4. Post Maintenance Ads (Buy bottlenecks, Sell surplus)
-            for (const chem of ['C', 'N', 'D', 'Q']) {
-                const valuation = shadowPrices[chem] || 0;
-                const stock = inventory[chem] || 0;
-
-                if (valuation > 10 && Math.random() > 0.7) {
-                    console.log(`         📝 Posting BUY request for ${chem} (Shadow: $${valuation.toFixed(2)})`);
-                    const bidResponse = await api.createBuyOrder(chem, 100, valuation);
-                    this.logApiCall('POST', '/api/offers/bid', { chemical: chem, quantity: 100, maxPrice: valuation }, bidResponse);
-                } else if (valuation < 1 && stock > 300 && Math.random() > 0.7) {
-                    console.log(`         📢 Posting SELL ad for ${chem} (Stock: ${Math.round(stock)})`);
-                    const adResponse = await api.postAdvertisement(chem, 'sell', "Surplus sale!");
-                    this.logApiCall('POST', '/api/advertisements/post', { chemical: chem, type: 'sell' }, adResponse);
-                }
+            } else {
+                console.log('         💤 Oracle: No profitable moves found');
             }
 
         } catch (error) {

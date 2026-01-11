@@ -95,7 +95,16 @@ class BrowserHelper {
      * Navigate to a page
      */
     async navigateTo(page, pathStr, options = {}) {
-        const url = pathStr.startsWith('http') ? pathStr : `${this.config.baseUrl}${pathStr}`;
+        if (pathStr.startsWith('http')) {
+            await page.goto(pathStr, { waitUntil: 'networkidle2', ...options });
+            return;
+        }
+
+        // Ensure proper slash handling
+        const baseUrl = this.config.baseUrl.replace(/\/$/, '');
+        const relativePath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
+        const url = `${baseUrl}${relativePath}`;
+        
         await page.goto(url, { waitUntil: 'networkidle2', ...options });
     }
 

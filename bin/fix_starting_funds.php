@@ -52,13 +52,14 @@ try {
                 'is_starting' => true
             ]);
 
-            echo "✓ Fixed: $teamName - Set starting funds to \$" . number_format($currentFunds, 2) . "\n";
-            $fixed++;
-        } else {
-            echo "⏭  Skipped: $teamName - Already has proper starting funds (\$" . number_format($startingFunds, 2) . ")\n";
-            $skipped++;
-        }
-    }
+                    $currentStr = ($currentFunds < 0 ? '-$' : '$') . number_format(abs($currentFunds), 2);
+                    echo "✓ Fixed: $teamName - Set starting funds to $currentStr\n";
+                    $fixed++;
+                } else {
+                    $startingStr = ($startingFunds < 0 ? '-$' : '$') . number_format(abs($startingFunds), 2);
+                    echo "⏭  Skipped: $teamName - Already has proper starting funds ($startingStr)\n";
+                    $skipped++;
+                }    }
 
     echo "\n" . str_repeat('-', 50) . "\n";
     echo "✅ Migration complete!\n";

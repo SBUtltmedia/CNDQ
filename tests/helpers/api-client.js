@@ -207,6 +207,14 @@ class ApiClient {
     }
 
     // ===================
+    // TEST ENDPOINTS
+    // ===================
+
+    async consultStrategy(skillLevel = 'expert') {
+        return this.get(`test/consult-strategy.php?skill=${skillLevel}`);
+    }
+
+    // ===================
     // ADMIN ENDPOINTS
     // ===================
 

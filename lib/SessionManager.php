@@ -331,7 +331,7 @@ class SessionManager {
     /**
      * Start New Game (formerly restartGame)
      * Resets the entire world and starts a fresh session.
-     * Preserves NPC count.
+     * Preserves NPC count and trading duration.
      */
     public function startNewGame() {
         require_once __DIR__ . '/NPCManager.php';
@@ -340,6 +340,10 @@ class SessionManager {
         $npcManager = new NPCManager();
         $npcConfig = $npcManager->loadConfig();
         $npcSkillLevels = array_column($npcConfig['npcs'] ?? [], 'skillLevel');
+
+        // Preserve current trading duration
+        $currentState = $this->getState();
+        $tradingDuration = $currentState['tradingDuration'] ?? 600;
         
         $db = Database::getInstance();
         $db->beginTransaction();
@@ -367,7 +371,7 @@ class SessionManager {
             $npcManager->createNPCs($level, 1);
         }
 
-        return $this->reset();
+        return $this->reset($tradingDuration);
     }
 
     // Alias for backward compatibility
@@ -378,7 +382,7 @@ class SessionManager {
         return $this->storage->getSystemState();
     }
 
-    public function reset($tradingDuration = 120) {
+    public function reset($tradingDuration = 600) {
         $this->storage->setSessionData([
             'currentSession' => 1,
             'phase' => 'TRADING',
@@ -389,7 +393,7 @@ class SessionManager {
             'lastTick' => time(),
             'productionRun' => null,
             'productionJustRan' => null, // Don't show modal at start
-            'gameStopped' => false, // Game starts immediately for 24/7 loop
+            'gameStopped' => true, // Start STOPPED so admin can prepare
             'gameFinished' => false
         ]);
         return $this->storage->getSystemState();

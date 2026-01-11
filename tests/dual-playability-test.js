@@ -30,6 +30,38 @@
 const UIPlayabilityTest = require('./ui-playability-test');
 const APIPlayabilityTest = require('./api-playability-test');
 
+const runUiOnly = process.argv.includes('--ui-only');
+const runApiOnly = process.argv.includes('--api-only');
+
+// Parse dynamic arguments
+const getArgValue = (flag) => {
+    const idx = process.argv.indexOf(flag);
+    return (idx > -1 && process.argv[idx + 1]) ? process.argv[idx + 1] : null;
+};
+
+const npcCount = parseInt(getArgValue('--npcs') || '3');
+const rpcCount = parseInt(getArgValue('--rpcs') || '3');
+const tradingDuration = parseInt(getArgValue('--duration') || '10');
+const skillLevel = getArgValue('--skill') || 'expert';
+const useSkillDist = process.argv.includes('--skill-dist');
+
+// Map count to levels (e.g., 3 -> beginner, novice, expert)
+const defaultLevels = ['beginner', 'novice', 'expert'];
+
+// NPC Levels
+const npcLevels = [];
+for (let i = 0; i < npcCount; i++) {
+    npcLevels.push(defaultLevels[i % defaultLevels.length]);
+}
+
+// RPC (Test User) Levels
+const rpcLevels = [];
+if (useSkillDist) {
+    for (let i = 0; i < rpcCount; i++) {
+        rpcLevels.push(defaultLevels[i % defaultLevels.length]);
+    }
+}
+
 const CONFIG = {
     baseUrl: 'http://cndq.test/CNDQ/',
     adminUser: 'admin@stonybrook.edu',
@@ -37,11 +69,18 @@ const CONFIG = {
         'test_mail1@stonybrook.edu',
         'test_mail2@stonybrook.edu',
         'test_mail3@stonybrook.edu'
-    ],
+    ].slice(0, rpcCount),
     targetSessions: 2, // Increased to check multi-round health
     headless: process.argv.includes('--headless'),
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
     keepOpen: false, // Never keep open in dual mode
+
+    // Dynamic configuration from CLI
+    npcLevels: npcLevels,
+    rpcLevels: rpcLevels,
+    skillLevel: skillLevel,
+    skillLevels: useSkillDist ? rpcLevels : null,
+    tradingDuration: tradingDuration,
 
     // ROI-based pass criteria
     minPositiveRoiTeams: 1,        // At least 1 team should have positive ROI
@@ -78,9 +117,13 @@ class DualPlayabilityTest {
                 console.log('');
 
                 const uiTest = new UIPlayabilityTest(this.config);
-                await uiTest.run().catch(err => {
-                    console.error('UI test failed:', err.message);
-                });
+                // Modular run: setup then play
+                await uiTest.browser.launch();
+                await uiTest.setupGame();
+                await uiTest.playMarketplace();
+                await uiTest.endGameAndCheckResults();
+                uiTest.printResults();
+                await uiTest.browser.close();
 
                 this.uiResults = {
                     uiActions: uiTest.results.uiActions,
@@ -91,7 +134,6 @@ class DualPlayabilityTest {
                 };
 
                 // Wait between tests to let server settle
-                // Note: Game has time-freeze mechanism - when no clients active, timer doesn't advance
                 if (!runUiOnly) {
                     console.log('\n⏸️  Waiting 10 seconds before API test (time-freeze aware)...\n');
                     await new Promise(resolve => setTimeout(resolve, 10000));

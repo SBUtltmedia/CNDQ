@@ -40,6 +40,17 @@ class OfferBubble extends HTMLElement {
         this.render();
     }
 
+    formatCurrency(num) {
+        if (num === null || num === undefined || isNaN(num)) return '$0.00';
+        const parsed = parseFloat(num);
+        const value = Object.is(parsed, -0) ? 0 : parsed;
+        const formatted = Math.abs(value).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        return (value < 0 ? '-$' : '$') + formatted;
+    }
+
     render() {
         if (!this._offer) {
             this.innerHTML = '';
@@ -72,10 +83,10 @@ class OfferBubble extends HTMLElement {
                     <span>${this._offer.fromTeamName}</span>
                 </div>
                 <div class="text-xs text-secondary">
-                    ${this._offer.quantity} gal @ $${this._offer.price.toFixed(2)}/gal
+                    ${this._offer.quantity} gal @ ${this.formatCurrency(this._offer.price)}/gal
                 </div>
                 <div class="text-xs font-bold text-success">
-                    Total: $${total.toFixed(2)}
+                    Total: ${this.formatCurrency(total)}
                 </div>
                 ${hotBadge}
                 <div class="text-[10px] text-tertiary mt-1 italic">

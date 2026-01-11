@@ -14,9 +14,10 @@ class ApiClient {
     constructor() {
         // Determine the base path relative to the current page
         const path = window.location.pathname;
+        const search = window.location.search;
 
+        // Robust path detection for subfolder installations
         // If we're in /admin/ or any subdirectory, use '../' prefix
-        // Otherwise use './' for root-level pages
         if (path.includes('/admin/')) {
             this.pathPrefix = '../';
         } else {
@@ -24,7 +25,7 @@ class ApiClient {
         }
 
         console.group('🌐 API Client Initialized');
-        console.log('Current URL:', path);
+        console.log('Path:', path);
         console.log('Path Prefix:', this.pathPrefix);
         console.groupEnd();
     }
@@ -136,7 +137,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, profile: Object, inventory: Object}>}
          */
         getProfile: async () => {
-            return this.get('/api/team/profile.php');
+            return this.get('api/team/profile.php');
         },
 
         /**
@@ -144,7 +145,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, settings: Object}>}
          */
         getSettings: async () => {
-            return this.get('/api/team/settings.php');
+            return this.get('api/team/settings.php');
         },
 
         /**
@@ -153,7 +154,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, settings: Object}>}
          */
         updateSettings: async (settings) => {
-            return this.post('/api/team/settings.php', settings);
+            return this.post('api/team/settings.php', settings);
         }
     };
 
@@ -167,7 +168,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, shadowPrices: Object}>}
          */
         getShadowPrices: async () => {
-            return this.get('/api/production/shadow-prices.php');
+            return this.get('api/production/shadow-prices.php');
         }
     };
 
@@ -181,7 +182,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, advertisements: Object}>}
          */
         list: async () => {
-            return this.get('/api/advertisements/list.php');
+            return this.get('api/advertisements/list.php');
         },
 
         /**
@@ -191,7 +192,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, message: string, advertisement: Object}>}
          */
         post: async (chemical, type) => {
-            return this.post('/api/advertisements/post.php', { chemical, type });
+            return this.post('api/advertisements/post.php', { chemical, type });
         },
 
         /**
@@ -199,7 +200,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, advertisements: Array}>}
          */
         getMyAds: async () => {
-            return this.get('/api/advertisements/my-ads.php');
+            return this.get('api/advertisements/my-ads.php');
         }
     };
 
@@ -216,7 +217,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, buyOrder: Object}>}
          */
         bid: async (chemical, quantity, maxPrice) => {
-            return this.post('/api/offers/bid.php', {
+            return this.post('api/offers/bid.php', {
                 chemical,
                 quantity,
                 maxPrice
@@ -234,7 +235,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, negotiations: Array}>}
          */
         list: async () => {
-            return this.get('/api/negotiations/list.php');
+            return this.get('api/negotiations/list.php');
         },
 
         /**
@@ -248,7 +249,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, negotiation: Object}>}
          */
         initiate: async (responderId, chemical, quantity, price, type = 'buy', adId = null) => {
-            return this.post('/api/negotiations/initiate.php', {
+            return this.post('api/negotiations/initiate.php', {
                 responderId,
                 chemical,
                 quantity,
@@ -266,7 +267,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, negotiation: Object}>}
          */
         counter: async (negotiationId, quantity, price) => {
-            return this.post('/api/negotiations/counter.php', {
+            return this.post('api/negotiations/counter.php', {
                 negotiationId,
                 quantity,
                 price
@@ -279,7 +280,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, trade: Object}>}
          */
         accept: async (negotiationId) => {
-            return this.post('/api/negotiations/accept.php', { negotiationId });
+            return this.post('api/negotiations/accept.php', { negotiationId });
         },
 
         /**
@@ -288,7 +289,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean}>}
          */
         reject: async (negotiationId) => {
-            return this.post('/api/negotiations/reject.php', { negotiationId });
+            return this.post('api/negotiations/reject.php', { negotiationId });
         }
     };
 
@@ -302,7 +303,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, notifications: Array, unreadCount: number}>}
          */
         list: async () => {
-            return this.get('/api/notifications/list.php');
+            return this.get('api/notifications/list.php');
         }
     };
 
@@ -311,7 +312,7 @@ class ApiClient {
          * Get public session status (triggers auto-advance)
          */
         getStatus: async () => {
-            return this.get('/api/session/status.php');
+            return this.get('api/session/status.php');
         }
     };
 
@@ -325,7 +326,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, session: Object}>}
          */
         getSession: async () => {
-            return this.get('/api/admin/session.php');
+            return this.get('api/admin/session.php');
         },
 
         /**
@@ -335,7 +336,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, message: string, session: Object}>}
          */
         updateSession: async (action, params = {}) => {
-            return this.post('/api/admin/session.php', { action, ...params });
+            return this.post('api/admin/session.php', { action, ...params });
         },
 
         /**
@@ -343,7 +344,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, teamsReset: number}>}
          */
         resetGame: async () => {
-            return this.post('/api/admin/reset-game.php');
+            return this.post('api/admin/reset-game.php');
         },
 
         /**
@@ -351,7 +352,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, teams: Array}>}
          */
         listTeams: async () => {
-            return this.get('/api/admin/list-teams.php');
+            return this.get('api/admin/list-teams.php');
         }
     };
 
@@ -365,7 +366,7 @@ class ApiClient {
          * @returns {Promise<{success: boolean, standings: Array, session: string, phase: string}>}
          */
         getStandings: async () => {
-            return this.get('/api/leaderboard/standings.php');
+            return this.get('api/leaderboard/standings.php');
         }
     };
 }

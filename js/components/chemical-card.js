@@ -136,6 +136,17 @@ class ChemicalCard extends LitElement {
         }));
     }
 
+    formatCurrency(num) {
+        if (num === null || num === undefined || isNaN(num)) return '$0.00';
+        const parsed = parseFloat(num);
+        const value = Object.is(parsed, -0) ? 0 : parsed;
+        const formatted = Math.abs(value).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        return (value < 0 ? '-$' : '$') + formatted;
+    }
+
     render() {
         const { border, header } = this.getChemicalColor(this.chemical);
         const hasActiveBuyAd = this.buyAds.some(ad => ad.teamId === this.currentUserId);
@@ -155,7 +166,7 @@ class ChemicalCard extends LitElement {
                         <div id="inventory" class="info-value">${this.inventory.toLocaleString()}</div>
                         
                         <div class="shadow-price" title="This is the internal value of 1 gallon to YOUR team. Buying below this or selling above this increases your potential profit.">
-                            Shadow Price: <span id="shadow-price">$${this.shadowPrice.toFixed(2)}</span>
+                            Shadow Price: <span id="shadow-price">${this.formatCurrency(this.shadowPrice)}</span>
                         </div>
 
                         <div style="font-size: 0.65rem; color: var(--color-text-secondary); margin-top: 0.5rem; line-height: 1.2;">

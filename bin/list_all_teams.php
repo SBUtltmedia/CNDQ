@@ -15,10 +15,12 @@ foreach ($teams as $row) {
     $starting = $profile['startingFunds'] ?? 0;
     $current = $profile['currentFunds'] ?? 0;
 
-    printf("%-30s %-35s Start: $%10.2f Current: $%10.2f\n",
+    $startStr = ($starting < 0 ? '-$' : '$') . number_format(abs($starting), 2);
+    $currStr = ($current < 0 ? '-$' : '$') . number_format(abs($current), 2);
+    printf("%-30s %-35s Start: %12s Current: %12s\n",
         $name,
         $email,
-        $starting,
-        $current
+        $startStr,
+        $currStr
     );
 }
