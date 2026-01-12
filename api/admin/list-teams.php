@@ -49,16 +49,37 @@ try {
             $transactions = $state['transactions'] ?? [];
             $offers = $state['offers'] ?? [];
 
-            $startingPotential = $profile['startingFunds'] ?? 0;
+            // Calculate success metric: % improvement over initial production potential
+            $initialPotential = $profile['initialProductionPotential'] ?? 0;
             $currentPotential = $state['shadowPrices']['maxProfit'] ?? 0;
-            
-            // Calculate improvement
-            $improvement = $currentPotential - $startingPotential;
+
+            // Calculate trading net from transactions
+            $tradingNet = 0;
+            foreach ($transactions as $t) {
+                $amount = $t['price'] * $t['quantity'];
+                if ($t['role'] === 'seller') {
+                    $tradingNet += $amount;
+                } else if ($t['role'] === 'buyer') {
+                    $tradingNet -= $amount;
+                }
+            }
+
+            // Check if production has run
+            $hasProduction = isset($profile['productions']) && count($profile['productions']) > 0;
+            $currentProfit = $hasProduction ? ($profile['currentFunds'] ?? 0) : $tradingNet;
+
+            // Calculate percentage improvement
+            $percentImprovement = 0;
+            if ($initialPotential > 0) {
+                $percentImprovement = (($currentProfit - $initialPotential) / $initialPotential) * 100;
+            }
 
             $teamSummaries[] = [
                 'email' => $teamInfo['email'],
                 'teamName' => $profile['teamName'] ?? $teamInfo['teamName'] ?? 'Unknown Team',
-                'funds' => round($improvement, 2), // Labelled as funds for legacy compatibility but contains improvement
+                'funds' => round($currentProfit, 2), // Current profit
+                'initialPotential' => round($initialPotential, 2), // Initial production potential
+                'percentImprovement' => round($percentImprovement, 2), // Success metric
                 'inventory' => [
                     'C' => max(0, round($inventory['C'] ?? 0, 4)),
                     'N' => max(0, round($inventory['N'] ?? 0, 4)),

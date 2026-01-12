@@ -29,7 +29,12 @@ try {
     // Execute schema
     $db->getPdo()->exec($schema);
 
-    echo "✅ Schema applied successfully!\n\n";
+    // Set schema version
+    $versionFile = __DIR__ . '/../lib/schema_version.txt';
+    $version = file_exists($versionFile) ? (int)trim(file_get_contents($versionFile)) : 1;
+    $db->getPdo()->exec("INSERT OR REPLACE INTO config (key, value, updated_at) VALUES ('schema_version', '" . json_encode($version) . "', " . time() . ")");
+
+    echo "✅ Schema applied successfully! (Version: $version)\n\n";
 
     // Verify tables
     $stats = $db->getStats();

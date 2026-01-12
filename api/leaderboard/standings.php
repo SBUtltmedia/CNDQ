@@ -27,9 +27,10 @@ try {
         $standings[] = [
             'teamName' => $teamStat['teamName'],
             'teamId' => $teamStat['email'],
-            'startingFunds' => round($teamStat['startingFunds'], 2),
-            'currentFunds' => round($teamStat['currentFunds'], 2),
-            'profit' => round($teamStat['currentFunds'] - $teamStat['startingFunds'], 2),
+            'email' => $teamStat['email'], // Add email field for frontend comparison
+            'startingFunds' => round($teamStat['startingFunds'], 2), // Initial production potential
+            'currentFunds' => round($teamStat['currentFunds'], 2), // Current profit
+            'profit' => round($teamStat['currentFunds'] - $teamStat['startingFunds'], 2), // Net improvement
             'roi' => $teamStat['percentChange'],
             'percentChange' => $teamStat['percentChange'],
             'inventory' => [
@@ -42,10 +43,10 @@ try {
         ];
     }
 
-    // Sort by Total Value (currentFunds) descending
-    // This represents Production Profit + Net Cash from Trades
+    // Sort by Success Score (percentChange) descending
+    // This represents % improvement over initial production potential
     usort($standings, function($a, $b) {
-        return $b['currentFunds'] <=> $a['currentFunds'];
+        return $b['percentChange'] <=> $a['percentChange'];
     });
 
     // Add rank

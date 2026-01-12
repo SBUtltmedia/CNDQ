@@ -263,9 +263,16 @@ if (!isAdmin()) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
 
-            const bgColor = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+            // Get actual background color values from CSS
+            const bgColors = {
+                success: '#15803d',
+                error: '#dc2626',
+                info: '#2563eb'
+            };
+            const bgColor = bgColors[type] || bgColors.info;
 
-            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg min-w-[300px] max-w-md transform transition-all duration-300 ease-in-out`;
+            toast.className = `text-white px-6 py-3 rounded-lg shadow-lg min-w-[300px] max-w-md transform transition-all duration-300 ease-in-out`;
+            toast.style.backgroundColor = bgColor;
             toast.innerHTML = `
                 <div class="flex items-center justify-between gap-3">
                     <span>${message}</span>
@@ -308,18 +315,22 @@ if (!isAdmin()) {
 
                 if (data.teams) {
                     const teamList = document.getElementById('team-list');
-                    teamList.innerHTML = data.teams.map(team => `
-                        <div class="bg-gray-700 p-3 rounded flex justify-between items-center">
-                            <div>
-                                <div class="font-bold">${team.teamName}</div>
-                                <div class="text-sm text-gray-300">${team.email}</div>
+                    teamList.innerHTML = data.teams.map(team => {
+                        const sign = team.percentImprovement >= 0 ? '+' : '';
+                        const color = team.percentImprovement >= 0 ? 'text-green-400' : 'text-red-400';
+                        return `
+                            <div class="bg-gray-700 p-3 rounded flex justify-between items-center">
+                                <div>
+                                    <div class="font-bold">${team.teamName}</div>
+                                    <div class="text-sm text-gray-300">${team.email}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="${color} font-bold">${sign}${team.percentImprovement.toFixed(1)}% Success</div>
+                                    <div class="text-xs text-gray-300">${team.totalTrades} trades, $${team.funds.toFixed(2)} profit</div>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <div class="text-green-400 font-bold">$${team.funds.toLocaleString()} Improvement</div>
-                                <div class="text-xs text-gray-300">${team.totalTrades} trades, Inventory: C=${Math.round(team.inventory.C)} N=${Math.round(team.inventory.N)}</div>
-                            </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
             } catch (error) {
                 console.error('Failed to load teams:', error);

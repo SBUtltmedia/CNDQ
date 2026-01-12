@@ -44,6 +44,7 @@ try {
                 'teamName' => $profile['teamName'],
                 'currentFunds' => round($profile['currentFunds'], 2),
                 'startingFunds' => round($profile['startingFunds'], 2),
+                'initialProductionPotential' => round($profile['initialProductionPotential'] ?? 0, 2),
                 'settings' => $profile['settings'] ?? []
             ],
             'inventory' => [

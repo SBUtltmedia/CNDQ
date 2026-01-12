@@ -31,8 +31,12 @@ class MarketplaceApp {
         this.pollingInterval = null;
         this.timerInterval = null;
         this.pollingFrequency = 3000; // 3 seconds
+
+        // Track when page loaded to filter out old toasts
+        this.pageLoadTime = Date.now() / 1000; // Unix timestamp in seconds
         this.lastServerTimeRemaining = 0;
         this.gameStopped = true;
+        this.wasGameStopped = false; // Track previous game stopped state for reload trigger
         this.gameFinished = false;
 
         // Modal state
@@ -368,8 +372,8 @@ class MarketplaceApp {
         try {
             const data = await api.get('api/trades/history.php');
             if (data.success) {
-                // Check for new global trades (notifications)
-                this.checkNewGlobalTrades(data.transactions);
+                this.transactions = data.transactions || [];
+                this.renderFinancialSummary();
             }
         } catch (error) {
             console.error('Failed to load transactions:', error);
@@ -395,28 +399,62 @@ class MarketplaceApp {
         });
 
         const tradingNet = salesRevenue - purchaseCosts;
+
+        // Financial Summary:
+        // - currentFunds: Current money (starts at $0, changes only through trading in Infinite Capital model)
+        // - startingFunds: Always $0 (vestigial field from old multi-session design)
+        // - totalProfit: currentFunds - startingFunds = currentFunds (since startingFunds is always 0)
         const totalProfit = (this.profile.currentFunds || 0) - (this.profile.startingFunds || 0);
-        
-        // Production Revenue is the remainder of profit not explained by trading
-        // Note: In "Infinite Capital" model, starting funds might be 0, so totalProfit is just currentFunds
-        // But if we want to show strict "Revenue from Production", we back it out:
-        const productionRevenue = totalProfit - tradingNet;
+
+        // Production Revenue:
+        // Production only runs ONCE at the end of the game to calculate final scores.
+        // During gameplay, productionRevenue should always be $0.
+        // After final production, it will be: totalProfit - tradingNet
+        const hasProduction = (this.profile.productions?.length ?? 0) > 0;
+        const productionRevenue = hasProduction ? (totalProfit - tradingNet) : 0;
+
+        // Success Metric: % Improvement over initial production potential
+        // Formula: (Current Profit - Initial Potential) / Initial Potential × 100
+        const initialPotential = this.profile.initialProductionPotential || 0;
+        let percentImprovement = 0;
+        if (initialPotential > 0) {
+            // Current profit is the total we'd get if we ran production NOW with current inventory
+            // During gameplay: currentProfit = tradingNet + projected production revenue (from shadow prices)
+            // After final production: currentProfit = totalProfit
+            let currentProfit;
+            if (hasProduction) {
+                currentProfit = totalProfit;
+            } else {
+                // Add projected production revenue from current inventory
+                const projectedRevenue = this.shadowPrices?.maxProfit || 0;
+                currentProfit = tradingNet + projectedRevenue;
+            }
+            percentImprovement = ((currentProfit - initialPotential) / initialPotential) * 100;
+        }
 
         // Update DOM
         const els = {
             prod: document.getElementById('fin-production-rev'),
             sales: document.getElementById('fin-sales-rev'),
             cost: document.getElementById('fin-purchase-cost'),
-            net: document.getElementById('fin-net-profit')
+            net: document.getElementById('fin-net-profit'),
+            improvement: document.getElementById('fin-improvement')
         };
 
         if (els.prod) els.prod.textContent = this.formatCurrency(productionRevenue);
         if (els.sales) els.sales.textContent = this.formatCurrency(salesRevenue);
         if (els.cost) els.cost.textContent = this.formatCurrency(purchaseCosts);
-        
+
         if (els.net) {
             els.net.textContent = (totalProfit >= 0 ? '+' : '') + this.formatCurrency(totalProfit);
             els.net.className = `text-2xl font-mono font-bold z-10 ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        }
+
+        // Display % improvement (new success metric)
+        if (els.improvement) {
+            const sign = percentImprovement >= 0 ? '+' : '';
+            els.improvement.textContent = `${sign}${percentImprovement.toFixed(1)}%`;
+            els.improvement.className = `text-lg font-mono font-bold ${percentImprovement >= 0 ? 'text-green-400' : 'text-red-400'}`;
         }
     }
 
@@ -491,7 +529,13 @@ class MarketplaceApp {
                 card.shadowPrice = this.shadowPrices[chemical];
                 // Access ranges from this.ranges, not this.shadowPrices
                 card.ranges = this.ranges?.[chemical] || { allowableIncrease: 0, allowableDecrease: 0 };
-                const buyAds = this.advertisements[chemical]?.buy || [];
+
+                // Filter buy ads: only show if player has inventory to fulfill the request
+                // If inventory is 0, hide all buy requests (can't sell what you don't have)
+                const allBuyAds = this.advertisements[chemical]?.buy || [];
+                const myInventory = this.inventory[chemical] || 0;
+                const buyAds = myInventory > 0 ? allBuyAds : [];
+
                 card.buyAds = buyAds;
             }
         });
@@ -1901,10 +1945,18 @@ class MarketplaceApp {
             const mainApp = document.getElementById('app');
             const closedOverlay = document.getElementById('market-closed-overlay');
             if (data.gameStopped) {
+                this.wasGameStopped = true; // Track that game is stopped
                 if (closedOverlay && closedOverlay.classList) closedOverlay?.classList.remove('hidden');
                 if (mainApp && mainApp.classList) mainApp?.classList.add('hidden');
                 return; // Stop processing other updates if game is stopped
             } else {
+                // Game is running - check if it was previously stopped
+                if (this.wasGameStopped === true) {
+                    console.log('🎮 Game started! Performing hard refresh to clear cache...');
+                    window.location.reload(true); // Force reload from server, not cache
+                    return;
+                }
+                this.wasGameStopped = false;
                 if (closedOverlay && closedOverlay.classList) closedOverlay?.classList.add('hidden');
                 if (mainApp && mainApp.classList) mainApp?.classList.remove('hidden');
             }
@@ -1929,30 +1981,39 @@ class MarketplaceApp {
                 [...data.recentTrades].reverse().forEach(event => {
                     // Support both transactionId (trades) and eventId (joins)
                     const uniqueId = event.transactionId || event.eventId;
-                    
+
                     if (uniqueId && !this.processedGlobalTrades.has(uniqueId)) {
                         this.processedGlobalTrades.add(uniqueId);
 
-                        if (event.type === 'join') {
-                            // Team Joined Event
-                            if (event.teamName !== (this.profile?.teamName)) { // Don't toast my own join (I know I joined)
-                                this.showToast(`👋 Team ${event.teamName} has joined the game!`, 'info', 5000);
-                            }
-                        } else {
-                            // Trade Event
-                            // Don't toast if I was part of it (I already got a personal toast/notif)
-                            const involvesMe = event.sellerId === this.currentUser || event.buyerId === this.currentUser;
-                            
-                            if (!involvesMe) {
-                                const isHot = event.heat?.isHot;
-                                const icon = isHot ? '🔥 ' : '📦 ';
-                                const message = `${icon}${event.sellerName} sold ${this.formatNumber(event.quantity)} gal of ${event.chemical} to ${event.buyerName}`;
-                                const type = isHot ? 'hot' : 'info';
-                                this.showToast(message, type, 4000);
+                        // Get event timestamp (trades use timestamp, joins use joinedAt)
+                        const eventTime = event.timestamp || event.joinedAt;
+
+                        // Only show toasts for events that happened after page load
+                        // This prevents toast flood on refresh/late join
+                        if (eventTime && eventTime >= this.pageLoadTime) {
+                            if (event.type === 'join') {
+                                // Team Joined Event
+                                if (event.teamName !== (this.profile?.teamName)) { // Don't toast my own join (I know I joined)
+                                    this.showToast(`👋 Team ${event.teamName} has joined the game!`, 'info', 5000);
+                                }
+                            } else {
+                                // Trade Event
+                                // Don't toast if I was part of it (I already got a personal toast/notif)
+                                const involvesMe = event.sellerId === this.currentUser || event.buyerId === this.currentUser;
+
+                                if (!involvesMe) {
+                                    const isHot = event.heat?.isHot;
+                                    const icon = isHot ? '🔥 ' : '📦 ';
+                                    const message = `${icon}${event.sellerName} sold ${this.formatNumber(event.quantity)} gal of ${event.chemical} to ${event.buyerName}`;
+                                    const type = isHot ? 'hot' : 'info';
+                                    this.showToast(message, type, 4000);
+                                }
                             }
                         }
                     }
                 });
+
+                // Cleanup memory: keep only last 100 IDs
 
                 // Cleanup memory: keep only last 100 IDs
                 if (this.processedGlobalTrades.size > 100) {
@@ -2429,7 +2490,7 @@ class MarketplaceApp {
                         <div class="text-3xl font-black ${team.percentChange >= 0 ? 'text-green-400' : 'text-red-400'} font-mono">
                             ${team.percentChange >= 0 ? '+' : ''}${team.percentChange.toFixed(1)}%
                         </div>
-                        <div class="text-sm font-bold text-gray-400 uppercase tracking-widest">ROI Improvement</div>
+                        <div class="text-sm font-bold text-gray-400 uppercase tracking-widest">Success Score</div>
                     </div>
                 </div>
             `).join('');

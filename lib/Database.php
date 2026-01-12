@@ -57,12 +57,18 @@ class Database {
             $this->pdo->exec('PRAGMA cache_size = -64000');       // 64MB cache
             $this->pdo->exec('PRAGMA foreign_keys = ON');         // Enforce foreign keys
 
-            // Check if database needs initialization
-            // Initialize if: no tables exist OR config table doesn't exist (key indicator)
+            // Check if database needs initialization or schema update
             $needsInit = false;
+            $needsUpdate = false;
+
             try {
                 $result = $this->pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='config'")->fetchAll();
                 $needsInit = empty($result);
+
+                if (!$needsInit) {
+                    // Check schema version
+                    $needsUpdate = $this->checkSchemaVersion();
+                }
             } catch (PDOException $e) {
                 // If query fails, assume we need to initialize
                 $needsInit = true;
@@ -70,6 +76,8 @@ class Database {
 
             if ($needsInit) {
                 $this->initializeSchema();
+            } elseif ($needsUpdate) {
+                $this->updateSchema();
             }
         } catch (PDOException $e) {
             throw new Exception("Database connection failed: " . $e->getMessage());
@@ -217,6 +225,83 @@ class Database {
 
         $schema = file_get_contents($schemaFile);
         $this->pdo->exec($schema);
+
+        // Set initial schema version
+        $this->setSchemaVersion($this->getExpectedSchemaVersion());
+        error_log("Database initialized with schema version " . $this->getExpectedSchemaVersion());
+    }
+
+    /**
+     * Check if schema needs updating
+     * @return bool True if update needed
+     */
+    private function checkSchemaVersion() {
+        $currentVersion = $this->getCurrentSchemaVersion();
+        $expectedVersion = $this->getExpectedSchemaVersion();
+
+        if ($currentVersion < $expectedVersion) {
+            error_log("Schema update needed: current=$currentVersion, expected=$expectedVersion");
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get current schema version from database
+     * @return int
+     */
+    private function getCurrentSchemaVersion() {
+        try {
+            $result = $this->pdo->query("SELECT value FROM config WHERE key = 'schema_version'")->fetch(PDO::FETCH_ASSOC);
+            return $result ? (int)json_decode($result['value']) : 0;
+        } catch (PDOException $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Get expected schema version from file
+     * @return int
+     */
+    private function getExpectedSchemaVersion() {
+        $versionFile = __DIR__ . '/schema_version.txt';
+        if (file_exists($versionFile)) {
+            return (int)trim(file_get_contents($versionFile));
+        }
+        return 1; // Default to version 1 if file doesn't exist
+    }
+
+    /**
+     * Set schema version in database
+     * @param int $version
+     */
+    private function setSchemaVersion($version) {
+        $this->pdo->exec("INSERT OR REPLACE INTO config (key, value, updated_at) VALUES ('schema_version', '" . json_encode($version) . "', " . time() . ")");
+    }
+
+    /**
+     * Update schema to latest version
+     */
+    private function updateSchema() {
+        $currentVersion = $this->getCurrentSchemaVersion();
+        $expectedVersion = $this->getExpectedSchemaVersion();
+
+        error_log("Updating schema from version $currentVersion to $expectedVersion");
+
+        // Apply schema.sql (idempotent - uses CREATE IF NOT EXISTS)
+        $schemaFile = __DIR__ . '/schema.sql';
+        if (file_exists($schemaFile)) {
+            $schema = file_get_contents($schemaFile);
+            try {
+                $this->pdo->exec($schema);
+                $this->setSchemaVersion($expectedVersion);
+                error_log("Schema updated successfully to version $expectedVersion");
+            } catch (PDOException $e) {
+                error_log("Schema update failed: " . $e->getMessage());
+                // Don't throw - allow app to continue with partial update
+            }
+        }
     }
 
     /**

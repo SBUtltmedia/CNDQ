@@ -199,7 +199,7 @@ class ChemicalCard extends LitElement {
                         <h4 class="ads-header">Buy Requests</h4>
                         <div class="ads-container">
                             ${this.buyAds.length === 0
-                                ? html`<p class="empty-ads">No buy requests yet</p>`
+                                ? html`<p class="empty-ads">${this.inventory > 0 ? 'No buy requests yet' : 'Get inventory to see buy requests'}</p>`
                                 : this.buyAds.map(ad => {
                                     console.log(`🔧 Creating ad-item for ${this.chemical}:`, ad.teamName, ad.id, ad.teamId === this.currentUserId ? '(MINE)' : '');
                                     return html`

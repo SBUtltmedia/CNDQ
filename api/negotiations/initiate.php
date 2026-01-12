@@ -115,9 +115,14 @@ try {
     ]);
 
 } catch (Exception $e) {
+    // Log the full error for debugging
+    error_log("Negotiation initiate error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+
     http_response_code(500);
     echo json_encode([
         'error' => 'Server error',
-        'message' => $e->getMessage()
+        'message' => $e->getMessage(),
+        'debug' => $e->getFile() . ':' . $e->getLine()
     ]);
 }

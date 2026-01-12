@@ -371,6 +371,12 @@ class SessionManager {
             $npcManager->createNPCs($level, 1);
         }
 
+        // Force marketplace snapshot to be empty (defensive)
+        // This ensures no stale ads appear after reset
+        require_once __DIR__ . '/MarketplaceAggregator.php';
+        $aggregator = new MarketplaceAggregator();
+        $aggregator->generateSnapshot();
+
         return $this->reset($tradingDuration);
     }
 

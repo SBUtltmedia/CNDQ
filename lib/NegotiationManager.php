@@ -140,6 +140,36 @@ class NegotiationManager {
                 ]
             );
 
+            // If this negotiation is linked to an advertisement, remove it immediately
+            // (prevents other teams from responding to the same ad)
+            if ($adId) {
+                try {
+                    require_once __DIR__ . '/AdvertisementManager.php';
+                    // The ad belongs to the responder (they posted the buy request)
+                    $adManager = new AdvertisementManager($responderId);
+
+                    // Check if ad still exists before trying to remove
+                    $existingAds = $adManager->getAdvertisements();
+                    $adExists = false;
+                    foreach ($existingAds['ads'] ?? [] as $ad) {
+                        if ($ad['id'] === $adId) {
+                            $adExists = true;
+                            break;
+                        }
+                    }
+
+                    if ($adExists) {
+                        $adManager->removeAdvertisement($adId);
+                        error_log("NegotiationManager: Removed advertisement {$adId} after negotiation initiation.");
+                    } else {
+                        error_log("NegotiationManager: Advertisement {$adId} already removed (race condition).");
+                    }
+                } catch (Exception $e) {
+                    error_log("NegotiationManager: Failed to remove ad {$adId}: " . $e->getMessage());
+                    // Don't throw - ad removal failure shouldn't block negotiation creation
+                }
+            }
+
             // Emit events to both parties
             try {
                 require_once __DIR__ . '/TeamStorage.php';

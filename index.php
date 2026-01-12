@@ -415,7 +415,7 @@
             </div>
 
             <!-- Financial Summary Panel -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
                     <span class="text-xs text-gray-400 uppercase font-bold mb-1">Production Value</span>
                     <span class="text-xl font-mono text-green-400" id="fin-production-rev">$0.00</span>
@@ -432,6 +432,11 @@
                     <div class="absolute inset-0 bg-blue-600 opacity-10"></div>
                     <span class="text-xs text-blue-300 uppercase font-bold mb-1 z-10">Net Profit</span>
                     <span class="text-2xl font-mono font-bold text-white z-10" id="fin-net-profit">$0.00</span>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-purple-600 opacity-10"></div>
+                    <span class="text-xs text-purple-300 uppercase font-bold mb-1 z-10">Success Score</span>
+                    <span class="text-lg font-mono font-bold text-white z-10" id="fin-improvement">0.0%</span>
                 </div>
             </div>
             

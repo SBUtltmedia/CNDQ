@@ -278,23 +278,27 @@ class MarketplaceAggregator {
             try {
                 $storage = new TeamStorage($teamInfo['email']);
                 $state = $storage->getState();
-                
-                $startingPotential = $state['profile']['startingFunds'] ?? 0;
-                
-                // Value Creation Logic:
-                // During Trading: Value = Cash + Projected Production Revenue
-                // After Production: Value = Final Cash (Inventory is gone, revenue is in cash)
-                $currentCash = $state['profile']['currentFunds'] ?? 0;
-                
+
+                // Success Metric: % improvement over initial production potential
+                $initialPotential = $state['profile']['initialProductionPotential'] ?? 0;
+
                 // Get game state to check if production already ran
                 require_once __DIR__ . '/SystemStorage.php';
                 $system = new SystemStorage();
                 $gameStopped = $system->getSystemState()['gameStopped'] ?? true;
 
-                $totalValueCreated = $currentCash;
-                
-                // Only add projected revenue if game is still running (inventory still exists)
-                if (!$gameStopped) {
+                // Current Profit Calculation:
+                // During Trading: currentProfit = tradingNet (projected production)
+                // After Production: currentProfit = currentFunds (actual production revenue realized)
+                $hasProduction = isset($state['profile']['productions']) && count($state['profile']['productions']) > 0;
+
+                if ($hasProduction) {
+                    // Production has run: use final cash
+                    $currentProfit = $state['profile']['currentFunds'] ?? 0;
+                } else {
+                    // Still trading: calculate trading net + projected production revenue
+                    $currentCash = $state['profile']['currentFunds'] ?? 0;
+
                     // Calculate Potential Revenue from current inventory
                     $inventoryRevenue = $state['shadowPrices']['maxProfit'] ?? 0;
                     // If maxProfit isn't in shadowPrices, calculate it live
@@ -304,15 +308,15 @@ class MarketplaceAggregator {
                         $res = $solver->solve($state['inventory']);
                         $inventoryRevenue = $res['maxProfit'];
                     }
-                    $totalValueCreated += $inventoryRevenue;
+                    $currentProfit = $currentCash + $inventoryRevenue;
                 }
 
                 $stats[] = [
                     'email' => $teamInfo['email'],
                     'teamName' => $state['profile']['teamName'] ?? $teamInfo['teamName'],
-                    'startingFunds' => $startingPotential,
-                    'currentFunds' => $totalValueCreated, // Display Total Value Created
-                    'percentChange' => $this->calculatePercentChange($startingPotential, $totalValueCreated),
+                    'startingFunds' => $initialPotential, // Now represents initial potential
+                    'currentFunds' => $currentProfit, // Current profit (trading net + projected or actual production)
+                    'percentChange' => $this->calculatePercentChange($initialPotential, $currentProfit),
                     'totalTrades' => count($state['transactions'] ?? []),
                     'inventory' => $state['inventory']
                 ];
@@ -326,9 +330,9 @@ class MarketplaceAggregator {
     }
 
     private function calculatePercentChange($starting, $current) {
-        // If starting is 0, calculate ROI based on current funds as 100% gain
+        // If starting is 0, can't calculate percentage
         if ($starting == 0) {
-            return $current > 0 ? 100 : 0;
+            return 0;
         }
         return (($current - $starting) / $starting) * 100;
     }

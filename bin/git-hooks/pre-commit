@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# Git Pre-Commit Hook - Schema Version Check
+#
+# Install: cp bin/git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#
+
+# Check if schema.sql is being committed
+if git diff --cached --name-only | grep -q "lib/schema.sql"; then
+    echo "🔍 Detected changes to schema.sql"
+
+    # Check if schema_version.txt was also updated
+    if git diff --cached --name-only | grep -q "lib/schema_version.txt"; then
+        echo "✅ schema_version.txt also updated"
+    else
+        echo ""
+        echo "⚠️  WARNING: schema.sql changed but schema_version.txt not updated!"
+        echo ""
+        echo "If you made schema changes, you should increment the version:"
+        echo "  1. Edit lib/schema_version.txt"
+        echo "  2. Increment the version number"
+        echo "  3. git add lib/schema_version.txt"
+        echo ""
+        read -p "Continue commit anyway? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    fi
+fi
+
+# Check if schema_version.txt changed alone (unusual)
+if git diff --cached --name-only | grep -q "lib/schema_version.txt"; then
+    if ! git diff --cached --name-only | grep -q "lib/schema.sql"; then
+        echo "⚠️  WARNING: schema_version.txt changed without schema.sql"
+        echo "This is unusual - did you forget to stage schema.sql?"
+    fi
+fi
+
+exit 0

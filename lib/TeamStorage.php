@@ -66,6 +66,21 @@ class TeamStorage {
 
         $timestamp = microtime(true);
 
+        // Generate random starting inventory
+        $startingInventory = [
+            'C' => round(rand(500, 2000), 4),
+            'N' => round(rand(500, 2000), 4),
+            'D' => round(rand(500, 2000), 4),
+            'Q' => round(rand(500, 2000), 4)
+        ];
+
+        // Calculate initial production potential (baseline for success measurement)
+        // This is what the team COULD make with their starting inventory if they don't trade
+        require_once __DIR__ . '/LPSolver.php';
+        $solver = new LPSolver();
+        $result = $solver->solve($startingInventory);
+        $initialProductionPotential = $result['maxProfit'];
+
         $event = [
             'type' => 'init',
             'payload' => [
@@ -74,14 +89,10 @@ class TeamStorage {
                     'teamName' => $this->teamName,
                     'createdAt' => time(),
                     'currentFunds' => 0,
-                    'startingFunds' => 0
+                    'startingFunds' => 0,
+                    'initialProductionPotential' => $initialProductionPotential  // NEW: baseline for % improvement
                 ],
-                'inventory' => [
-                    'C' => round(rand(500, 2000), 4),
-                    'N' => round(rand(500, 2000), 4),
-                    'D' => round(rand(500, 2000), 4),
-                    'Q' => round(rand(500, 2000), 4)
-                ],
+                'inventory' => $startingInventory,
                 'shadowPrices' => [
                     'C' => 0, 'N' => 0, 'D' => 0, 'Q' => 0
                 ]
@@ -121,9 +132,9 @@ class TeamStorage {
             ]
         );
 
-        // Run "session 0" production immediately
-        // User will see modal on first load showing initial production results
-        $this->runAutomaticFirstProduction();
+        // NOTE: Production is NOT run at initialization.
+        // Production only runs at the end of the game to calculate final scores.
+        // Players start with random inventory and $0 funds, then trade to maximize value.
     }
 
     /**
