@@ -239,17 +239,23 @@ class MarketplaceApp {
             console.log('Shadow prices API response:', data);
 
             if (data && data.shadowPrices) {
-                this.shadowPrices = data.shadowPrices;
+                this.shadowPrices = {
+                    ...data.shadowPrices,
+                    maxProfit: data.maxProfit || 0  // Include maxProfit for success metric calculation
+                };
                 this.ranges = data.ranges || {}; // Store ranges
                 console.log('Shadow prices loaded:', this.shadowPrices);
                 this.updateShadowPricesUI();
+
+                // Render financial summary now that shadow prices are available
+                this.renderFinancialSummary();
             } else {
                 console.warn('No shadow prices in API response:', data);
             }
         } catch (error) {
             console.error('Failed to load shadow prices:', error);
             // Don't block on shadow price errors - use defaults
-            this.shadowPrices = { C: 0, N: 0, D: 0, Q: 0 };
+            this.shadowPrices = { C: 0, N: 0, D: 0, Q: 0, maxProfit: 0 };
         }
     }
 
@@ -314,7 +320,10 @@ class MarketplaceApp {
 
         try {
             const data = await api.production.getShadowPrices();
-            this.shadowPrices = data.shadowPrices;
+            this.shadowPrices = {
+                ...data.shadowPrices,
+                maxProfit: data.maxProfit || 0
+            };
             this.ranges = data.ranges || {}; // Update ranges
             this.updateShadowPricesUI();
 
@@ -386,6 +395,12 @@ class MarketplaceApp {
     renderFinancialSummary() {
         if (!this.transactions || !this.profile) return;
 
+        // If shadow prices haven't loaded yet, wait for them
+        if (!this.shadowPrices || !this.shadowPrices.hasOwnProperty('maxProfit')) {
+            console.log('Waiting for shadow prices to load before rendering financial summary...');
+            return;
+        }
+
         let salesRevenue = 0;
         let purchaseCosts = 0;
 
@@ -401,60 +416,56 @@ class MarketplaceApp {
         const tradingNet = salesRevenue - purchaseCosts;
 
         // Financial Summary:
-        // - currentFunds: Current money (starts at $0, changes only through trading in Infinite Capital model)
-        // - startingFunds: Always $0 (vestigial field from old multi-session design)
-        // - totalProfit: currentFunds - startingFunds = currentFunds (since startingFunds is always 0)
-        const totalProfit = (this.profile.currentFunds || 0) - (this.profile.startingFunds || 0);
+        // - currentFunds: Current money (realized profit from trading)
+        const realizedProfit = (this.profile.currentFunds || 0) - (this.profile.startingFunds || 0);
 
-        // Production Revenue:
-        // Production only runs ONCE at the end of the game to calculate final scores.
-        // During gameplay, productionRevenue should always be $0.
-        // After final production, it will be: totalProfit - tradingNet
+        // Inventory Value (Projected Production):
         const hasProduction = (this.profile.productions?.length ?? 0) > 0;
-        const productionRevenue = hasProduction ? (totalProfit - tradingNet) : 0;
+        const projectedRevenue = this.shadowPrices?.maxProfit || 0;
+        const inventoryValue = hasProduction ? (realizedProfit - tradingNet) : projectedRevenue;
+
+        // Total Projected Value:
+        const totalValue = realizedProfit + (hasProduction ? 0 : projectedRevenue);
 
         // Success Metric: % Improvement over initial production potential
-        // Formula: (Current Profit - Initial Potential) / Initial Potential × 100
         const initialPotential = this.profile.initialProductionPotential || 0;
         let percentImprovement = 0;
         if (initialPotential > 0) {
-            // Current profit is the total we'd get if we ran production NOW with current inventory
-            // During gameplay: currentProfit = tradingNet + projected production revenue (from shadow prices)
-            // After final production: currentProfit = totalProfit
-            let currentProfit;
-            if (hasProduction) {
-                currentProfit = totalProfit;
-            } else {
-                // Add projected production revenue from current inventory
-                const projectedRevenue = this.shadowPrices?.maxProfit || 0;
-                currentProfit = tradingNet + projectedRevenue;
-            }
-            percentImprovement = ((currentProfit - initialPotential) / initialPotential) * 100;
+            percentImprovement = ((totalValue - initialPotential) / initialPotential) * 100;
         }
 
         // Update DOM
         const els = {
-            prod: document.getElementById('fin-production-rev'),
-            sales: document.getElementById('fin-sales-rev'),
-            cost: document.getElementById('fin-purchase-cost'),
-            net: document.getElementById('fin-net-profit'),
-            improvement: document.getElementById('fin-improvement')
+            tradingNet: document.getElementById('fin-trading-net'),
+            inventory: document.getElementById('fin-production-rev'),
+            totalValue: document.getElementById('fin-net-profit'),
+            improvement: document.getElementById('fin-improvement'),
+            improvementBadge: document.getElementById('improvement-badge')
         };
 
-        if (els.prod) els.prod.textContent = this.formatCurrency(productionRevenue);
-        if (els.sales) els.sales.textContent = this.formatCurrency(salesRevenue);
-        if (els.cost) els.cost.textContent = this.formatCurrency(purchaseCosts);
-
-        if (els.net) {
-            els.net.textContent = (totalProfit >= 0 ? '+' : '') + this.formatCurrency(totalProfit);
-            els.net.className = `text-2xl font-mono font-bold z-10 ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        if (els.tradingNet) {
+            els.tradingNet.textContent = (tradingNet >= 0 ? '+' : '') + this.formatCurrency(tradingNet);
+            els.tradingNet.className = `text-xl font-mono ${tradingNet >= 0 ? 'text-green-400' : 'text-red-400'}`;
         }
 
-        // Display % improvement (new success metric)
+        if (els.inventory) {
+            els.inventory.textContent = this.formatCurrency(inventoryValue);
+        }
+
+        if (els.totalValue) {
+            els.totalValue.textContent = this.formatCurrency(totalValue);
+            els.totalValue.className = `text-2xl font-mono font-bold z-10 ${totalValue >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        }
+
+        // Display Growth Badge
         if (els.improvement) {
             const sign = percentImprovement >= 0 ? '+' : '';
             els.improvement.textContent = `${sign}${percentImprovement.toFixed(1)}%`;
-            els.improvement.className = `text-lg font-mono font-bold ${percentImprovement >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            els.improvement.className = `text-sm font-mono font-bold ml-1 ${percentImprovement >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            
+            if (els.improvementBadge) {
+                els.improvementBadge.classList.remove('hidden');
+            }
         }
     }
 
@@ -1946,6 +1957,10 @@ class MarketplaceApp {
             const closedOverlay = document.getElementById('market-closed-overlay');
             if (data.gameStopped) {
                 this.wasGameStopped = true; // Track that game is stopped
+
+                // Close any open modals when market closes
+                this.closeAllModals();
+
                 if (closedOverlay && closedOverlay.classList) closedOverlay?.classList.remove('hidden');
                 if (mainApp && mainApp.classList) mainApp?.classList.add('hidden');
                 return; // Stop processing other updates if game is stopped
@@ -1962,9 +1977,6 @@ class MarketplaceApp {
             }
 
             // Update UI elements
-            const sessionDisplay = document.getElementById('session-num-display');
-            if (sessionDisplay) sessionDisplay.textContent = data.session;
-
             const phaseEl = document.getElementById('current-phase');
             if (phaseEl) {
                 phaseEl.textContent = data.phase;
@@ -2052,6 +2064,14 @@ class MarketplaceApp {
         const timerEl = document.getElementById('session-timer');
         if (timerEl) {
             timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // To prevent label shifting when time decreases (e.g. 1000:00 to 99:59),
+            // we ensure the timer box never shrinks below the maximum width it has reached.
+            const currentWidth = timerEl.offsetWidth;
+            const currentMin = parseFloat(timerEl.style.minWidth) || 0;
+            if (currentWidth > currentMin) {
+                timerEl.style.minWidth = currentWidth + 'px';
+            }
         }
     }
 
@@ -2451,6 +2471,36 @@ class MarketplaceApp {
             else if (modalId === 'negotiation-modal') this.closeNegotiationModal();
             else if (modalId === 'offer-modal') this.closeOfferModal();
         }
+    }
+
+    /**
+     * Close all modals (used when market closes)
+     */
+    closeAllModals() {
+        // Close negotiation modal if open
+        const negotiationModal = document.getElementById('negotiation-modal');
+        if (negotiationModal && !negotiationModal.classList.contains('hidden')) {
+            this.closeNegotiationModal();
+        }
+
+        // Close offer modal if open
+        const offerModal = document.getElementById('offer-modal');
+        if (offerModal && !offerModal.classList.contains('hidden')) {
+            this.closeOfferModal();
+        }
+
+        // Close other modals
+        const modals = ['settings-modal', 'leaderboard-modal', 'production-guide-modal', 'history-modal'];
+        modals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && !modal.classList.contains('hidden')) {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // Clear current modal state
+        this.currentModal = null;
+        this.currentNegotiation = null;
     }
 
     /**

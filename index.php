@@ -397,46 +397,40 @@
             <!-- Session Status Bar -->
             <div class="bg-gray-800 border-l-4 border-purple-500 p-4 mb-6 rounded shadow-lg flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
-                    <div class="bg-purple-900/30 px-3 py-1 rounded border border-purple-500/50">
-                        <span class="text-xs text-purple-300 uppercase font-bold">Session</span>
-                        <span id="session-num-display" class="text-lg font-mono ml-2">1</span>
-                    </div>
                     <div id="phase-badge" class="bg-green-900/30 px-3 py-1 rounded border border-green-500/50">
                         <span id="current-phase" class="text-xs text-green-400 uppercase font-bold">TRADING</span>
+                    </div>
+                    <div id="improvement-badge" class="hidden bg-blue-900/30 px-3 py-1 rounded border border-blue-500/50">
+                        <span class="text-xs text-blue-400 uppercase font-bold">Growth</span>
+                        <span id="fin-improvement" class="text-sm font-mono font-bold ml-1">+0.0%</span>
                     </div>
                 </div>
                 
                 <div class="flex items-center gap-3">
                     <span class="text-gray-400 text-xs uppercase font-bold">Time Remaining</span>
-                    <div class="bg-gray-900 px-4 py-2 rounded font-mono text-xl text-yellow-400 border border-gray-700 w-24 text-center" id="session-timer">
+                    <div class="bg-gray-900 px-4 py-2 rounded font-mono text-xl text-yellow-400 border border-gray-700 w-fit min-w-[6rem] text-center" id="session-timer">
                         00:00
                     </div>
                 </div>
             </div>
 
             <!-- Financial Summary Panel -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
-                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Production Value</span>
-                    <span class="text-xl font-mono text-green-400" id="fin-production-rev">$0.00</span>
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Trading Profit</span>
+                    <span class="text-xl font-mono text-white" id="fin-trading-net">$0.00</span>
+                    <span class="text-[10px] text-gray-500 uppercase mt-1">Realized from trades</span>
                 </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
-                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Sales Rev</span>
-                    <span class="text-xl font-mono text-green-400" id="fin-sales-rev">$0.00</span>
-                </div>
-                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
-                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Purchase Cost</span>
-                    <span class="text-xl font-mono text-red-400" id="fin-purchase-cost">$0.00</span>
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Inventory Value</span>
+                    <span class="text-xl font-mono text-blue-400" id="fin-production-rev">$0.00</span>
+                    <span class="text-[10px] text-gray-500 uppercase mt-1">Projected from stock</span>
                 </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center relative overflow-hidden">
-                    <div class="absolute inset-0 bg-blue-600 opacity-10"></div>
-                    <span class="text-xs text-blue-300 uppercase font-bold mb-1 z-10">Net Profit</span>
+                    <div class="absolute inset-0 bg-green-600 opacity-10"></div>
+                    <span class="text-xs text-green-300 uppercase font-bold mb-1 z-10">Total Projected Value</span>
                     <span class="text-2xl font-mono font-bold text-white z-10" id="fin-net-profit">$0.00</span>
-                </div>
-                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center relative overflow-hidden">
-                    <div class="absolute inset-0 bg-purple-600 opacity-10"></div>
-                    <span class="text-xs text-purple-300 uppercase font-bold mb-1 z-10">Success Score</span>
-                    <span class="text-lg font-mono font-bold text-white z-10" id="fin-improvement">0.0%</span>
+                    <span class="text-[10px] text-gray-400 uppercase mt-1 z-10">Realized + Projected</span>
                 </div>
             </div>
             

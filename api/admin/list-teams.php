@@ -51,22 +51,31 @@ try {
 
             // Calculate success metric: % improvement over initial production potential
             $initialPotential = $profile['initialProductionPotential'] ?? 0;
-            $currentPotential = $state['shadowPrices']['maxProfit'] ?? 0;
-
-            // Calculate trading net from transactions
-            $tradingNet = 0;
-            foreach ($transactions as $t) {
-                $amount = $t['price'] * $t['quantity'];
-                if ($t['role'] === 'seller') {
-                    $tradingNet += $amount;
-                } else if ($t['role'] === 'buyer') {
-                    $tradingNet -= $amount;
-                }
-            }
 
             // Check if production has run
             $hasProduction = isset($profile['productions']) && count($profile['productions']) > 0;
-            $currentProfit = $hasProduction ? ($profile['currentFunds'] ?? 0) : $tradingNet;
+
+            // Current Profit Calculation:
+            // During Trading: currentProfit = tradingNet + projected production revenue
+            // After Production: currentProfit = currentFunds (actual production revenue realized)
+            if ($hasProduction) {
+                // Production has run: use final cash
+                $currentProfit = $profile['currentFunds'] ?? 0;
+            } else {
+                // Still trading: calculate trading net + projected production revenue
+                $currentCash = $profile['currentFunds'] ?? 0;
+
+                // Calculate Potential Revenue from current inventory
+                $inventoryRevenue = $state['shadowPrices']['maxProfit'] ?? 0;
+                // If maxProfit isn't in shadowPrices, calculate it live
+                if ($inventoryRevenue <= 0) {
+                    require_once __DIR__ . '/../../lib/LPSolver.php';
+                    $solver = new LPSolver();
+                    $res = $solver->solve($inventory);
+                    $inventoryRevenue = $res['maxProfit'];
+                }
+                $currentProfit = $currentCash + $inventoryRevenue;
+            }
 
             // Calculate percentage improvement
             $percentImprovement = 0;

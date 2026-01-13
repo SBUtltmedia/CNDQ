@@ -318,6 +318,15 @@ if (!isAdmin()) {
                     teamList.innerHTML = data.teams.map(team => {
                         const sign = team.percentImprovement >= 0 ? '+' : '';
                         const color = team.percentImprovement >= 0 ? 'text-green-400' : 'text-red-400';
+
+                        // Format funds with proper sign placement
+                        const fundsFormatted = team.funds >= 0
+                            ? `$${team.funds.toFixed(2)}`
+                            : `-$${Math.abs(team.funds).toFixed(2)}`;
+
+                        // Format initial potential
+                        const initialFormatted = `$${team.initialPotential.toFixed(2)}`;
+
                         return `
                             <div class="bg-gray-700 p-3 rounded flex justify-between items-center">
                                 <div>
@@ -326,7 +335,8 @@ if (!isAdmin()) {
                                 </div>
                                 <div class="text-right">
                                     <div class="${color} font-bold">${sign}${team.percentImprovement.toFixed(1)}% Success</div>
-                                    <div class="text-xs text-gray-300">${team.totalTrades} trades, $${team.funds.toFixed(2)} profit</div>
+                                    <div class="text-xs text-gray-400">Initial: ${initialFormatted} → Current: ${fundsFormatted}</div>
+                                    <div class="text-xs text-gray-500">${team.totalTrades} trades completed</div>
                                 </div>
                             </div>
                         `;
@@ -584,44 +594,66 @@ if (!isAdmin()) {
                     if (npcs.length === 0) {
                         npcListEl.innerHTML = '<p class="text-gray-400 text-sm">No NPCs created yet. Use the form above to add NPCs.</p>';
                     } else {
-                        npcListEl.innerHTML = npcs.map(npc => `
-                            <div class="bg-gray-700 p-4 rounded flex items-center justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-3 mb-1">
-                                        <span class="font-bold text-lg">${npc.teamName}</span>
-                                        <span class="text-xs px-2 py-1 rounded ${
-                                            npc.skillLevel === 'beginner' ? 'bg-gray-600 text-gray-300' :
-                                            npc.skillLevel === 'novice' ? 'bg-blue-600 text-white' :
-                                            'bg-purple-600 text-white'
-                                        }">${npc.skillLevel.toUpperCase()}</span>
-                                        <span class="text-xs px-2 py-1 rounded ${npc.active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}">
-                                            ${npc.active ? 'ACTIVE' : 'INACTIVE'}
-                                        </span>
+                        npcListEl.innerHTML = npcs.map(npc => {
+                            // Format currency with proper negative sign placement
+                            const formatCurrency = (value) => {
+                                const num = parseFloat(value) || 0;
+                                return num >= 0 ? `$${num.toFixed(2)}` : `-$${Math.abs(num).toFixed(2)}`;
+                            };
+
+                            // Calculate success metrics
+                            const initialPotential = parseFloat(npc.initialProductionPotential) || 0;
+                            const currentFunds = parseFloat(npc.currentFunds) || 0;
+                            const percentImprovement = initialPotential > 0
+                                ? ((currentFunds - initialPotential) / initialPotential * 100)
+                                : 0;
+
+                            const successSign = percentImprovement >= 0 ? '+' : '';
+                            const successColor = percentImprovement >= 0 ? 'text-green-400' : 'text-red-400';
+
+                            return `
+                                <div class="bg-gray-700 p-4 rounded flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-1">
+                                            <span class="font-bold text-lg">${npc.teamName}</span>
+                                            <span class="text-xs px-2 py-1 rounded ${
+                                                npc.skillLevel === 'beginner' ? 'bg-gray-600 text-gray-300' :
+                                                npc.skillLevel === 'novice' ? 'bg-blue-600 text-white' :
+                                                'bg-purple-600 text-white'
+                                            }">${npc.skillLevel.toUpperCase()}</span>
+                                            <span class="text-xs px-2 py-1 rounded ${npc.active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}">
+                                                ${npc.active ? 'ACTIVE' : 'INACTIVE'}
+                                            </span>
+                                        </div>
+                                        <div class="text-sm ${successColor} font-bold">
+                                            ${successSign}${percentImprovement.toFixed(1)}% Success
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-1">
+                                            Initial: ${formatCurrency(initialPotential)} → Current: ${formatCurrency(currentFunds)}
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            ${parseInt(npc.stats?.totalTrades) || 0} trades |
+                                            Inventory: C=${Math.max(0, Math.round(npc.inventory?.C || 0))}
+                                            N=${Math.max(0, Math.round(npc.inventory?.N || 0))}
+                                            D=${Math.max(0, Math.round(npc.inventory?.D || 0))}
+                                            Q=${Math.max(0, Math.round(npc.inventory?.Q || 0))}
+                                        </div>
                                     </div>
-                                    <div class="text-sm text-gray-300 flex gap-4">
-                                        <span>Funds: $${(parseFloat(npc.currentFunds) || 0).toFixed(2)}</span>
-                                        <span>Trades: ${parseInt(npc.stats?.totalTrades) || 0}</span>
-                                        <span>Profit: $${(parseFloat(npc.stats?.totalProfit) || 0).toFixed(2)}</span>
-                                    </div>
-                                    <div class="text-xs text-gray-400 mt-1">
-                                        Inventory: C=${Math.round(npc.inventory?.C || 0)} N=${Math.round(npc.inventory?.N || 0)}
-                                        D=${Math.round(npc.inventory?.D || 0)} Q=${Math.round(npc.inventory?.Q || 0)}
+                                    <div class="flex gap-2">
+                                        <button onclick="toggleNPC('${npc.id}', ${!npc.active})"
+                                                class="px-4 py-2 rounded font-bold transition ${
+                                                    npc.active ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'
+                                                }">
+                                            ${npc.active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button onclick="deleteNPC('${npc.id}')"
+                                                class="px-4 py-2 rounded font-bold transition bg-red-600 hover:bg-red-700">
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="flex gap-2">
-                                    <button onclick="toggleNPC('${npc.id}', ${!npc.active})"
-                                            class="px-4 py-2 rounded font-bold transition ${
-                                                npc.active ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'
-                                            }">
-                                        ${npc.active ? 'Deactivate' : 'Activate'}
-                                    </button>
-                                    <button onclick="deleteNPC('${npc.id}')"
-                                            class="px-4 py-2 rounded font-bold transition bg-red-600 hover:bg-red-700">
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('');
+                            `;
+                        }).join('');
                     }
                 }
             } catch (error) {
