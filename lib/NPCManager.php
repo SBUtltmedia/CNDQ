@@ -263,6 +263,7 @@ class NPCManager
     public function listNPCs()
     {
         $config = $this->loadConfig();
+        $configChanged = false;
 
         // Enrich with current team data using No-M getState()
         foreach ($config['npcs'] as &$npc) {
@@ -272,9 +273,21 @@ class NPCManager
 
                 $npc['currentFunds'] = $state['profile']['currentFunds'] ?? 0;
                 $npc['inventory'] = $state['inventory'];
+
+                // Sync team name from profile if it's missing or different
+                $profileTeamName = $state['profile']['teamName'] ?? null;
+                if ($profileTeamName && (!isset($npc['teamName']) || $npc['teamName'] !== $profileTeamName)) {
+                    $npc['teamName'] = $profileTeamName;
+                    $configChanged = true;
+                }
             } catch (Exception $e) {
                 error_log("Failed to load NPC data for {$npc['email']}: " . $e->getMessage());
             }
+        }
+
+        // Save config if team names were updated
+        if ($configChanged) {
+            $this->saveConfig($config);
         }
 
         return [
@@ -323,10 +336,24 @@ class NPCManager
         }
 
         $config = $this->loadConfig();
+        $configChanged = false;
 
-        foreach ($config['npcs'] as $npc) {
+        foreach ($config['npcs'] as &$npc) {
             if (!$npc['active']) {
                 continue;
+            }
+
+            // Sync team name from profile before trading
+            try {
+                $storage = new TeamStorage($npc['email']);
+                $profile = $storage->getProfile();
+                $profileTeamName = $profile['teamName'] ?? null;
+                if ($profileTeamName && (!isset($npc['teamName']) || $npc['teamName'] !== $profileTeamName)) {
+                    $npc['teamName'] = $profileTeamName;
+                    $configChanged = true;
+                }
+            } catch (Exception $e) {
+                error_log("Failed to sync NPC team name for {$npc['email']}: " . $e->getMessage());
             }
 
             try {
@@ -334,6 +361,11 @@ class NPCManager
             } catch (Exception $e) {
                 error_log("NPC trading error for {$npc['email']}: " . $e->getMessage());
             }
+        }
+
+        // Save config if team names were updated
+        if ($configChanged) {
+            $this->saveConfig($config);
         }
     }
 

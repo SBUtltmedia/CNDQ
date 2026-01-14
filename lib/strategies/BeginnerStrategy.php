@@ -142,9 +142,15 @@ class BeginnerStrategy extends NPCTradingStrategy
     public function respondToNegotiations()
     {
         $pendingNegotiations = $this->getPendingNegotiations();
-        if (empty($pendingNegotiations)) return null;
 
-        $negotiation = array_values($pendingNegotiations)[0];
+        // Filter out negotiations where NPC made the last offer (cannot accept own offer)
+        $respondableNegotiations = array_filter($pendingNegotiations, function($neg) {
+            return $neg['lastOfferBy'] !== $this->npc['email'];
+        });
+
+        if (empty($respondableNegotiations)) return null;
+
+        $negotiation = array_values($respondableNegotiations)[0];
         $latestOffer = end($negotiation['offers']);
         $offerCount = count($negotiation['offers']);
         

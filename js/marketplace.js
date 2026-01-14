@@ -285,6 +285,7 @@ class MarketplaceApp {
     updateStalenessIndicator(level, count) {
         const indicator = document.getElementById('staleness-indicator');
         const warning = document.getElementById('staleness-warning');
+        const recalcBtn = document.getElementById('recalc-shadow-btn');
 
         // Store for theme changes
         this.lastStalenessLevel = level;
@@ -293,6 +294,12 @@ class MarketplaceApp {
         if (level === 'fresh') {
             if (indicator) indicator.innerHTML = '<span class="staleness-fresh">✓ Fresh</span>';
             if (warning) warning?.classList.add('hidden');
+            // Disable and grey out button when fresh
+            if (recalcBtn) {
+                recalcBtn.disabled = true;
+                recalcBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                recalcBtn.classList.add('bg-gray-600', 'cursor-not-allowed', 'opacity-50');
+            }
         } else if (level === 'warning') {
             if (indicator) indicator.innerHTML = '<span class="staleness-warning">⚠ Stale (1 trade ago)</span>';
             if (warning) {
@@ -300,12 +307,24 @@ class MarketplaceApp {
                 warning.className = 'mt-3 p-3 rounded text-sm badge-warning';
                 warning.textContent = '💡 Tip: Your inventory changed! Shadow prices may be outdated. Click [Recalculate] to update them.';
             }
+            // Enable button when stale
+            if (recalcBtn) {
+                recalcBtn.disabled = false;
+                recalcBtn.classList.remove('bg-gray-600', 'cursor-not-allowed', 'opacity-50');
+                recalcBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            }
         } else if (level === 'stale') {
             if (indicator) indicator.innerHTML = `<span class="staleness-stale">✗ Very Stale (${count} trades ago)</span>`;
             if (warning) {
                 warning?.classList.remove('hidden');
                 warning.className = 'mt-3 p-3 rounded text-sm badge-error';
                 warning.textContent = `⚠️ Warning: Shadow prices are very stale (last calculated before ${count} transactions). Your valuations may be inaccurate!`;
+            }
+            // Enable button when very stale
+            if (recalcBtn) {
+                recalcBtn.disabled = false;
+                recalcBtn.classList.remove('bg-gray-600', 'cursor-not-allowed', 'opacity-50');
+                recalcBtn.classList.add('bg-green-600', 'hover:bg-green-700');
             }
         }
     }
@@ -434,22 +453,45 @@ class MarketplaceApp {
             percentImprovement = ((totalValue - initialPotential) / initialPotential) * 100;
         }
 
+        // Calculate deltas from previous values (stored in instance)
+        // Only update baseline when transaction count changes (new trade occurred)
+        const currentTransactionCount = this.transactions.length;
+        const transactionCountChanged = (this.prevTransactionCount !== undefined) && (currentTransactionCount !== this.prevTransactionCount);
+
+        let inventoryDelta = 0;
+        let totalDelta = 0;
+
+        if (this.prevInventoryValue !== undefined && this.prevTotalValue !== undefined) {
+            inventoryDelta = inventoryValue - this.prevInventoryValue;
+            totalDelta = totalValue - this.prevTotalValue;
+        }
+
+        // Update baseline only when transaction count changes (new trade)
+        if (this.prevTransactionCount === undefined || transactionCountChanged) {
+            this.prevInventoryValue = inventoryValue;
+            this.prevTotalValue = totalValue;
+            this.prevTransactionCount = currentTransactionCount;
+        }
+
         // Update DOM
         const els = {
-            tradingNet: document.getElementById('fin-trading-net'),
             inventory: document.getElementById('fin-production-rev'),
+            inventoryDelta: document.getElementById('fin-production-delta'),
             totalValue: document.getElementById('fin-net-profit'),
+            totalDelta: document.getElementById('fin-total-delta'),
             improvement: document.getElementById('fin-improvement'),
             improvementBadge: document.getElementById('improvement-badge')
         };
 
-        if (els.tradingNet) {
-            els.tradingNet.textContent = (tradingNet >= 0 ? '+' : '') + this.formatCurrency(tradingNet);
-            els.tradingNet.className = `text-xl font-mono ${tradingNet >= 0 ? 'text-green-400' : 'text-red-400'}`;
-        }
-
         if (els.inventory) {
             els.inventory.textContent = this.formatCurrency(inventoryValue);
+        }
+
+        if (els.inventoryDelta) {
+            const deltaSign = inventoryDelta >= 0 ? '+' : '';
+            const deltaColor = inventoryDelta >= 0 ? 'text-green-400' : 'text-red-400';
+            els.inventoryDelta.textContent = inventoryDelta !== 0 ? `${deltaSign}${this.formatCurrency(inventoryDelta)} from last trade` : 'No change yet';
+            els.inventoryDelta.className = `text-[10px] uppercase mt-1 ${inventoryDelta !== 0 ? deltaColor : 'text-gray-500'}`;
         }
 
         if (els.totalValue) {
@@ -457,12 +499,19 @@ class MarketplaceApp {
             els.totalValue.className = `text-2xl font-mono font-bold z-10 ${totalValue >= 0 ? 'text-green-400' : 'text-red-400'}`;
         }
 
+        if (els.totalDelta) {
+            const deltaSign = totalDelta >= 0 ? '+' : '';
+            const deltaColor = totalDelta >= 0 ? 'text-green-400' : 'text-red-400';
+            els.totalDelta.textContent = totalDelta !== 0 ? `${deltaSign}${this.formatCurrency(totalDelta)} from last trade` : 'No change yet';
+            els.totalDelta.className = `text-[10px] uppercase mt-1 z-10 ${totalDelta !== 0 ? deltaColor : 'text-gray-400'}`;
+        }
+
         // Display Growth Badge
         if (els.improvement) {
             const sign = percentImprovement >= 0 ? '+' : '';
             els.improvement.textContent = `${sign}${percentImprovement.toFixed(1)}%`;
             els.improvement.className = `text-sm font-mono font-bold ml-1 ${percentImprovement >= 0 ? 'text-green-400' : 'text-red-400'}`;
-            
+
             if (els.improvementBadge) {
                 els.improvementBadge.classList.remove('hidden');
             }
@@ -880,6 +929,7 @@ class MarketplaceApp {
 
                 this.closeRespondModal();
                 await this.loadNegotiations();
+                await this.loadAdvertisements(); // Refresh to remove the ad we just responded to
             } else {
                 this.showToast(response.message || 'Failed to send offer', 'error');
             }
@@ -1077,6 +1127,22 @@ class MarketplaceApp {
             qtySlider.max = maxQty;
             qtySlider.value = latestOffer.quantity;
             document.getElementById('haggle-qty-display').textContent = latestOffer.quantity;
+
+            // Display shadow price range information
+            const rangeDisplay = document.getElementById('haggle-range-display');
+            if (rangeDisplay && this.ranges && this.ranges[negotiation.chemical]) {
+                const range = this.ranges[negotiation.chemical];
+                const decrease = range.allowableDecrease || 0;
+                const increase = range.allowableIncrease || 0;
+                const isRangeZero = (increase + decrease) < 1;
+
+                if (isRangeZero) {
+                    rangeDisplay.textContent = 'N/A (Low Inventory)';
+                } else {
+                    const increaseText = increase >= 9000 ? '∞' : increase.toFixed(0);
+                    rangeDisplay.textContent = `[-${decrease.toFixed(0)}, +${increaseText}] gal`;
+                }
+            }
 
             // Set Price Range (0% to 300% of shadow price)
             priceSlider.min = 0;

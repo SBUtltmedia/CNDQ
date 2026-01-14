@@ -272,7 +272,16 @@ class ExpertStrategy extends NPCTradingStrategy
     {
         $pendingNegotiations = $this->getPendingNegotiations();
 
-        if (empty($pendingNegotiations)) {
+        error_log("DEBUG: {$this->npc['teamName']} has " . count($pendingNegotiations) . " pending negotiations");
+
+        // Filter out negotiations where NPC made the last offer (cannot accept own offer)
+        $respondableNegotiations = array_filter($pendingNegotiations, function($neg) {
+            return $neg['lastOfferBy'] !== $this->npc['email'];
+        });
+
+        error_log("DEBUG: {$this->npc['teamName']} has " . count($respondableNegotiations) . " respondable negotiations (excluding own offers)");
+
+        if (empty($respondableNegotiations)) {
             return null;
         }
 
@@ -285,8 +294,8 @@ class ExpertStrategy extends NPCTradingStrategy
             }
         }
 
-        // Only respond to the first pending negotiation
-        $negotiation = array_values($pendingNegotiations)[0];
+        // Only respond to the first respondable negotiation
+        $negotiation = array_values($respondableNegotiations)[0];
         $latestOffer = end($negotiation['offers']);
 
         $chemical = $negotiation['chemical'];

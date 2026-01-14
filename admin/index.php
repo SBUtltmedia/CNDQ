@@ -22,6 +22,10 @@ if (!isAdmin()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CNDQ Admin Dashboard</title>
 
+    <!-- UnoCSS Runtime (JIT) -->
+    <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime@0.58.5/uno.global.js"></script>
+    <script src="../css/unocss-config.js"></script>
+
     <link rel="stylesheet" href="../css/styles.css">
     <style>
         /* Focus styles */
@@ -104,7 +108,7 @@ if (!isAdmin()) {
                 <div class="text-xs text-blue-300 space-y-1">
                     <p>1. Market runs for the duration below.</p>
                     <p>2. Game automatically finalizes (Results shown).</p>
-                    <p>3. After 60 seconds, a <strong>New Game</strong> starts automatically (wiping previous data).</p>
+                    <p>3. Users can initiate a <strong>New Game</strong> from the Results screen (via "Restart Simulation" button).</p>
                 </div>
             </div>
 

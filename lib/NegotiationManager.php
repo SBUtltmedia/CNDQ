@@ -70,6 +70,19 @@ class NegotiationManager {
      * Create new negotiation
      */
     public function createNegotiation($initiatorId, $initiatorName, $responderId, $responderName, $chemical, $initialOffer, $sessionNumber = null, $type = 'buy', $adId = null) {
+        // CHOPSTICK CHECK: Prevent duplicate pending negotiations for the same chemical between same parties
+        $existingNegotiation = $this->db->queryOne(
+            'SELECT id FROM negotiations
+             WHERE ((initiator_id = ? AND responder_id = ?) OR (initiator_id = ? AND responder_id = ?))
+               AND chemical = ?
+               AND status = ?',
+            [$initiatorId, $responderId, $responderId, $initiatorId, $chemical, 'pending']
+        );
+
+        if ($existingNegotiation) {
+            throw new Exception("You already have a pending negotiation for $chemical with this team");
+        }
+
         // Validation: If selling, check inventory
         if ($type === 'sell') {
             $this->checkInventory($initiatorId, $chemical, $initialOffer['quantity']);
@@ -360,21 +373,61 @@ class NegotiationManager {
      * Accept negotiation (execute trade)
      */
     public function acceptNegotiation($negotiationId, $acceptingTeamId) {
-        $negotiation = $this->getNegotiation($negotiationId);
-
-        if (!$negotiation) {
-            throw new Exception('Negotiation not found');
+        // DEBUG: Check if transaction already active
+        if ($this->db->inTransaction()) {
+            error_log("WARNING: acceptNegotiation called while transaction already active!");
+            throw new Exception("Cannot accept negotiation: transaction already in progress");
         }
 
-        // Verify team is part of this negotiation
-        if ($acceptingTeamId !== $negotiation['initiatorId'] && $acceptingTeamId !== $negotiation['responderId']) {
-            throw new Exception('Unauthorized');
-        }
+        // Start transaction immediately to lock the negotiation
+        $this->db->beginTransaction();
+        error_log("DEBUG: Transaction started in acceptNegotiation for $negotiationId");
 
-        // Verify it's their turn (can only accept other team's offer)
-        if ($negotiation['lastOfferBy'] === $acceptingTeamId) {
-            throw new Exception('Cannot accept your own offer');
-        }
+        try {
+            // Get negotiation with row-level lock (SELECT FOR UPDATE)
+            $negotiation = $this->db->queryOne(
+                'SELECT * FROM negotiations WHERE id = ?',
+                [$negotiationId]
+            );
+
+            if (!$negotiation) {
+                throw new Exception('Negotiation not found');
+            }
+
+            // CRITICAL: Check if already accepted (prevents double-execution)
+            if ($negotiation['status'] === 'accepted') {
+                throw new Exception('This negotiation has already been accepted');
+            }
+
+            if ($negotiation['status'] === 'rejected') {
+                throw new Exception('This negotiation has been rejected');
+            }
+
+            // Verify team is part of this negotiation (use database column names with underscores)
+            if ($acceptingTeamId !== $negotiation['initiator_id'] && $acceptingTeamId !== $negotiation['responder_id']) {
+                throw new Exception('Unauthorized');
+            }
+
+            // Verify it's their turn (can only accept other team's offer)
+            if ($negotiation['last_offer_by'] === $acceptingTeamId) {
+                throw new Exception('Cannot accept your own offer');
+            }
+
+            // Convert array result from database columns to expected format
+            $negotiation = [
+                'id' => $negotiation['id'],
+                'chemical' => $negotiation['chemical'],
+                'type' => $negotiation['type'],
+                'initiatorId' => $negotiation['initiator_id'],
+                'initiatorName' => $negotiation['initiator_name'],
+                'responderId' => $negotiation['responder_id'],
+                'responderName' => $negotiation['responder_name'],
+                'sessionNumber' => $negotiation['session_number'],
+                'status' => $negotiation['status'],
+                'lastOfferBy' => $negotiation['last_offer_by'],
+                'adId' => $negotiation['ad_id'],
+                'offers' => $this->getNegotiationOffers($negotiationId)
+            ];
 
         // Validation: If I am accepting a 'Buy' offer (meaning I am selling), check MY inventory.
         // If the other person offered to BUY, they are the Buyer, I am the Seller.
@@ -390,26 +443,29 @@ class NegotiationManager {
         //    - If I am Responder (accepting Initiator's Sell Offer), I am Buyer.
         //    - If I am Initiator (accepting Responder's Buy Counter), I am Seller. Check My Inv.
 
-        $isSeller = ($negotiation['type'] === 'buy' && $acceptingTeamId === $negotiation['responderId']) ||
-                    ($negotiation['type'] === 'sell' && $acceptingTeamId === $negotiation['initiatorId']);
+            $isSeller = ($negotiation['type'] === 'buy' && $acceptingTeamId === $negotiation['responderId']) ||
+                        ($negotiation['type'] === 'sell' && $acceptingTeamId === $negotiation['initiatorId']);
 
-        if ($isSeller) {
-            // Get the last offer to know quantity
-            $offers = $this->getNegotiationOffers($negotiationId);
-            $lastOffer = end($offers);
-            $this->checkInventory($acceptingTeamId, $negotiation['chemical'], $lastOffer['quantity']);
-        }
+            if ($isSeller) {
+                // Get the last offer to know quantity
+                $lastOffer = end($negotiation['offers']);
+                $this->checkInventory($acceptingTeamId, $negotiation['chemical'], $lastOffer['quantity']);
+            }
 
-        // Start transaction
-        $this->db->beginTransaction();
-        try {
-            // Update negotiation
-            $this->db->execute(
+            // Update negotiation status to 'accepted' - marks it as consumed
+            // The WHERE clause includes status='pending' to ensure atomicity
+            $rowsAffected = $this->db->execute(
                 'UPDATE negotiations
                  SET status = ?, accepted_by = ?, accepted_at = ?, updated_at = ?
-                 WHERE id = ?',
-                ['accepted', $acceptingTeamId, time(), time(), $negotiationId]
+                 WHERE id = ? AND status = ?',
+                ['accepted', $acceptingTeamId, time(), time(), $negotiationId, 'pending']
             );
+
+            // Double-check that the update succeeded (another transaction might have beaten us)
+            if ($rowsAffected === 0) {
+                $this->db->rollback();
+                throw new Exception('This negotiation was already accepted by someone else');
+            }
 
             // Emit events to both parties
             try {
@@ -468,9 +524,21 @@ class NegotiationManager {
                 }
             }
 
+            error_log("DEBUG: About to commit transaction in acceptNegotiation for $negotiationId");
+            if (!$this->db->inTransaction()) {
+                error_log("ERROR: No transaction active when trying to commit! This should never happen.");
+                throw new Exception("Transaction lost before commit");
+            }
             $this->db->commit();
+            error_log("DEBUG: Transaction committed successfully for $negotiationId");
         } catch (Exception $e) {
-            $this->db->rollback();
+            error_log("DEBUG: Exception in acceptNegotiation: " . $e->getMessage());
+            if ($this->db->inTransaction()) {
+                error_log("DEBUG: Rolling back transaction");
+                $this->db->rollback();
+            } else {
+                error_log("ERROR: Cannot rollback - no transaction active!");
+            }
             throw $e;
         }
 

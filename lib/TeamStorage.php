@@ -375,6 +375,8 @@ class TeamStorage {
                 $chem = $payload['chemical'];
                 // Round to 4 decimal places to prevent floating-point accumulation errors
                 $state['inventory'][$chem] = round(($state['inventory'][$chem] ?? 0) + $payload['amount'], 4);
+                // Increment staleness counter - shadow prices need recalculation after inventory change
+                $state['inventory']['transactionsSinceLastShadowCalc'] = ($state['inventory']['transactionsSinceLastShadowCalc'] ?? 0) + 1;
                 break;
 
             case 'update_shadow_prices':

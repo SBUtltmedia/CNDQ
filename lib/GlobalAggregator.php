@@ -102,10 +102,19 @@ class GlobalAggregator {
         ]);
 
         $actorName = $actorStorage->getTeamName();
+        $counterpartyName = $counterpartyStorage->getTeamName();
 
+        // Add notification to counterparty
         $counterpartyStorage->addNotification([
             'type' => 'trade_completed',
             'message' => ($role === 'seller' ? "Sold" : "Bought") . " $quantity gallons of $chemical " . ($role === 'seller' ? "to" : "from") . " $actorName for " . ($totalAmount < 0 ? '-$' : '$') . number_format(abs($totalAmount), 2)
+        ]);
+
+        // Add notification to actor (since TradeExecutor no longer does this)
+        $actorRole = $txn['role']; // Actor's original role (opposite of counterparty role)
+        $actorStorage->addNotification([
+            'type' => 'trade_completed',
+            'message' => ($actorRole === 'seller' ? "Sold" : "Bought") . " $quantity gallons of $chemical " . ($actorRole === 'seller' ? "to" : "from") . " $counterpartyName for " . ($totalAmount < 0 ? '-$' : '$') . number_format(abs($totalAmount), 2)
         ]);
 
         // 3. Mark as reflected on actor

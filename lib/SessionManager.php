@@ -139,14 +139,9 @@ class SessionManager {
             return; 
         }
 
-        // 5. Auto-Restart
-        if (($data['autoAdvance'] ?? false) && ($data['gameFinished'] ?? false)) {
-            $endedAt = $data['productionJustRan'] ?? 0;
-            if ($now - $endedAt > 60) {
-                $this->startNewGame();
-                return;
-            }
-        }
+        // 5. Auto-Restart removed - users must manually start new game from results screen
+        // Previously: After 60 seconds, auto-started new game
+        // Now: Game stays in finished state until user clicks "Restart Simulation" button
 
         // Persist updates ONLY if something changed (to save IO/Events)
         // We always update lastTick if delta > 0 to keep the heartbeat fresh

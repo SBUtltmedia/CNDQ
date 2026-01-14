@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toast Test</title>
+
+    <!-- UnoCSS Runtime -->
+    <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime@0.58.5/uno.global.js"></script>
+    <script src="./css/unocss-config.js"></script>
+
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <h1 class="text-4xl font-bold mb-8">Toast Notification Test</h1>
+
+    <div class="space-y-4">
+        <button onclick="showToast('Success toast!', 'success')" class="bg-green-600 text-white px-4 py-2 rounded">
+            Show Success Toast
+        </button>
+
+        <button onclick="showToast('Error toast!', 'error')" class="bg-red-600 text-white px-4 py-2 rounded">
+            Show Error Toast
+        </button>
+
+        <button onclick="showToast('Info toast!', 'info')" class="bg-blue-600 text-white px-4 py-2 rounded">
+            Show Info Toast
+        </button>
+
+        <button onclick="showToast('Warning toast!', 'warning')" class="bg-yellow-600 text-white px-4 py-2 rounded">
+            Show Warning Toast
+        </button>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[9999] space-y-2"></div>
+
+    <script>
+        function showToast(message, type = 'info', duration = 3000) {
+            const colors = {
+                success: 'bg-green-600',
+                error: 'bg-red-600',
+                info: 'bg-blue-600',
+                warning: 'bg-yellow-600'
+            };
+
+            const icons = {
+                success: '✓',
+                error: '✗',
+                info: 'ℹ',
+                warning: '⚠'
+            };
+
+            const container = document.getElementById('toast-container');
+            if (!container) {
+                console.error('Toast container not found!');
+                return;
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center gap-2`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+
+            const iconSpan = document.createElement('span');
+            iconSpan.textContent = icons[type];
+            iconSpan.className = 'text-xl';
+            toast.appendChild(iconSpan);
+
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = message;
+            toast.appendChild(messageSpan);
+
+            container.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                requestAnimationFrame(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateX(0)';
+                });
+            });
+
+            // Remove after duration
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+        }
+
+        // Auto-test on load
+        setTimeout(() => {
+            console.log('Testing toast...');
+            showToast('Page loaded successfully!', 'success');
+        }, 1000);
+    </script>
+</body>
+</html>

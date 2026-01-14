@@ -35,8 +35,7 @@ class TradeExecutor {
             
             if ($isBuyerActing) {
                 // Buyer Actor: needs funds - CHECK REMOVED (Infinite Capital)
-                $funds = $actorStorage->getProfile()['currentFunds'] ?? 0;
-                
+
                 // Seller Counterparty: needs inventory
                 $inv = $counterpartyStorage->getInventory()[$chemical] ?? 0;
                 if ($inv < $quantity) {
@@ -49,8 +48,6 @@ class TradeExecutor {
                     throw new Exception("You have insufficient inventory (need $quantity, have $inv)");
                 }
                 // Buyer Counterparty: needs funds - CHECK REMOVED (Infinite Capital)
-                $funds = $counterpartyStorage->getProfile()['currentFunds'] ?? 0;
-                
             }
 
             // Debug: Log pre-trade state
@@ -96,11 +93,8 @@ class TradeExecutor {
                         'buyerGain' => $buyerGain
                     ]
                 ]);
-                
-                $actorStorage->addNotification([
-                    'type' => 'trade_completed',
-                    'message' => "Bought $quantity gallons of $chemical from $counterpartyName for " . ($totalCost < 0 ? '-$' : '$') . number_format(abs($totalCost), 2)
-                ]);
+
+                // Notification removed - GlobalAggregator will add notification when reflecting to both parties
             } else {
                 // Seller is acting: they lose chemicals, gain money
                 $actorStorage->adjustChemical($chemical, -$quantity);
@@ -123,10 +117,7 @@ class TradeExecutor {
                     ]
                 ]);
 
-                $actorStorage->addNotification([
-                    'type' => 'trade_completed',
-                    'message' => "Sold $quantity gallons of $chemical to $counterpartyName for " . ($totalCost < 0 ? '-$' : '$') . number_format(abs($totalCost), 2)
-                ]);
+                // Notification removed - GlobalAggregator will add notification when reflecting to both parties
             }
             
             // GLOBAL MARKETPLACE EVENT: Record the trade for all to see
@@ -191,13 +182,12 @@ class TradeExecutor {
     /**
      * Minimal validation for the UI
      */
-    public function validateTrade($sellerId, $buyerId, $chemical, $quantity, $pricePerGallon) {
+    public function validateTrade($sellerId, $buyerId, $chemical, $quantity) {
         $seller = new TeamStorage($sellerId);
-        $buyer = new TeamStorage($buyerId);
-        
-                $hasInventory = ($seller->getInventory()[$chemical] ?? 0) >= $quantity;
-        
-                // Funds check removed for Infinite Capital model
+
+        $hasInventory = ($seller->getInventory()[$chemical] ?? 0) >= $quantity;
+
+        // Funds check removed for Infinite Capital model
         
                 
         

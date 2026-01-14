@@ -22,7 +22,10 @@
     }
     </script>
 
-    <link rel="stylesheet" href="./css/tailwind.min.css">
+    <!-- UnoCSS Runtime (JIT) - No build step needed! -->
+    <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime@0.58.5/uno.global.js"></script>
+    <script src="./css/unocss-config.js"></script>
+
     <link rel="stylesheet" href="./css/styles.css">
     <style>
         /* Page-specific animations */
@@ -331,11 +334,6 @@
                     </div>
 
                     <div class="flex items-center gap-2 md:gap-4">
-                        <!-- Funds Display -->
-                        <div class="bg-gray-700 px-3 py-2 md:px-6 md:py-3 rounded-lg border border-gray-600">
-                            <span class="text-gray-300 text-xs md:text-sm block">Total Value</span>
-                            <span class="text-success font-bold text-lg md:text-2xl" id="current-funds">$0</span>
-                        </div>
 
                         <!-- Notifications -->
                         <notification-manager id="notification-manager"></notification-manager>
@@ -415,22 +413,17 @@
             </div>
 
             <!-- Financial Summary Panel -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
-                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Trading Profit</span>
-                    <span class="text-xl font-mono text-white" id="fin-trading-net">$0.00</span>
-                    <span class="text-[10px] text-gray-500 uppercase mt-1">Realized from trades</span>
-                </div>
-                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
-                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Inventory Value</span>
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Projected production profit</span>
                     <span class="text-xl font-mono text-blue-400" id="fin-production-rev">$0.00</span>
-                    <span class="text-[10px] text-gray-500 uppercase mt-1">Projected from stock</span>
+                    <span class="text-[10px] text-gray-500 uppercase mt-1" id="fin-production-delta"></span>
                 </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-green-600 opacity-10"></div>
-                    <span class="text-xs text-green-300 uppercase font-bold mb-1 z-10">Total Projected Value</span>
+                    <span class="text-xs text-green-300 uppercase font-bold mb-1 z-10">Projected total profit</span>
                     <span class="text-2xl font-mono font-bold text-white z-10" id="fin-net-profit">$0.00</span>
-                    <span class="text-[10px] text-gray-400 uppercase mt-1 z-10">Realized + Projected</span>
+                    <span class="text-[10px] text-gray-400 uppercase mt-1 z-10" id="fin-total-delta"></span>
                 </div>
             </div>
             
@@ -717,6 +710,10 @@
                                 <div class="flex justify-between text-[10px] text-gray-500 mt-1">
                                     <span>Min: 1</span>
                                     <span>Max: <span id="haggle-qty-max">0</span></span>
+                                </div>
+                                <div class="text-[10px] text-gray-400 mt-2 text-center">
+                                    <span>Shadow Price Stable Range: </span>
+                                    <span class="text-blue-400 font-mono" id="haggle-range-display">[N/A]</span>
                                 </div>
                                 <p id="haggle-sensitivity-warning" class="hidden text-[10px] text-yellow-500 mt-1 text-center">⚠️ Quantity exceeds stable range.</p>
                             </div>
