@@ -13,11 +13,11 @@ class NotificationManager extends LitElement {
 
             .notif-btn {
                 position: relative;
-                background-color: var(--color-bg-tertiary);
-                color: var(--color-text-tertiary);
+                background-color: #374151;
+                color: #d1d5db;
                 padding: 0.5rem;
                 border-radius: 0.5rem;
-                border: 1px solid var(--color-border);
+                border: none;
                 cursor: pointer;
                 transition: all 0.2s;
                 display: flex;
@@ -32,8 +32,7 @@ class NotificationManager extends LitElement {
             }
 
             .notif-btn:hover {
-                background-color: var(--color-border);
-                color: var(--color-text-primary);
+                background-color: #4b5563;
             }
 
             .badge {
