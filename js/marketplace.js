@@ -454,24 +454,30 @@ class MarketplaceApp {
         }
 
         // Calculate deltas from previous values (stored in instance)
-        // Only update baseline when transaction count changes (new trade occurred)
         const currentTransactionCount = this.transactions.length;
         const transactionCountChanged = (this.prevTransactionCount !== undefined) && (currentTransactionCount !== this.prevTransactionCount);
 
-        let inventoryDelta = 0;
-        let totalDelta = 0;
+        // Calculate delta when transaction count has changed (new trade occurred)
+        if (transactionCountChanged && this.prevInventoryValue !== undefined && this.prevTotalValue !== undefined) {
+            this.lastInventoryDelta = inventoryValue - this.prevInventoryValue;
+            this.lastTotalDelta = totalValue - this.prevTotalValue;
 
-        if (this.prevInventoryValue !== undefined && this.prevTotalValue !== undefined) {
-            inventoryDelta = inventoryValue - this.prevInventoryValue;
-            totalDelta = totalValue - this.prevTotalValue;
-        }
-
-        // Update baseline only when transaction count changes (new trade)
-        if (this.prevTransactionCount === undefined || transactionCountChanged) {
+            // Update baseline for next time
             this.prevInventoryValue = inventoryValue;
             this.prevTotalValue = totalValue;
             this.prevTransactionCount = currentTransactionCount;
+        } else if (this.prevTransactionCount === undefined) {
+            // First time - set baseline without showing delta
+            this.prevInventoryValue = inventoryValue;
+            this.prevTotalValue = totalValue;
+            this.prevTransactionCount = currentTransactionCount;
+            this.lastInventoryDelta = 0;
+            this.lastTotalDelta = 0;
         }
+
+        // Use persisted delta values (they'll be 0 until first trade, then persist until next trade)
+        const inventoryDelta = this.lastInventoryDelta || 0;
+        const totalDelta = this.lastTotalDelta || 0;
 
         // Update DOM
         const els = {
