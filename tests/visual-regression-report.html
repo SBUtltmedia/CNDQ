@@ -1,0 +1,456 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Regression Report</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 {
+            text-align: center;
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+        .summary {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        .summary .stat {
+            display: inline-block;
+            margin: 0 20px;
+            font-size: 18px;
+        }
+        .summary .passed { color: #10b981; }
+        .summary .failed { color: #ef4444; }
+        .comparison {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border: 2px solid #4a4a4a;
+        }
+        .comparison.failed {
+            border-color: #ef4444;
+        }
+        .comparison.passed {
+            border-color: #10b981;
+        }
+        .comparison h2 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .comparison .status {
+            font-size: 24px;
+        }
+        .comparison .metadata {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 15px;
+        }
+        .images {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .image-container {
+            text-align: center;
+        }
+        .image-container h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #d1d5db;
+        }
+        .image-container img {
+            width: 100%;
+            border: 1px solid #4a4a4a;
+            border-radius: 4px;
+            background: white;
+        }
+        .no-diff {
+            text-align: center;
+            color: #10b981;
+            font-size: 18px;
+            padding: 40px;
+        }
+        .filter {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .filter button {
+            margin: 0 5px;
+            padding: 10px 20px;
+            border: none;
+            background: #4a4a4a;
+            color: #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .filter button.active {
+            background: #10b981;
+            color: white;
+        }
+        .filter button:hover {
+            background: #5a5a5a;
+        }
+        .filter button.active:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Visual Regression Report</h1>
+
+    <div class="summary">
+        <div class="stat">Total: <strong>9</strong></div>
+        <div class="stat passed">Passed: <strong>0</strong></div>
+        <div class="stat failed">Failed: <strong>9</strong></div>
+    </div>
+
+    <div class="filter">
+        <button class="active" onclick="filterComparisons('all')">All</button>
+        <button onclick="filterComparisons('failed')">Failed Only</button>
+        <button onclick="filterComparisons('passed')">Passed Only</button>
+    </div>
+
+    <div id="comparisons">
+        
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>admin_main_dark</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: -1
+                    (100.00%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\admin_main_dark_1768276105897.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\admin_main_dark_1768276178909.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>admin_main_high-contrast</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: 342,182
+                    (19.07%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\admin_main_high-contrast_1768276150333.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\admin_main_high-contrast_1768276219350.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="screenshots\diff\diff_admin_main_high-contrast_1768276150333.png" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>admin_main_light</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: 1,220
+                    (0.07%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\admin_main_light_1768276127966.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\admin_main_light_1768276196871.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="screenshots\diff\diff_admin_main_light_1768276127966.png" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>modal_chemical_card_dark</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: 663,900
+                    (37.00%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\modal_chemical_card_dark_1768276120333.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\modal_chemical_card_dark_1768276193690.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="screenshots\diff\diff_modal_chemical_card_dark_1768276120333.png" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>modal_chemical_card_high-contrast</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: 61,846
+                    (3.45%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\modal_chemical_card_high-contrast_1768276165356.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\modal_chemical_card_high-contrast_1768276229964.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="screenshots\diff\diff_modal_chemical_card_high-contrast_1768276165356.png" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>modal_chemical_card_light</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: 1,217
+                    (0.07%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\modal_chemical_card_light_1768276142707.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\modal_chemical_card_light_1768276211846.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="screenshots\diff\diff_modal_chemical_card_light_1768276142707.png" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>player_marketplace_dark</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: -1
+                    (100.00%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\player_marketplace_dark_1768276112822.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\player_marketplace_dark_1768276186132.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>player_marketplace_high-contrast</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: 99
+                    (0.01%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\player_marketplace_high-contrast_1768276157544.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\player_marketplace_high-contrast_1768276222132.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="screenshots\diff\diff_player_marketplace_high-contrast_1768276157544.png" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+
+        <div class="comparison failed">
+            <h2>
+                <span class="status">❌</span>
+                <span>player_marketplace_light</span>
+                <span style="margin-left: auto; font-size: 16px; color: #ef4444;">
+                    DIFFERENT
+                </span>
+            </h2>
+            
+                <div class="metadata">
+                    Pixels changed: 1,273
+                    (0.07%)
+                </div>
+            
+            
+                <div class="images">
+                    <div class="image-container">
+                        <h3>Baseline (Before)</h3>
+                        <img src="screenshots\baseline\player_marketplace_light_1768276134927.png" alt="Baseline">
+                    </div>
+                    <div class="image-container">
+                        <h3>Current (After)</h3>
+                        <img src="screenshots\current\player_marketplace_light_1768276204091.png" alt="Current">
+                    </div>
+                    <div class="image-container">
+                        <h3>Difference</h3>
+                        <img src="screenshots\diff\diff_player_marketplace_light_1768276134927.png" alt="Difference">
+                    </div>
+                </div>
+            
+        </div>
+        
+    </div>
+
+    <script>
+        function filterComparisons(type) {
+            // Update button states
+            document.querySelectorAll('.filter button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Filter comparisons
+            document.querySelectorAll('.comparison').forEach(comp => {
+                const isFailed = comp.classList.contains('failed');
+                const isPassed = comp.classList.contains('passed');
+
+                if (type === 'all') {
+                    comp.style.display = 'block';
+                } else if (type === 'failed' && isFailed) {
+                    comp.style.display = 'block';
+                } else if (type === 'passed' && isPassed) {
+                    comp.style.display = 'block';
+                } else {
+                    comp.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+        
