@@ -49,6 +49,7 @@ class MarketplaceApp {
 
         // Track seen global trades to avoid duplicate toasts
         this.processedGlobalTrades = new Set();
+        this.seenCompletedNegotiations = new Set();
     }
 
     /**
@@ -387,10 +388,54 @@ class MarketplaceApp {
         try {
             const data = await api.negotiations.list();
             this.myNegotiations = data.negotiations || [];
+
+            // Check for newly completed negotiations to show synopsis
+            this.myNegotiations.forEach(neg => {
+                if (neg.status !== 'pending' && !this.seenCompletedNegotiations.has(neg.id)) {
+                    this.showTradeSynopsis(neg);
+                    this.seenCompletedNegotiations.add(neg.id);
+                }
+            });
+
             this.renderNegotiations();
         } catch (error) {
             console.error('Failed to load negotiations:', error);
         }
+    }
+
+    /**
+     * Show a modal with a synopsis of a completed trade
+     * @param {object} negotiation The completed negotiation object
+     */
+    showTradeSynopsis(negotiation) {
+        const modal = document.getElementById('trade-synopsis-modal');
+        const card = document.getElementById('synopsis-card');
+        if (!modal || !card) return;
+
+        const lastOffer = negotiation.offers[negotiation.offers.length - 1];
+        const counterparty = negotiation.initiatorId === this.currentUser ? negotiation.responderName : negotiation.initiatorName;
+
+        // Set content
+        document.getElementById('synopsis-chemical').textContent = `Chemical ${negotiation.chemical}`;
+        document.getElementById('synopsis-counterparty').textContent = counterparty;
+        document.getElementById('synopsis-quantity').textContent = `${lastOffer.quantity} gal`;
+        document.getElementById('synopsis-price').textContent = `${this.formatCurrency(lastOffer.price)} / gal`;
+        document.getElementById('synopsis-total').textContent = this.formatCurrency(lastOffer.quantity * lastOffer.price);
+
+        // Customize for status
+        if (negotiation.status === 'accepted') {
+            document.getElementById('synopsis-title').textContent = 'Trade Accepted!';
+            document.getElementById('synopsis-subtitle').textContent = 'The trade was successfully executed.';
+            card.classList.remove('border-red-500');
+            card.classList.add('border-green-500');
+        } else { // rejected or cancelled
+            document.getElementById('synopsis-title').textContent = 'Negotiation Ended';
+            document.getElementById('synopsis-subtitle').textContent = 'The negotiation was rejected or cancelled.';
+            card.classList.remove('border-green-500');
+            card.classList.add('border-red-500');
+        }
+
+        modal.classList.remove('hidden');
     }
 
     /**
@@ -1612,6 +1657,11 @@ class MarketplaceApp {
             this.recalculateShadowPrices();
         });
 
+        // Synopsis Modal
+        document.getElementById('synopsis-dismiss-btn').addEventListener('click', () => {
+            document.getElementById('trade-synopsis-modal').classList.add('hidden');
+        });
+
         // Web Component Events: Post interest (from chemical-card)
         document.addEventListener('post-interest', (e) => {
             const { chemical, type } = e.detail;
@@ -1948,6 +1998,7 @@ class MarketplaceApp {
             try {
                 // Run these in parallel but catch individual errors so one doesn't block others
                 await Promise.all([
+                    this.loadProfile().catch(e => console.error('Profile poll failed', e)),
                     this.loadAdvertisements().catch(e => console.error('Ad poll failed', e)),
                     this.loadNegotiations().catch(e => console.error('Neg poll failed', e)),
                     this.loadNotifications().catch(e => console.error('Notif poll failed', e)),

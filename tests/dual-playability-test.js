@@ -326,25 +326,38 @@ class DualPlayabilityTest {
         console.log('\n📡 API ENDPOINT COVERAGE:');
         console.log('-'.repeat(80));
 
+        // Helper to normalize endpoint strings for comparison
+        const normalizeEndpoint = (ep) => {
+            if (!ep) return '';
+            // Strip domain and base path if full URL
+            let normalized = ep.replace(this.config.baseUrl, '');
+            // Strip query parameters
+            normalized = normalized.split('?')[0];
+            // Ensure leading slash
+            if (!normalized.startsWith('/')) normalized = '/' + normalized;
+            // Strip .php extension
+            normalized = normalized.replace(/\.php$/, '');
+            // Strip trailing slash
+            normalized = normalized.replace(/\/$/, '');
+            return normalized;
+        };
+
         // Build endpoint lists
         const uiEndpoints = new Set();
         this.uiResults.apiCallLog.forEach(call => {
-            const endpoint = call.url.split('?')[0];
-            uiEndpoints.add(endpoint);
+            uiEndpoints.add(normalizeEndpoint(call.url));
         });
 
         const apiEndpoints = new Set();
         this.apiResults.apiCallLog.forEach(call => {
-            apiEndpoints.add(call.endpoint);
+            apiEndpoints.add(normalizeEndpoint(call.endpoint));
         });
 
-        console.log(`UI touched ${uiEndpoints.size} unique endpoints`);
-        console.log(`API tested ${apiEndpoints.size} unique endpoints`);
+        console.log(`UI touched ${uiEndpoints.size} unique normalized endpoints`);
+        console.log(`API tested ${apiEndpoints.size} unique normalized endpoints`);
 
         // Find endpoints only in API test (not triggered by UI)
-        const apiOnlyEndpoints = [...apiEndpoints].filter(ep => {
-            return ![...uiEndpoints].some(uiEp => uiEp.includes(ep.split('?')[0]));
-        });
+        const apiOnlyEndpoints = [...apiEndpoints].filter(ep => !uiEndpoints.has(ep));
 
         if (apiOnlyEndpoints.length > 0) {
             console.log('\n⚠️  Endpoints tested by API but not triggered by UI:');
@@ -355,9 +368,7 @@ class DualPlayabilityTest {
         }
 
         // Find common endpoints
-        const commonEndpoints = [...apiEndpoints].filter(ep => {
-            return [...uiEndpoints].some(uiEp => uiEp.includes(ep.split('?')[0]));
-        });
+        const commonEndpoints = [...apiEndpoints].filter(ep => uiEndpoints.has(ep));
 
         if (commonEndpoints.length > 0) {
             console.log(`\n✅ ${commonEndpoints.length} endpoints tested by both UI and API`);
@@ -371,14 +382,14 @@ class DualPlayabilityTest {
 
         const uiFreq = {};
         this.uiResults.apiCallLog.forEach(call => {
-            const endpoint = call.url.split('?')[0];
-            uiFreq[endpoint] = (uiFreq[endpoint] || 0) + 1;
+            const normalized = normalizeEndpoint(call.url);
+            uiFreq[normalized] = (uiFreq[normalized] || 0) + 1;
         });
 
         const apiFreq = {};
         this.apiResults.apiCallLog.forEach(call => {
-            const endpoint = call.endpoint.split('?')[0];
-            apiFreq[endpoint] = (apiFreq[endpoint] || 0) + 1;
+            const normalized = normalizeEndpoint(call.endpoint);
+            apiFreq[normalized] = (apiFreq[normalized] || 0) + 1;
         });
 
         // Compare common endpoints
