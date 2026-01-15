@@ -388,54 +388,10 @@ class MarketplaceApp {
         try {
             const data = await api.negotiations.list();
             this.myNegotiations = data.negotiations || [];
-
-            // Check for newly completed negotiations to show synopsis
-            this.myNegotiations.forEach(neg => {
-                if (neg.status !== 'pending' && !this.seenCompletedNegotiations.has(neg.id)) {
-                    this.showTradeSynopsis(neg);
-                    this.seenCompletedNegotiations.add(neg.id);
-                }
-            });
-
-            this.renderNegotiations();
+            this.renderNegotiations(); // This will handle the logic
         } catch (error) {
             console.error('Failed to load negotiations:', error);
         }
-    }
-
-    /**
-     * Show a modal with a synopsis of a completed trade
-     * @param {object} negotiation The completed negotiation object
-     */
-    showTradeSynopsis(negotiation) {
-        const modal = document.getElementById('trade-synopsis-modal');
-        const card = document.getElementById('synopsis-card');
-        if (!modal || !card) return;
-
-        const lastOffer = negotiation.offers[negotiation.offers.length - 1];
-        const counterparty = negotiation.initiatorId === this.currentUser ? negotiation.responderName : negotiation.initiatorName;
-
-        // Set content
-        document.getElementById('synopsis-chemical').textContent = `Chemical ${negotiation.chemical}`;
-        document.getElementById('synopsis-counterparty').textContent = counterparty;
-        document.getElementById('synopsis-quantity').textContent = `${lastOffer.quantity} gal`;
-        document.getElementById('synopsis-price').textContent = `${this.formatCurrency(lastOffer.price)} / gal`;
-        document.getElementById('synopsis-total').textContent = this.formatCurrency(lastOffer.quantity * lastOffer.price);
-
-        // Customize for status
-        if (negotiation.status === 'accepted') {
-            document.getElementById('synopsis-title').textContent = 'Trade Accepted!';
-            document.getElementById('synopsis-subtitle').textContent = 'The trade was successfully executed.';
-            card.classList.remove('border-red-500');
-            card.classList.add('border-green-500');
-        } else { // rejected or cancelled
-            document.getElementById('synopsis-title').textContent = 'Negotiation Ended';
-            document.getElementById('synopsis-subtitle').textContent = 'The negotiation was rejected or cancelled.';
-            card.classList.remove('border-green-500');
-            card.classList.add('border-red-500');
-        }
-
-        modal.classList.remove('hidden');
     }
 
     /**
@@ -672,18 +628,25 @@ class MarketplaceApp {
             return;
         }
 
-        // Show only pending negotiations in summary (max 5)
-        const pending = this.myNegotiations.filter(n => n.status === 'pending').slice(0, 5);
+        // Show pending negotiations OR newly completed ones that haven't been dismissed
+        const pendingOrNew = this.myNegotiations.filter(n => 
+            n.status === 'pending' || 
+            (n.status !== 'pending' && !this.seenCompletedNegotiations.has(n.id))
+        ).slice(0, 5);
 
-        if (pending.length === 0) {
+        if (pendingOrNew.length === 0) {
             container.innerHTML = '<p class="text-gray-300 text-center py-8">No pending negotiations</p>';
         } else {
             container.innerHTML = '';
-            pending.forEach(neg => {
+            pendingOrNew.forEach(neg => {
                 const card = document.createElement('negotiation-card');
                 card.negotiation = neg;
                 card.currentUserId = this.currentUser;
                 card.context = 'summary';
+                // If it's completed and not yet seen, show the synopsis view
+                if (neg.status !== 'pending' && !this.seenCompletedNegotiations.has(neg.id)) {
+                    card.setAttribute('show-synopsis', true);
+                }
                 container.appendChild(card);
             });
         }
@@ -1089,11 +1052,18 @@ class MarketplaceApp {
             completedContainer.innerHTML = '<p class="text-gray-300 text-center py-4">No completed negotiations</p>';
         } else {
             completedContainer.innerHTML = '';
+            // Show newest completed first
+            completed.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            
             completed.forEach(neg => {
                 const card = document.createElement('negotiation-card');
                 card.negotiation = neg;
                 card.currentUserId = this.currentUser;
                 card.context = 'list';
+                // If it's completed and not yet seen, show the synopsis view
+                if (!this.seenCompletedNegotiations.has(neg.id)) {
+                    card.setAttribute('show-synopsis', true);
+                }
                 completedContainer.appendChild(card);
             });
         }
@@ -1657,11 +1627,6 @@ class MarketplaceApp {
             this.recalculateShadowPrices();
         });
 
-        // Synopsis Modal
-        document.getElementById('synopsis-dismiss-btn').addEventListener('click', () => {
-            document.getElementById('trade-synopsis-modal').classList.add('hidden');
-        });
-
         // Web Component Events: Post interest (from chemical-card)
         document.addEventListener('post-interest', (e) => {
             const { chemical, type } = e.detail;
@@ -1794,6 +1759,15 @@ class MarketplaceApp {
             const { negotiationId } = e.detail;
             console.log('📢 View-detail caught for:', negotiationId);
             this.viewNegotiationDetail(negotiationId);
+        });
+
+        // Event listener for dismissing a synopsis card
+        document.addEventListener('dismiss-synopsis', (e) => {
+            const { negotiationId } = e.detail;
+            this.seenCompletedNegotiations.add(negotiationId);
+            // Re-render the views to show the normal card now
+            this.renderNegotiations();
+            this.renderNegotiationsInModal();
         });
 
         // View all negotiations button

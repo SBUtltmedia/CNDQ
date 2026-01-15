@@ -59,7 +59,7 @@ class NegotiationCard extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ['current-user-id', 'context'];
+        return ['current-user-id', 'context', 'show-synopsis'];
     }
 
     formatCurrency(num) {
@@ -74,6 +74,55 @@ class NegotiationCard extends HTMLElement {
     }
 
     render() {
+        if (this.hasAttribute('show-synopsis')) {
+            this.renderSynopsis();
+        } else {
+            this.renderCard();
+        }
+    }
+
+    renderSynopsis() {
+        if (!this._negotiation) {
+            this.innerHTML = '';
+            return;
+        }
+
+        const neg = this._negotiation;
+        const lastOffer = neg.offers[neg.offers.length - 1];
+        const isAccepted = neg.status === 'accepted';
+
+        const title = isAccepted ? 'Trade Accepted!' : 'Negotiation Ended';
+        const borderColor = isAccepted ? 'border-green-500' : 'border-red-500';
+        const icon = isAccepted 
+            ? `<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+        this.innerHTML = `
+            <div class="bg-gray-800 rounded p-4 border-2 ${borderColor} shadow-lg animate-fade-in-up">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-bold text-lg text-white flex items-center gap-2">${icon} ${title}</h4>
+                    <button class="dismiss-btn text-gray-500 hover:text-white">&times;</button>
+                </div>
+                <div class="bg-gray-700 rounded p-3 space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-400">Chemical:</span> <span class="font-bold">Chemical ${neg.chemical}</span></div>
+                    ${isAccepted ? `
+                    <div class="flex justify-between"><span class="text-gray-400">Quantity:</span> <span class="font-bold">${lastOffer.quantity} gal</span></div>
+                    <div class="flex justify-between"><span class="text-gray-400">Price:</span> <span class="font-bold">${this.formatCurrency(lastOffer.price)}</span></div>
+                    ` : '<p class="text-center text-gray-400 py-2">This negotiation was not completed.</p>'}
+                </div>
+                <button class="dismiss-btn w-full mt-4 bg-gray-600 hover:bg-gray-500 text-white py-2 rounded text-sm font-semibold transition">Dismiss</button>
+            </div>
+        `;
+
+        this.querySelectorAll('.dismiss-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.handleDismiss();
+            });
+        });
+    }
+
+    renderCard() {
         if (!this._negotiation) {
             this.innerHTML = '';
             return;
@@ -134,6 +183,16 @@ class NegotiationCard extends HTMLElement {
                 this.handleViewDetail();
             }
         });
+    }
+
+    handleDismiss() {
+        this.dispatchEvent(new CustomEvent('dismiss-synopsis', {
+            bubbles: true,
+            composed: true,
+            detail: {
+                negotiationId: this._negotiation.id
+            }
+        }));
     }
 
     handleViewDetail() {

@@ -971,39 +971,6 @@
         </div>
     </div>
 
-    <!-- Trade Synopsis Modal -->
-    <div id="trade-synopsis-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[120] p-4">
-        <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md border-2 shadow-2xl animate-fade-in-up" id="synopsis-card">
-            <h3 class="text-2xl font-bold mb-2" id="synopsis-title">Trade Completed</h3>
-            <p class="text-sm text-gray-400 mb-4" id="synopsis-subtitle">Your negotiation has concluded.</p>
-            <div class="bg-gray-700 rounded-lg p-4 space-y-3 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Chemical:</span>
-                    <span class="font-bold text-white" id="synopsis-chemical"></span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Counterparty:</span>
-                    <span class="font-bold text-white" id="synopsis-counterparty"></span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Final Quantity:</span>
-                    <span class="font-bold text-white" id="synopsis-quantity"></span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-400">Final Price:</span>
-                    <span class="font-bold text-white" id="synopsis-price"></span>
-                </div>
-                 <div class="flex justify-between">
-                    <span class="text-gray-400">Total Value:</span>
-                    <span class="font-bold text-white" id="synopsis-total"></span>
-                </div>
-            </div>
-            <button id="synopsis-dismiss-btn" class="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold transition">
-                OK
-            </button>
-        </div>
-    </div>
-
     <!-- Main JavaScript Application -->
     <script id="main-app-script"
             type="module"
