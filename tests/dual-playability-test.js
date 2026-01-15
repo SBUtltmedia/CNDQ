@@ -51,7 +51,13 @@ const defaultLevels = ['beginner', 'novice', 'expert'];
 // NPC Levels
 const npcLevels = [];
 for (let i = 0; i < npcCount; i++) {
-    npcLevels.push(defaultLevels[i % defaultLevels.length]);
+    // If a specific skill is requested via --skill, use it for all NPCs
+    // Otherwise use the default distribution
+    if (process.argv.includes('--skill')) {
+        npcLevels.push(skillLevel);
+    } else {
+        npcLevels.push(defaultLevels[i % defaultLevels.length]);
+    }
 }
 
 // RPC (Test User) Levels
@@ -68,7 +74,10 @@ const CONFIG = {
     testUsers: [
         'test_mail1@stonybrook.edu',
         'test_mail2@stonybrook.edu',
-        'test_mail3@stonybrook.edu'
+        'test_mail3@stonybrook.edu',
+        'test_mail4@stonybrook.edu',
+        'test_mail5@stonybrook.edu',
+        'test_mail6@stonybrook.edu'
     ].slice(0, rpcCount),
     targetSessions: 2, // Increased to check multi-round health
     headless: process.argv.includes('--headless'),

@@ -21,7 +21,10 @@ const CONFIG = {
     testUsers: [
         'test_mail1@stonybrook.edu',
         'test_mail2@stonybrook.edu',
-        'test_mail3@stonybrook.edu'
+        'test_mail3@stonybrook.edu',
+        'test_mail4@stonybrook.edu',
+        'test_mail5@stonybrook.edu',
+        'test_mail6@stonybrook.edu'
     ],
     headless: process.argv.includes('--headless'),
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
@@ -183,24 +186,44 @@ class APIPlayabilityTest {
     /**
      * Play the single marketplace run via API
      */
+    async asyncHeartbeat(api, durationMs) {
+        const interval = 5000;
+        let elapsed = 0;
+        while (elapsed < durationMs) {
+            await api.getSessionStatus();
+            await this.browser.sleep(interval);
+            elapsed += interval;
+        }
+    }
+
     async playMarketplaceViaAPI() {
         console.log(`\n🎮 PLAYING MARKETPLACE (API)`);
         console.log('-'.repeat(80));
+
+        // Use a persistent admin page for heartbeats
+        const adminPage = await this.browser.loginAndNavigate(this.config.adminUser, '');
+        const api = new ApiClient(adminPage, this.config.baseUrl);
 
         // Multi-turn trading
         const turns = 10;
         for (let turn = 1; turn <= turns; turn++) {
             console.log(`\n   🔄 Turn ${turn}/${turns}...`);
-            // Each player takes multiple actions sequentially
+            
+            // 1. Heartbeat to trigger NPCs
+            await api.getSessionStatus();
+
+            // 2. Each player takes multiple actions sequentially
             for (let i = 0; i < this.config.testUsers.length; i++) {
                 const userId = this.config.testUsers[i];
                 await this.playerTakesActionsViaAPI(userId, i);
             }
+
             if (turn < turns) {
-                console.log('      ⏳ Waiting for market activity & NPC response (15s)...');
-                await this.browser.sleep(15000); // Increased to 15s between turns
+                console.log('      ⏳ Waiting for market activity & NPC response (15s heartbeat)...');
+                await this.asyncHeartbeat(api, 15000);
             }
         }
+        await adminPage.close();
     }
 
     /**

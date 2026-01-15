@@ -357,7 +357,12 @@ class NPCManager
             }
 
             try {
+                $originalNextAction = $npc['nextActionAt'] ?? 0;
                 $this->runNPCTrade($npc, $currentSession);
+                
+                if (($npc['nextActionAt'] ?? 0) !== $originalNextAction) {
+                    $configChanged = true;
+                }
             } catch (Exception $e) {
                 error_log("NPC trading error for {$npc['email']}: " . $e->getMessage());
             }
@@ -372,8 +377,15 @@ class NPCManager
     /**
      * Run trading logic for a single NPC
      */
-    private function runNPCTrade($npc, $currentSession = null)
+    private function runNPCTrade(&$npc, $currentSession = null)
     {
+        // 1. Time-gating check
+        $currentTime = time();
+        if (isset($npc['nextActionAt']) && $currentTime < $npc['nextActionAt']) {
+            // It's not time yet
+            return;
+        }
+
         error_log("DEBUG: Running trade for {$npc['teamName']} ({$npc['email']})");
         
         // Load appropriate strategy based on skill level
@@ -413,32 +425,50 @@ class NPCManager
             }
         }
 
+        $actionTaken = false;
+
         // First, check for and respond to pending negotiations
         try {
+            // Only process ONE negotiation per cycle if time-gating is active
             $negotiationAction = $strategy->respondToNegotiations();
 
             if ($negotiationAction) {
                 error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) NEGOTIATION ACTION: {$negotiationAction['type']}");
                 $this->executeNPCAction($npc, $negotiationAction, $currentSession);
-                return; // Prioritize negotiation responses over new trades
+                $actionTaken = true;
             }
         } catch (Exception $e) {
             error_log("ERROR: respondToNegotiations failed for {$npc['email']}: " . $e->getMessage());
         }
 
         // If no negotiations to respond to, decide on regular trade action
-        try {
-            $action = $strategy->decideTrade();
+        if (!$actionTaken) {
+            try {
+                $action = $strategy->decideTrade();
 
-            if ($action) {
-                error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) DECIDE ACTION: {$action['type']}");
-                $this->executeNPCAction($npc, $action, $currentSession);
-            } else {
-                error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) DECIDED: NO ACTION");
+                if ($action) {
+                    error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) DECIDE ACTION: {$action['type']}");
+                    $this->executeNPCAction($npc, $action, $currentSession);
+                    $actionTaken = true;
+                } else {
+                    // Even if NO action is taken, we might want to wait a bit before checking again to avoid CPU spin
+                    // But for realism, we only delay significant actions. 
+                    // However, to prevent log spam, let's add a small delay even on no action.
+                }
+            } catch (Exception $e) {
+                error_log("ERROR: decideTrade failed for {$npc['email']}: " . $e->getMessage());
             }
-        } catch (Exception $e) {
-            error_log("ERROR: decideTrade failed for {$npc['email']}: " . $e->getMessage());
         }
+
+        // Update nextActionAt if an action was taken (or just to throttle checks)
+        // If action taken: 5-30 seconds delay
+        // If NO action taken: 2-5 seconds delay (to avoid spamming checks but stay responsive)
+        $minDelay = $actionTaken ? 5 : 2;
+        $maxDelay = $actionTaken ? 30 : 5;
+        
+        $npc['nextActionAt'] = time() + rand($minDelay, $maxDelay);
+        
+        // Note: The caller (runTradingCycle) needs to save the config!
     }
 
     /**

@@ -302,7 +302,7 @@ abstract class NPCTradingStrategy
     }
 
     /**
-     * Get pending negotiations where NPC is the responder
+     * Get pending negotiations where it is the NPC's turn to act
      *
      * @return array Pending negotiations
      */
@@ -311,9 +311,12 @@ abstract class NPCTradingStrategy
         $negotiationManager = $this->npcManager->getNegotiationManager();
         $allNegotiations = $negotiationManager->getTeamNegotiations($this->npc['email']);
 
-        // Filter to only those where NPC is the responder
+        // Filter to only those where it is MY turn (I did not make the last offer)
         return array_filter($allNegotiations, function($neg) {
-            return $neg['responderId'] === $this->npc['email'];
+            $isPending = ($neg['status'] ?? 'pending') === 'pending';
+            $isMyTurn = ($neg['lastOfferBy'] !== $this->npc['email']);
+            
+            return $isPending && $isMyTurn;
         });
     }
 

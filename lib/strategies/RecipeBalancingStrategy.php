@@ -188,6 +188,11 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
         $chemOffers = $offers[$chemical] ?? [];
 
         foreach ($chemOffers as $offer) {
+            // Check if already negotiating
+            if ($this->hasPendingNegotiationWith($offer['sellerId'], $chemical)) {
+                continue;
+            }
+
             $marketPrice = $offer['minPrice'];
 
             if ($marketPrice <= $maxAcceptablePrice) {
@@ -232,6 +237,11 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
         $chemBuyOrders = $buyOrders[$chemical] ?? [];
 
         foreach ($chemBuyOrders as $buyOrder) {
+            // Check if already negotiating
+            if ($this->hasPendingNegotiationWith($buyOrder['buyerId'], $chemical)) {
+                continue;
+            }
+
             $marketPrice = $buyOrder['maxPrice'];
 
             if ($marketPrice >= $minAcceptablePrice) {

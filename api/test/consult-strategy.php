@@ -59,6 +59,40 @@ try {
     $npcManager = new NPCManager();
     $strategy = NPCStrategyFactory::createStrategy($storage, $npcConfig, $npcManager);
 
+    // --- STATEFUL LOGIC START ---
+    $db = Database::getInstance();
+    $row = $db->queryOne('SELECT value FROM config WHERE key = ?', ['rpc_test_state']);
+    $rpcState = $row ? json_decode($row['value'], true) : [];
+    
+    // Initialize user state if missing
+    if (!isset($rpcState[$userEmail])) {
+        $rpcState[$userEmail] = ['nextActionAt' => 0];
+    }
+
+    $currentTime = time();
+    $userState = &$rpcState[$userEmail];
+
+    // Time-Gating Check
+    if ($currentTime < ($userState['nextActionAt'] ?? 0)) {
+        echo json_encode([
+            'success' => true,
+            'user' => $userEmail,
+            'strategy' => get_class($strategy),
+            'recommendation' => [
+                'negotiation_action' => null,
+                'trade_action' => null,
+                'status' => 'waiting',
+                'wait_seconds' => ($userState['nextActionAt'] - $currentTime)
+            ],
+            'debug' => [
+                'inventory' => $storage->getInventory(),
+                'shadow_prices' => $storage->getShadowPrices()
+            ]
+        ]);
+        exit;
+    }
+    // --- STATEFUL LOGIC END ---
+
     // 5. Get Recommendations
     
     // A. Check for Negotiation Responses (Highest Priority)
@@ -69,6 +103,24 @@ try {
     if (!$negotiationAction) {
         $tradeAction = $strategy->decideTrade();
     }
+
+    // --- STATE UPDATE START ---
+    $actionTaken = ($negotiationAction || $tradeAction);
+    
+    if ($actionTaken) {
+        // Set cooldown: 5-15 seconds for actions (simulate human typing/thinking)
+        $userState['nextActionAt'] = $currentTime + rand(5, 15);
+    } else {
+        // Set cooldown: 2-5 seconds for idle checks (don't spam CPU)
+        $userState['nextActionAt'] = $currentTime + rand(2, 5);
+    }
+
+    // Save updated state
+    $db->execute(
+        'INSERT OR REPLACE INTO config (key, value, updated_at) VALUES (?, ?, ?)',
+        ['rpc_test_state', json_encode($rpcState), time()]
+    );
+    // --- STATE UPDATE END ---
 
     echo json_encode([
         'success' => true,
