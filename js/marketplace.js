@@ -457,10 +457,25 @@ class MarketplaceApp {
         const currentTransactionCount = this.transactions.length;
         const transactionCountChanged = (this.prevTransactionCount !== undefined) && (currentTransactionCount !== this.prevTransactionCount);
 
+        console.log('[DEBUG] Financial Delta:', {
+            currentTransactionCount,
+            prevTransactionCount: this.prevTransactionCount,
+            transactionCountChanged,
+            inventoryValue,
+            prevInventoryValue: this.prevInventoryValue,
+            totalValue,
+            prevTotalValue: this.prevTotalValue
+        });
+
         // Calculate delta when transaction count has changed (new trade occurred)
         if (transactionCountChanged && this.prevInventoryValue !== undefined && this.prevTotalValue !== undefined) {
             this.lastInventoryDelta = inventoryValue - this.prevInventoryValue;
             this.lastTotalDelta = totalValue - this.prevTotalValue;
+
+            console.log('[DEBUG] New trade detected! Deltas:', {
+                inventoryDelta: this.lastInventoryDelta,
+                totalDelta: this.lastTotalDelta
+            });
 
             // Update baseline for next time
             this.prevInventoryValue = inventoryValue;
@@ -473,11 +488,15 @@ class MarketplaceApp {
             this.prevTransactionCount = currentTransactionCount;
             this.lastInventoryDelta = 0;
             this.lastTotalDelta = 0;
+
+            console.log('[DEBUG] First render - baseline set');
         }
 
         // Use persisted delta values (they'll be 0 until first trade, then persist until next trade)
-        const inventoryDelta = this.lastInventoryDelta || 0;
-        const totalDelta = this.lastTotalDelta || 0;
+        const inventoryDelta = this.lastInventoryDelta !== undefined ? this.lastInventoryDelta : 0;
+        const totalDelta = this.lastTotalDelta !== undefined ? this.lastTotalDelta : 0;
+
+        console.log('[DEBUG] Using deltas:', { inventoryDelta, totalDelta });
 
         // Update DOM
         const els = {
