@@ -189,9 +189,9 @@ class BeginnerStrategy extends NPCTradingStrategy
         if ($shadowPrice <= 0.1) $shadowPrice = 3.0; // Default base value
 
         // FORCE HAGGLE TESTING:
-        // If this is the very first offer from the player, ALWAYS counter.
+        // If this is the very first offer from the player AND NOT from an ad, ALWAYS counter.
         // This ensures the "Haggle" UI is triggered for testing purposes.
-        if ($offerCount === 1) {
+        if ($offerCount === 1 && empty($negotiation['adId'])) {
              $counterPrice = ($role === 'seller') ? ($price * 1.2) : ($price * 0.8);
              // Ensure counter is reasonable
              $counterPrice = round($counterPrice, 2);
@@ -204,6 +204,19 @@ class BeginnerStrategy extends NPCTradingStrategy
                 'quantity' => $quantity,
                 'price' => $counterPrice
              ];
+        }
+
+        // If negotiation is from an Ad, we should generally accept it if it matches our request
+        if (!empty($negotiation['adId'])) {
+             // We (NPC) posted the ad.
+             // If we posted a Buy Ad (type='sell' from user), we wanted to BUY at specific price.
+             // If we posted a Sell Ad (type='buy' from user), we wanted to SELL at specific price.
+             
+             // Beginner Strategy: Just accept it if it's from an ad. We are liquidity providers.
+             return [
+                'type' => 'accept_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
         }
 
         // "Bad" Strategy Evaluation: Be very generous to players

@@ -245,6 +245,15 @@ class NoviceStrategy extends NPCTradingStrategy
             }
             // RPC wants to sell to NPC (NPC is buyer)
             else {
+                // If this is a response to our ad, accept it if price is within our threshold
+                // We bypass the inventory check because we explicitly asked for this via an Ad
+                if (!empty($negotiation['adId']) && $price <= self::BUY_THRESHOLD) {
+                    return [
+                        'type' => 'accept_negotiation',
+                        'negotiationId' => $negotiation['id']
+                    ];
+                }
+
                 // Infinite Capital: NPC can buy even with 0 funds (debt)
                 /*
                 if ($this->hasSufficientFunds($quantity * $price) && $currentInventory < self::LOW_INVENTORY && $price <= self::BUY_THRESHOLD) {

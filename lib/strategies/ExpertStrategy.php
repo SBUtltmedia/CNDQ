@@ -307,8 +307,11 @@ class ExpertStrategy extends NPCTradingStrategy
         $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
 
         if ($shadowPrice <= 0) {
-            // Invalid shadow price, Expert cannot operate
-            return null;
+            // Invalid shadow price, Expert cannot operate safely, so reject
+            return [
+                'type' => 'reject_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
         }
 
         // Determine if NPC is buyer or seller
@@ -331,6 +334,26 @@ class ExpertStrategy extends NPCTradingStrategy
             // NPC wants to buy
             $optimalPrice = $shadowPrice * self::BUY_MARGIN;
             $absoluteMaxPrice = $shadowPrice * 1.15; // Will not go above this
+        }
+
+        // ADVERTISEMENT PRIORITY:
+        // If negotiation is from an ad, and price is good, accept immediately.
+        if (!empty($negotiation['adId'])) {
+            $isGoodDeal = false;
+            if ($npcIsSeller) {
+                 // We responded to a Buy Ad. Accept if price is near our optimal or better
+                 if ($playerPrice >= $optimalPrice * 0.95) $isGoodDeal = true;
+            } else {
+                 // We posted a Buy Ad. User is selling to us. Accept if price is near our optimal or better
+                 if ($playerPrice <= $optimalPrice * 1.05) $isGoodDeal = true;
+            }
+
+            if ($isGoodDeal) {
+                return [
+                    'type' => 'accept_negotiation',
+                    'negotiationId' => $negotiation['id']
+                ];
+            }
         }
 
         // ITERATIVE HAGGLING: Calculate counter-offer based on round number
@@ -422,3 +445,4 @@ class ExpertStrategy extends NPCTradingStrategy
             'price' => round($counterPrice, 2)
         ];
     }
+}
