@@ -453,50 +453,40 @@ class MarketplaceApp {
             percentImprovement = ((totalValue - initialPotential) / initialPotential) * 100;
         }
 
-        // Calculate deltas from previous values (stored in instance)
-        const currentTransactionCount = this.transactions.length;
-        const transactionCountChanged = (this.prevTransactionCount !== undefined) && (currentTransactionCount !== this.prevTransactionCount);
+        // Calculate delta from last transaction
+        // Simple approach: The delta is just the financial impact of the last transaction
+        let inventoryDelta = 0;
+        let totalDelta = 0;
 
-        console.log('[DEBUG] Financial Delta:', {
-            currentTransactionCount,
-            prevTransactionCount: this.prevTransactionCount,
-            transactionCountChanged,
-            inventoryValue,
-            prevInventoryValue: this.prevInventoryValue,
-            totalValue,
-            prevTotalValue: this.prevTotalValue
-        });
+        if (this.transactions.length > 0) {
+            const lastTransaction = this.transactions[this.transactions.length - 1];
+            const lastAmount = Math.abs(lastTransaction.totalAmount || (lastTransaction.quantity * lastTransaction.pricePerGallon));
 
-        // Calculate delta when transaction count has changed (new trade occurred)
-        if (transactionCountChanged && this.prevInventoryValue !== undefined && this.prevTotalValue !== undefined) {
-            this.lastInventoryDelta = inventoryValue - this.prevInventoryValue;
-            this.lastTotalDelta = totalValue - this.prevTotalValue;
+            // For sellers: positive delta (gained money)
+            // For buyers: negative delta (spent money)
+            if (lastTransaction.role === 'seller') {
+                totalDelta = lastAmount;
+                inventoryDelta = lastAmount;
+            } else if (lastTransaction.role === 'buyer') {
+                totalDelta = -lastAmount;
+                inventoryDelta = -lastAmount;
+            }
 
-            console.log('[DEBUG] New trade detected! Deltas:', {
-                inventoryDelta: this.lastInventoryDelta,
-                totalDelta: this.lastTotalDelta
+            console.log('[DEBUG] Financial Delta from Last Transaction:', {
+                transactionCount: this.transactions.length,
+                lastTransaction: {
+                    role: lastTransaction.role,
+                    chemical: lastTransaction.chemical,
+                    quantity: lastTransaction.quantity,
+                    pricePerGallon: lastTransaction.pricePerGallon,
+                    totalAmount: lastAmount
+                },
+                inventoryDelta,
+                totalDelta
             });
-
-            // Update baseline for next time
-            this.prevInventoryValue = inventoryValue;
-            this.prevTotalValue = totalValue;
-            this.prevTransactionCount = currentTransactionCount;
-        } else if (this.prevTransactionCount === undefined) {
-            // First time - set baseline without showing delta
-            this.prevInventoryValue = inventoryValue;
-            this.prevTotalValue = totalValue;
-            this.prevTransactionCount = currentTransactionCount;
-            this.lastInventoryDelta = 0;
-            this.lastTotalDelta = 0;
-
-            console.log('[DEBUG] First render - baseline set');
+        } else {
+            console.log('[DEBUG] No transactions yet, deltas = 0');
         }
-
-        // Use persisted delta values (they'll be 0 until first trade, then persist until next trade)
-        const inventoryDelta = this.lastInventoryDelta !== undefined ? this.lastInventoryDelta : 0;
-        const totalDelta = this.lastTotalDelta !== undefined ? this.lastTotalDelta : 0;
-
-        console.log('[DEBUG] Using deltas:', { inventoryDelta, totalDelta });
 
         // Update DOM
         const els = {
