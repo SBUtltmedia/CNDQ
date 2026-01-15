@@ -141,7 +141,7 @@ class ExpertStrategy extends NPCTradingStrategy
             $currentAmount = $this->inventory[$chemical] ?? 0;
 
             // Only post buy request if shadow price is high and inventory is low
-            if ($shadowPrice > 2.0 && $currentAmount < 2000) { 
+            if ($shadowPrice > 1.0 && $currentAmount < 2000) { 
                 $maxBuyPrice = round($shadowPrice * self::BUY_MARGIN, 2);
                 $quantity = $this->calculateBuyQuantity($chemical, $currentAmount);
 
@@ -188,8 +188,8 @@ class ExpertStrategy extends NPCTradingStrategy
             $neededForProduction = $willConsume[$chemical] ?? 0;
             $surplus = $currentAmount - $neededForProduction;
 
-            // If we have more than 10 gallons of leftovers, sell it!
-            if ($surplus > 10) {
+            // If we have more than 1 gallon of leftovers, sell it!
+            if ($surplus > 1) {
                 // Look for buyers (buy orders)
                 $buyOrders = $this->getMarketBuyOrders();
                 $highestBuyOrder = $this->findHighestBuyOrder($chemical, $buyOrders);
