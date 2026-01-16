@@ -119,10 +119,22 @@ try {
     error_log("Negotiation initiate error: " . $e->getMessage());
     error_log("Stack trace: " . $e->getTraceAsString());
 
-    http_response_code(500);
+    $message = $e->getMessage();
+    $code = 500;
+
+    // Map known exceptions to appropriate HTTP codes
+    if (strpos($message, 'already have a pending negotiation') !== false) {
+        $code = 409; // Conflict
+    } elseif (strpos($message, 'Insufficient inventory') !== false) {
+        $code = 400; // Bad Request
+    } elseif (strpos($message, 'Cannot negotiate with yourself') !== false) {
+        $code = 400;
+    }
+
+    http_response_code($code);
     echo json_encode([
-        'error' => 'Server error',
-        'message' => $e->getMessage(),
+        'error' => $message, // Client uses 'error' field for display
+        'message' => $message,
         'debug' => $e->getFile() . ':' . $e->getLine()
     ]);
 }

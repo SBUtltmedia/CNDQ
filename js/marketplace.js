@@ -636,20 +636,61 @@ class MarketplaceApp {
 
         if (pendingOrNew.length === 0) {
             container.innerHTML = '<p class="text-gray-300 text-center py-8">No pending negotiations</p>';
-        } else {
+            return;
+        }
+
+        // Remove the "No pending" or "No active" message if it exists (check first child)
+        if (container.firstElementChild && container.firstElementChild.tagName === 'P') {
             container.innerHTML = '';
-            pendingOrNew.forEach(neg => {
-                const card = document.createElement('negotiation-card');
+        }
+
+        // Map existing cards by negotiation ID
+        const existingMap = new Map();
+        Array.from(container.children).forEach(child => {
+            if (child.tagName === 'NEGOTIATION-CARD') {
+                const id = child.getAttribute('negotiation-id') || (child.negotiation && child.negotiation.id);
+                if (id) existingMap.set(String(id), child);
+            } else {
+                child.remove(); // Remove non-card elements
+            }
+        });
+
+        // Update or create cards
+        pendingOrNew.forEach(neg => {
+            let card = existingMap.get(String(neg.id));
+            
+            if (card) {
+                // Update existing card
+                // Only update if data changed (setter usually handles this check or diff)
+                card.negotiation = neg; 
+                existingMap.delete(String(neg.id)); // Mark as visited
+            } else {
+                // Create new card
+                card = document.createElement('negotiation-card');
                 card.negotiation = neg;
                 card.currentUserId = this.currentUser;
                 card.context = 'summary';
-                // If it's completed and not yet seen, show the synopsis view
-                if (neg.status !== 'pending' && !this.seenCompletedNegotiations.has(neg.id)) {
-                    card.setAttribute('show-synopsis', true);
-                }
                 container.appendChild(card);
-            });
-        }
+            }
+
+            // Handle synopsis view state
+            const shouldShowSynopsis = neg.status !== 'pending' && !this.seenCompletedNegotiations.has(neg.id);
+            if (shouldShowSynopsis) {
+                if (!card.hasAttribute('show-synopsis')) {
+                    card.setAttribute('show-synopsis', 'true');
+                }
+            } else {
+                if (card.hasAttribute('show-synopsis')) {
+                    card.removeAttribute('show-synopsis');
+                }
+            }
+
+            // Ensure correct order in DOM
+            container.appendChild(card);
+        });
+
+        // Remove cards that are no longer in the list
+        existingMap.forEach(card => card.remove());
     }
 
     /**
@@ -1768,6 +1809,12 @@ class MarketplaceApp {
             // Re-render the views to show the normal card now
             this.renderNegotiations();
             this.renderNegotiationsInModal();
+        });
+
+        // Event listener for cancelling a negotiation from the card
+        document.addEventListener('cancel-negotiation', (e) => {
+            const { negotiationId } = e.detail;
+            this.rejectNegotiation(negotiationId);
         });
 
         // View all negotiations button
