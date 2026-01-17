@@ -1,0 +1,168 @@
+/**
+ * StateManager
+ * Handles application state, data loading, and event-based updates.
+ */
+import { api } from '../api.js';
+
+export class StateManager extends EventTarget {
+    constructor() {
+        super();
+        this.state = {
+            profile: null,
+            inventory: { C: 0, N: 0, D: 0, Q: 0 },
+            shadowPrices: { C: 0, N: 0, D: 0, Q: 0, maxProfit: 0 },
+            ranges: {},
+            advertisements: { C: { buy: [], sell: [] }, N: { buy: [], sell: [] }, D: { buy: [], sell: [] }, Q: { buy: [], sell: [] } },
+            myNegotiations: [],
+            transactions: [],
+            notifications: [],
+            settings: { showTradingHints: false },
+            sessionPhase: null,
+            gameStopped: true,
+            lastStalenessLevel: 'fresh',
+            lastStalenessCount: 0
+        };
+    }
+
+    /**
+     * Dispatch a state update event
+     * @param {string} type - Event type
+     * @param {Object} data - Updated data
+     */
+    notify(type, data) {
+        this.dispatchEvent(new CustomEvent(type, { detail: data }));
+        this.dispatchEvent(new CustomEvent('stateChanged', { detail: { type, data, state: this.state } }));
+    }
+
+    /**
+     * Load team profile and inventory
+     */
+    async loadProfile() {
+        const data = await api.team.getProfile();
+        this.state.profile = data.profile;
+        this.state.inventory = data.inventory;
+        this.state.lastStalenessLevel = data.inventory.stalenessLevel;
+        this.state.lastStalenessCount = data.inventory.transactionsSinceLastShadowCalc;
+
+        this.notify('profileUpdated', {
+            profile: this.state.profile,
+            inventory: this.state.inventory,
+            staleness: {
+                level: this.state.lastStalenessLevel,
+                count: this.state.lastStalenessCount
+            }
+        });
+        return data;
+    }
+
+    /**
+     * Load shadow prices
+     */
+    async loadShadowPrices() {
+        try {
+            const data = await api.production.getShadowPrices();
+            if (data && data.shadowPrices) {
+                this.state.shadowPrices = {
+                    ...data.shadowPrices,
+                    maxProfit: data.maxProfit || 0
+                };
+                this.state.ranges = data.ranges || {};
+                
+                this.notify('shadowPricesUpdated', {
+                    shadowPrices: this.state.shadowPrices,
+                    ranges: this.state.ranges
+                });
+            }
+        } catch (error) {
+            console.error('StateManager: Failed to load shadow prices:', error);
+        }
+    }
+
+    /**
+     * Recalculate shadow prices
+     */
+    async recalculateShadowPrices() {
+        const data = await api.production.getShadowPrices();
+        this.state.shadowPrices = {
+            ...data.shadowPrices,
+            maxProfit: data.maxProfit || 0
+        };
+        this.state.ranges = data.ranges || {};
+        this.state.lastStalenessLevel = 'fresh';
+        this.state.lastStalenessCount = 0;
+
+        this.notify('shadowPricesUpdated', {
+            shadowPrices: this.state.shadowPrices,
+            ranges: this.state.ranges
+        });
+        
+        await this.loadProfile();
+    }
+
+    /**
+     * Load advertisements
+     */
+    async loadAdvertisements() {
+        try {
+            const data = await api.advertisements.list();
+            this.state.advertisements = data.advertisements;
+            this.notify('advertisementsUpdated', this.state.advertisements);
+        } catch (error) {
+            console.error('StateManager: Failed to load advertisements:', error);
+        }
+    }
+
+    /**
+     * Load negotiations
+     */
+    async loadNegotiations() {
+        try {
+            const data = await api.negotiations.list();
+            this.state.myNegotiations = data.negotiations || [];
+            this.notify('negotiationsUpdated', this.state.myNegotiations);
+        } catch (error) {
+            console.error('StateManager: Failed to load negotiations:', error);
+        }
+    }
+
+    /**
+     * Load transactions
+     */
+    async loadTransactions() {
+        try {
+            const data = await api.get('api/trades/history.php');
+            if (data.success) {
+                this.state.transactions = data.transactions || [];
+                this.notify('transactionsUpdated', this.state.transactions);
+            }
+        } catch (error) {
+            console.error('StateManager: Failed to load transactions:', error);
+        }
+    }
+
+    /**
+     * Update settings
+     */
+    updateSettings(newSettings) {
+        this.state.settings = { ...this.state.settings, ...newSettings };
+        this.notify('settingsUpdated', this.state.settings);
+        localStorage.setItem('cndq_settings', JSON.stringify(this.state.settings));
+    }
+
+    /**
+     * Load settings from localStorage
+     */
+    loadSettings() {
+        const saved = localStorage.getItem('cndq_settings');
+        if (saved) {
+            try {
+                this.state.settings = { ...this.state.settings, ...JSON.parse(saved) };
+                this.notify('settingsUpdated', this.state.settings);
+            } catch (e) {
+                console.error('StateManager: Failed to parse saved settings');
+            }
+        }
+    }
+}
+
+export const stateManager = new StateManager();

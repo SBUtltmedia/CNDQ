@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Debug Tool - CNDQ</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3a8eef;
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .warning { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <h1>🔧 CNDQ Frontend Debug Tool</h1>
+
+    <div class="section">
+        <h2>1. Test API Endpoint</h2>
+        <button onclick="testAPI()">Call /api/advertisements/list.php</button>
+        <pre id="api-result"></pre>
+    </div>
+
+    <div class="section">
+        <h2>2. Check Web Components</h2>
+        <button onclick="checkComponents()">Check if Components are Loaded</button>
+        <pre id="component-result"></pre>
+    </div>
+
+    <div class="section">
+        <h2>3. Test Chemical Card Rendering</h2>
+        <button onclick="testChemicalCard()">Render Test Chemical Card</button>
+        <div id="test-card-container"></div>
+        <pre id="card-result"></pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Check Console Logs</h2>
+        <p>Open browser DevTools (F12) and check the Console tab for any errors.</p>
+        <p>Look for messages starting with:</p>
+        <ul>
+            <li>📢 Loaded advertisements</li>
+            <li>🔧 Creating ad-item</li>
+            <li>🎪 Rendering ad-item</li>
+        </ul>
+    </div>
+
+    <script type="module">
+        import { API } from './js/api.js';
+
+        window.api = new API();
+
+        window.testAPI = async function() {
+            const result = document.getElementById('api-result');
+            result.textContent = 'Loading...';
+
+            try {
+                const data = await window.api.advertisements.list();
+                result.innerHTML = '<span class="success">✓ API Call Successful</span>\n\n';
+                result.innerHTML += JSON.stringify(data, null, 2);
+
+                // Analyze the data
+                let buyAdCount = 0;
+                for (const chemical of ['C', 'N', 'D', 'Q']) {
+                    const ads = data.advertisements[chemical]?.buy || [];
+                    buyAdCount += ads.length;
+                    if (ads.length > 0) {
+                        result.innerHTML += `\n\n<span class="success">✓ Chemical ${chemical}: ${ads.length} buy ads found</span>`;
+                    }
+                }
+
+                if (buyAdCount === 0) {
+                    result.innerHTML += '\n\n<span class="warning">⚠️ No buy ads found. NPCs may not have run their trading cycle yet.</span>';
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">✗ API Error: ${error.message}</span>`;
+                console.error('API Error:', error);
+            }
+        };
+
+        window.checkComponents = function() {
+            const result = document.getElementById('component-result');
+            const components = ['chemical-card', 'advertisement-item'];
+            let output = '';
+
+            for (const comp of components) {
+                const isDefined = customElements.get(comp) !== undefined;
+                const status = isDefined ?
+                    `<span class="success">✓ ${comp} is defined</span>` :
+                    `<span class="error">✗ ${comp} is NOT defined</span>`;
+                output += status + '\n';
+            }
+
+            result.innerHTML = output;
+        };
+
+        window.testChemicalCard = async function() {
+            const container = document.getElementById('test-card-container');
+            const result = document.getElementById('card-result');
+
+            // Clear previous test
+            container.innerHTML = '';
+            result.textContent = 'Testing...';
+
+            try {
+                // First check if component is defined
+                if (!customElements.get('chemical-card')) {
+                    result.innerHTML = '<span class="error">✗ chemical-card component not loaded!</span>';
+                    return;
+                }
+
+                if (!customElements.get('advertisement-item')) {
+                    result.innerHTML = '<span class="error">✗ advertisement-item component not loaded!</span>';
+                    return;
+                }
+
+                // Get real data from API
+                const data = await window.api.advertisements.list();
+                const buyAds = data.advertisements.D?.buy || [];
+
+                if (buyAds.length === 0) {
+                    result.innerHTML = '<span class="warning">⚠️ No buy ads for Chemical D to test with</span>';
+                    return;
+                }
+
+                // Create a test card
+                const card = document.createElement('chemical-card');
+                card.setAttribute('chemical', 'D');
+                card.currentUserId = 'test_mail1@stonybrook.edu';
+                card.inventory = 1480;
+                card.shadowPrice = 8.57;
+                card.ranges = { allowableIncrease: 100, allowableDecrease: 50 };
+                card.buyAds = buyAds;
+
+                container.appendChild(card);
+
+                result.innerHTML = `<span class="success">✓ Created chemical-card with ${buyAds.length} buy ads</span>\n`;
+                result.innerHTML += `\nBuy Ads:\n`;
+                buyAds.forEach(ad => {
+                    result.innerHTML += `  - ${ad.teamName} (${ad.teamId})\n`;
+                });
+                result.innerHTML += `\n<span class="success">✓ Check above to see if "Sell to" buttons are visible</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+                console.error('Test Error:', error);
+            }
+        };
+    </script>
+</body>
+</html>

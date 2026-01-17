@@ -217,16 +217,12 @@ class BottleneckEliminationStrategy extends NPCTradingStrategy
     }
 
     /**
-     * Post strategic buy order for bottleneck or sell offer for excess
+     * Post strategic buy order for bottleneck
      */
     private function postStrategicOffer($bottleneck, $excess, $shadowPrices)
     {
-        // Prefer to post buy orders for bottleneck
-        if (mt_rand(0, 100) < 70) {
-            return $this->postBottleneckBuyOrder($bottleneck);
-        } else {
-            return $this->postExcessSellOffer($excess);
-        }
+        // Only post buy orders (players don't post sell advertisements)
+        return $this->postBottleneckBuyOrder($bottleneck);
     }
 
     /**
@@ -249,30 +245,6 @@ class BottleneckEliminationStrategy extends NPCTradingStrategy
             'chemical' => $chemical,
             'quantity' => $this->getTradeQuantity(),
             'maxPrice' => round($offerPrice, 2)
-        ];
-    }
-
-    /**
-     * Post sell offer for excess chemical
-     */
-    private function postExcessSellOffer($excess)
-    {
-        $chemical = $excess['chemical'];
-        $shadowPrice = $excess['price'];
-        $available = $this->inventory[$chemical] ?? 0;
-
-        if ($available < self::MIN_TRADE_QTY) {
-            return null;
-        }
-
-        // Ask slightly above shadow price
-        $askPrice = $shadowPrice * (1.1 + $this->variability * 0.1);
-
-        return [
-            'type' => 'create_offer',
-            'chemical' => $chemical,
-            'quantity' => min($available, $this->getTradeQuantity()),
-            'minPrice' => round($askPrice, 2)
         ];
     }
 

@@ -1,97 +1,85 @@
 /**
- * UnoCSS Runtime Configuration
+ * UnoCSS Runtime Configuration - Final Stable Version using Rules
  *
- * This configuration integrates UnoCSS with the existing CSS variable-based theme system.
- * Include this in any page that needs utility-first styling without a build step.
- *
- * Usage in PHP/HTML:
- *
- * <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime@0.58.5/uno.global.js"></script>
- * <script src="./css/unocss-config.js"></script>
- *
- * Benefits:
- * - Zero build step during development
- * - Just-in-time compilation in browser
- * - ~10KB runtime vs 2.8MB precompiled CSS
- * - Standard Tailwind syntax (AI-friendly)
- * - Works seamlessly with CSS variables
- * - Shadow DOM compatible
+ * This version uses explicit rules to avoid theme merging conflicts with the default preset.
  */
 
+// Helper to create simple CSS rules for our semantic colors
+const createColorRules = (prefix, property, variable) => [
+    new RegExp(`^${prefix}$`),
+    () => ({ [property]: `var(${variable})` })
+];
+
 window.__unocss = {
-    // Presets - enables standard Tailwind classes
-    presets: [],  // Empty array means use defaults (includes all Tailwind utilities)
+    // Explicitly use the default preset
+    presets: [
+        () => window.unocss.presetUno(),
+    ],
+    // Define explicit rules for every semantic class
+    rules: [
+        // Backgrounds
+        createColorRules('bg-base', 'background-color', '--color-bg-primary'),
+        createColorRules('bg-surface', 'background-color', '--color-bg-secondary'),
+        createColorRules('bg-surface-alt', 'background-color', '--color-bg-tertiary'),
 
-    theme: {
-        colors: {
-            // Background colors mapped to CSS variables
-            'bg-primary': 'var(--color-bg-primary)',
-            'bg-secondary': 'var(--color-bg-secondary)',
-            'bg-tertiary': 'var(--color-bg-tertiary)',
-            'bg-modal': 'var(--color-bg-modal)',
+        // Text
+        createColorRules('text-main', 'color', '--color-text-primary'),
+        createColorRules('text-dim', 'color', '--color-text-secondary'),
+        createColorRules('text-muted', 'color', '--color-text-tertiary'),
+        
+        // Brand
+        createColorRules('bg-brand', 'background-color', '--color-brand-primary'),
+        createColorRules('text-brand', 'color', '--color-brand-primary'),
+        createColorRules('border-brand', 'border-color', '--color-brand-primary'),
+        createColorRules('accent-brand', 'accent-color', '--color-brand-primary'),
 
-            // Text colors
-            'text-primary': 'var(--color-text-primary)',
-            'text-secondary': 'var(--color-text-secondary)',
-            'text-tertiary': 'var(--color-text-tertiary)',
+        createColorRules('bg-brand-alt', 'background-color', '--color-brand-secondary'),
+        
+        // Status
+        createColorRules('bg-success', 'background-color', '--color-success'),
+        createColorRules('text-success', 'color', '--color-success'),
+        createColorRules('border-success', 'border-color', '--color-success'),
 
-            // Brand colors
-            'brand-primary': 'var(--color-brand-primary)',
-            'brand-secondary': 'var(--color-brand-secondary)',
-            'accent': 'var(--color-accent)',
+        createColorRules('bg-error', 'background-color', '--color-error'),
+        createColorRules('text-error', 'color', '--color-error'),
+        createColorRules('border-error', 'border-color', '--color-error'),
 
-            // Semantic colors
-            'success': 'var(--color-success)',
-            'error': 'var(--color-error)',
-            'warning': 'var(--color-warning)',
-            'info': 'var(--color-info)',
+        createColorRules('bg-warning', 'background-color', '--color-warning'),
+        createColorRules('text-warning', 'color', '--color-warning'),
+        createColorRules('border-warning', 'border-color', '--color-warning'),
 
-            // Chemical-specific colors
-            'chemical-c': 'var(--color-chemical-c)',
-            'chemical-n': 'var(--color-chemical-n)',
-            'chemical-d': 'var(--color-chemical-d)',
-            'chemical-q': 'var(--color-chemical-q)',
+        createColorRules('bg-info', 'background-color', '--color-info'),
+        createColorRules('text-info', 'color', '--color-info'),
+        createColorRules('border-info', 'border-color', '--color-info'),
+        createColorRules('accent-info', 'accent-color', '--color-info'),
 
-            // Border colors
-            'border': 'var(--color-border)',
-            'border-light': 'var(--color-border-light)',
+        // Chemicals
+        createColorRules('bg-chem-c', 'background-color', '--color-chemical-c'),
+        createColorRules('text-chem-c', 'color', '--color-chemical-c'),
+        createColorRules('border-chem-c', 'border-color', '--color-chemical-c'),
 
-            // Ad background colors
-            'bg-ad-mine': 'var(--color-bg-ad-mine)',
-            'border-ad-mine': 'var(--color-border-ad-mine)',
-        },
-        boxShadow: {
-            'sm': 'var(--shadow-sm)',
-            'md': 'var(--shadow-md)',
-            'lg': 'var(--shadow-lg)',
-            'xl': 'var(--shadow-xl)',
-        }
-    },
-    // Shortcuts for commonly used patterns
+        createColorRules('bg-chem-n', 'background-color', '--color-chemical-n'),
+        createColorRules('text-chem-n', 'color', '--color-chemical-n'),
+        createColorRules('border-chem-n', 'border-color', '--color-chemical-n'),
+
+        createColorRules('bg-chem-d', 'background-color', '--color-chemical-d'),
+        createColorRules('text-chem-d', 'color', '--color-chemical-d'),
+        createColorRules('border-chem-d', 'border-color', '--color-chemical-d'),
+
+        createColorRules('bg-chem-q', 'background-color', '--color-chemical-q'),
+        createColorRules('text-chem-q', 'color', '--color-chemical-q'),
+        createColorRules('border-chem-q', 'border-color', '--color-chemical-q'),
+
+        // Borders
+        createColorRules('border-border-base', 'border-color', '--color-border'),
+        createColorRules('border-border-subtle', 'border-color', '--color-border-light'),
+    ],
+    // Define shortcuts using the now-stable base classes
     shortcuts: {
-        // Card components
-        'card': 'bg-bg-secondary rounded-lg border-2 border-border shadow-md',
-        'card-header': 'p-4 bg-bg-tertiary border-b border-border',
-        'card-body': 'p-4',
-
-        // Button variants
+        'card': 'bg-surface rounded-lg border-2 border-border-base shadow-md',
         'btn': 'inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold cursor-pointer transition-all duration-200',
-        'btn-primary': 'btn bg-brand-primary text-white hover:bg-brand-secondary',
-        'btn-secondary': 'btn bg-bg-tertiary text-text-primary hover:bg-border',
-        'btn-danger': 'btn bg-error text-white hover:brightness-90',
-        'btn-success': 'btn bg-success text-white hover:brightness-90',
-
-        // Status badges
-        'badge': 'inline-flex items-center px-2 py-1 rounded text-xs font-semibold',
-        'badge-success': 'badge bg-success text-white',
-        'badge-error': 'badge bg-error text-white',
-        'badge-warning': 'badge bg-warning text-gray-900',
-        'badge-info': 'badge bg-info text-white',
-
-        // Chemical badges
-        'badge-chemical-c': 'badge bg-chemical-c text-gray-900',
-        'badge-chemical-n': 'badge bg-chemical-n text-white',
-        'badge-chemical-d': 'badge bg-chemical-d text-gray-900',
-        'badge-chemical-q': 'badge bg-chemical-q text-white',
+        'btn-brand': 'btn bg-brand text-main hover:bg-brand-alt',
+        'btn-success': 'btn bg-success text-main hover:brightness-110',
+        'btn-danger': 'btn bg-error text-main hover:brightness-110',
     }
 };

@@ -279,12 +279,8 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
      */
     private function postStrategicOffer($analysis, $shadowPrices)
     {
-        // 60% of time post buy order for deficit, 40% post sell offer for excess
-        if (mt_rand(0, 100) < 60) {
-            return $this->postDeficitBuyOrder($analysis['deficit'], $shadowPrices);
-        } else {
-            return $this->postExcessSellOffer($analysis['excess'], $shadowPrices);
-        }
+        // Only post buy orders (players don't post sell advertisements)
+        return $this->postDeficitBuyOrder($analysis['deficit'], $shadowPrices);
     }
 
     /**
@@ -303,30 +299,6 @@ class RecipeBalancingStrategy extends NPCTradingStrategy
             'chemical' => $chemical,
             'quantity' => $this->getTradeQuantity(),
             'maxPrice' => round($bidPrice, 2)
-        ];
-    }
-
-    /**
-     * Post sell offer for excess chemical
-     */
-    private function postExcessSellOffer($excess, $shadowPrices)
-    {
-        $chemical = $excess['chemical'];
-        $shadowPrice = $shadowPrices[$chemical] ?? 2.0;
-        $available = $this->inventory[$chemical] ?? 0;
-
-        if ($available < self::MIN_TRADE_QTY) {
-            return null;
-        }
-
-        // Start with highball ask
-        $askPrice = $shadowPrice * (1 + self::INITIAL_HIGHBALL_PERCENT + $this->variability * 0.1);
-
-        return [
-            'type' => 'create_offer',
-            'chemical' => $chemical,
-            'quantity' => min($available, $this->getTradeQuantity()),
-            'minPrice' => round($askPrice, 2)
         ];
     }
 

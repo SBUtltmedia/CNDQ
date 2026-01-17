@@ -57,12 +57,12 @@ class AdvertisementItem extends LitElement {
     static styles = componentStyles;
 
     static properties = {
-        adId: { type: String },
-        teamName: { type: String },
-        teamId: { type: String },
-        type: { type: String },
-        chemical: { type: String },
-        isMyAd: { type: Boolean }
+        adId: { type: String, reflect: true },
+        teamName: { type: String, reflect: true },
+        teamId: { type: String, reflect: true },
+        type: { type: String, reflect: true },
+        chemical: { type: String, reflect: true },
+        isMyAd: { type: Boolean, reflect: true }
     };
 
     constructor() {

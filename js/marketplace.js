@@ -14,6 +14,12 @@ import './components/leaderboard-modal.js';
 // Import API client
 import { api } from './api.js';
 
+// Import Services
+import { notifications } from './modules/NotificationService.js';
+import { stateManager } from './modules/StateManager.js';
+import { PollingService } from './modules/PollingService.js';
+import { modalManager } from './components/ModalManager.js';
+
 class MarketplaceApp {
     constructor() {
         // State
@@ -27,10 +33,12 @@ class MarketplaceApp {
         this.settings = { showTradingHints: false };
         this.productionResultsShown = false; // Flag to prevent showing modal multiple times
 
-        // Polling
-        this.pollingInterval = null;
-        this.timerInterval = null;
-        this.pollingFrequency = 3000; // 3 seconds
+        // Polling (Delegated)
+        this.pollingService = new PollingService({
+            frequency: 3000,
+            onPoll: (data) => this.handlePoll(data),
+            onTick: (time) => this.updateTimerUI(time)
+        });
 
         // Track when page loaded to filter out old toasts
         this.pageLoadTime = Date.now() / 1000; // Unix timestamp in seconds
@@ -50,6 +58,43 @@ class MarketplaceApp {
         // Track seen global trades to avoid duplicate toasts
         this.processedGlobalTrades = new Set();
         this.seenCompletedNegotiations = new Set();
+
+        // Bind StateManager events
+        this.bindStateEvents();
+    }
+
+    bindStateEvents() {
+        stateManager.addEventListener('profileUpdated', (e) => {
+            const { profile, inventory, staleness } = e.detail;
+            this.profile = profile;
+            this.inventory = inventory;
+            this.currentUser = profile.email;
+            this.updateUIProfile();
+            this.updateStalenessIndicator(staleness.level, staleness.count);
+        });
+
+        stateManager.addEventListener('shadowPricesUpdated', (e) => {
+            const { shadowPrices, ranges } = e.detail;
+            this.shadowPrices = shadowPrices;
+            this.ranges = ranges;
+            this.updateShadowPricesUI();
+            this.renderFinancialSummary();
+        });
+
+        stateManager.addEventListener('advertisementsUpdated', (e) => {
+            this.advertisements = e.detail;
+            this.renderAdvertisements();
+        });
+
+        stateManager.addEventListener('negotiationsUpdated', (e) => {
+            this.myNegotiations = e.detail || [];
+            this.renderNegotiations();
+        });
+
+        stateManager.addEventListener('transactionsUpdated', (e) => {
+            this.transactions = e.detail || [];
+            this.renderFinancialSummary();
+        });
     }
 
     /**
@@ -76,11 +121,11 @@ class MarketplaceApp {
             // 3. Load data (async chain)
             console.log('Loading initial data...');
             await Promise.all([
-                this.loadProfile(),
-                this.loadShadowPrices(),
-                this.loadAdvertisements(),
-                this.loadNegotiations(),
-                this.loadTransactions(),
+                stateManager.loadProfile(), // Use StateManager
+                stateManager.loadShadowPrices(), // Use StateManager
+                stateManager.loadAdvertisements(),
+                stateManager.loadNegotiations(),
+                stateManager.loadTransactions(),
                 this.loadNotifications(),
                 this.loadSettings()
             ]);
@@ -107,7 +152,7 @@ class MarketplaceApp {
             const overlay = document.getElementById('loading-overlay');
             if (overlay) overlay?.classList.add('hidden');
             
-            this.showToast('Initialization error: ' + error.message, 'error');
+            notifications.showToast('Initialization error: ' + error.message, 'error');
         }
     }
 
@@ -206,14 +251,10 @@ class MarketplaceApp {
     }
 
     /**
-     * Load team profile and inventory
+     * Update UI with profile and inventory data
      */
-    async loadProfile() {
-        const data = await api.team.getProfile();
-
-        this.profile = data.profile;
-        this.inventory = data.inventory;
-        this.currentUser = this.profile.email;
+    updateUIProfile() {
+        if (!this.profile) return;
 
         // Update UI
         document.getElementById('team-name').textContent = this.profile.teamName || this.profile.email;
@@ -226,39 +267,9 @@ class MarketplaceApp {
                 card.inventory = this.inventory[chem];
             }
         });
-
-        // Update staleness indicator
-        this.updateStalenessIndicator(data.inventory.stalenessLevel, data.inventory.transactionsSinceLastShadowCalc);
     }
 
-    /**
-     * Load shadow prices
-     */
-    async loadShadowPrices() {
-        try {
-            const data = await api.production.getShadowPrices();
-            console.log('Shadow prices API response:', data);
 
-            if (data && data.shadowPrices) {
-                this.shadowPrices = {
-                    ...data.shadowPrices,
-                    maxProfit: data.maxProfit || 0  // Include maxProfit for success metric calculation
-                };
-                this.ranges = data.ranges || {}; // Store ranges
-                console.log('Shadow prices loaded:', this.shadowPrices);
-                this.updateShadowPricesUI();
-
-                // Render financial summary now that shadow prices are available
-                this.renderFinancialSummary();
-            } else {
-                console.warn('No shadow prices in API response:', data);
-            }
-        } catch (error) {
-            console.error('Failed to load shadow prices:', error);
-            // Don't block on shadow price errors - use defaults
-            this.shadowPrices = { C: 0, N: 0, D: 0, Q: 0, maxProfit: 0 };
-        }
-    }
 
     /**
      * Update shadow prices in UI
@@ -335,79 +346,29 @@ class MarketplaceApp {
      */
     async recalculateShadowPrices() {
         const btn = document.getElementById('recalc-shadow-btn');
-        btn.disabled = true;
-        btn.textContent = 'Calculating...';
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Calculating...';
+        }
 
         try {
-            const data = await api.production.getShadowPrices();
-            this.shadowPrices = {
-                ...data.shadowPrices,
-                maxProfit: data.maxProfit || 0
-            };
-            this.ranges = data.ranges || {}; // Update ranges
-            this.updateShadowPricesUI();
-
-            // Clear local staleness tracked state
-            this.lastStalenessLevel = 'fresh';
-            this.lastStalenessCount = 0;
-
-            // Reload profile to get fresh staleness indicator from server
-            await this.loadProfile();
-
-            this.showToast('Shadow prices updated successfully', 'success');
+            await stateManager.recalculateShadowPrices();
+            notifications.showToast('Shadow prices updated successfully', 'success');
         } catch (error) {
             console.error('Failed to recalculate shadow prices:', error);
-            this.showToast('Failed to recalculate shadow prices', 'error');
+            notifications.showToast('Failed to recalculate shadow prices', 'error');
         } finally {
-            btn.disabled = false;
-            btn.textContent = 'Recalculate Shadow Prices';
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Recalculate Shadow Prices';
+            }
         }
     }
 
     /**
      * Load marketplace offers
      */
-    /**
-     * Load advertisements from API
-     */
-    async loadAdvertisements() {
-        try {
-            const data = await api.advertisements.list();
-            this.advertisements = data.advertisements;
-            console.log('📢 Loaded advertisements:', this.advertisements);
-            this.renderAdvertisements();
-        } catch (error) {
-            console.error('Failed to load advertisements:', error);
-        }
-    }
 
-    /**
-     * Load negotiations from API
-     */
-    async loadNegotiations() {
-        try {
-            const data = await api.negotiations.list();
-            this.myNegotiations = data.negotiations || [];
-            this.renderNegotiations(); // This will handle the logic
-        } catch (error) {
-            console.error('Failed to load negotiations:', error);
-        }
-    }
-
-    /**
-     * Load transaction history
-     */
-    async loadTransactions() {
-        try {
-            const data = await api.get('api/trades/history.php');
-            if (data.success) {
-                this.transactions = data.transactions || [];
-                this.renderFinancialSummary();
-            }
-        } catch (error) {
-            console.error('Failed to load transactions:', error);
-        }
-    }
 
     /**
      * Render Financial Summary Panel
@@ -582,11 +543,11 @@ class MarketplaceApp {
 
     openTransactionHistory() {
         this.renderTransactionHistoryTable();
-        this.openModalAccessible('history-modal');
+        modalManager.open('history-modal');
     }
 
     closeTransactionHistory() {
-        this.closeModalAccessible('history-modal');
+        modalManager.close('history-modal');
     }
 
     /**
@@ -701,7 +662,7 @@ class MarketplaceApp {
 
         // Check if already posting this ad (prevent race condition)
         if (this.pendingAdPosts.has(adKey)) {
-            this.showToast(`Already posting buy advertisement for Chemical ${chemical}...`, 'warning');
+            notifications.showToast(`Already posting buy advertisement for Chemical ${chemical}...`, 'warning');
             return;
         }
 
@@ -710,7 +671,7 @@ class MarketplaceApp {
         const hasActiveAd = existingAds.some(ad => ad.teamId === this.currentUser);
 
         if (hasActiveAd) {
-            this.showToast(`You already have an active buy advertisement for Chemical ${chemical}`, 'warning');
+            notifications.showToast(`You already have an active buy advertisement for Chemical ${chemical}`, 'warning');
             return;
         }
 
@@ -725,16 +686,16 @@ class MarketplaceApp {
             const isNewAd = returnedAd && (Date.now() - returnedAd.createdAt * 1000) < 2000; // Created within last 2 seconds
 
             if (isNewAd) {
-                this.showToast(`Posted interest to buy ${chemical}`, 'success');
+                notifications.showToast(`Posted interest to buy ${chemical}`, 'success');
             } else {
-                this.showToast(`You already have an active buy advertisement for Chemical ${chemical}`, 'warning');
+                notifications.showToast(`You already have an active buy advertisement for Chemical ${chemical}`, 'warning');
             }
 
             // Wait for advertisements to reload so duplicate check works on next click
-            await this.loadAdvertisements();
+            await stateManager.loadAdvertisements();
         } catch (error) {
             console.error('Failed to post advertisement:', error);
-            this.showToast('Failed to post advertisement: ' + error.message, 'error');
+            notifications.showToast('Failed to post advertisement: ' + error.message, 'error');
         } finally {
             // Always remove pending flag
             this.pendingAdPosts.delete(adKey);
@@ -821,7 +782,7 @@ class MarketplaceApp {
         const maxPrice = parseFloat(document.getElementById('offer-price').value);
 
         if (!chemical || quantity <= 0 || maxPrice < 0) {
-            this.showToast('Invalid input', 'error');
+            notifications.showToast('Invalid input', 'error');
             return;
         }
 
@@ -829,21 +790,21 @@ class MarketplaceApp {
             const response = await api.offers.bid(chemical, quantity, maxPrice);
 
             if (response.success) {
-                this.showToast(`Buy request posted for ${quantity} gallons of ${chemical}`, 'success');
+                notifications.showToast(`Buy request posted for ${quantity} gallons of ${chemical}`, 'success');
                 
                 // Teachable moment: Remind about stale shadow prices
                 if (this.lastStalenessLevel === 'stale') {
-                    this.showToast('💡 Tip: Prices change as you trade! Recalculate shadow prices to see how this buy request affects your production value.', 'info', 6000);
+                    notifications.showToast('💡 Tip: Prices change as you trade! Recalculate shadow prices to see how this buy request affects your production value.', 'info', 6000);
                 }
 
                 this.closeOfferModal();
-                await this.loadAdvertisements();
+                await stateManager.loadAdvertisements();
             } else {
-                this.showToast(response.message || 'Failed to post buy request', 'error');
+                notifications.showToast(response.message || 'Failed to post buy request', 'error');
             }
         } catch (error) {
             console.error('Failed to submit buy request:', error);
-            this.showToast('Failed to post buy request: ' + error.message, 'error');
+            notifications.showToast('Failed to post buy request: ' + error.message, 'error');
         }
     }
 
@@ -969,12 +930,12 @@ class MarketplaceApp {
         const yourInventory = this.inventory[chemical] || 0;
 
         if (quantity <= 0 || price < 0) {
-            this.showToast('Invalid quantity or price', 'error');
+            notifications.showToast('Invalid quantity or price', 'error');
             return;
         }
 
         if (quantity > yourInventory) {
-            this.showToast('Insufficient inventory', 'error');
+            notifications.showToast('Insufficient inventory', 'error');
             return;
         }
 
@@ -984,22 +945,22 @@ class MarketplaceApp {
             const response = await api.negotiations.initiate(buyerTeamId, chemical, quantity, price, 'sell', adId);
 
             if (response.success) {
-                this.showToast(`Offer sent to ${buyerTeamName} for ${quantity} gallons of ${chemical}`, 'success');
+                notifications.showToast(`Offer sent to ${buyerTeamName} for ${quantity} gallons of ${chemical}`, 'success');
                 
                 // Teachable moment: Remind about stale shadow prices
                 if (this.lastStalenessLevel === 'stale') {
-                    this.showToast('💡 Tip: Before sending more offers, recalculate your shadow prices. Your inventory has changed!', 'info', 6000);
+                    notifications.showToast('💡 Tip: Before sending more offers, recalculate your shadow prices. Your inventory has changed!', 'info', 6000);
                 }
 
                 this.closeRespondModal();
-                await this.loadNegotiations();
-                await this.loadAdvertisements(); // Refresh to remove the ad we just responded to
+                await stateManager.loadNegotiations();
+                await stateManager.loadAdvertisements(); // Refresh to remove the ad we just responded to
             } else {
-                this.showToast(response.message || 'Failed to send offer', 'error');
+                notifications.showToast(response.message || 'Failed to send offer', 'error');
             }
         } catch (error) {
             console.error('Failed to submit respond offer:', error);
-            this.showToast('Failed to send offer: ' + error.message, 'error');
+            notifications.showToast('Failed to send offer: ' + error.message, 'error');
         }
     }
 
@@ -1278,12 +1239,12 @@ class MarketplaceApp {
         const price = parseFloat(document.getElementById('new-neg-price').value);
 
         if (!quantity || quantity <= 0) {
-            this.showToast('Please enter a valid quantity', 'error');
+            notifications.showToast('Please enter a valid quantity', 'error');
             return;
         }
 
         if (price === null || price < 0) {
-            this.showToast('Please enter a valid price', 'error');
+            notifications.showToast('Please enter a valid price', 'error');
             return;
         }
 
@@ -1295,19 +1256,19 @@ class MarketplaceApp {
                 price,
                 this.tempNegotiation.type || 'buy'
             );
-            this.showToast('Negotiation started', 'success');
+            notifications.showToast('Negotiation started', 'success');
 
             // Teachable moment: Remind about stale shadow prices
             if (this.lastStalenessLevel === 'stale') {
-                this.showToast('💡 Tip: Your inventory changed! Are you sure your offer is still profitable? Recalculate shadow prices to be sure.', 'info', 6000);
+                notifications.showToast('💡 Tip: Your inventory changed! Are you sure your offer is still profitable? Recalculate shadow prices to be sure.', 'info', 6000);
             }
 
-            await this.loadNegotiations();
+            await stateManager.loadNegotiations();
             this.showNegotiationListView();
             this.renderNegotiationsInModal();
         } catch (error) {
             console.error('Failed to start negotiation:', error);
-            this.showToast('Failed to start negotiation: ' + error.message, 'error');
+            notifications.showToast('Failed to start negotiation: ' + error.message, 'error');
         }
     }
 
@@ -1319,7 +1280,7 @@ class MarketplaceApp {
         const chemical = this.currentNegotiation.chemical;
 
         if (!quantity || quantity <= 0) {
-            this.showToast('Please enter a valid quantity', 'error');
+            notifications.showToast('Please enter a valid quantity', 'error');
             return;
         }
 
@@ -1332,7 +1293,7 @@ class MarketplaceApp {
         if (isSelling) {
             const currentInv = this.inventory[chemical] || 0;
             if (currentInv < quantity) {
-                this.showToast(`Insufficient inventory for this counter-offer!`, 'error');
+                notifications.showToast(`Insufficient inventory for this counter-offer!`, 'error');
                 return;
             }
         } else {
@@ -1348,12 +1309,12 @@ class MarketplaceApp {
             });
 
             await api.negotiations.counter(this.currentNegotiation.id, quantity, price);
-            this.showToast('Counter-offer sent', 'success');
-            await this.loadNegotiations();
+            notifications.showToast('Counter-offer sent', 'success');
+            await stateManager.loadNegotiations();
             this.viewNegotiationDetail(this.currentNegotiation.id);
         } catch (error) {
             console.error('Failed to send counter-offer:', error);
-            this.showToast('Failed to send counter-offer: ' + error.message, 'error');
+            notifications.showToast('Failed to send counter-offer: ' + error.message, 'error');
         }
     }
 
@@ -1437,7 +1398,7 @@ class MarketplaceApp {
         if (isSelling) {
             const currentInv = this.inventory[chemical] || 0;
             if (currentInv < quantity) {
-                this.showToast(`Insufficient inventory! You need ${quantity} gallons of ${chemical} but only have ${currentInv.toFixed(1)}.`, 'error');
+                notifications.showToast(`Insufficient inventory! You need ${quantity} gallons of ${chemical} but only have ${currentInv.toFixed(1)}.`, 'error');
                 return;
             }
         } else {
@@ -1454,28 +1415,28 @@ class MarketplaceApp {
 
             if (heat) {
                 if (heat.isHot) {
-                    this.showToast(`🔥 HOT TRADE! Value created: ${this.formatCurrency(heat.total)}`, 'hot', 5000);
+                    notifications.showToast(`🔥 HOT TRADE! Value created: ${this.formatCurrency(heat.total)}`, 'hot', 5000);
                 } else if (heat.isCold) {
-                    this.showToast(`❄️ COLD TRADE! Value destroyed: ${this.formatCurrency(Math.abs(heat.total))}`, 'cold', 5000);
+                    notifications.showToast(`❄️ COLD TRADE! Value destroyed: ${this.formatCurrency(Math.abs(heat.total))}`, 'cold', 5000);
                 } else {
-                    this.showToast('Trade executed successfully!', 'success');
+                    notifications.showToast('Trade executed successfully!', 'success');
                 }
             } else {
-                this.showToast('Trade executed successfully!', 'success');
+                notifications.showToast('Trade executed successfully!', 'success');
             }
 
             // Teachable moment: Remind about stale shadow prices
             if (this.lastStalenessLevel === 'stale') {
-                this.showToast('💡 Tip: You\'ve made several trades without updating your valuations. Recalculate shadow prices to see your new optimal strategy!', 'info', 6000);
+                notifications.showToast('💡 Tip: You\'ve made several trades without updating your valuations. Recalculate shadow prices to see your new optimal strategy!', 'info', 6000);
             }
 
-            await this.loadNegotiations();
-            await this.loadProfile(); // Refresh inventory
-            await this.loadShadowPrices(); // Refresh shadow prices
+            await stateManager.loadNegotiations();
+            await stateManager.loadProfile(); // Refresh inventory
+            await stateManager.loadShadowPrices(); // Refresh shadow prices
             this.closeNegotiationModal();
         } catch (error) {
             console.error('Failed to accept offer:', error);
-            this.showToast('Failed to accept offer: ' + error.message, 'error');
+            notifications.showToast('Failed to accept offer: ' + error.message, 'error');
         }
     }
 
@@ -1488,13 +1449,13 @@ class MarketplaceApp {
 
         try {
             await api.negotiations.reject(this.currentNegotiation.id);
-            this.showToast('Negotiation cancelled', 'success');
-            await this.loadNegotiations();
+            notifications.showToast('Negotiation cancelled', 'success');
+            await stateManager.loadNegotiations();
             this.showNegotiationListView();
             this.renderNegotiationsInModal();
         } catch (error) {
             console.error('Failed to cancel negotiation:', error);
-            this.showToast('Failed to cancel negotiation: ' + error.message, 'error');
+            notifications.showToast('Failed to cancel negotiation: ' + error.message, 'error');
         }
     }
 
@@ -1675,7 +1636,7 @@ class MarketplaceApp {
                 this.openBuyRequestModal(chemical);
             } else {
                 // Sell is disabled in simplified version
-                this.showToast('Selling is disabled. Only buy requests are supported.', 'info');
+                notifications.showToast('Selling is disabled. Only buy requests are supported.', 'info');
             }
         });
 
@@ -2010,57 +1971,57 @@ class MarketplaceApp {
 
 
     /**
-     * Start polling for updates
+     * Handle Polling Service Update
      */
-    startPolling() {
-        if (this.pollingInterval) return;
+    async handlePoll(data) {
+        // Process session state
+        await this._processSessionData(data);
 
-        const poll = async () => {
+        // If game is not finished, refresh data
+        if (!this.gameFinished) {
             try {
-                // Run these in parallel but catch individual errors so one doesn't block others
                 await Promise.all([
-                    this.loadProfile().catch(e => console.error('Profile poll failed', e)),
-                    this.loadAdvertisements().catch(e => console.error('Ad poll failed', e)),
-                    this.loadNegotiations().catch(e => console.error('Neg poll failed', e)),
+                    stateManager.loadProfile().catch(e => console.error('Profile poll failed', e)),
+                    stateManager.loadAdvertisements().catch(e => console.error('Ad poll failed', e)),
+                    stateManager.loadNegotiations().catch(e => console.error('Neg poll failed', e)),
                     this.loadNotifications().catch(e => console.error('Notif poll failed', e)),
-                    this.checkSessionPhase().catch(e => console.error('Session poll failed', e)),
-                    this.loadTransactions().catch(e => console.error('Txn poll failed', e))
+                    stateManager.loadTransactions().catch(e => console.error('Txn poll failed', e))
                 ]);
             } catch (error) {
-                console.warn('⚠️ Polling error, pausing for one cycle:', error.message);
-                if (error.message.includes('404')) {
-                    console.error('🚫 Critical 404 detected. Stopping poll to prevent request storm.');
-                    this.stopPolling();
-                }
+                console.warn('⚠️ Data refresh error:', error.message);
             }
-        };
-
-        this.pollingInterval = setInterval(poll, this.pollingFrequency);
-
-        // Local timer update every second
-        if (!this.timerInterval) {
-            this.timerInterval = setInterval(() => {
-                if (!this.gameStopped && this.lastServerTimeRemaining > 0) {
-                    this.lastServerTimeRemaining--;
-                    this.updateTimerDisplay(this.lastServerTimeRemaining);
-                }
-            }, 1000);
         }
     }
 
     /**
-     * Stop polling
+     * Update timer UI
+     */
+    updateTimerUI(time) {
+        const timerEl = document.getElementById('game-timer');
+        if (!timerEl) return;
+        
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+        timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    /**
+     * Start polling (via service)
+     */
+    startPolling() {
+        this.pollingService.start();
+    }
+
+    /**
+     * Stop polling (via service)
      */
     stopPolling() {
-        if (this.pollingInterval) {
-            clearInterval(this.pollingInterval);
-            this.pollingInterval = null;
-        }
-        if (this.timerInterval) {
-            clearInterval(this.timerInterval);
-            this.timerInterval = null;
-        }
+        this.pollingService.stop();
     }
+
+
+
+
 
     /**
      * Check session phase (triggers auto-advance if enabled)
@@ -2159,7 +2120,7 @@ class MarketplaceApp {
                             if (event.type === 'join') {
                                 // Team Joined Event
                                 if (event.teamName !== (this.profile?.teamName)) { // Don't toast my own join (I know I joined)
-                                    this.showToast(`👋 Team ${event.teamName} has joined the game!`, 'info', 5000);
+                                    notifications.showToast(`👋 Team ${event.teamName} has joined the game!`, 'info', 5000);
                                 }
                             } else {
                                 // Trade Event
@@ -2171,7 +2132,7 @@ class MarketplaceApp {
                                     const icon = isHot ? '🔥 ' : '📦 ';
                                     const message = `${icon}${event.sellerName} sold ${this.formatNumber(event.quantity)} gal of ${event.chemical} to ${event.buyerName}`;
                                     const type = isHot ? 'hot' : 'info';
-                                    this.showToast(message, type, 4000);
+                                    notifications.showToast(message, type, 4000);
                                 }
                             }
                         }
@@ -2200,7 +2161,7 @@ class MarketplaceApp {
                 const isInitial = data.session === 1;
                 const productionSession = data.session === 1 ? 1 : data.session - 1;
                 await this.showProductionResults(productionSession, isInitial);
-                await this.loadProfile(); // Refresh to show updated inventory/funds
+                await stateManager.loadProfile(); // Refresh to show updated inventory/funds
             }
         } catch (error) {
             console.error('🚨 ERROR in _processSessionData:', error);
@@ -2232,14 +2193,14 @@ class MarketplaceApp {
      * Open settings modal
      */
     openSettings() {
-        this.openModalAccessible('settings-modal');
+        modalManager.open('settings-modal');
     }
 
     /**
      * Close settings modal
      */
     closeSettings() {
-        this.closeModalAccessible('settings-modal');
+        modalManager.close('settings-modal');
     }
 
     /**
@@ -2374,7 +2335,7 @@ class MarketplaceApp {
         this.productionModalShown = false;
 
         // Refresh profile to show updated funds/inventory
-        this.loadProfile();
+        stateManager.loadProfile();
 
         console.log('✅ Production results modal closed');
     }
@@ -2439,176 +2400,17 @@ class MarketplaceApp {
      * Open production guide modal
      */
     openProductionGuide() {
-        this.openModalAccessible('production-guide-modal');
+        modalManager.open('production-guide-modal');
     }
 
     /**
      * Close production guide modal
      */
     closeProductionGuide() {
-        this.closeModalAccessible('production-guide-modal');
+        modalManager.close('production-guide-modal');
     }
 
-    /**
-     * Show toast notification
-     */
-    showToast(message, type = 'info', duration = 3000) {
-        const colors = {
-            success: 'bg-green-600',
-            error: 'bg-red-600',
-            info: 'bg-blue-600',
-            warning: 'bg-yellow-600',
-            excellent: 'bg-gradient-to-r from-green-500 to-emerald-600',
-            bad: 'bg-gradient-to-r from-red-500 to-rose-600',
-            hot: 'bg-gradient-to-r from-orange-500 to-red-600 shadow-orange-500/50',
-            cold: 'bg-gradient-to-r from-cyan-400 to-blue-600 shadow-blue-500/50'
-        };
 
-        const icons = {
-            success: '✓',
-            error: '✗',
-            info: 'ℹ',
-            warning: '⚠',
-            excellent: '🎉',
-            bad: '⚠️',
-            hot: '🔥',
-            cold: '❄️'
-        };
-
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center gap-2`;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-
-        // Add icon if special type
-        if (icons[type]) {
-            const iconSpan = document.createElement('span');
-            iconSpan.textContent = icons[type];
-            iconSpan.className = 'text-xl';
-            toast.appendChild(iconSpan);
-        }
-
-        const messageSpan = document.createElement('span');
-        messageSpan.textContent = message;
-        toast.appendChild(messageSpan);
-
-        container.appendChild(toast);
-
-        // Animate in
-        requestAnimationFrame(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateX(0)';
-            });
-        });
-
-        // Remove after specified duration
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-        }, duration);
-    }
-
-    /**
-     * Trap focus inside modal for accessibility
-     */
-    trapFocus(modalElement) {
-        const focusableElements = modalElement.querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        const handleTab = (e) => {
-            if (e.key === 'Tab') {
-                if (e.shiftKey && document.activeElement === firstElement) {
-                    e.preventDefault();
-                    lastElement.focus();
-                } else if (!e.shiftKey && document.activeElement === lastElement) {
-                    e.preventDefault();
-                    firstElement.focus();
-                }
-            } else if (e.key === 'Escape') {
-                this.closeCurrentModal();
-            }
-        };
-
-        modalElement.addEventListener('keydown', handleTab);
-
-        // Focus first element
-        if (firstElement) {
-            firstElement.focus();
-        }
-
-        return () => modalElement.removeEventListener('keydown', handleTab);
-    }
-
-    /**
-     * Open modal with focus management
-     */
-    openModalAccessible(modalId) {
-        // Don't open if production modal is visible (it should block everything)
-        if (this.isProductionModalBlocking()) {
-            console.log(`⚠️ Production modal is open - blocking ${modalId}`);
-            return;
-        }
-
-        this.focusBeforeModal = document.activeElement;
-        const modal = document.getElementById(modalId);
-        this.currentModal = modal;
-        modal?.classList.remove('hidden');
-        this.trapFocus(modal);
-
-        // Add active state to the button that opened this modal
-        const buttonMap = {
-            'settings-modal': 'settings-btn',
-            'leaderboard-modal': 'leaderboard-btn',
-            'production-guide-modal': 'production-guide-btn'
-        };
-
-        const buttonId = buttonMap[modalId];
-        if (buttonId) {
-            const button = document.getElementById(buttonId);
-            button?.classList.add('ring-2', 'ring-white', 'ring-opacity-50');
-            button.setAttribute('aria-pressed', 'true');
-        }
-    }
-
-    /**
-     * Close modal and restore focus
-     */
-    closeModalAccessible(modalId) {
-        const modal = document.getElementById(modalId);
-        modal?.classList.add('hidden');
-        this.currentModal = null;
-
-        // Remove active state from the button
-        const buttonMap = {
-            'settings-modal': 'settings-btn',
-            'leaderboard-modal': 'leaderboard-btn',
-            'production-guide-modal': 'production-guide-btn'
-        };
-
-        const buttonId = buttonMap[modalId];
-        if (buttonId) {
-            const button = document.getElementById(buttonId);
-            button?.classList.remove('ring-2', 'ring-white', 'ring-opacity-50');
-            button.setAttribute('aria-pressed', 'false');
-        }
-
-        if (this.focusBeforeModal) {
-            this.focusBeforeModal.focus();
-            this.focusBeforeModal = null;
-        }
-    }
 
     /**
      * Close currently open modal (for ESC key)
@@ -2748,16 +2550,16 @@ class MarketplaceApp {
             const data = await api.post('api/session/restart.php');
 
             if (data.success) {
-                this.showToast('Simulation restarted! Reloading...', 'success');
+                notifications.showToast('Simulation restarted! Reloading...', 'success');
                 setTimeout(() => window.location.reload(), 1500);
             } else {
-                this.showToast(data.error || 'Failed to restart', 'error');
+                notifications.showToast(data.error || 'Failed to restart', 'error');
                 btn.disabled = false;
                 btn.textContent = 'Restart Simulation';
             }
         } catch (error) {
             console.error('Restart failed:', error);
-            this.showToast('Network error during restart', 'error');
+            notifications.showToast('Network error during restart', 'error');
         }
     }
 

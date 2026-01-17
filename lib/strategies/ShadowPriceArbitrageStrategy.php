@@ -189,16 +189,12 @@ class ShadowPriceArbitrageStrategy extends NPCTradingStrategy
     }
 
     /**
-     * Post a sell offer or buy order based on shadow prices
+     * Post a buy order based on shadow prices
      */
     private function postMarketOffer($shadowPrices)
     {
-        // Randomly choose to post buy order or sell offer
-        if (mt_rand(0, 1)) {
-            return $this->postBuyOrder($shadowPrices);
-        } else {
-            return $this->postSellOffer($shadowPrices);
-        }
+        // Only post buy orders (players don't post sell advertisements)
+        return $this->postBuyOrder($shadowPrices);
     }
 
     /**
@@ -220,31 +216,6 @@ class ShadowPriceArbitrageStrategy extends NPCTradingStrategy
                     'chemical' => $chemical,
                     'quantity' => $this->getTradeQuantity(),
                     'maxPrice' => round($offerPrice, 2)
-                ];
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Post a sell offer at slightly above shadow price
-     */
-    private function postSellOffer($shadowPrices)
-    {
-        foreach (['C', 'N', 'D', 'Q'] as $chemical) {
-            $available = $this->inventory[$chemical] ?? 0;
-            $shadowPrice = $shadowPrices[$chemical];
-
-            if ($available > self::MIN_TRADE_QTY && $shadowPrice > 0.5) {
-                // Ask slightly above shadow price
-                $askPrice = $shadowPrice * (1.05 + $this->variability * 0.1);
-
-                return [
-                    'type' => 'create_offer',
-                    'chemical' => $chemical,
-                    'quantity' => min($available, $this->getTradeQuantity()),
-                    'minPrice' => round($askPrice, 2)
                 ];
             }
         }
