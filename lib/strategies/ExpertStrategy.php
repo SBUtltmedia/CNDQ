@@ -305,23 +305,20 @@ class ExpertStrategy extends NPCTradingStrategy
         $offerCount = count($negotiation['offers'] ?? []);
 
         $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
-
-        if ($shadowPrice <= 0) {
-            // Invalid shadow price, Expert cannot operate safely, so reject
-            return [
-                'type' => 'reject_negotiation',
-                'negotiationId' => $negotiation['id']
-            ];
-        }
+        error_log("DEBUG: {$this->npc['teamName']} evaluating {$type} negotiation for {$chemical} at \${$playerPrice}. Shadow Price: \${$shadowPrice}");
 
         // Determine if NPC is buyer or seller
         $npcIsSeller = ($type === 'buy') || ($negotiation['initiatorId'] === $this->npc['email'] && $type === 'sell');
 
+        // Use a minimum shadow price for calculation to avoid division by zero or immediate rejection
+        // but only for the purpose of not rejecting. The actual value remains 0 if it's not a bottleneck.
+        $calcShadowPrice = max(0.01, $shadowPrice);
+
         // Calculate target price ranges
         if ($npcIsSeller) {
             // NPC wants to sell
-            $optimalPrice = $shadowPrice * self::SELL_MARGIN;
-            $absoluteMinPrice = $shadowPrice * 0.85; // Will not go below this
+            $optimalPrice = $calcShadowPrice * self::SELL_MARGIN;
+            $absoluteMinPrice = $shadowPrice * 0.70; // Be more flexible (was 0.85)
 
             // Check inventory
             if (!$this->hasSufficientInventory($chemical, $quantity)) {
@@ -332,8 +329,8 @@ class ExpertStrategy extends NPCTradingStrategy
             }
         } else {
             // NPC wants to buy
-            $optimalPrice = $shadowPrice * self::BUY_MARGIN;
-            $absoluteMaxPrice = $shadowPrice * 1.15; // Will not go above this
+            $optimalPrice = $calcShadowPrice * self::BUY_MARGIN;
+            $absoluteMaxPrice = $calcShadowPrice * 1.50; // Be more flexible (was 1.15)
         }
 
         // ADVERTISEMENT PRIORITY:
