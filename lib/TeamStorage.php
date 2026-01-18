@@ -418,10 +418,6 @@ class TeamStorage {
 
             case 'add_transaction':
                 $state['transactions'][] = $payload;
-                if (!isset($state['inventory']['transactionsSinceLastShadowCalc'])) {
-                    $state['inventory']['transactionsSinceLastShadowCalc'] = 0;
-                }
-                $state['inventory']['transactionsSinceLastShadowCalc']++;
                 break;
 
             case 'add_notification':

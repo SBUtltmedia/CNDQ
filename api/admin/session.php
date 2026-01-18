@@ -10,11 +10,28 @@
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
 
+// Start output buffering to catch any stray output
+ob_start();
+
 header('Content-Type: application/json');
 
-// Register shutdown function to catch fatal errors
+// Register shutdown function to catch ALL errors including fatal ones
 register_shutdown_function(function() {
     $error = error_get_last();
+    $output = ob_get_clean();
+
+    // If there was unexpected output (PHP warnings/errors), log it
+    if (!empty($output) && strpos($output, '{') !== 0) {
+        error_log("session.php unexpected output: " . substr($output, 0, 500));
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Unexpected output',
+            'debug' => substr($output, 0, 200)
+        ]);
+        return;
+    }
+
+    // If there was a fatal error
     if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
         http_response_code(500);
         echo json_encode([
@@ -23,7 +40,11 @@ register_shutdown_function(function() {
             'file' => basename($error['file']),
             'line' => $error['line']
         ]);
+        return;
     }
+
+    // Otherwise echo any buffered valid output
+    echo $output;
 });
 
 try {

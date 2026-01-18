@@ -51,6 +51,20 @@ abstract class NPCTradingStrategy
     abstract public function respondToNegotiations();
 
     /**
+     * Clear cached shadow prices to force recalculation
+     */
+    public function clearShadowPrices()
+    {
+        // Concrete strategies like ExpertStrategy use this to reset their internal cache
+        if (property_exists($this, 'shadowPrices')) {
+            $this->shadowPrices = null;
+        }
+        if (property_exists($this, 'ranges')) {
+            $this->ranges = null;
+        }
+    }
+
+    /**
      * Check if NPC has any trades pending reflection (unfinalized)
      * 
      * @return bool
@@ -234,9 +248,9 @@ abstract class NPCTradingStrategy
     }
 
     /**
-     * Calculate shadow prices for current inventory
+     * Calculate shadow prices and ranges for current inventory
      *
-     * @return array Shadow prices for C, N, D, Q
+     * @return array [shadowPrices, ranges]
      */
     protected function calculateShadowPrices()
     {
@@ -249,10 +263,13 @@ abstract class NPCTradingStrategy
         }
 
         return [
-            'C' => $result['shadowPrices']['C'] ?? 0,
-            'N' => $result['shadowPrices']['N'] ?? 0,
-            'D' => $result['shadowPrices']['D'] ?? 0,
-            'Q' => $result['shadowPrices']['Q'] ?? 0
+            'shadowPrices' => [
+                'C' => $result['shadowPrices']['C'] ?? 0,
+                'N' => $result['shadowPrices']['N'] ?? 0,
+                'D' => $result['shadowPrices']['D'] ?? 0,
+                'Q' => $result['shadowPrices']['Q'] ?? 0
+            ],
+            'ranges' => $result['ranges'] ?? []
         ];
     }
 

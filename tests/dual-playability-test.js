@@ -29,48 +29,46 @@
 
 const UIPlayabilityTest = require('./ui-playability-test');
 const APIPlayabilityTest = require('./api-playability-test');
+const fs = require('fs');
+const path = require('path');
 
-const runUiOnly = process.argv.includes('--ui-only');
-const runApiOnly = process.argv.includes('--api-only');
+// Load default config
+const configPath = path.join(__dirname, 'test-config.json');
+let CONFIG = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-// Parse dynamic arguments
+// Parse dynamic arguments for overrides
 const getArgValue = (flag) => {
     const idx = process.argv.indexOf(flag);
     return (idx > -1 && process.argv[idx + 1]) ? process.argv[idx + 1] : null;
 };
 
-const npcCount = parseInt(getArgValue('--npcs') || '3');
-const rpcCount = parseInt(getArgValue('--rpcs') || '3');
-const tradingDuration = parseInt(getArgValue('--duration') || '10');
-const skillLevel = getArgValue('--skill') || 'expert';
-const useSkillDist = process.argv.includes('--skill-dist');
+// Apply CLI Overrides
+if (process.argv.includes('--headless')) CONFIG.headless = true;
+if (process.argv.includes('--verbose') || process.argv.includes('-v')) CONFIG.verbose = true;
 
-// Map count to levels (e.g., 3 -> beginner, novice, expert)
-const defaultLevels = ['beginner', 'novice', 'expert'];
+const argNpcs = getArgValue('--npcs');
+if (argNpcs) CONFIG.npcCount = parseInt(argNpcs);
 
-// NPC Levels
-const npcLevels = [];
-for (let i = 0; i < npcCount; i++) {
-    // If a specific skill is requested via --skill, use it for all NPCs
-    // Otherwise use the default distribution
-    if (process.argv.includes('--skill')) {
-        npcLevels.push(skillLevel);
-    } else {
-        npcLevels.push(defaultLevels[i % defaultLevels.length]);
-    }
+const argRpcs = getArgValue('--rpcs');
+if (argRpcs) CONFIG.rpcCount = parseInt(argRpcs);
+
+const argDuration = getArgValue('--duration');
+if (argDuration) CONFIG.tradingDuration = parseInt(argDuration);
+
+const argSkill = getArgValue('--skill');
+if (argSkill) {
+    CONFIG.npcSkillMix = Array(CONFIG.npcCount).fill(argSkill);
+    CONFIG.rpcSkillMix = Array(CONFIG.rpcCount).fill(argSkill);
 }
 
-// RPC (Test User) Levels
-const rpcLevels = [];
-if (useSkillDist) {
-    for (let i = 0; i < rpcCount; i++) {
-        rpcLevels.push(defaultLevels[i % defaultLevels.length]);
-    }
-}
+// Final derivation of levels based on count and mix
+const npcLevels = CONFIG.npcSkillMix.slice(0, CONFIG.npcCount);
+const rpcLevels = CONFIG.rpcSkillMix.slice(0, CONFIG.rpcCount);
 
-const CONFIG = {
-    baseUrl: 'http://cndq.test/CNDQ/',
-    adminUser: 'admin@stonybrook.edu',
+// Final CONFIG mapping for child tests
+const TEST_CONFIG = {
+    ...CONFIG,
+    baseUrl: CONFIG.baseUrl,
     testUsers: [
         'test_mail1@stonybrook.edu',
         'test_mail2@stonybrook.edu',
@@ -78,24 +76,17 @@ const CONFIG = {
         'test_mail4@stonybrook.edu',
         'test_mail5@stonybrook.edu',
         'test_mail6@stonybrook.edu'
-    ].slice(0, rpcCount),
-    targetSessions: 2, // Increased to check multi-round health
-    headless: process.argv.includes('--headless'),
-    verbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
-    keepOpen: false, // Never keep open in dual mode
-
-    // Dynamic configuration from CLI
+    ].slice(0, CONFIG.rpcCount),
     npcLevels: npcLevels,
     rpcLevels: rpcLevels,
-    skillLevel: skillLevel,
-    skillLevels: useSkillDist ? rpcLevels : null,
-    tradingDuration: tradingDuration,
-
-    // ROI-based pass criteria
-    minPositiveRoiTeams: 1,        // At least 1 team should have positive ROI
-    minAverageRoi: -50,            // Average ROI should be > -50% (allows some losses)
-    minTotalTrades: 3,             // At least 3 trades should execute
-    maxAcceptableErrors: 2          // Allow up to 2 errors before failing
+    skillLevels: rpcLevels, // API test expects this field
+    keepOpen: false,
+    
+    // Pass criteria (flattened for easy access)
+    minPositiveRoiTeams: CONFIG.passCriteria.minPositiveRoiTeams,
+    minAverageRoi: CONFIG.passCriteria.minAverageRoi,
+    minTotalTrades: CONFIG.passCriteria.minTotalTrades,
+    maxAcceptableErrors: CONFIG.passCriteria.maxAcceptableErrors
 };
 
 class DualPlayabilityTest {
@@ -523,7 +514,7 @@ class DualPlayabilityTest {
 
 // Run the dual test
 if (require.main === module) {
-    const test = new DualPlayabilityTest(CONFIG);
+    const test = new DualPlayabilityTest(TEST_CONFIG);
     test.run().catch(error => {
         console.error('Fatal error:', error);
         process.exit(1);

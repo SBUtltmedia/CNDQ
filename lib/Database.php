@@ -56,6 +56,7 @@ class Database {
             $this->pdo->exec('PRAGMA temp_store = MEMORY');       // Use memory for temp tables
             $this->pdo->exec('PRAGMA cache_size = -64000');       // 64MB cache
             $this->pdo->exec('PRAGMA foreign_keys = ON');         // Enforce foreign keys
+            $this->pdo->exec('PRAGMA busy_timeout = 5000');       // Wait up to 5 seconds if database is locked
 
             // Check if database needs initialization or schema update
             $needsInit = false;

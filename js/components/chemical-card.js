@@ -105,7 +105,8 @@ class ChemicalCard extends LitElement {
         shadowPrice: { type: Number },
         ranges: { type: Object },
         buyAds: { type: Array },
-        currentUserId: { type: String }
+        currentUserId: { type: String },
+        hasActiveNegotiation: { type: Boolean }
     };
 
     constructor() {
@@ -116,6 +117,7 @@ class ChemicalCard extends LitElement {
         this.ranges = { allowableIncrease: 0, allowableDecrease: 0 };
         this.buyAds = [];
         this.currentUserId = '';
+        this.hasActiveNegotiation = false;
     }
 
     getChemicalColor(chemical) {
@@ -210,6 +212,7 @@ class ChemicalCard extends LitElement {
                                             type="buy"
                                             .chemical=${this.chemical}
                                             ?isMyAd=${ad.teamId === this.currentUserId}
+                                            ?disabled=${this.hasActiveNegotiation}
                                         ></advertisement-item>
                                     `;
                                 })

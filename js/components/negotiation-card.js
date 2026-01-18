@@ -135,17 +135,20 @@ class NegotiationCard extends HTMLElement {
         if (isSynopsis) {
             // SYNOPSIS STATE
             const isAccepted = neg.status === 'accepted';
-            const title = isAccepted ? 'Trade Accepted!' : 'Negotiation Ended';
             const titleColor = isAccepted ? 'text-green-400' : 'text-red-400';
             const borderColor = isAccepted ? 'border-green-500' : 'border-red-500';
-            const icon = isAccepted 
-                ? `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
-                : `<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            
+            let statusBadge = '';
+            if (isAccepted) {
+                statusBadge = '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Accepted</span>';
+            } else {
+                statusBadge = '<span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-semibold">Rejected</span>';
+            }
 
             // Update wrapper classes
             wrapper.className = `card-wrapper bg-gray-800 rounded p-4 border-2 ${borderColor} shadow-lg transition relative synopsis-container`;
             
-            // Synopsis Content - Matching Active Card Header Layout
+            // Synopsis Content - Matching Active Card Layout
             wrapper.innerHTML = `
                 <button class="dismiss-btn absolute top-2 right-2 text-gray-400 hover:text-white transition" aria-label="Dismiss">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -153,7 +156,7 @@ class NegotiationCard extends HTMLElement {
                     </svg>
                 </button>
 
-                <!-- Shared Header Structure -->
+                <!-- Header Structure -->
                 <div class="flex items-center justify-between mb-3 pr-6">
                     <div class="flex items-center gap-2">
                         ${chemicalBadge}
@@ -163,16 +166,16 @@ class NegotiationCard extends HTMLElement {
                     </div>
                 </div>
 
-                <!-- Synopsis Specific Body -->
-                <div class="bg-gray-700 rounded p-3 space-y-2 text-sm">
-                    <div class="flex items-center gap-2 mb-2 pb-2 border-b border-gray-600">
-                        ${icon}
-                        <h4 class="font-bold text-base ${titleColor}">${title}</h4>
+                <!-- Body -->
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-300">
+                        ${isAccepted ? `
+                            Final: <span class="font-mono font-bold text-white">${lastOffer.quantity} gal</span> @ <span class="font-mono font-bold text-white">${this.formatCurrency(lastOffer.price)}</span>
+                        ` : `
+                            <span class="italic opacity-60">Negotiation cancelled.</span>
+                        `}
                     </div>
-                    ${isAccepted ? `
-                    <div class="flex justify-between"><span class="text-gray-400">Quantity:</span> <span class="font-bold">${lastOffer.quantity} gal</span></div>
-                    <div class="flex justify-between"><span class="text-gray-400">Price:</span> <span class="font-bold">${this.formatCurrency(lastOffer.price)}</span></div>
-                    ` : '<p class="text-center text-gray-400 py-1">Negotiation cancelled.</p>'}
+                    ${statusBadge}
                 </div>
             `;
 

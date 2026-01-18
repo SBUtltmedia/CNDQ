@@ -649,15 +649,15 @@
             <!-- Negotiation List View -->
             <div id="negotiation-list-view">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div class="bg-gray-700 rounded-lg p-4">
+                    <div class="bg-gray-700 rounded-lg p-4 flex flex-col">
                         <h4 class="font-bold text-lg mb-2 text-green-400">Pending Negotiations</h4>
-                        <div id="pending-negotiations" class="space-y-2 max-h-96 overflow-y-auto">
+                        <div id="pending-negotiations" class="space-y-2 overflow-y-auto scrollbar-thin flex-1 min-h-[400px] max-h-[600px] pr-2">
                             <p class="text-gray-300 text-center py-4">No pending negotiations</p>
                         </div>
                     </div>
-                    <div class="bg-gray-700 rounded-lg p-4">
+                    <div class="bg-gray-700 rounded-lg p-4 flex flex-col">
                         <h4 class="font-bold text-lg mb-2 text-gray-400">Completed Negotiations</h4>
-                        <div id="completed-negotiations" class="space-y-2 max-h-96 overflow-y-auto">
+                        <div id="completed-negotiations" class="space-y-2 overflow-y-auto scrollbar-thin flex-1 min-h-[400px] max-h-[600px] pr-2">
                             <p class="text-gray-300 text-center py-4">No completed negotiations</p>
                         </div>
                     </div>

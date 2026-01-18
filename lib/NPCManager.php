@@ -273,6 +273,7 @@ class NPCManager
 
                 $npc['currentFunds'] = $state['profile']['currentFunds'] ?? 0;
                 $npc['inventory'] = $state['inventory'];
+                $npc['initialProductionPotential'] = $state['profile']['initialProductionPotential'] ?? 0;
 
                 // Sync team name from profile if it's missing or different
                 $profileTeamName = $state['profile']['teamName'] ?? null;
@@ -436,6 +437,11 @@ class NPCManager
                 error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) NEGOTIATION ACTION: {$negotiationAction['type']}");
                 $this->executeNPCAction($npc, $negotiationAction, $currentSession);
                 $actionTaken = true;
+                
+                // FORCE RECALCULATION: If this was an acceptance, the next cycle MUST have new shadow prices
+                if ($negotiationAction['type'] === 'accept_negotiation') {
+                    $strategy->clearShadowPrices();
+                }
             }
         } catch (Exception $e) {
             error_log("ERROR: respondToNegotiations failed for {$npc['email']}: " . $e->getMessage());
@@ -450,6 +456,11 @@ class NPCManager
                     error_log("NPC {$npc['teamName']} ({$npc['skillLevel']}) DECIDE ACTION: {$action['type']}");
                     $this->executeNPCAction($npc, $action, $currentSession);
                     $actionTaken = true;
+
+                    // FORCE RECALCULATION: If this was an acceptance, the next cycle MUST have new shadow prices
+                    if ($action['type'] === 'accept_buy_order') {
+                        $strategy->clearShadowPrices();
+                    }
                 } else {
                     // Even if NO action is taken, we might want to wait a bit before checking again to avoid CPU spin
                     // But for realism, we only delay significant actions. 
@@ -461,10 +472,21 @@ class NPCManager
         }
 
         // Update nextActionAt if an action was taken (or just to throttle checks)
-        // If action taken: 5-30 seconds delay
+        // If action taken: 3-15 seconds delay (Expert is faster)
         // If NO action taken: 2-5 seconds delay (to avoid spamming checks but stay responsive)
-        $minDelay = $actionTaken ? 5 : 2;
-        $maxDelay = $actionTaken ? 30 : 5;
+        $isExpert = ($npc['skillLevel'] === 'expert');
+        
+        $minDelay = $actionTaken ? ($isExpert ? 3 : 5) : 2;
+        $maxDelay = $actionTaken ? ($isExpert ? 15 : 30) : 5;
+        
+        // If there are still pending negotiations for the NPC, reduce delay significantly to keep momentum
+        $negotiationManager = $this->getNegotiationManager();
+        $pendingCount = count($negotiationManager->getTeamNegotiations($npc['email']));
+        if ($pendingCount > 0) {
+            $minDelay = 1;
+            $maxDelay = $isExpert ? 3 : 5;
+            error_log("NPC {$npc['teamName']} has {$pendingCount} pending negotiations. Shortening delay to {$minDelay}-{$maxDelay}s.");
+        }
         
         $npc['nextActionAt'] = time() + rand($minDelay, $maxDelay);
         

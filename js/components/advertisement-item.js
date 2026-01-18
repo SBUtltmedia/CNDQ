@@ -48,8 +48,13 @@ const componentStyles = css`
         border: none;
         cursor: pointer;
     }
-    .btn:hover {
+    .btn:hover:not(:disabled) {
         background-color: #059669;
+    }
+    .btn:disabled {
+        background-color: #4b5563;
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 `;
 
@@ -62,15 +67,18 @@ class AdvertisementItem extends LitElement {
         teamId: { type: String, reflect: true },
         type: { type: String, reflect: true },
         chemical: { type: String, reflect: true },
-        isMyAd: { type: Boolean, reflect: true }
+        isMyAd: { type: Boolean, reflect: true },
+        disabled: { type: Boolean, reflect: true }
     };
 
     constructor() {
         super();
         this.isMyAd = false;
+        this.disabled = false;
     }
 
     handleNegotiate() {
+        if (this.disabled) return;
         this.dispatchEvent(new CustomEvent('negotiate', {
             detail: {
                 adId: this.adId,
@@ -85,7 +93,7 @@ class AdvertisementItem extends LitElement {
     }
 
     render() {
-        console.log(`🎪 Rendering ad-item: ${this.teamName} (${this.adId}), isMyAd=${this.isMyAd}`);
+        console.log(`🎪 Rendering ad-item: ${this.teamName} (${this.adId}), isMyAd=${this.isMyAd}, disabled=${this.disabled}`);
         return html`
             <div class="ad-item ${this.isMyAd ? 'ad-item-mine' : ''}">
                 <div class="team-info">
@@ -93,8 +101,8 @@ class AdvertisementItem extends LitElement {
                     ${this.isMyAd ? html`<span class="your-ad"> (Your Request)</span>` : ''}
                 </div>
                 ${!this.isMyAd ? html`
-                    <button class="btn" @click=${this.handleNegotiate}>
-                        Sell to
+                    <button class="btn" @click=${this.handleNegotiate} ?disabled=${this.disabled}>
+                        ${this.disabled ? 'Negotiating...' : 'Sell to'}
                     </button>
                 ` : ''}
             </div>

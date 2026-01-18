@@ -98,8 +98,18 @@ class SessionManager {
             error_log("SessionManager: Aggregation failed: " . $e->getMessage());
         }
 
-        // 3. NPC Logic
+        // 3. NPC Logic & Garbage Collection
         if (!($data['gameStopped'] ?? true) && !($data['gameFinished'] ?? false)) {
+            // Periodic Garbage Collection (every 60 seconds)
+            $lastGC = $data['lastGC'] ?? 0;
+            if ($now - $lastGC >= 60) {
+                try {
+                    require_once __DIR__ . '/NegotiationManager.php';
+                    (new NegotiationManager())->cleanupOldNegotiations(1); // Clean 1+ day old
+                    $updates['lastGC'] = $now;
+                } catch (Exception $e) {}
+            }
+
             $npcSettings = (new NPCManager())->loadConfig();
             if (($npcSettings['enabled'] ?? false)) {
                 $lastNpcRun = $data['npcLastRun'] ?? 0;

@@ -567,6 +567,12 @@ class MarketplaceApp {
                 // Access ranges from this.ranges, not this.shadowPrices
                 card.ranges = this.ranges?.[chemical] || { allowableIncrease: 0, allowableDecrease: 0 };
 
+                // Check for active negotiations for this chemical
+                const hasActiveNeg = this.myNegotiations.some(n => 
+                    n.chemical === chemical && n.status === 'pending'
+                );
+                card.hasActiveNegotiation = hasActiveNeg;
+
                 // Filter buy ads: only show if player has inventory to fulfill the request
                 // If inventory is 0, hide all buy requests (can't sell what you don't have)
                 const allBuyAds = this.advertisements[chemical]?.buy || [];
@@ -1436,7 +1442,17 @@ class MarketplaceApp {
             this.closeNegotiationModal();
         } catch (error) {
             console.error('Failed to accept offer:', error);
-            notifications.showToast('Failed to accept offer: ' + error.message, 'error');
+            
+            // Check for "already accepted" message which can happen if counterparty accepts while we are looking at it
+            if (error.message && (error.message.includes('already been accepted') || error.message.includes('already accepted'))) {
+                notifications.showToast('This trade was already completed!', 'success', 5000);
+                await stateManager.loadNegotiations();
+                await stateManager.loadProfile();
+                await stateManager.loadShadowPrices();
+                this.closeNegotiationModal();
+            } else {
+                notifications.showToast('Failed to accept offer: ' + error.message, 'error');
+            }
         }
     }
 

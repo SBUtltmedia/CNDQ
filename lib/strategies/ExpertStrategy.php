@@ -21,8 +21,8 @@ class ExpertStrategy extends NPCTradingStrategy
     const MAX_QUANTITY = 500;           // Maximum trade quantity
     const RECALC_INTERVAL = 1;          // Recalculate shadow prices after EVERY trade
 
-    private $shadowPrices = null;
-    private $ranges = null;
+    protected $shadowPrices = null;
+    protected $ranges = null;
     private $tradesSinceRecalc = 0;
 
     /**

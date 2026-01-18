@@ -1,0 +1,18 @@
+{
+  "baseUrl": "http://cndq.test/CNDQ/",
+  "adminUser": "admin@stonybrook.edu",
+  "npcCount": 6,
+  "rpcCount": 6,
+  "tradingDuration": 300,
+  "targetSessions": 2,
+  "npcSkillMix": ["expert", "expert", "expert", "expert", "expert", "expert"],
+  "rpcSkillMix": ["expert", "expert", "expert", "expert", "expert", "expert"],
+  "passCriteria": {
+    "minPositiveRoiTeams": 1,
+    "minAverageRoi": -50,
+    "minTotalTrades": 3,
+    "maxAcceptableErrors": 2
+  },
+  "headless": true,
+  "verbose": false
+}
