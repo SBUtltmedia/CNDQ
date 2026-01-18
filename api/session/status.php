@@ -5,6 +5,10 @@
  * Triggers auto-advance logic if enabled.
  */
 
+// Prevent PHP errors/warnings from corrupting JSON output
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../../lib/SessionManager.php';
 header('Content-Type: application/json');
 

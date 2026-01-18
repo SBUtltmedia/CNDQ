@@ -6,13 +6,31 @@
  * POST: Update session (finalize, startNew, setAutoCycle, toggleGameStop)
  */
 
-header('Content-Type: application/json');
-require_once __DIR__ . '/../../userData.php';
-require_once __DIR__ . '/../../lib/SessionManager.php';
+// Prevent PHP errors/warnings from corrupting JSON output
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
 
-$sessionManager = new SessionManager();
+header('Content-Type: application/json');
+
+// Register shutdown function to catch fatal errors
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Fatal error',
+            'message' => $error['message'],
+            'file' => basename($error['file']),
+            'line' => $error['line']
+        ]);
+    }
+});
 
 try {
+    require_once __DIR__ . '/../../userData.php';
+    require_once __DIR__ . '/../../lib/SessionManager.php';
+
+    $sessionManager = new SessionManager();
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Get current session state (public - triggers auto-advance if enabled)
         // Tick the simulation forward based on this heartbeat

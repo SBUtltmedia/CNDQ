@@ -19,9 +19,10 @@ class ExpertStrategy extends NPCTradingStrategy
     const SELL_MARGIN = 1.05;           // Sell at 105% of shadow price
     const MIN_QUANTITY = 50;            // Minimum trade quantity
     const MAX_QUANTITY = 500;           // Maximum trade quantity
-    const RECALC_INTERVAL = 2;          // Recalculate shadow prices every N trades
+    const RECALC_INTERVAL = 1;          // Recalculate shadow prices after EVERY trade
 
     private $shadowPrices = null;
+    private $ranges = null;
     private $tradesSinceRecalc = 0;
 
     /**
@@ -34,7 +35,9 @@ class ExpertStrategy extends NPCTradingStrategy
     {
         // Recalculate shadow prices if needed
         if ($this->shadowPrices === null || $this->tradesSinceRecalc >= self::RECALC_INTERVAL) {
-            $this->shadowPrices = $this->calculateShadowPrices();
+            $result = $this->calculateShadowPrices();
+            $this->shadowPrices = $result['shadowPrices'] ?? null;
+            $this->ranges = $result['ranges'] ?? null;
             $this->tradesSinceRecalc = 0;
 
             if (!$this->shadowPrices) {
@@ -77,7 +80,9 @@ class ExpertStrategy extends NPCTradingStrategy
 
         // Ensure we have shadow prices
         if ($this->shadowPrices === null) {
-            $this->shadowPrices = $this->calculateShadowPrices();
+            $result = $this->calculateShadowPrices();
+            $this->shadowPrices = $result['shadowPrices'] ?? null;
+            $this->ranges = $result['ranges'] ?? null;
         }
 
         if (!$this->shadowPrices) {
@@ -104,10 +109,21 @@ class ExpertStrategy extends NPCTradingStrategy
 
             if ($targetPrice >= $minSellPrice && $this->hasSufficientInventory($chemical, self::MIN_QUANTITY)) {
                 // Found a good buyer! Initiate negotiation
-                $offerPrice = round(max($minSellPrice, $targetPrice * 0.98), 2); // Offer slightly below buyer's max, but above our min
-                $offerQty = min($ad['quantity'], $this->calculateSellQuantity($chemical, $this->inventory[$chemical]));
+                // EXPERT LOGIC: Only sell what is within the ALLOWABLE DECREASE range
+                $allowableDecrease = $this->ranges[$chemical]['allowableDecrease'] ?? 0;
+                if ($allowableDecrease < 1) continue;
 
-                if ($offerQty >= self::MIN_QUANTITY) {
+                // Ensure we never offer for less than a reasonable floor (e.g. $0.50) even if shadow price is 0
+                $offerPrice = round(max($minSellPrice, $targetPrice * 0.98, 0.50), 2);
+                
+                // Limit quantity to requested, NPC logic, and sensitivity range
+                $offerQty = min(
+                    $ad['quantity'], 
+                    $this->calculateSellQuantity($chemical, $this->inventory[$chemical]),
+                    $allowableDecrease
+                );
+
+                if ($offerQty >= 1) {
                     return [
                         'type' => 'initiate_negotiation',
                         'responderId' => $ad['buyerId'],
@@ -130,7 +146,9 @@ class ExpertStrategy extends NPCTradingStrategy
      */
     private function tryToBuy() {
         if ($this->shadowPrices === null) {
-            $this->shadowPrices = $this->calculateShadowPrices();
+            $result = $this->calculateShadowPrices();
+            $this->shadowPrices = $result['shadowPrices'] ?? null;
+            $this->ranges = $result['ranges'] ?? null;
         }
         if (!$this->shadowPrices) {
             return null;
@@ -143,9 +161,17 @@ class ExpertStrategy extends NPCTradingStrategy
             // Only post buy request if shadow price is high and inventory is low
             if ($shadowPrice > 1.0 && $currentAmount < 2000) { 
                 $maxBuyPrice = round($shadowPrice * self::BUY_MARGIN, 2);
-                $quantity = $this->calculateBuyQuantity($chemical, $currentAmount);
+                
+                // EXPERT LOGIC: Only buy what is within the ALLOWABLE INCREASE range
+                $allowableIncrease = $this->ranges[$chemical]['allowableIncrease'] ?? 0;
+                if ($allowableIncrease < 1) continue;
 
-                if ($quantity >= self::MIN_QUANTITY && $this->hasSufficientFunds($quantity * $maxBuyPrice)) {
+                $quantity = min(
+                    $this->calculateBuyQuantity($chemical, $currentAmount),
+                    $allowableIncrease
+                );
+
+                if ($quantity >= 1 && $this->hasSufficientFunds($quantity * $maxBuyPrice)) {
                     return [
                         'type' => 'create_buy_order',
                         'chemical' => $chemical,
@@ -164,7 +190,9 @@ class ExpertStrategy extends NPCTradingStrategy
      */
     private function tryToSell() {
         if ($this->shadowPrices === null) {
-            $this->shadowPrices = $this->calculateShadowPrices();
+            $result = $this->calculateShadowPrices();
+            $this->shadowPrices = $result['shadowPrices'] ?? null;
+            $this->ranges = $result['ranges'] ?? null;
         }
         
         // Use the LP Solver result from calculating shadow prices
@@ -200,7 +228,10 @@ class ExpertStrategy extends NPCTradingStrategy
                         continue;
                     }
                     
-                    $quantity = min($surplus, $highestBuyOrder['quantity']);
+                    // EXPERT LOGIC: Respect sensitivity range for surplus dumping
+                    $allowableDecrease = $this->ranges[$chemical]['allowableDecrease'] ?? 0;
+
+                    $quantity = min($surplus, $highestBuyOrder['quantity'], $allowableDecrease);
                     if ($quantity >= 1 && $this->hasSufficientInventory($chemical, $quantity)) {
                         return [
                             'type' => 'accept_buy_order',
@@ -272,26 +303,27 @@ class ExpertStrategy extends NPCTradingStrategy
     {
         $pendingNegotiations = $this->getPendingNegotiations();
 
-        error_log("DEBUG: {$this->npc['teamName']} has " . count($pendingNegotiations) . " pending negotiations");
-
         // Filter out negotiations where NPC made the last offer (cannot accept own offer)
         $respondableNegotiations = array_filter($pendingNegotiations, function($neg) {
             return $neg['lastOfferBy'] !== $this->npc['email'];
         });
 
-        error_log("DEBUG: {$this->npc['teamName']} has " . count($respondableNegotiations) . " respondable negotiations (excluding own offers)");
-
         if (empty($respondableNegotiations)) {
             return null;
         }
 
+        // Get time remaining for pragmatic decision making
+        require_once __DIR__ . '/../SessionManager.php';
+        $sessionState = (new SessionManager())->getState();
+        $timeRemaining = $sessionState['timeRemaining'] ?? 300;
+        $isTimePressure = ($timeRemaining < 45); // Pragmatic mode: < 45 seconds left
+
         // Recalculate shadow prices if needed
         if ($this->shadowPrices === null) {
-            $this->shadowPrices = $this->calculateShadowPrices();
-            if (!$this->shadowPrices) {
-                // LP solver failed, Expert cannot operate
-                return null;
-            }
+            $result = $this->calculateShadowPrices();
+            $this->shadowPrices = $result['shadowPrices'] ?? null;
+            $this->ranges = $result['ranges'] ?? null;
+            if (!$this->shadowPrices) return null;
         }
 
         // Only respond to the first respondable negotiation
@@ -305,44 +337,60 @@ class ExpertStrategy extends NPCTradingStrategy
         $offerCount = count($negotiation['offers'] ?? []);
 
         $shadowPrice = $this->shadowPrices[$chemical] ?? 0;
-        error_log("DEBUG: {$this->npc['teamName']} evaluating {$type} negotiation for {$chemical} at \${$playerPrice}. Shadow Price: \${$shadowPrice}");
-
+        
         // Determine if NPC is buyer or seller
         $npcIsSeller = ($type === 'buy') || ($negotiation['initiatorId'] === $this->npc['email'] && $type === 'sell');
 
-        // Use a minimum shadow price for calculation to avoid division by zero or immediate rejection
-        // but only for the purpose of not rejecting. The actual value remains 0 if it's not a bottleneck.
-        $calcShadowPrice = max(0.01, $shadowPrice);
-
-        // Calculate target price ranges
+        // Check if the trade is profitable at all
+        $isProfitable = false;
         if ($npcIsSeller) {
-            // NPC wants to sell
-            $optimalPrice = $calcShadowPrice * self::SELL_MARGIN;
-            $absoluteMinPrice = $shadowPrice * 0.70; // Be more flexible (was 0.85)
-
-            // Check inventory
-            if (!$this->hasSufficientInventory($chemical, $quantity)) {
-                return [
-                    'type' => 'reject_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
-            }
+            $isProfitable = ($playerPrice > $shadowPrice);
         } else {
-            // NPC wants to buy
-            $optimalPrice = $calcShadowPrice * self::BUY_MARGIN;
-            $absoluteMaxPrice = $calcShadowPrice * 1.50; // Be more flexible (was 1.15)
+            $isProfitable = ($playerPrice < $shadowPrice);
         }
 
-        // ADVERTISEMENT PRIORITY:
-        // If negotiation is from an ad, and price is good, accept immediately.
+        // EXPERT CHECK: Is the quantity within our ALLOWABLE RANGE?
+        $range = $this->ranges[$chemical] ?? null;
+        $withinRange = true;
+        if ($range) {
+            if ($npcIsSeller && $quantity > $range['allowableDecrease']) $withinRange = false;
+            if (!$npcIsSeller && $quantity > $range['allowableIncrease']) $withinRange = false;
+        }
+
+        // 1. PRAGMATIC CLOSING: If time is running out, accept ANY profitable deal within range
+        if ($isTimePressure && $isProfitable && $withinRange) {
+            error_log("NPC {$this->npc['teamName']} PRAGMATIC ACCEPT: Time low ({$timeRemaining}s), securing profit.");
+            return [
+                'type' => 'accept_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
+        }
+
+        // Check inventory for sellers
+        if ($npcIsSeller && !$this->hasSufficientInventory($chemical, $quantity)) {
+            return [
+                'type' => 'reject_negotiation',
+                'negotiationId' => $negotiation['id']
+            ];
+        }
+
+        // Calculate target price ranges
+        $calcShadowPrice = max(0.01, $shadowPrice);
+        if ($npcIsSeller) {
+            $optimalPrice = $calcShadowPrice * self::SELL_MARGIN;
+            $absoluteMinPrice = $shadowPrice + 0.05; // Absolute floor is shadow + 5 cents
+        } else {
+            $optimalPrice = $calcShadowPrice * self::BUY_MARGIN;
+            $absoluteMaxPrice = max(0.01, $shadowPrice - 0.05); // Absolute ceiling is shadow - 5 cents
+        }
+
+        // 2. ADVERTISEMENT PRIORITY:
         if (!empty($negotiation['adId'])) {
             $isGoodDeal = false;
             if ($npcIsSeller) {
-                 // We responded to a Buy Ad. Accept if price is near our optimal or better
-                 if ($playerPrice >= $optimalPrice * 0.95) $isGoodDeal = true;
+                 if ($playerPrice >= $optimalPrice * 0.95 && $withinRange) $isGoodDeal = true;
             } else {
-                 // We posted a Buy Ad. User is selling to us. Accept if price is near our optimal or better
-                 if ($playerPrice <= $optimalPrice * 1.05) $isGoodDeal = true;
+                 if ($playerPrice <= $optimalPrice * 1.05 && $withinRange) $isGoodDeal = true;
             }
 
             if ($isGoodDeal) {
@@ -353,92 +401,57 @@ class ExpertStrategy extends NPCTradingStrategy
             }
         }
 
-        // ITERATIVE HAGGLING: Calculate counter-offer based on round number
-        // Start at optimal price, gradually move toward player's price
-        $maxRounds = 5; // Maximum number of counter-offers before rejecting
+        // 3. ITERATIVE HAGGLING: 
+        $maxRounds = 5; 
         $currentRound = min($offerCount, $maxRounds);
-
-        // Calculate how much to compromise based on round number
-        // Round 1: 100% optimal, Round 2: 75% optimal + 25% player, etc.
         $compromiseFactor = ($currentRound - 1) / ($maxRounds - 1);
 
         if ($npcIsSeller) {
-            // Move DOWN from optimal toward player's offer
             $counterPrice = $optimalPrice - ($compromiseFactor * ($optimalPrice - $playerPrice));
             $counterPrice = max($absoluteMinPrice, min($optimalPrice, $counterPrice));
 
-            // Accept if player's price is good enough
-            if ($playerPrice >= $optimalPrice * 0.95) {
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
+            // Accept if player's price is good enough AND within range
+            if ($playerPrice >= $optimalPrice * 0.98 && $withinRange) {
+                return ['type' => 'accept_negotiation', 'negotiationId' => $negotiation['id']];
             }
 
-            // Reject if player's price is below absolute minimum OR too many rounds
-            if ($playerPrice < $absoluteMinPrice || $offerCount >= $maxRounds) {
-                $displeasure = min(100, 60 + ($offerCount * 10));
-                $this->npcManager->runTradingCycleAction($this->npc, [
-                    'type' => 'add_reaction',
-                    'negotiationId' => $negotiation['id'],
-                    'level' => $displeasure
-                ]);
-
-                return [
-                    'type' => 'reject_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
+            // If deal is NOT profitable OR out of range, and we've reached max rounds, reject
+            if ((!$isProfitable || !$withinRange) && $offerCount >= $maxRounds) {
+                return ['type' => 'reject_negotiation', 'negotiationId' => $negotiation['id']];
             }
-
-            // Counter-offer with increasing displeasure
-            $priceGap = abs($playerPrice - $optimalPrice) / $optimalPrice;
-            $displeasure = min(95, 20 + ($priceGap * 50) + ($currentRound * 15));
-
         } else {
-            // Move UP from optimal toward player's offer
             $counterPrice = $optimalPrice + ($compromiseFactor * ($playerPrice - $optimalPrice));
             $counterPrice = max($optimalPrice, min($absoluteMaxPrice, $counterPrice));
 
-            // Accept if player's price is good enough
-            if ($playerPrice <= $optimalPrice * 1.05) {
-                return [
-                    'type' => 'accept_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
+            // Accept if player's price is good enough AND within range
+            if ($playerPrice <= $optimalPrice * 1.02 && $withinRange) {
+                return ['type' => 'accept_negotiation', 'negotiationId' => $negotiation['id']];
             }
 
-            // Reject if player's price is above absolute maximum OR too many rounds
-            if ($playerPrice > $absoluteMaxPrice || $offerCount >= $maxRounds) {
-                $displeasure = min(100, 60 + ($offerCount * 10));
-                $this->npcManager->runTradingCycleAction($this->npc, [
-                    'type' => 'add_reaction',
-                    'negotiationId' => $negotiation['id'],
-                    'level' => $displeasure
-                ]);
-
-                return [
-                    'type' => 'reject_negotiation',
-                    'negotiationId' => $negotiation['id']
-                ];
+            // If deal is NOT profitable OR out of range, and we've reached max rounds, reject
+            if ((!$isProfitable || !$withinRange) && $offerCount >= $maxRounds) {
+                return ['type' => 'reject_negotiation', 'negotiationId' => $negotiation['id']];
             }
-
-            // Counter-offer with increasing displeasure
-            $priceGap = abs($playerPrice - $optimalPrice) / $optimalPrice;
-            $displeasure = min(95, 20 + ($priceGap * 50) + ($currentRound * 15));
         }
 
-        // Add reaction to show displeasure
+        // Correct quantity if it was out of range for the counter-offer
+        $targetQuantity = $quantity;
+        if (!$withinRange) {
+            if ($npcIsSeller) $targetQuantity = max(1, floor($range['allowableDecrease']));
+            else $targetQuantity = max(1, floor($range['allowableIncrease']));
+        }
+
+        // Expert NPCs don't get 'annoyed', but we keep a 0 reaction level to avoid UI issues
         $this->npcManager->runTradingCycleAction($this->npc, [
             'type' => 'add_reaction',
             'negotiationId' => $negotiation['id'],
-            'level' => round($displeasure)
+            'level' => 0
         ]);
 
-        // Return counter-offer
         return [
             'type' => 'counter_negotiation',
             'negotiationId' => $negotiation['id'],
-            'quantity' => $quantity,
+            'quantity' => $targetQuantity,
             'price' => round($counterPrice, 2)
         ];
     }
