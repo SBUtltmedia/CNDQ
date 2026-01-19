@@ -145,8 +145,8 @@ class NegotiationCard extends HTMLElement {
                 statusBadge = '<span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-semibold">Rejected</span>';
             }
 
-            // Update wrapper classes
-            wrapper.className = `card-wrapper bg-gray-800 rounded p-4 border-2 ${borderColor} shadow-lg transition relative synopsis-container`;
+            // Update wrapper classes - no cursor-pointer for synopsis (not clickable)
+            wrapper.className = `card-wrapper bg-gray-800 rounded p-4 border-2 ${borderColor} shadow-lg transition relative synopsis-container cursor-default`;
             
             // Synopsis Content - Matching Active Card Layout
             wrapper.innerHTML = `
@@ -266,6 +266,12 @@ class NegotiationCard extends HTMLElement {
     }
 
     handleViewDetail() {
+        // Don't open modal for completed negotiations (synopsis view)
+        // Synopsis cards only have dismiss action
+        if (this.hasAttribute('show-synopsis')) {
+            return;
+        }
+
         this.dispatchEvent(new CustomEvent('view-detail', {
             bubbles: true,
             composed: true,

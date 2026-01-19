@@ -6,13 +6,15 @@ const componentStyles = css`
         margin-bottom: 0.5rem;
     }
     .ad-item {
-        background-color: var(--color-bg-tertiary, #374151);
+        background: #374151 !important; /* Force background color */
         border-radius: 0.375rem;
         padding: 0.75rem;
         transition: background-color 0.2s;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        min-height: 2.5rem;
+        border: 1px solid #4b5563; /* Add visible border */
     }
     .ad-item:hover {
         background-color: #4b5563; /* Slightly lighter */
@@ -31,7 +33,7 @@ const componentStyles = css`
     }
     .team-name {
         font-weight: 600;
-        color: var(--color-text-primary, #f9fafb);
+        color: #f9fafb !important; /* Force white text */
     }
     .your-ad {
         font-size: 0.75rem;

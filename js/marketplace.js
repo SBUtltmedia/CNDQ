@@ -107,15 +107,14 @@ class MarketplaceApp {
 
                     // Show toast notification
                     if (updated.status === 'accepted') {
-                        const lastOffer = updated.offers[updated.offers.length - 1];
                         const otherParty = updated.initiatorId === this.currentUser ? updated.responderName : updated.initiatorName;
                         notifications.showToast(`${otherParty} accepted your offer!`, 'success');
                     } else {
                         notifications.showToast('Negotiation was cancelled', 'info');
                     }
 
-                    // Close detail view and refresh data
-                    this.showNegotiationListView();
+                    // Close modal - synopsis card will show on main page
+                    this.closeNegotiationModal();
                     stateManager.loadProfile();
                     stateManager.loadShadowPrices();
                 }
@@ -749,6 +748,25 @@ class MarketplaceApp {
         if (this.isProductionModalBlocking()) {
             console.log('⚠️ Production modal is open - blocking offer modal');
             return;
+        }
+
+        // Check if user already has an active buy ad for this chemical
+        const existingAds = this.advertisements[chemical]?.['buy'] || [];
+        const hasActiveBuyAd = existingAds.some(ad => ad.buyerId === this.currentUser);
+
+        // If revising, check for active negotiations related to this chemical
+        if (hasActiveBuyAd) {
+            const activeNegotiationsForChemical = this.myNegotiations.filter(
+                n => n.chemical === chemical && n.status === 'pending'
+            );
+            if (activeNegotiationsForChemical.length > 0) {
+                notifications.showToast(
+                    `Cannot revise: You have ${activeNegotiationsForChemical.length} active negotiation(s) for Chemical ${chemical}. Complete or cancel them first.`,
+                    'warning',
+                    5000
+                );
+                return;
+            }
         }
 
         const modal = document.getElementById('offer-modal');
@@ -1470,6 +1488,8 @@ class MarketplaceApp {
             await stateManager.loadNegotiations();
             await stateManager.loadProfile(); // Refresh inventory
             await stateManager.loadShadowPrices(); // Refresh shadow prices
+
+            // Close the modal - the synopsis card will show on the main page
             this.closeNegotiationModal();
         } catch (error) {
             console.error('Failed to accept offer:', error);
@@ -1480,6 +1500,7 @@ class MarketplaceApp {
                 await stateManager.loadNegotiations();
                 await stateManager.loadProfile();
                 await stateManager.loadShadowPrices();
+                // Close modal - synopsis card will show on main page
                 this.closeNegotiationModal();
             } else {
                 notifications.showToast('Failed to accept offer: ' + error.message, 'error');

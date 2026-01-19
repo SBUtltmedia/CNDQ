@@ -14,15 +14,24 @@ export class NotificationService {
      * @param {number} duration - Duration in milliseconds
      */
     showToast(message, type = 'info', duration = 3000) {
+        // Use solid bg classes that are definitely in the Tailwind build
         const colors = {
             success: 'bg-green-600',
             error: 'bg-red-600',
             info: 'bg-blue-600',
             warning: 'bg-yellow-600',
-            excellent: 'bg-gradient-to-r from-green-500 to-emerald-600',
-            bad: 'bg-gradient-to-r from-red-500 to-rose-600',
-            hot: 'bg-gradient-to-r from-orange-500 to-red-600 shadow-orange-500/50',
-            cold: 'bg-gradient-to-r from-cyan-400 to-blue-600 shadow-blue-500/50'
+            excellent: 'bg-green-600',
+            bad: 'bg-red-600',
+            hot: 'bg-orange-600',
+            cold: 'bg-blue-600'
+        };
+
+        // Use inline styles for gradients (Tailwind gradient classes may not be in pre-built CSS)
+        const gradientStyles = {
+            excellent: 'background: linear-gradient(to right, #22c55e, #059669);',
+            bad: 'background: linear-gradient(to right, #ef4444, #e11d48);',
+            hot: 'background: linear-gradient(to right, #f97316, #dc2626); box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);',
+            cold: 'background: linear-gradient(to right, #22d3ee, #2563eb); box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);'
         };
 
         const icons = {
@@ -44,6 +53,12 @@ export class NotificationService {
 
         const toast = document.createElement('div');
         toast.className = `${colors[type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center gap-2`;
+
+        // Apply gradient styles if available for this type
+        if (gradientStyles[type]) {
+            toast.style.cssText += gradientStyles[type];
+        }
+
         toast.setAttribute('role', 'alert');
         toast.setAttribute('aria-live', 'assertive');
 
