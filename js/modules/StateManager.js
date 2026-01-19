@@ -56,21 +56,26 @@ export class StateManager extends EventTarget {
     }
 
     /**
-     * Load shadow prices
+     * Load shadow prices (read-only, does NOT recalculate)
      */
     async loadShadowPrices() {
         try {
-            const data = await api.production.getShadowPrices();
+            const data = await api.production.readShadowPrices();
             if (data && data.shadowPrices) {
                 this.state.shadowPrices = {
                     ...data.shadowPrices,
-                    maxProfit: data.maxProfit || 0
+                    maxProfit: this.state.shadowPrices?.maxProfit || 0
                 };
-                this.state.ranges = data.ranges || {};
-                
+                // Update staleness from read endpoint
+                if (data.staleness) {
+                    this.state.lastStalenessLevel = data.staleness.level;
+                    this.state.lastStalenessCount = data.staleness.count;
+                }
+
                 this.notify('shadowPricesUpdated', {
                     shadowPrices: this.state.shadowPrices,
-                    ranges: this.state.ranges
+                    ranges: this.state.ranges,
+                    staleness: data.staleness
                 });
             }
         } catch (error) {
@@ -79,10 +84,10 @@ export class StateManager extends EventTarget {
     }
 
     /**
-     * Recalculate shadow prices
+     * Recalculate shadow prices (triggers LP solver, resets staleness)
      */
     async recalculateShadowPrices() {
-        const data = await api.production.getShadowPrices();
+        const data = await api.production.recalculateShadowPrices();
         this.state.shadowPrices = {
             ...data.shadowPrices,
             maxProfit: data.maxProfit || 0
@@ -93,9 +98,10 @@ export class StateManager extends EventTarget {
 
         this.notify('shadowPricesUpdated', {
             shadowPrices: this.state.shadowPrices,
-            ranges: this.state.ranges
+            ranges: this.state.ranges,
+            staleness: { level: 'fresh', count: 0 }
         });
-        
+
         await this.loadProfile();
     }
 

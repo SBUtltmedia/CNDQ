@@ -164,10 +164,18 @@ class ApiClient {
 
     production = {
         /**
-         * Get or recalculate shadow prices
+         * Read stored shadow prices WITHOUT recalculating
+         * @returns {Promise<{success: boolean, shadowPrices: Object, staleness: Object}>}
+         */
+        readShadowPrices: async () => {
+            return this.get('api/production/shadow-prices-read.php');
+        },
+
+        /**
+         * Recalculate shadow prices (resets staleness counter)
          * @returns {Promise<{success: boolean, shadowPrices: Object}>}
          */
-        getShadowPrices: async () => {
+        recalculateShadowPrices: async () => {
             return this.get('api/production/shadow-prices.php');
         }
     };

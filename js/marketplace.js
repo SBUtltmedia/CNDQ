@@ -74,11 +74,15 @@ class MarketplaceApp {
         });
 
         stateManager.addEventListener('shadowPricesUpdated', (e) => {
-            const { shadowPrices, ranges } = e.detail;
+            const { shadowPrices, ranges, staleness } = e.detail;
             this.shadowPrices = shadowPrices;
             this.ranges = ranges;
             this.updateShadowPricesUI();
             this.renderFinancialSummary();
+            // Update staleness indicator if staleness info is included
+            if (staleness) {
+                this.updateStalenessIndicator(staleness.level, staleness.count);
+            }
         });
 
         stateManager.addEventListener('advertisementsUpdated', (e) => {
@@ -87,8 +91,35 @@ class MarketplaceApp {
         });
 
         stateManager.addEventListener('negotiationsUpdated', (e) => {
+            const oldNegotiations = this.myNegotiations || [];
             this.myNegotiations = e.detail || [];
             this.renderNegotiations();
+
+            // Also update modal view if open
+            this.renderNegotiationsInModal();
+
+            // Check if currently viewed negotiation changed status (counterparty accepted/rejected)
+            if (this.currentNegotiation && this.currentNegotiation.status === 'pending') {
+                const updated = this.myNegotiations.find(n => n.id === this.currentNegotiation.id);
+                if (updated && updated.status !== 'pending') {
+                    // Negotiation was completed by counterparty! Update the view
+                    this.currentNegotiation = updated;
+
+                    // Show toast notification
+                    if (updated.status === 'accepted') {
+                        const lastOffer = updated.offers[updated.offers.length - 1];
+                        const otherParty = updated.initiatorId === this.currentUser ? updated.responderName : updated.initiatorName;
+                        notifications.showToast(`${otherParty} accepted your offer!`, 'success');
+                    } else {
+                        notifications.showToast('Negotiation was cancelled', 'info');
+                    }
+
+                    // Close detail view and refresh data
+                    this.showNegotiationListView();
+                    stateManager.loadProfile();
+                    stateManager.loadShadowPrices();
+                }
+            }
         });
 
         stateManager.addEventListener('transactionsUpdated', (e) => {
