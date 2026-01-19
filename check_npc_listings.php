@@ -24,55 +24,63 @@ foreach ($npcs as $npc) {
 }
 echo "\n";
 
-// Check advertisements by type
-$adStats = $db->query("SELECT type, COUNT(*) as count FROM advertisements GROUP BY type");
+// Check listings by type
+$adStats = $db->query("
+    SELECT event_type as type, COUNT(*) as count 
+    FROM marketplace_events 
+    WHERE event_type IN ('add_ad', 'add_listing')
+    GROUP BY event_type
+");
 
-echo "=== Advertisements by Type ===\n";
+echo "=== Listings by Event Type ===\n";
 if (empty($adStats)) {
-    echo "No advertisements in database yet.\n";
+    echo "No listings in database yet.\n";
 } else {
     foreach ($adStats as $stat) {
-        echo "  {$stat['type']}: {$stat['count']} ads\n";
+        echo "  {$stat['type']}: {$stat['count']} listings\n";
     }
 }
 echo "\n";
 
-// Check recent NPC advertisements
+// Check recent NPC listings
 $npcAds = $db->query("
-    SELECT a.*, t.teamName
-    FROM advertisements a
-    JOIN teams t ON a.teamEmail = t.email
-    WHERE t.email LIKE 'npc_%'
-    ORDER BY a.createdAt DESC
+    SELECT payload, team_name, timestamp
+    FROM marketplace_events
+    WHERE team_email LIKE 'npc_%' AND event_type IN ('add_ad', 'add_listing')
+    ORDER BY timestamp DESC
     LIMIT 10
 ");
 
-echo "=== Recent NPC Advertisements (Last 10) ===\n";
+echo "=== Recent NPC Listings (Last 10) ===\n";
 if (empty($npcAds)) {
-    echo "No NPC advertisements found.\n";
+    echo "No NPC listings found.\n";
 } else {
     foreach ($npcAds as $ad) {
-        $time = date('H:i:s', $ad['createdAt']);
-        echo "  [{$time}] {$ad['teamName']}: {$ad['type']} Chemical {$ad['chemical']}\n";
+        $payload = json_decode($ad['payload'], true);
+        $time = date('H:i:s', (int)$ad['timestamp']);
+        echo "  [{$time}] {$ad['team_name']}: {$payload['type']} Chemical {$payload['chemical']}\n";
     }
 }
 echo "\n";
 
-// Check for any 'sell' type ads from NPCs (SHOULD BE ZERO after fix!)
+// Check for any 'sell' type listings from NPCs
 $npcSellAds = $db->query("
-    SELECT COUNT(*) as count
-    FROM advertisements a
-    JOIN teams t ON a.teamEmail = t.email
-    WHERE t.email LIKE 'npc_%' AND a.type = 'sell'
+    SELECT payload
+    FROM marketplace_events
+    WHERE team_email LIKE 'npc_%' AND event_type IN ('add_ad', 'add_listing')
 ");
 
-$sellCount = $npcSellAds[0]['count'] ?? 0;
+$sellCount = 0;
+foreach ($npcSellAds as $ad) {
+    $payload = json_decode($ad['payload'], true);
+    if (($payload['type'] ?? '') === 'sell') $sellCount++;
+}
+
 echo "=== VERIFICATION ===\n";
 if ($sellCount > 0) {
-    echo "❌ PROBLEM: Found {$sellCount} SELL advertisements from NPCs!\n";
-    echo "   NPCs should NOT post sell ads (bug still present)\n";
+    echo "❌ PROBLEM: Found {$sellCount} SELL listings from NPCs!\n";
 } else {
-    echo "✅ GOOD: No sell advertisements from NPCs\n";
+    echo "✅ GOOD: No sell listings from NPCs\n";
     echo "   NPCs are correctly only posting buy requests\n";
 }
 echo "\n";

@@ -242,9 +242,10 @@ class MarketplaceAggregator {
                     break;
 
                 case 'add_ad':
+                case 'add_listing':
                     $payload['teamId'] = $teamId;
                     $payload['teamName'] = $teamName;
-                    // Deduplication: Only keep latest ad per team/chemical
+                    // Deduplication: Only keep latest listing per team/chemical
                     foreach ($ads as $id => $ad) {
                         if ($ad['teamId'] === $teamId && $ad['chemical'] === $payload['chemical']) {
                             unset($ads[$id]);
@@ -254,6 +255,7 @@ class MarketplaceAggregator {
                     break;
 
                 case 'remove_ad':
+                case 'remove_listing':
                     unset($ads[$payload['id']]);
                     break;
             }

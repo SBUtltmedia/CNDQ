@@ -5,7 +5,7 @@ const componentStyles = css`
         display: block;
         margin-bottom: 0.5rem;
     }
-    .ad-item {
+    .listing-item {
         background: #374151 !important; /* Force background color */
         border-radius: 0.375rem;
         padding: 0.75rem;
@@ -16,14 +16,14 @@ const componentStyles = css`
         min-height: 2.5rem;
         border: 1px solid #4b5563; /* Add visible border */
     }
-    .ad-item:hover {
+    .listing-item:hover {
         background-color: #4b5563; /* Slightly lighter */
     }
-    .ad-item-mine {
+    .listing-item-mine {
         background-color: var(--color-bg-ad-mine, #422006);
         border: 1px solid var(--color-border-ad-mine, #d97706);
     }
-    .ad-item-mine:hover {
+    .listing-item-mine:hover {
         filter: brightness(1.1);
     }
     .team-info {
@@ -35,7 +35,7 @@ const componentStyles = css`
         font-weight: 600;
         color: #f9fafb !important; /* Force white text */
     }
-    .your-ad {
+    .your-listing {
         font-size: 0.75rem;
         font-style: italic;
         color: var(--color-text-tertiary, #d1d5db);
@@ -60,7 +60,7 @@ const componentStyles = css`
     }
 `;
 
-class AdvertisementItem extends LitElement {
+class ListingItem extends LitElement {
     static styles = componentStyles;
 
     static properties = {
@@ -69,6 +69,8 @@ class AdvertisementItem extends LitElement {
         teamId: { type: String, reflect: true },
         type: { type: String, reflect: true },
         chemical: { type: String, reflect: true },
+        quantity: { type: Number },
+        maxPrice: { type: Number },
         isMyAd: { type: Boolean, reflect: true },
         disabled: { type: Boolean, reflect: true }
     };
@@ -77,6 +79,8 @@ class AdvertisementItem extends LitElement {
         super();
         this.isMyAd = false;
         this.disabled = false;
+        this.quantity = null;
+        this.maxPrice = null;
     }
 
     handleNegotiate() {
@@ -87,7 +91,9 @@ class AdvertisementItem extends LitElement {
                 teamId: this.teamId,
                 teamName: this.teamName,
                 chemical: this.chemical,
-                type: this.type
+                type: this.type,
+                quantity: this.quantity,
+                maxPrice: this.maxPrice
             },
             bubbles: true,
             composed: true
@@ -95,12 +101,22 @@ class AdvertisementItem extends LitElement {
     }
 
     render() {
-        console.log(`🎪 Rendering ad-item: ${this.teamName} (${this.adId}), isMyAd=${this.isMyAd}, disabled=${this.disabled}`);
+        console.log(`🎪 Rendering listing-item: ${this.teamName} (${this.adId}), isMyAd=${this.isMyAd}, disabled=${this.disabled}`);
+        
+        const showDetails = this.quantity && this.maxPrice;
+
         return html`
-            <div class="ad-item ${this.isMyAd ? 'ad-item-mine' : ''}">
+            <div class="listing-item ${this.isMyAd ? 'listing-item-mine' : ''}">
                 <div class="team-info">
-                    <span class="team-name">${this.teamName}</span>
-                    ${this.isMyAd ? html`<span class="your-ad"> (Your Request)</span>` : ''}
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="team-name">${this.teamName}</span>
+                        ${showDetails ? html`
+                            <span style="font-size: 0.65rem; color: var(--color-text-secondary, #9ca3af);">
+                                Wants ${this.quantity} gal @ ${this.maxPrice.toFixed(2)}/gal
+                            </span>
+                        ` : ''}
+                    </div>
+                    ${this.isMyAd ? html`<span class="your-listing"> (Your Request)</span>` : ''}
                 </div>
                 ${!this.isMyAd ? html`
                     <button class="btn" @click=${this.handleNegotiate} ?disabled=${this.disabled}>
@@ -112,4 +128,4 @@ class AdvertisementItem extends LitElement {
     }
 }
 
-customElements.define('advertisement-item', AdvertisementItem);
+customElements.define('listing-item', ListingItem);

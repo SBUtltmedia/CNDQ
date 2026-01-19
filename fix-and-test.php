@@ -8,7 +8,7 @@
 
 require_once __DIR__ . '/lib/NPCManager.php';
 require_once __DIR__ . '/lib/TeamStorage.php';
-require_once __DIR__ . '/lib/AdvertisementManager.php';
+require_once __DIR__ . '/lib/ListingManager.php';
 
 echo "=== FIX AND TEST SCRIPT ===\n\n";
 
@@ -23,18 +23,18 @@ try {
     echo "✗ Error: " . $e->getMessage() . "\n\n";
 }
 
-// Step 2: Check advertisements
-echo "Step 2: Checking advertisements...\n";
-$ads = AdvertisementManager::getAdvertisementsByChemical();
+// Step 2: Check listings
+echo "Step 2: Checking listings...\n";
+$ads = ListingManager::getListingsByChemical();
 $totalBuyAds = 0;
 foreach (['C', 'N', 'D', 'Q'] as $chem) {
     $count = count($ads[$chem]['buy'] ?? []);
     $totalBuyAds += $count;
     if ($count > 0) {
-        echo "  Chemical {$chem}: {$count} buy ads\n";
+        echo "  Chemical {$chem}: {$count} buy listings\n";
     }
 }
-echo "Total: {$totalBuyAds} buy advertisements\n\n";
+echo "Total: {$totalBuyAds} buy listings\n\n";
 
 // Step 3: Check Crafty Otter
 echo "Step 3: What Crafty Otter should see...\n";
@@ -65,6 +65,6 @@ echo "4. You should see 'Sell to' buttons under 'Buy Requests' section\n";
 echo "5. If not visible:\n";
 echo "   - Press Ctrl+Shift+R to hard refresh (clear cache)\n";
 echo "   - Open DevTools (F12) and check Console for errors\n";
-echo "   - Check Network tab to see if /api/advertisements/list.php is called\n";
+echo "   - Check Network tab to see if /api/listings/list.php is called\n";
 echo "\n";
 ?>

@@ -1,11 +1,11 @@
 <?php
 /**
- * Advertisement Manager - Refactored to use No-M TeamStorage
+ * Listing Manager - Refactored to use No-M TeamStorage
  */
 
 require_once __DIR__ . '/TeamStorage.php';
 
-class AdvertisementManager {
+class ListingManager {
     private $storage;
 
     public function __construct($teamEmail, $teamName = null) {
@@ -15,20 +15,20 @@ class AdvertisementManager {
         }
     }
 
-    public function getAdvertisements() {
-        return $this->storage->getAds();
+    public function getListings() {
+        return $this->storage->getListings();
     }
 
-    public function postAdvertisement($chemical, $type) {
-        return $this->storage->addAd($chemical, $type);
+    public function postListing($chemical, $type, $extraData = []) {
+        return $this->storage->addListing($chemical, $type, $extraData);
     }
 
-    public function removeAdvertisement($adId) {
-        $this->storage->removeAd($adId);
+    public function removeListing($adId) {
+        $this->storage->removeListing($adId);
         return true;
     }
 
-    public static function getAllAdvertisements() {
+    public static function getAllListings() {
         require_once __DIR__ . '/MarketplaceAggregator.php';
         $aggregator = new MarketplaceAggregator();
         $data = $aggregator->getAggregatedFromEvents(); // Updated for SQLite
@@ -46,8 +46,8 @@ class AdvertisementManager {
         return $allAds;
     }
 
-    public static function getAdvertisementsByChemical() {
-        $allAds = self::getAllAdvertisements();
+    public static function getListingsByChemical() {
+        $allAds = self::getAllListings();
 
         $byChemical = [
             'C' => ['buy' => [], 'sell' => []],

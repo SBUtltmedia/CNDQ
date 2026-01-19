@@ -4,7 +4,7 @@
  * GET: Get current user's advertisements
  */
 
-require_once __DIR__ . '/../../lib/AdvertisementManager.php';
+require_once __DIR__ . '/../../lib/ListingManager.php';
 require_once __DIR__ . '/../../lib/TeamStorage.php';
 require_once __DIR__ . '/../../userData.php';
 
@@ -22,12 +22,12 @@ try {
     $storage = new TeamStorage($currentUserEmail);
     $profile = $storage->getProfile();
 
-    $adManager = new AdvertisementManager($currentUserEmail, $profile['teamName']);
-    $ads = $adManager->getAdvertisements();
+    $listingManager = new ListingManager($currentUserEmail, $profile['teamName']);
+    $listings = $listingManager->getListings();
 
     echo json_encode([
         'success' => true,
-        'advertisements' => $ads
+        'listings' => $listings
     ]);
 
 } catch (Exception $e) {

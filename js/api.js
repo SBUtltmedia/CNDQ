@@ -7,7 +7,7 @@
  * Usage:
  *   import { api } from './api.js';
  *   const profile = await api.team.getProfile();
- *   await api.advertisements.post('C', 'sell');
+ *   await api.listings.post('C', 'sell');
  */
 
 class ApiClient {
@@ -181,34 +181,34 @@ class ApiClient {
     };
 
     // ==========================================
-    // Advertisement APIs
+    // Listing APIs
     // ==========================================
 
-    advertisements = {
+    listings = {
         /**
-         * List all marketplace advertisements
-         * @returns {Promise<{success: boolean, advertisements: Object}>}
+         * List all marketplace listings
+         * @returns {Promise<{success: boolean, listings: Object}>}
          */
         list: async () => {
-            return this.get('api/advertisements/list.php');
+            return this.get('api/listings/list.php');
         },
 
         /**
          * Post buy or sell interest
          * @param {string} chemical - Chemical type (C, N, D, Q)
          * @param {string} type - 'buy' or 'sell'
-         * @returns {Promise<{success: boolean, message: string, advertisement: Object}>}
+         * @returns {Promise<{success: boolean, message: string, listing: Object}>}
          */
         post: async (chemical, type) => {
-            return this.post('api/advertisements/post.php', { chemical, type });
+            return this.post('api/listings/post.php', { chemical, type });
         },
 
         /**
-         * Get my advertisements
-         * @returns {Promise<{success: boolean, advertisements: Array}>}
+         * Get my listings
+         * @returns {Promise<{success: boolean, listings: Array}>}
          */
-        getMyAds: async () => {
-            return this.get('api/advertisements/my-ads.php');
+        getMyListings: async () => {
+            return this.get('api/listings/my-listings.php');
         }
     };
 
@@ -253,7 +253,7 @@ class ApiClient {
          * @param {number} quantity - Gallons
          * @param {number} price - Price per gallon
          * @param {string} type - 'buy' or 'sell' (initiator perspective)
-         * @param {string} adId - (Optional) ID of advertisement being responded to
+         * @param {string} adId - (Optional) ID of listing being responded to
          * @returns {Promise<{success: boolean, negotiation: Object}>}
          */
         initiate: async (responderId, chemical, quantity, price, type = 'buy', adId = null) => {

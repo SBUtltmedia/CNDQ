@@ -178,7 +178,7 @@ class TeamStorage {
             // If this is a marketplace event, also insert into marketplace_events
             $marketplaceTypes = ['add_offer', 'remove_offer', 'update_offer',
                                'add_buy_order', 'remove_buy_order', 'update_buy_order',
-                               'add_ad', 'remove_ad'];
+                               'add_listing', 'remove_listing'];
 
             if (in_array($type, $marketplaceTypes)) {
                 // Ensure teamName is in payload for marketplace
@@ -439,10 +439,12 @@ class TeamStorage {
                 break;
 
             case 'add_ad':
+            case 'add_listing':
                 $state['ads'][] = $payload;
                 break;
 
             case 'remove_ad':
+            case 'remove_listing':
                 $state['ads'] = array_values(array_filter($state['ads'], fn($a) => $a['id'] !== $payload['id']));
                 break;
 
@@ -682,33 +684,34 @@ class TeamStorage {
         $this->emitEvent('mark_notifications_read', ['ids' => $ids]);
     }
 
-    // ==================== Advertisement Methods ====================
+    // ==================== Listing Methods ====================
 
-    public function getAds() { return $this->getState()['ads']; }
+    public function getListings() { return $this->getState()['ads']; }
 
-    public function addAd($chemical, $type) {
-        // Garbage Collection: Remove existing active ads for this chemical/type
-        $existingAds = $this->getAds();
+    public function addListing($chemical, $type, $extraData = []) {
+        // Garbage Collection: Remove existing active listings for this chemical/type
+        $existingAds = $this->getListings();
         foreach ($existingAds as $existingAd) {
             if ($existingAd['chemical'] === $chemical && $existingAd['type'] === $type) {
-                $this->removeAd($existingAd['id']);
+                $this->removeListing($existingAd['id']);
             }
         }
 
-        $ad = [
+        $ad = array_merge([
             'id' => 'ad_' . time() . '_' . bin2hex(random_bytes(4)),
             'teamId' => $this->teamEmail,
             'chemical' => $chemical,
             'type' => $type,
             'status' => 'active',
             'createdAt' => time()
-        ];
-        $this->emitEvent('add_ad', $ad);
-        return ['ads' => $this->getAds()];
+        ], $extraData);
+        
+        $this->emitEvent('add_listing', $ad);
+        return ['ads' => $this->getListings()];
     }
 
-    public function removeAd($adId) {
-        $this->emitEvent('remove_ad', ['id' => $adId]);
+    public function removeListing($adId) {
+        $this->emitEvent('remove_listing', ['id' => $adId]);
     }
 
     // ==================== Production Methods ====================

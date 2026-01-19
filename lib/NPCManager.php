@@ -640,10 +640,13 @@ class NPCManager
 
         $storage->addBuyOrder($buyOrderData);
 
-        // ALSO post advertisement so it shows up in marketplace
-        require_once __DIR__ . '/AdvertisementManager.php';
-        $adManager = new AdvertisementManager($npc['email'], $npc['teamName']);
-        $adManager->postAdvertisement($action['chemical'], 'buy');
+        // ALSO post listing so it shows up in marketplace
+        require_once __DIR__ . '/ListingManager.php';
+        $listingManager = new ListingManager($npc['email'], $npc['teamName']);
+        $listingManager->postListing($action['chemical'], 'buy', [
+            'quantity' => $action['quantity'],
+            'maxPrice' => $action['maxPrice']
+        ]);
 
         error_log("NPC {$npc['teamName']} posted buy order: {$action['quantity']} gal of {$action['chemical']} at \${$action['maxPrice']}/gal max");
     }

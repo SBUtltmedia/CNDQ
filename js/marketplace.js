@@ -5,7 +5,7 @@
 
 // Import web components (cache-busting v4)
 import './components/chemical-card.js?v=7';
-import './components/advertisement-item.js?v=7';
+import './components/listing-item.js?v=7';
 import './components/negotiation-card.js';
 import './components/offer-bubble.js';
 import './components/notification-manager.js';
@@ -27,7 +27,7 @@ class MarketplaceApp {
         this.profile = null;
         this.inventory = { C: 0, N: 0, D: 0, Q: 0 };
         this.shadowPrices = { C: 0, N: 0, D: 0, Q: 0 };
-        this.advertisements = { C: { buy: [], sell: [] }, N: { buy: [], sell: [] }, D: { buy: [], sell: [] }, Q: { buy: [], sell: [] } };
+        this.listings = { C: { buy: [], sell: [] }, N: { buy: [], sell: [] }, D: { buy: [], sell: [] }, Q: { buy: [], sell: [] } };
         this.myNegotiations = [];
         this.notifications = [];
         this.settings = { showTradingHints: false };
@@ -85,9 +85,9 @@ class MarketplaceApp {
             }
         });
 
-        stateManager.addEventListener('advertisementsUpdated', (e) => {
-            this.advertisements = e.detail;
-            this.renderAdvertisements();
+        stateManager.addEventListener('listingsUpdated', (e) => {
+            this.listings = e.detail;
+            this.renderListings();
         });
 
         stateManager.addEventListener('negotiationsUpdated', (e) => {
@@ -142,7 +142,7 @@ class MarketplaceApp {
             // 2. Wait for custom elements to be defined
             await Promise.all([
                 customElements.whenDefined('chemical-card'),
-                customElements.whenDefined('advertisement-item'),
+                customElements.whenDefined('listing-item'),
                 customElements.whenDefined('negotiation-card'),
                 customElements.whenDefined('offer-bubble')
             ]);
@@ -153,7 +153,7 @@ class MarketplaceApp {
             await Promise.all([
                 stateManager.loadProfile(), // Use StateManager
                 stateManager.loadShadowPrices(), // Use StateManager
-                stateManager.loadAdvertisements(),
+                stateManager.loadListings(),
                 stateManager.loadNegotiations(),
                 stateManager.loadTransactions(),
                 this.loadNotifications(),
@@ -581,32 +581,32 @@ class MarketplaceApp {
     }
 
     /**
-     * Render advertisement board
+     * Render listing board
+     * Updates chemical cards with current listings
      */
-    /**
-     * Render advertisement board using web components
-     */
-    renderAdvertisements() {
+    renderListings() {
+        if (!this.listings) return;
+
         ['C', 'N', 'D', 'Q'].forEach(chemical => {
             const card = document.querySelector(`chemical-card[chemical="${chemical}"]`);
             if (card) {
-                // Lit properties are case-sensitive
                 card.currentUserId = this.currentUser;
                 card.inventory = this.inventory[chemical];
                 card.shadowPrice = this.shadowPrices[chemical];
-                // Access ranges from this.ranges, not this.shadowPrices
+                
                 card.ranges = this.ranges?.[chemical] || { allowableIncrease: 0, allowableDecrease: 0 };
 
                 // Check for active negotiations for this chemical
-                const hasActiveNeg = this.myNegotiations.some(n => 
+                card.hasActiveNegotiation = this.myNegotiations.some(n => 
                     n.chemical === chemical && n.status === 'pending'
                 );
-                card.hasActiveNegotiation = hasActiveNeg;
 
-                // Filter buy ads: only show if player has inventory to fulfill the request
-                // If inventory is 0, hide all buy requests (can't sell what you don't have)
-                const allBuyAds = this.advertisements[chemical]?.buy || [];
+                // Filter listings - only show what they can sell into (human buy requests)
+                // Filter rule: If they have 0 inventory, hide all buy requests for that chemical
+                // (Can't sell what you don't have)
+                const allBuyAds = this.listings[chemical]?.buy || [];
                 const myInventory = this.inventory[chemical] || 0;
+                
                 const buyAds = myInventory > 0 ? allBuyAds : [];
 
                 card.buyAds = buyAds;
@@ -691,23 +691,23 @@ class MarketplaceApp {
     }
 
     /**
-     * Post advertisement (interest to buy)
+     * Post listing (interest to buy)
      */
-    async postAdvertisement(chemical, type = 'buy') {
+    async postListing(chemical, type = 'buy') {
         const adKey = `${chemical}-buy`;
 
-        // Check if already posting this ad (prevent race condition)
+        // Check if already posting this listing (prevent race condition)
         if (this.pendingAdPosts.has(adKey)) {
-            notifications.showToast(`Already posting buy advertisement for Chemical ${chemical}...`, 'warning');
+            notifications.showToast(`Already posting buy listing for Chemical ${chemical}...`, 'warning');
             return;
         }
 
-        // Check if user already has an active advertisement for this chemical
-        const existingAds = this.advertisements[chemical]?.['buy'] || [];
+        // Check if user already has an active listing for this chemical
+        const existingAds = this.listings[chemical]?.['buy'] || [];
         const hasActiveAd = existingAds.some(ad => ad.teamId === this.currentUser);
 
         if (hasActiveAd) {
-            notifications.showToast(`You already have an active buy advertisement for Chemical ${chemical}`, 'warning');
+            notifications.showToast(`You already have an active buy listing for Chemical ${chemical}`, 'warning');
             return;
         }
 
@@ -715,23 +715,23 @@ class MarketplaceApp {
             // Mark as pending to prevent duplicate clicks
             this.pendingAdPosts.add(adKey);
 
-            const response = await api.advertisements.post(chemical, 'buy');
+            const response = await api.listings.post(chemical, 'buy');
 
-            // Check if the returned ad was just created or already existed
-            const returnedAd = response.advertisement;
+            // Check if the returned listing was just created or already existed
+            const returnedAd = response.listing;
             const isNewAd = returnedAd && (Date.now() - returnedAd.createdAt * 1000) < 2000; // Created within last 2 seconds
 
             if (isNewAd) {
                 notifications.showToast(`Posted interest to buy ${chemical}`, 'success');
             } else {
-                notifications.showToast(`You already have an active buy advertisement for Chemical ${chemical}`, 'warning');
+                notifications.showToast(`You already have an active buy listing for Chemical ${chemical}`, 'warning');
             }
 
-            // Wait for advertisements to reload so duplicate check works on next click
-            await stateManager.loadAdvertisements();
+            // Wait for listings to reload so duplicate check works on next click
+            await stateManager.loadListings();
         } catch (error) {
-            console.error('Failed to post advertisement:', error);
-            notifications.showToast('Failed to post advertisement: ' + error.message, 'error');
+            console.error('Failed to post listing:', error);
+            notifications.showToast('Failed to post listing: ' + error.message, 'error');
         } finally {
             // Always remove pending flag
             this.pendingAdPosts.delete(adKey);
@@ -750,8 +750,8 @@ class MarketplaceApp {
             return;
         }
 
-        // Check if user already has an active buy ad for this chemical
-        const existingAds = this.advertisements[chemical]?.['buy'] || [];
+        // Check if user already has an active buy listing for this chemical
+        const existingAds = this.listings[chemical]?.['buy'] || [];
         const hasActiveBuyAd = existingAds.some(ad => ad.buyerId === this.currentUser);
 
         // If revising, check for active negotiations related to this chemical
@@ -853,7 +853,7 @@ class MarketplaceApp {
                 }
 
                 this.closeOfferModal();
-                await stateManager.loadAdvertisements();
+                await stateManager.loadListings();
             } else {
                 notifications.showToast(response.message || 'Failed to post buy request', 'error');
             }
@@ -895,14 +895,16 @@ class MarketplaceApp {
         document.getElementById('respond-buyer-name').textContent = buyerTeamName;
         document.getElementById('respond-chemical').textContent = `Chemical ${chemical}`;
 
-        // Get buy request details from advertisements
-        const buyAds = this.advertisements[chemical]?.buy || [];
+        // Get buy request details from listings
+        const buyAds = this.listings[chemical]?.buy || [];
         const buyRequest = buyAds.find(ad => ad.teamId === buyerTeamId);
 
         // Set request details (if we have them - otherwise use defaults)
-        // Note: Current advertisement system doesn't store quantity/price, so we'll use defaults
-        document.getElementById('respond-requested-qty').textContent = '?';
-        document.getElementById('respond-max-price').textContent = '?';
+        const requestedQty = buyRequest?.quantity || 100;
+        const maxPrice = buyRequest?.maxPrice || 5.00;
+
+        document.getElementById('respond-requested-qty').textContent = requestedQty.toLocaleString();
+        document.getElementById('respond-max-price').textContent = this.formatCurrency(maxPrice);
 
         // Set your inventory and shadow price
         const yourInventory = this.inventory[chemical] || 0;
@@ -1009,7 +1011,7 @@ class MarketplaceApp {
 
                 this.closeRespondModal();
                 await stateManager.loadNegotiations();
-                await stateManager.loadAdvertisements(); // Refresh to remove the ad we just responded to
+                await stateManager.loadListings(); // Refresh to remove the listing we just responded to
             } else {
                 notifications.showToast(response.message || 'Failed to send offer', 'error');
             }
@@ -1759,7 +1761,7 @@ class MarketplaceApp {
             this.updateBuyRequestTotal();
         });
 
-        // Web Component Events: Negotiate (from advertisement-item)
+        // Web Component Events: Negotiate (from listing-item)
         document.addEventListener('negotiate', (e) => {
             const { teamId, teamName, chemical, type, adId } = e.detail;
 
@@ -2050,7 +2052,7 @@ class MarketplaceApp {
             try {
                 await Promise.all([
                     stateManager.loadProfile().catch(e => console.error('Profile poll failed', e)),
-                    stateManager.loadAdvertisements().catch(e => console.error('Ad poll failed', e)),
+                    stateManager.loadListings().catch(e => console.error('Listing poll failed', e)),
                     stateManager.loadNegotiations().catch(e => console.error('Neg poll failed', e)),
                     this.loadNotifications().catch(e => console.error('Notif poll failed', e)),
                     stateManager.loadTransactions().catch(e => console.error('Txn poll failed', e))

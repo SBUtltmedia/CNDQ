@@ -153,33 +153,33 @@ class NegotiationManager {
                 ]
             );
 
-            // If this negotiation is linked to an advertisement, remove it immediately
-            // (prevents other teams from responding to the same ad)
+            // If this negotiation is linked to a listing, remove it immediately
+            // (prevents other teams from responding to the same listing)
             if ($adId) {
                 try {
-                    require_once __DIR__ . '/AdvertisementManager.php';
-                    // The ad belongs to the responder (they posted the buy request)
-                    $adManager = new AdvertisementManager($responderId);
+                    require_once __DIR__ . '/ListingManager.php';
+                    // The listing belongs to the responder (they posted the buy request)
+                    $listingManager = new ListingManager($responderId);
 
-                    // Check if ad still exists before trying to remove
-                    $existingAds = $adManager->getAdvertisements();
-                    $adExists = false;
-                    foreach ($existingAds['ads'] ?? [] as $ad) {
+                    // Check if listing still exists before trying to remove
+                    $existingListings = $listingManager->getListings();
+                    $listingExists = false;
+                    foreach ($existingListings['ads'] ?? [] as $ad) {
                         if ($ad['id'] === $adId) {
-                            $adExists = true;
+                            $listingExists = true;
                             break;
                         }
                     }
 
-                    if ($adExists) {
-                        $adManager->removeAdvertisement($adId);
-                        error_log("NegotiationManager: Removed advertisement {$adId} after negotiation initiation.");
+                    if ($listingExists) {
+                        $listingManager->removeListing($adId);
+                        error_log("NegotiationManager: Removed listing {$adId} after negotiation initiation.");
                     } else {
-                        error_log("NegotiationManager: Advertisement {$adId} already removed (race condition).");
+                        error_log("NegotiationManager: Listing {$adId} already removed (race condition).");
                     }
                 } catch (Exception $e) {
-                    error_log("NegotiationManager: Failed to remove ad {$adId}: " . $e->getMessage());
-                    // Don't throw - ad removal failure shouldn't block negotiation creation
+                    error_log("NegotiationManager: Failed to remove listing {$adId}: " . $e->getMessage());
+                    // Don't throw - listing removal failure shouldn't block negotiation creation
                 }
             }
 
@@ -487,20 +487,20 @@ class NegotiationManager {
                 error_log("NegotiationManager: Failed to emit accept events: " . $e->getMessage());
             }
 
-            // Remove associated advertisement and buy order if they exist
+            // Remove associated listing and buy order if they exist
             if (!empty($negotiation['adId'])) {
                 try {
-                    require_once __DIR__ . '/AdvertisementManager.php';
-                    // Determine who owned the ad
+                    require_once __DIR__ . '/ListingManager.php';
+                    // Determine who owned the listing
                     // If type was 'buy' from initiator, initiator posted it.
-                    // If it was 'sell' from initiator, they were responding to a 'buy' ad from responder.
+                    // If it was 'sell' from initiator, they were responding to a 'buy' listing from responder.
                     $adOwner = (($negotiation['type'] ?? 'buy') === 'buy') ? $negotiation['initiatorId'] : $negotiation['responderId'];
 
-                    $adManager = new AdvertisementManager($adOwner);
+                    $listingManager = new ListingManager($adOwner);
                     
-                    // 1. Remove the public advertisement event
-                    $adManager->removeAdvertisement($negotiation['adId']);
-                    error_log("NegotiationManager: Automatically removed advertisement {$negotiation['adId']} after acceptance.");
+                    // 1. Remove the public listing event
+                    $listingManager->removeListing($negotiation['adId']);
+                    error_log("NegotiationManager: Automatically removed listing {$negotiation['adId']} after acceptance.");
 
                     // 2. ALSO remove the corresponding buy order event for this chemical
                     try {
@@ -520,7 +520,7 @@ class NegotiationManager {
                         error_log("NegotiationManager: Failed to remove associated buy order: " . $e->getMessage());
                     }
                 } catch (Exception $e) {
-                    error_log("NegotiationManager: Failed to cleanup linked advertisement/buy-order: " . $e->getMessage());
+                    error_log("NegotiationManager: Failed to cleanup linked listing/buy-order: " . $e->getMessage());
                 }
             }
 

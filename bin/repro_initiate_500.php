@@ -17,14 +17,14 @@ $inputData = [
 require_once __DIR__ . '/../lib/Database.php';
 require_once __DIR__ . '/../lib/NegotiationManager.php';
 require_once __DIR__ . '/../lib/TeamStorage.php';
-require_once __DIR__ . '/../lib/AdvertisementManager.php';
+require_once __DIR__ . '/../lib/ListingManager.php';
 require_once __DIR__ . '/../lib/SessionManager.php';
 
-// Create a mock ad for test_mail2 so adId is valid-ish
-$adManager = new AdvertisementManager('test_mail2@stonybrook.edu');
-$result = $adManager->postAdvertisement('C', 'buy');
+// Create a mock listing for test_mail2 so adId is valid-ish
+$listingManager = new ListingManager('test_mail2@stonybrook.edu');
+$result = $listingManager->postListing('C', 'buy');
 $realAdId = $result['ads'][0]['id'] ?? 'failed_to_create_ad';
-echo "Created mock Ad: $realAdId\n";
+echo "Created mock Listing: $realAdId\n";
 
 $inputData['adId'] = $realAdId;
 

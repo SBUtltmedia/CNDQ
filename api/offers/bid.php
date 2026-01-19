@@ -83,10 +83,13 @@ try {
 
     $result = $storage->addBuyOrder($buyOrderData);
 
-    // ALSO post advertisement so it shows up in the public marketplace
-    require_once __DIR__ . '/../../lib/AdvertisementManager.php';
-    $adManager = new AdvertisementManager($currentUserEmail, $profile['teamName'] ?? null);
-    $adManager->postAdvertisement($chemical, 'buy');
+    // ALSO post listing so it shows up in the public marketplace
+    require_once __DIR__ . '/../../lib/ListingManager.php';
+    $listingManager = new ListingManager($currentUserEmail, $profile['teamName'] ?? null);
+    $listingManager->postListing($chemical, 'buy', [
+        'quantity' => $quantity,
+        'maxPrice' => $maxPrice
+    ]);
 
     // Get the created buy order (last one in array)
     $buyOrders = $result['interests'];

@@ -12,7 +12,7 @@ export class StateManager extends EventTarget {
             inventory: { C: 0, N: 0, D: 0, Q: 0 },
             shadowPrices: { C: 0, N: 0, D: 0, Q: 0, maxProfit: 0 },
             ranges: {},
-            advertisements: { C: { buy: [], sell: [] }, N: { buy: [], sell: [] }, D: { buy: [], sell: [] }, Q: { buy: [], sell: [] } },
+            listings: { C: { buy: [], sell: [] }, N: { buy: [], sell: [] }, D: { buy: [], sell: [] }, Q: { buy: [], sell: [] } },
             myNegotiations: [],
             transactions: [],
             notifications: [],
@@ -106,15 +106,15 @@ export class StateManager extends EventTarget {
     }
 
     /**
-     * Load advertisements
+     * Load listings
      */
-    async loadAdvertisements() {
+    async loadListings() {
         try {
-            const data = await api.advertisements.list();
-            this.state.advertisements = data.advertisements;
-            this.notify('advertisementsUpdated', this.state.advertisements);
+            const data = await api.listings.list();
+            this.state.listings = data.listings;
+            this.notify('listingsUpdated', this.state.listings);
         } catch (error) {
-            console.error('StateManager: Failed to load advertisements:', error);
+            console.error('StateManager: Failed to load listings:', error);
         }
     }
 

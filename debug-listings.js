@@ -37,43 +37,43 @@ const puppeteer = require('puppeteer');
             const shadowRoot = card.shadowRoot;
             if (!shadowRoot) return { error: 'No shadow root' };
 
-            const adsContainer = shadowRoot.querySelector('.ads-container');
-            if (!adsContainer) return { error: 'No ads-container' };
+            const listingsContainer = shadowRoot.querySelector('.listings-container');
+            if (!listingsContainer) return { error: 'No listings-container' };
 
-            const emptyMsg = adsContainer.querySelector('.empty-ads');
-            const adItems = adsContainer.querySelectorAll('advertisement-item');
+            const emptyMsg = listingsContainer.querySelector('.empty-listings');
+            const adItems = listingsContainer.querySelectorAll('listing-item');
 
             const results = {
                 hasEmptyMessage: !!emptyMsg,
                 emptyMessageText: emptyMsg ? emptyMsg.textContent : null,
-                adItemCount: adItems.length,
-                adItems: []
+                listingItemCount: adItems.length,
+                listingItems: []
             };
 
-            // Check each ad-item
+            // Check each listing-item
             adItems.forEach((adItem, index) => {
                 const adShadow = adItem.shadowRoot;
                 const info = {
                     index,
                     hasShadowRoot: !!adShadow,
                     teamName: adItem.teamName,
-                    adId: adItem.adId,
-                    isMyAd: adItem.isMyAd
+                    listingId: adItem.adId,
+                    isMyListing: adItem.isMyAd
                 };
 
                 if (adShadow) {
-                    const adDiv = adShadow.querySelector('.ad-item');
+                    const adDiv = adShadow.querySelector('.listing-item');
                     const teamNameEl = adShadow.querySelector('.team-name');
                     const button = adShadow.querySelector('.btn');
 
-                    info.hasAdDiv = !!adDiv;
-                    info.adDivHTML = adDiv ? adDiv.innerHTML : null;
+                    info.hasListingDiv = !!adDiv;
+                    info.listingDivHTML = adDiv ? adDiv.innerHTML : null;
                     info.teamNameText = teamNameEl ? teamNameEl.textContent : null;
                     info.hasButton = !!button;
                     info.buttonText = button ? button.textContent : null;
                 }
 
-                results.adItems.push(info);
+                results.listingItems.push(info);
             });
 
             return results;

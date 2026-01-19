@@ -4,7 +4,7 @@
  * GET: Get all active advertisements grouped by chemical
  */
 
-require_once __DIR__ . '/../../lib/AdvertisementManager.php';
+require_once __DIR__ . '/../../lib/ListingManager.php';
 require_once __DIR__ . '/../../userData.php';
 
 header('Content-Type: application/json');
@@ -18,14 +18,14 @@ if (!$currentUserEmail) {
 }
 
 try {
-    $advertisements = AdvertisementManager::getAdvertisementsByChemical();
+    $listings = ListingManager::getListingsByChemical();
 
     // Include user's own ads so they can see their buy/sell requests
     // The frontend will mark them with isMyAd flag for special display
 
     echo json_encode([
         'success' => true,
-        'advertisements' => $advertisements
+        'listings' => $listings
     ]);
 
 } catch (Exception $e) {

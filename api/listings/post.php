@@ -5,7 +5,7 @@
  * Body: { chemical: "C", type: "buy" | "sell" }
  */
 
-require_once __DIR__ . '/../../lib/AdvertisementManager.php';
+require_once __DIR__ . '/../../lib/ListingManager.php';
 require_once __DIR__ . '/../../lib/SessionManager.php';
 require_once __DIR__ . '/../../lib/TeamStorage.php';
 require_once __DIR__ . '/../../userData.php';
@@ -33,7 +33,7 @@ if (!$sessionManager->isTradingAllowed()) {
     http_response_code(403);
     echo json_encode([
         'error' => 'Trading not allowed',
-        'message' => 'Market is currently ' . $state['phase'] . '. Cannot post advertisements now.',
+        'message' => 'Market is currently ' . $state['phase'] . '. Cannot post listings now.',
         'currentPhase' => $state['phase']
     ]);
     exit;
@@ -67,13 +67,13 @@ try {
     $storage = new TeamStorage($currentUserEmail);
     $profile = $storage->getProfile();
 
-    $adManager = new AdvertisementManager($currentUserEmail, $profile['teamName']);
-    $ad = $adManager->postAdvertisement($chemical, $type);
+    $listingManager = new ListingManager($currentUserEmail, $profile['teamName']);
+    $listing = $listingManager->postListing($chemical, $type);
 
     echo json_encode([
         'success' => true,
-        'message' => 'Advertisement posted successfully',
-        'advertisement' => $ad
+        'message' => 'Listing posted successfully',
+        'listing' => $listing
     ]);
 
 } catch (Exception $e) {

@@ -75,7 +75,7 @@ const componentStyles = css`
         opacity: 0.5;
         cursor: not-allowed;
     }
-    .ads-header {
+    .listings-header {
         font-size: 0.75rem;
         font-weight: 700;
         color: var(--color-text-secondary, #e5e7eb);
@@ -83,12 +83,12 @@ const componentStyles = css`
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
-    .ads-container {
+    .listings-container {
         max-height: 24rem;
         overflow-y: auto;
         padding-right: 0.25rem; /* for scrollbar */
     }
-    .empty-ads {
+    .empty-listings {
         font-size: 0.75rem;
         color: var(--color-text-tertiary, #d1d5db);
         text-align: center;
@@ -192,28 +192,30 @@ class ChemicalCard extends LitElement {
                             @click=${this.handlePostBuyRequest}>
                             ${hasActiveBuyAd ? '✏️ Revise Buy Request' : '📋 Post Buy Request'}
                         </button>
-                        <p class="empty-ads" style="margin: 0.5rem 0 0; text-align: center;">
+                        <p class="empty-listings" style="margin: 0.5rem 0 0; text-align: center;">
                             ${hasActiveBuyAd ? 'Click to update or remove your request.' : 'Post what you need, teams will offer to sell.'}
                         </p>
                     </div>
 
                     <div>
-                        <h4 class="ads-header">Buy Requests</h4>
-                        <div class="ads-container">
+                        <h4 class="listings-header">Buy Requests</h4>
+                        <div class="listings-container">
                             ${this.buyAds.length === 0
-                                ? html`<p class="empty-ads">${this.inventory > 0 ? 'No buy requests yet' : 'Get inventory to see buy requests'}</p>`
+                                ? html`<p class="empty-listings">${this.inventory > 0 ? 'No buy requests yet' : 'Get inventory to see buy requests'}</p>`
                                 : this.buyAds.map(ad => {
-                                    console.log(`🔧 Creating ad-item for ${this.chemical}:`, ad.teamName, ad.id, ad.teamId === this.currentUserId ? '(MINE)' : '');
+                                    console.log(`🔧 Creating listing-item for ${this.chemical}:`, ad.teamName, ad.id, ad.teamId === this.currentUserId ? '(MINE)' : '');
                                     return html`
-                                        <advertisement-item
+                                        <listing-item
                                             .adId=${ad.id}
                                             .teamName=${ad.teamName}
                                             .teamId=${ad.teamId}
                                             type="buy"
                                             .chemical=${this.chemical}
+                                            .quantity=${ad.quantity}
+                                            .maxPrice=${ad.maxPrice}
                                             ?isMyAd=${ad.teamId === this.currentUserId}
                                             ?disabled=${this.hasActiveNegotiation}
-                                        ></advertisement-item>
+                                        ></listing-item>
                                     `;
                                 })
                             }

@@ -50,8 +50,8 @@ echo "This means: If you have 0 inventory of Chemical D, you won't see ANY buy r
 echo "even though someone wants to buy it from you.\n\n";
 
 echo "Testing for each chemical:\n";
-require_once __DIR__ . '/lib/AdvertisementManager.php';
-$adsByChemical = AdvertisementManager::getAdvertisementsByChemical();
+require_once __DIR__ . '/lib/ListingManager.php';
+$adsByChemical = ListingManager::getListingsByChemical();
 foreach (['C', 'N', 'D', 'Q'] as $chemical) {
     $myInventory = $state['inventory'][$chemical] ?? 0;
     $allBuyAds = $adsByChemical[$chemical]['buy'] ?? [];
