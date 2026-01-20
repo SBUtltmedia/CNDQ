@@ -57,11 +57,22 @@ export class StateManager extends EventTarget {
 
     /**
      * Load shadow prices (read-only, does NOT recalculate)
+     * Auto-recalculates if shadow prices are all zeros but inventory isn't
      */
     async loadShadowPrices() {
         try {
             const data = await api.production.readShadowPrices();
             if (data && data.shadowPrices) {
+                // Check if shadow prices are all zeros but inventory isn't
+                const allShadowZero = Object.values(data.shadowPrices).every(v => v === 0);
+                const hasInventory = data.inventory && Object.values(data.inventory).some(v => v > 0);
+
+                if (allShadowZero && hasInventory) {
+                    console.log('StateManager: Shadow prices are zero but inventory exists - auto-recalculating');
+                    await this.recalculateShadowPrices();
+                    return; // recalculateShadowPrices already notifies
+                }
+
                 this.state.shadowPrices = {
                     ...data.shadowPrices,
                     maxProfit: this.state.shadowPrices?.maxProfit || 0
