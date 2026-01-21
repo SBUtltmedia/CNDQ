@@ -980,7 +980,7 @@ class MarketplaceApp {
     async submitRespondOffer() {
         if (!this.currentRespondContext) return;
 
-        const { buyerTeamId, buyerTeamName, chemical, adId } = this.currentRespondContext;
+        const { buyerTeamId, buyerTeamName, chemical, listingId } = this.currentRespondContext;
         const quantity = parseInt(document.getElementById('respond-quantity').value);
         const price = parseFloat(document.getElementById('respond-price').value);
 
@@ -999,7 +999,7 @@ class MarketplaceApp {
         try {
             // Initiate negotiation with the buyer. User is responding to a buy request,
             // so from the user's perspective (the initiator of this negotiation), it's a 'sell'.
-            const response = await api.negotiations.initiate(buyerTeamId, chemical, quantity, price, 'sell', adId);
+            const response = await api.negotiations.initiate(buyerTeamId, chemical, quantity, price, 'sell', listingId);
 
             if (response.success) {
                 notifications.showToast(`Offer sent to ${buyerTeamName} for ${quantity} gallons of ${chemical}`, 'success');
@@ -1763,11 +1763,11 @@ class MarketplaceApp {
 
         // Web Component Events: Negotiate (from listing-item)
         document.addEventListener('negotiate', (e) => {
-            const { teamId, teamName, chemical, type, adId } = e.detail;
+            const { teamId, teamName, chemical, type, listingId } = e.detail;
 
             // If responding to a buy request, use special respond modal
             if (type === 'buy') {
-                this.openRespondModal(teamId, teamName, chemical, adId);
+                this.openRespondModal(teamId, teamName, chemical, listingId);
             } else if (type === 'sell') {
                 // If initiating negotiation with a seller (we want to buy from them)
                 this.openNegotiationModal();

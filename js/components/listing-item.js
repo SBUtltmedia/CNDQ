@@ -20,8 +20,8 @@ const componentStyles = css`
         background-color: #4b5563; /* Slightly lighter */
     }
     .listing-item-mine {
-        background-color: var(--color-bg-ad-mine, #422006);
-        border: 1px solid var(--color-border-ad-mine, #d97706);
+        background-color: var(--color-bg-listing-mine, #422006);
+        border: 1px solid var(--color-border-listing-mine, #d97706);
     }
     .listing-item-mine:hover {
         filter: brightness(1.1);
@@ -64,20 +64,20 @@ class ListingItem extends LitElement {
     static styles = componentStyles;
 
     static properties = {
-        adId: { type: String, reflect: true },
+        listingId: { type: String, reflect: true },
         teamName: { type: String, reflect: true },
         teamId: { type: String, reflect: true },
         type: { type: String, reflect: true },
         chemical: { type: String, reflect: true },
         quantity: { type: Number },
         maxPrice: { type: Number },
-        isMyAd: { type: Boolean, reflect: true },
+        isMyListing: { type: Boolean, reflect: true },
         disabled: { type: Boolean, reflect: true }
     };
 
     constructor() {
         super();
-        this.isMyAd = false;
+        this.isMyListing = false;
         this.disabled = false;
         this.quantity = null;
         this.maxPrice = null;
@@ -87,7 +87,7 @@ class ListingItem extends LitElement {
         if (this.disabled) return;
         this.dispatchEvent(new CustomEvent('negotiate', {
             detail: {
-                adId: this.adId,
+                listingId: this.listingId,
                 teamId: this.teamId,
                 teamName: this.teamName,
                 chemical: this.chemical,
@@ -101,12 +101,12 @@ class ListingItem extends LitElement {
     }
 
     render() {
-        console.log(`🎪 Rendering listing-item: ${this.teamName} (${this.adId}), isMyAd=${this.isMyAd}, disabled=${this.disabled}`);
+        console.log(`🎪 Rendering listing-item: ${this.teamName} (${this.listingId}), isMyListing=${this.isMyListing}, disabled=${this.disabled}`);
         
         const showDetails = this.quantity && this.maxPrice;
 
         return html`
-            <div class="listing-item ${this.isMyAd ? 'listing-item-mine' : ''}">
+            <div class="listing-item ${this.isMyListing ? 'listing-item-mine' : ''}">
                 <div class="team-info">
                     <div style="display: flex; flex-direction: column;">
                         <span class="team-name">${this.teamName}</span>
@@ -116,9 +116,9 @@ class ListingItem extends LitElement {
                             </span>
                         ` : ''}
                     </div>
-                    ${this.isMyAd ? html`<span class="your-listing"> (Your Request)</span>` : ''}
+                    ${this.isMyListing ? html`<span class="your-listing"> (Your Request)</span>` : ''}
                 </div>
-                ${!this.isMyAd ? html`
+                ${!this.isMyListing ? html`
                     <button class="btn" @click=${this.handleNegotiate} ?disabled=${this.disabled}>
                         ${this.disabled ? 'Negotiating...' : 'Sell to'}
                     </button>

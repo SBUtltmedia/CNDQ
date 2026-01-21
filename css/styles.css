@@ -35,8 +35,8 @@
     --color-border: #4b5563;
     --color-border-light: #6b7280;
 
-    --color-bg-ad-mine: #422006;
-    --color-border-ad-mine: #d97706;
+    --color-bg-listing-mine: #422006;
+    --color-border-listing-mine: #d97706;
 
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -72,8 +72,8 @@
     --color-border: #d1d5db;
     --color-border-light: #e5e7eb;
 
-    --color-bg-ad-mine: #fff7ed; /* Orange 50 */
-    --color-border-ad-mine: #f97316; /* Orange 500 */
+    --color-bg-listing-mine: #fff7ed; /* Orange 50 */
+    --color-border-listing-mine: #f97316; /* Orange 500 */
 
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -109,8 +109,8 @@
     --color-border: #ffffff;
     --color-border-light: #cccccc;
 
-    --color-bg-ad-mine: #000000;
-    --color-border-ad-mine: #ffaa00;
+    --color-bg-listing-mine: #000000;
+    --color-border-listing-mine: #ffaa00;
 
     --shadow-sm: 0 1px 3px 0 rgba(255, 255, 255, 0.3);
     --shadow-md: 0 4px 8px 0 rgba(255, 255, 255, 0.3);

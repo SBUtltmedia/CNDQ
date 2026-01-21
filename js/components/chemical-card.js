@@ -206,14 +206,14 @@ class ChemicalCard extends LitElement {
                                     console.log(`🔧 Creating listing-item for ${this.chemical}:`, ad.teamName, ad.id, ad.teamId === this.currentUserId ? '(MINE)' : '');
                                     return html`
                                         <listing-item
-                                            .adId=${ad.id}
+                                            .listingId=${ad.id}
                                             .teamName=${ad.teamName}
                                             .teamId=${ad.teamId}
                                             type="buy"
                                             .chemical=${this.chemical}
                                             .quantity=${ad.quantity}
                                             .maxPrice=${ad.maxPrice}
-                                            ?isMyAd=${ad.teamId === this.currentUserId}
+                                            ?isMyListing=${ad.teamId === this.currentUserId}
                                             ?disabled=${this.hasActiveNegotiation}
                                         ></listing-item>
                                     `;
