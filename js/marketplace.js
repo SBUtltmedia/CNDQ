@@ -53,7 +53,7 @@ class MarketplaceApp {
         this.currentModal = null;
 
         // Track pending ad posts to prevent race conditions
-        this.pendingAdPosts = new Set();
+        this.pendingListingPosts = new Set();
 
         // Track seen global trades to avoid duplicate toasts
         this.processedGlobalTrades = new Set();
@@ -604,12 +604,12 @@ class MarketplaceApp {
                 // Filter listings - only show what they can sell into (human buy requests)
                 // Filter rule: If they have 0 inventory, hide all buy requests for that chemical
                 // (Can't sell what you don't have)
-                const allBuyAds = this.listings[chemical]?.buy || [];
+                const allBuyListings = this.listings[chemical]?.buy || [];
                 const myInventory = this.inventory[chemical] || 0;
                 
-                const buyAds = myInventory > 0 ? allBuyAds : [];
+                const buyListings = myInventory > 0 ? allBuyListings : [];
 
-                card.buyAds = buyAds;
+                card.buyListings = buyListings;
             }
         });
     }
@@ -697,7 +697,7 @@ class MarketplaceApp {
         const adKey = `${chemical}-buy`;
 
         // Check if already posting this listing (prevent race condition)
-        if (this.pendingAdPosts.has(adKey)) {
+        if (this.pendingListingPosts.has(adKey)) {
             notifications.showToast(`Already posting buy listing for Chemical ${chemical}...`, 'warning');
             return;
         }
@@ -713,7 +713,7 @@ class MarketplaceApp {
 
         try {
             // Mark as pending to prevent duplicate clicks
-            this.pendingAdPosts.add(adKey);
+            this.pendingListingPosts.add(adKey);
 
             const response = await api.listings.post(chemical, 'buy');
 
@@ -734,7 +734,7 @@ class MarketplaceApp {
             notifications.showToast('Failed to post listing: ' + error.message, 'error');
         } finally {
             // Always remove pending flag
-            this.pendingAdPosts.delete(adKey);
+            this.pendingListingPosts.delete(adKey);
         }
     }
 
@@ -874,7 +874,7 @@ class MarketplaceApp {
     /**
      * Open respond to buy request modal
      */
-    openRespondModal(buyerTeamId, buyerTeamName, chemical, adId) {
+    openRespondModal(buyerTeamId, buyerTeamName, chemical, listingId) {
         // Don't open if production modal is visible (it should block everything)
         if (this.isProductionModalBlocking()) {
             console.log('⚠️ Production modal is open - blocking respond modal');
@@ -888,7 +888,7 @@ class MarketplaceApp {
             buyerTeamId,
             buyerTeamName,
             chemical,
-            adId
+            listingId
         };
 
         // Set buyer info
@@ -896,8 +896,8 @@ class MarketplaceApp {
         document.getElementById('respond-chemical').textContent = `Chemical ${chemical}`;
 
         // Get buy request details from listings
-        const buyAds = this.listings[chemical]?.buy || [];
-        const buyRequest = buyAds.find(ad => ad.teamId === buyerTeamId);
+        const buyListings = this.listings[chemical]?.buy || [];
+        const buyRequest = buyListings.find(ad => ad.teamId === buyerTeamId);
 
         // Set request details (if we have them - otherwise use defaults)
         const requestedQty = buyRequest?.quantity || 100;

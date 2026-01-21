@@ -104,7 +104,7 @@ class ChemicalCard extends LitElement {
         inventory: { type: Number },
         shadowPrice: { type: Number },
         ranges: { type: Object },
-        buyAds: { type: Array },
+        buyListings: { type: Array },
         currentUserId: { type: String },
         hasActiveNegotiation: { type: Boolean }
     };
@@ -115,7 +115,7 @@ class ChemicalCard extends LitElement {
         this.inventory = 0;
         this.shadowPrice = 0;
         this.ranges = { allowableIncrease: 0, allowableDecrease: 0 };
-        this.buyAds = [];
+        this.buyListings = [];
         this.currentUserId = '';
         this.hasActiveNegotiation = false;
     }
@@ -151,7 +151,7 @@ class ChemicalCard extends LitElement {
 
     render() {
         const { border, header } = this.getChemicalColor(this.chemical);
-        const hasActiveBuyAd = this.buyAds.some(ad => ad.teamId === this.currentUserId);
+        const hasActiveBuyListing = this.buyListings.some(listing => listing.teamId === this.currentUserId);
         
         const increase = this.ranges?.allowableIncrease ?? 0;
         const decrease = this.ranges?.allowableDecrease ?? 0;
@@ -188,32 +188,32 @@ class ChemicalCard extends LitElement {
                     <div style="margin-bottom: 1rem;">
                         <button
                             id="post-buy-btn"
-                            class="btn ${hasActiveBuyAd ? 'btn-revise' : ''}"
+                            class="btn ${hasActiveBuyListing ? 'btn-revise' : ''}"
                             @click=${this.handlePostBuyRequest}>
-                            ${hasActiveBuyAd ? '✏️ Revise Buy Request' : '📋 Post Buy Request'}
+                            ${hasActiveBuyListing ? '✏️ Revise Buy Request' : '📋 Post Buy Request'}
                         </button>
                         <p class="empty-listings" style="margin: 0.5rem 0 0; text-align: center;">
-                            ${hasActiveBuyAd ? 'Click to update or remove your request.' : 'Post what you need, teams will offer to sell.'}
+                            ${hasActiveBuyListing ? 'Click to update or remove your request.' : 'Post what you need, teams will offer to sell.'}
                         </p>
                     </div>
 
                     <div>
                         <h4 class="listings-header">Buy Requests</h4>
                         <div class="listings-container">
-                            ${this.buyAds.length === 0
+                            ${this.buyListings.length === 0
                                 ? html`<p class="empty-listings">${this.inventory > 0 ? 'No buy requests yet' : 'Get inventory to see buy requests'}</p>`
-                                : this.buyAds.map(ad => {
-                                    console.log(`🔧 Creating listing-item for ${this.chemical}:`, ad.teamName, ad.id, ad.teamId === this.currentUserId ? '(MINE)' : '');
+                                : this.buyListings.map(listing => {
+                                    console.log(`🔧 Creating listing-item for ${this.chemical}:`, listing.teamName, listing.id, listing.teamId === this.currentUserId ? '(MINE)' : '');
                                     return html`
                                         <listing-item
-                                            .listingId=${ad.id}
-                                            .teamName=${ad.teamName}
-                                            .teamId=${ad.teamId}
+                                            .listingId=${listing.id}
+                                            .teamName=${listing.teamName}
+                                            .teamId=${listing.teamId}
                                             type="buy"
                                             .chemical=${this.chemical}
-                                            .quantity=${ad.quantity}
-                                            .maxPrice=${ad.maxPrice}
-                                            ?isMyListing=${ad.teamId === this.currentUserId}
+                                            .quantity=${listing.quantity}
+                                            .maxPrice=${listing.maxPrice}
+                                            ?isMyListing=${listing.teamId === this.currentUserId}
                                             ?disabled=${this.hasActiveNegotiation}
                                         ></listing-item>
                                     `;
