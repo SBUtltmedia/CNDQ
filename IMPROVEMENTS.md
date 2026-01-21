@@ -34,7 +34,14 @@ This document outlines architectural and quality improvements to enhance develop
     *   **Decision:** Maintain "No-Build" architecture (Runtime CDNs) to ensure code remains readable, hackable, and debuggable directly in the browser.
     *   **Optimization:** Focus on efficient Import Maps and browser caching strategies rather than compilation.
 
-## 4. 🛡️ Code Quality Checks
+## 4. 🚫 Ad Blocker Compliance (Renaming "Ads" to "Listings")
+**Goal:** Prevent ad blockers from hiding critical UI elements.
+
+*   **Context:** See `docs/AD_BLOCKER_REFACTOR.md`.
+*   **Action:** Rename all CSS selectors, IDs, and internal variables from `ad`/`advertisement` to `listing` or `trade`.
+*   **Scope:** Frontend selectors (Immediate), Backend Logic (Follow-up), API Endpoints (Final).
+
+## 5. 🛡️ Code Quality Checks
 **Goal:** Automate style enforcement and catch errors early.
 
 *   **Action:** Add **Prettier** and **ESLint** to `package.json`.
