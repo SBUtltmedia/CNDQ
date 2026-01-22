@@ -268,9 +268,15 @@ class NegotiationManager {
         // If type='sell', Initiator is Seller, Responder is Buyer.
         $isSeller = ($negotiation['type'] === 'buy' && $fromTeamId === $negotiation['responderId']) ||
                     ($negotiation['type'] === 'sell' && $fromTeamId === $negotiation['initiatorId']);
-        
+
         if ($isSeller) {
-            $this->checkInventory($fromTeamId, $negotiation['chemical'], $quantity);
+            try {
+                $this->checkInventory($fromTeamId, $negotiation['chemical'], $quantity);
+            } catch (Exception $e) {
+                // Auto-reject the negotiation with the inventory error as reason
+                $this->rejectNegotiation($negotiationId, 'system', $e->getMessage());
+                throw new Exception("Trade invalidated: " . $e->getMessage());
+            }
         }
 
         // Calculate heat info
@@ -449,7 +455,15 @@ class NegotiationManager {
             if ($isSeller) {
                 // Get the last offer to know quantity
                 $lastOffer = end($negotiation['offers']);
-                $this->checkInventory($acceptingTeamId, $negotiation['chemical'], $lastOffer['quantity']);
+                try {
+                    $this->checkInventory($acceptingTeamId, $negotiation['chemical'], $lastOffer['quantity']);
+                } catch (Exception $e) {
+                    // Rollback current transaction first
+                    $this->db->rollback();
+                    // Then reject the negotiation with the reason
+                    $this->rejectNegotiation($negotiationId, 'system', $e->getMessage());
+                    throw new Exception("Trade invalidated: " . $e->getMessage());
+                }
             }
 
             // Update negotiation status to 'accepted' - marks it as consumed
@@ -547,51 +561,78 @@ class NegotiationManager {
 
     /**
      * Reject/Cancel negotiation
+     * @param string $negotiationId
+     * @param string $rejectingTeamId - Team rejecting, or 'system' for auto-rejection
+     * @param string|null $reason - Optional reason for rejection (e.g., "Insufficient inventory")
      */
-    public function rejectNegotiation($negotiationId, $rejectingTeamId) {
+    public function rejectNegotiation($negotiationId, $rejectingTeamId, $reason = null) {
         $negotiation = $this->getNegotiation($negotiationId);
 
         if (!$negotiation) {
             throw new Exception('Negotiation not found');
         }
 
-        // Verify team is part of this negotiation
-        if ($rejectingTeamId !== $negotiation['initiatorId'] && $rejectingTeamId !== $negotiation['responderId']) {
+        // Verify team is part of this negotiation (unless system rejection)
+        if ($rejectingTeamId !== 'system' &&
+            $rejectingTeamId !== $negotiation['initiatorId'] &&
+            $rejectingTeamId !== $negotiation['responderId']) {
             throw new Exception('Unauthorized');
         }
 
         // Start transaction
         $this->db->beginTransaction();
         try {
-            // Update negotiation
+            // Update negotiation with optional reason
             $this->db->execute(
                 'UPDATE negotiations
-                 SET status = ?, rejected_by = ?, rejected_at = ?, updated_at = ?
+                 SET status = ?, rejected_by = ?, rejected_at = ?, rejection_reason = ?, updated_at = ?
                  WHERE id = ?',
-                ['rejected', $rejectingTeamId, time(), time(), $negotiationId]
+                ['rejected', $rejectingTeamId, time(), $reason, time(), $negotiationId]
             );
 
             // Emit events to both parties
             try {
-                $otherTeamId = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
-                $otherTeamName = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderName'] : $negotiation['initiatorName'];
-                $rejectingTeamName = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['initiatorName'] : $negotiation['responderName'];
-                
-                $rStorage = new TeamStorage($rejectingTeamId);
-                $oStorage = new TeamStorage($otherTeamId);
+                $isSystemRejection = ($rejectingTeamId === 'system');
 
-                $rStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
-                $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
+                if ($isSystemRejection) {
+                    // System rejection - notify both parties
+                    $iStorage = new TeamStorage($negotiation['initiatorId']);
+                    $rStorage = new TeamStorage($negotiation['responderId']);
 
-                // Add notifications for history
-                $rStorage->addNotification([
-                    'type' => 'negotiation_rejected',
-                    'message' => "You cancelled the negotiation with $otherTeamName for Chemical {$negotiation['chemical']}."
-                ]);
-                $oStorage->addNotification([
-                    'type' => 'negotiation_rejected',
-                    'message' => "The negotiation for Chemical {$negotiation['chemical']} was cancelled by $rejectingTeamName."
-                ]);
+                    $iStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected', 'reason' => $reason]);
+                    $rStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected', 'reason' => $reason]);
+
+                    $reasonMsg = $reason ? " Reason: $reason" : "";
+                    $iStorage->addNotification([
+                        'type' => 'negotiation_rejected',
+                        'message' => "The negotiation for Chemical {$negotiation['chemical']} was cancelled due to validation failure.$reasonMsg"
+                    ]);
+                    $rStorage->addNotification([
+                        'type' => 'negotiation_rejected',
+                        'message' => "The negotiation for Chemical {$negotiation['chemical']} was cancelled due to validation failure.$reasonMsg"
+                    ]);
+                } else {
+                    // Normal rejection by a team member
+                    $otherTeamId = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
+                    $otherTeamName = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['responderName'] : $negotiation['initiatorName'];
+                    $rejectingTeamName = ($rejectingTeamId === $negotiation['initiatorId']) ? $negotiation['initiatorName'] : $negotiation['responderName'];
+
+                    $rejStorage = new TeamStorage($rejectingTeamId);
+                    $oStorage = new TeamStorage($otherTeamId);
+
+                    $rejStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
+                    $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'rejected']);
+
+                    // Add notifications for history
+                    $rejStorage->addNotification([
+                        'type' => 'negotiation_rejected',
+                        'message' => "You cancelled the negotiation with $otherTeamName for Chemical {$negotiation['chemical']}."
+                    ]);
+                    $oStorage->addNotification([
+                        'type' => 'negotiation_rejected',
+                        'message' => "The negotiation for Chemical {$negotiation['chemical']} was cancelled by $rejectingTeamName."
+                    ]);
+                }
             } catch (Exception $e) {
                 error_log("NegotiationManager: Failed to emit reject events: " . $e->getMessage());
             }
@@ -638,6 +679,7 @@ class NegotiationManager {
             'sessionNumber' => $neg['session_number'] ?? null,
             'status' => $neg['status'] ?? 'pending',
             'lastOfferBy' => $neg['last_offer_by'] ?? null,
+            'rejectionReason' => $neg['rejection_reason'] ?? null,
             'adId' => $neg['ad_id'] ?? null,
             'createdAt' => $neg['created_at'] ?? null,
             'updatedAt' => $neg['updated_at'] ?? null,

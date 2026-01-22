@@ -149,6 +149,8 @@ class NegotiationCard extends HTMLElement {
             wrapper.className = `card-wrapper bg-gray-800 rounded p-4 border-2 ${borderColor} shadow-lg transition relative synopsis-container cursor-default`;
             
             // Synopsis Content - Matching Active Card Layout
+            const totalValue = lastOffer.quantity * lastOffer.price;
+            
             wrapper.innerHTML = `
                 <button class="dismiss-btn absolute top-2 right-2 text-gray-400 hover:text-white transition" aria-label="Dismiss">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -167,15 +169,23 @@ class NegotiationCard extends HTMLElement {
                 </div>
 
                 <!-- Body -->
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-300">
-                        ${isAccepted ? `
-                            Final: <span class="font-mono font-bold text-white">${lastOffer.quantity} gal</span> @ <span class="font-mono font-bold text-white">${this.formatCurrency(lastOffer.price)}</span>
-                        ` : `
-                            <span class="italic opacity-60">Negotiation cancelled.</span>
-                        `}
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-300">
+                            ${isAccepted ? `
+                                Final: <span class="font-mono font-bold text-white">${lastOffer.quantity} gal</span> @ <span class="font-mono font-bold text-white">${this.formatCurrency(lastOffer.price)}</span>
+                            ` : `
+                                <span class="italic opacity-60">Negotiation cancelled.</span>
+                            `}
+                        </div>
+                        ${statusBadge}
                     </div>
-                    ${statusBadge}
+                    ${isAccepted ? `
+                    <div class="text-right border-t border-gray-700 pt-1 mt-1">
+                        <span class="text-xs text-gray-400 uppercase">Total:</span>
+                        <span class="font-mono font-bold text-green-400 text-lg">${this.formatCurrency(totalValue)}</span>
+                    </div>
+                    ` : ''}
                 </div>
             `;
 

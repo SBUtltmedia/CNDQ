@@ -431,7 +431,7 @@
             
             <!-- Button to view history -->
             <div class="flex justify-end mb-4">
-                <button id="view-history-btn" class="text-sm text-gray-400 hover:text-white flex items-center gap-1 transition">
+                <button id="view-history-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded shadow flex items-center gap-1 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     View Transaction History
                 </button>
@@ -959,6 +959,8 @@
                             <th class="py-3 font-semibold text-right">Qty</th>
                             <th class="py-3 font-semibold text-right">Price</th>
                             <th class="py-3 font-semibold text-right">Total</th>
+                            <th class="py-3 font-semibold text-right">Inv Before</th>
+                            <th class="py-3 font-semibold text-right">Inv After</th>
                             <th class="py-3 font-semibold pl-4">Counterparty</th>
                         </tr>
                     </thead>

@@ -296,12 +296,50 @@ class Database {
             $schema = file_get_contents($schemaFile);
             try {
                 $this->pdo->exec($schema);
-                $this->setSchemaVersion($expectedVersion);
-                error_log("Schema updated successfully to version $expectedVersion");
             } catch (PDOException $e) {
                 error_log("Schema update failed: " . $e->getMessage());
                 // Don't throw - allow app to continue with partial update
             }
+        }
+
+        // Apply migrations based on version
+        $this->applyMigrations($currentVersion, $expectedVersion);
+
+        $this->setSchemaVersion($expectedVersion);
+        error_log("Schema updated successfully to version $expectedVersion");
+    }
+
+    /**
+     * Apply incremental migrations between versions
+     */
+    private function applyMigrations($fromVersion, $toVersion) {
+        // Migration: v2 -> v3: Add rejection_reason column to negotiations
+        if ($fromVersion < 3 && $toVersion >= 3) {
+            $this->addColumnIfNotExists('negotiations', 'rejection_reason', 'TEXT');
+        }
+    }
+
+    /**
+     * Add a column to a table if it doesn't already exist
+     */
+    private function addColumnIfNotExists($table, $column, $type) {
+        try {
+            // Check if column exists by querying table info
+            $result = $this->pdo->query("PRAGMA table_info($table)")->fetchAll(PDO::FETCH_ASSOC);
+            $columnExists = false;
+            foreach ($result as $col) {
+                if ($col['name'] === $column) {
+                    $columnExists = true;
+                    break;
+                }
+            }
+
+            if (!$columnExists) {
+                $this->pdo->exec("ALTER TABLE $table ADD COLUMN $column $type");
+                error_log("Added column $column to $table");
+            }
+        } catch (PDOException $e) {
+            error_log("Failed to add column $column to $table: " . $e->getMessage());
         }
     }
 

@@ -4,12 +4,13 @@
  */
 
 // Import web components (cache-busting v4)
-import './components/chemical-card.js?v=7';
+import './components/chemical-card.js?v=8';
 import './components/listing-item.js?v=7';
 import './components/negotiation-card.js';
 import './components/offer-bubble.js';
 import './components/notification-manager.js';
 import './components/leaderboard-modal.js';
+import './components/buy-request-card.js';
 
 // Import API client
 import { api } from './api.js';
@@ -541,21 +542,33 @@ class MarketplaceApp {
             return;
         }
 
-        emptyMsg?.classList.add('hidden');
+        // Filter accepted and Sort by time desc
+        const sorted = [...this.transactions]
+            .filter(t => !t.status || t.status === 'accepted')
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-        // Sort by time desc
-        const sorted = [...this.transactions].sort((a, b) => b.timestamp - a.timestamp);
+        if (sorted.length === 0) {
+             emptyMsg?.classList.remove('hidden');
+             return;
+        }
+        emptyMsg?.classList.add('hidden');
 
         sorted.forEach(t => {
             const row = document.createElement('tr');
             row.className = 'hover:bg-gray-700/50 transition';
             
-            const date = new Date(t.timestamp * 1000);
-            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            let timeStr = 'Unknown';
+            if (t.timestamp) {
+                const date = new Date(t.timestamp * 1000);
+                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
             
             const isSale = t.role === 'seller';
             const typeColor = isSale ? 'text-green-400' : 'text-blue-400';
             const typeIcon = isSale ? '↗' : '↙';
+            const counterpartyName = t.counterpartyName || t.counterparty || 'Unknown';
+            const invBefore = t.inventoryBefore !== undefined ? this.formatNumber(t.inventoryBefore) : '-';
+            const invAfter = t.inventoryAfter !== undefined ? this.formatNumber(t.inventoryAfter) : '-';
             
             row.innerHTML = `
                 <td class="py-3 font-mono text-gray-400">${timeStr}</td>
@@ -564,7 +577,9 @@ class MarketplaceApp {
                 <td class="py-3 text-right font-mono">${this.formatNumber(t.quantity)}</td>
                 <td class="py-3 text-right font-mono">${this.formatCurrency(t.pricePerGallon)}</td>
                 <td class="py-3 text-right font-mono font-bold text-white">${this.formatCurrency(t.totalAmount)}</td>
-                <td class="py-3 pl-4 text-gray-400">vs ${t.counterparty || 'Unknown'}</td>
+                <td class="py-3 text-right font-mono text-gray-400">${invBefore}</td>
+                <td class="py-3 text-right font-mono text-gray-400">${invAfter}</td>
+                <td class="py-3 pl-4 text-gray-400">vs ${counterpartyName}</td>
             `;
             
             tbody.appendChild(row);
@@ -616,23 +631,32 @@ class MarketplaceApp {
 
     /**
      * Render negotiations summary using web components
+     * Includes pending buy requests (Phase 0) at the top, followed by active negotiations
      */
     renderNegotiations() {
         const container = document.getElementById('my-negotiations');
 
-        if (this.myNegotiations.length === 0) {
-            container.innerHTML = '<p class="text-gray-300 text-center py-8">You have no active negotiations</p>';
-            return;
+        // Collect user's own pending buy requests (Phase 0 - before anyone responds)
+        const myBuyRequests = [];
+        for (const chemical of ['C', 'N', 'D', 'Q']) {
+            const listings = this.listings[chemical]?.buy || [];
+            const myListing = listings.find(l => l.teamId === this.currentUser);
+            if (myListing) {
+                myBuyRequests.push({ ...myListing, chemical });
+            }
         }
 
         // Show pending negotiations OR newly completed ones that haven't been dismissed
-        const pendingOrNew = this.myNegotiations.filter(n => 
-            n.status === 'pending' || 
+        const pendingOrNew = this.myNegotiations.filter(n =>
+            n.status === 'pending' ||
             (n.status !== 'pending' && !this.seenCompletedNegotiations.has(n.id))
         ).slice(0, 5);
 
-        if (pendingOrNew.length === 0) {
-            container.innerHTML = '<p class="text-gray-300 text-center py-8">No pending negotiations</p>';
+        // Check if there's anything to show
+        const hasContent = myBuyRequests.length > 0 || pendingOrNew.length > 0;
+
+        if (!hasContent) {
+            container.innerHTML = '<p class="text-gray-300 text-center py-8">You have no active negotiations</p>';
             return;
         }
 
@@ -641,33 +665,54 @@ class MarketplaceApp {
             container.innerHTML = '';
         }
 
-        // Map existing cards by negotiation ID
-        const existingMap = new Map();
+        // Map existing cards by ID (for both buy-request-cards and negotiation-cards)
+        const existingBuyRequestMap = new Map();
+        const existingNegotiationMap = new Map();
         Array.from(container.children).forEach(child => {
-            if (child.tagName === 'NEGOTIATION-CARD') {
+            if (child.tagName === 'BUY-REQUEST-CARD') {
+                const id = child.getAttribute('listing-id') || (child.listing && child.listing.id);
+                if (id) existingBuyRequestMap.set(String(id), child);
+            } else if (child.tagName === 'NEGOTIATION-CARD') {
                 const id = child.getAttribute('negotiation-id') || (child.negotiation && child.negotiation.id);
-                if (id) existingMap.set(String(id), child);
+                if (id) existingNegotiationMap.set(String(id), child);
             } else {
                 child.remove(); // Remove non-card elements
             }
         });
 
-        // Update or create cards
-        pendingOrNew.forEach(neg => {
-            let card = existingMap.get(String(neg.id));
-            
+        // Render buy request cards first (Phase 0)
+        myBuyRequests.forEach(listing => {
+            let card = existingBuyRequestMap.get(String(listing.id));
+
             if (card) {
                 // Update existing card
-                // Only update if data changed (setter usually handles this check or diff)
-                card.negotiation = neg; 
-                existingMap.delete(String(neg.id)); // Mark as visited
+                card.listing = listing;
+                existingBuyRequestMap.delete(String(listing.id));
+            } else {
+                // Create new card
+                card = document.createElement('buy-request-card');
+                card.listing = listing;
+                card.currentUserId = this.currentUser;
+            }
+
+            // Insert at top (before negotiations)
+            container.appendChild(card);
+        });
+
+        // Render negotiation cards
+        pendingOrNew.forEach(neg => {
+            let card = existingNegotiationMap.get(String(neg.id));
+
+            if (card) {
+                // Update existing card
+                card.negotiation = neg;
+                existingNegotiationMap.delete(String(neg.id));
             } else {
                 // Create new card
                 card = document.createElement('negotiation-card');
                 card.negotiation = neg;
                 card.currentUserId = this.currentUser;
                 card.context = 'summary';
-                container.appendChild(card);
             }
 
             // Handle synopsis view state
@@ -682,12 +727,13 @@ class MarketplaceApp {
                 }
             }
 
-            // Ensure correct order in DOM
+            // Append after buy request cards
             container.appendChild(card);
         });
 
         // Remove cards that are no longer in the list
-        existingMap.forEach(card => card.remove());
+        existingBuyRequestMap.forEach(card => card.remove());
+        existingNegotiationMap.forEach(card => card.remove());
     }
 
     /**
@@ -1846,6 +1892,19 @@ class MarketplaceApp {
         document.addEventListener('cancel-negotiation', (e) => {
             const { negotiationId } = e.detail;
             this.rejectNegotiation(negotiationId);
+        });
+
+        // Event listener for cancelling a buy request from the buy-request-card
+        document.addEventListener('cancel-buy-request', async (e) => {
+            const { listingId, chemical } = e.detail;
+            try {
+                // Direct API call to bypass potential caching issues with api.js
+                await api.post('api/listings/cancel.php', { listingId });
+                notifications.showToast(`Cancelled buy request for Chemical ${chemical}`, 'success');
+                await stateManager.loadListings();
+            } catch (error) {
+                notifications.showToast('Failed to cancel: ' + error.message, 'error');
+            }
         });
 
         // View all negotiations button

@@ -209,6 +209,15 @@ class ApiClient {
          */
         getMyListings: async () => {
             return this.get('api/listings/my-listings.php');
+        },
+
+        /**
+         * Cancel a listing (buy request)
+         * @param {string} listingId - The listing ID to cancel
+         * @returns {Promise<{success: boolean, message: string}>}
+         */
+        cancel: async (listingId) => {
+            return this.post('api/listings/cancel.php', { listingId });
         }
     };
 

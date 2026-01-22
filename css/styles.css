@@ -38,6 +38,9 @@
     --color-bg-listing-mine: #422006;
     --color-border-listing-mine: #d97706;
 
+    --color-waiting: #0891b2; /* cyan-600 - for pending buy requests */
+    --color-bg-waiting: rgba(8, 145, 178, 0.1);
+
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);

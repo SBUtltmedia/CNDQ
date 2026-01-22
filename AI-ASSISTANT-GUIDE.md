@@ -477,7 +477,7 @@ node tests/run-tests.js
 ### Production Environment
 - **URL**: `https://production.server.com/CNDQ/`
 - **Subdirectory**: Must be deployed in `/CNDQ/` folder
-- **Database**: Upload `database.sqlite` (or let it auto-create)
+- **Database**: Upload `cndq.db` (or let it auto-create)
 - **Permissions**: Ensure web server can write to database file
 
 ### File Upload
@@ -491,7 +491,7 @@ server_root/
     ├── lib/
     ├── js/
     ├── css/
-    └── database.sqlite (optional)
+    └── data/cndq.db (optional)
 ```
 
 ### Environment-Specific Config

@@ -62,18 +62,14 @@ const componentStyles = css`
         cursor: pointer;
         transition: background-color 0.2s;
     }
-    .btn:hover {
+    .btn:hover:not(:disabled) {
         background-color: #1d4ed8;
     }
-    .btn-revise {
-        background-color: #d97706;
-    }
-    .btn-revise:hover {
-        background-color: #b45309;
-    }
-    .btn-disabled {
+    .btn-disabled,
+    .btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
+        background-color: #4b5563;
     }
     .listings-header {
         font-size: 0.75rem;
@@ -188,12 +184,13 @@ class ChemicalCard extends LitElement {
                     <div style="margin-bottom: 1rem;">
                         <button
                             id="post-buy-btn"
-                            class="btn ${hasActiveBuyListing ? 'btn-revise' : ''}"
+                            class="btn ${hasActiveBuyListing ? 'btn-disabled' : ''}"
+                            ?disabled=${hasActiveBuyListing}
                             @click=${this.handlePostBuyRequest}>
-                            ${hasActiveBuyListing ? '✏️ Revise Buy Request' : '📋 Post Buy Request'}
+                            📋 Post Buy Request
                         </button>
                         <p class="empty-listings" style="margin: 0.5rem 0 0; text-align: center;">
-                            ${hasActiveBuyListing ? 'Click to update or remove your request.' : 'Post what you need, teams will offer to sell.'}
+                            ${hasActiveBuyListing ? 'Cancel in My Negotiations to post new.' : 'Post what you need, teams will offer to sell.'}
                         </p>
                     </div>
 

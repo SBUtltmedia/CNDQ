@@ -71,10 +71,14 @@ class TradeExecutor {
 
             // Actor-specific events
             $counterpartyName = $counterpartyStorage->getTeamName();
+            $microtime = microtime(true);
 
             if ($isBuyerActing) {
                 // Buyer is acting: they lose money, gain chemicals
+                $invBefore = $actorStorage->getInventory()[$chemical] ?? 0;
                 $actorStorage->adjustChemical($chemical, $quantity);
+                $invAfter = $actorStorage->getInventory()[$chemical] ?? 0;
+
                 $actorStorage->updateFunds(-$totalCost);
                 $actorStorage->addTransaction([
                     'transactionId' => $transactionId,
@@ -84,7 +88,12 @@ class TradeExecutor {
                     'pricePerGallon' => $pricePerGallon,
                     'totalAmount' => $totalCost,
                     'counterparty' => $sellerId,
+                    'counterpartyName' => $counterpartyName,
                     'offerId' => $offerId,
+                    'timestamp' => $microtime,
+                    'status' => 'accepted',
+                    'inventoryBefore' => $invBefore,
+                    'inventoryAfter' => $invAfter,
                     'isPendingReflection' => true, // Signal for System Aggregator
                     'heat' => [
                         'total' => $totalHeat,
@@ -97,7 +106,10 @@ class TradeExecutor {
                 // Notification removed - GlobalAggregator will add notification when reflecting to both parties
             } else {
                 // Seller is acting: they lose chemicals, gain money
+                $invBefore = $actorStorage->getInventory()[$chemical] ?? 0;
                 $actorStorage->adjustChemical($chemical, -$quantity);
+                $invAfter = $actorStorage->getInventory()[$chemical] ?? 0;
+
                 $actorStorage->updateFunds($totalCost);
                 $actorStorage->addTransaction([
                     'transactionId' => $transactionId,
@@ -107,7 +119,12 @@ class TradeExecutor {
                     'pricePerGallon' => $pricePerGallon,
                     'totalAmount' => $totalCost,
                     'counterparty' => $buyerId,
+                    'counterpartyName' => $counterpartyName,
                     'offerId' => $offerId,
+                    'timestamp' => $microtime,
+                    'status' => 'accepted',
+                    'inventoryBefore' => $invBefore,
+                    'inventoryAfter' => $invAfter,
                     'isPendingReflection' => true, // Signal for System Aggregator
                     'heat' => [
                         'total' => $totalHeat,
@@ -122,7 +139,7 @@ class TradeExecutor {
             
             // GLOBAL MARKETPLACE EVENT: Record the trade for all to see
             // This enables global toasts for trades we're NOT part of
-            $microtime = microtime(true);
+            // $microtime is already defined above
             $globalEvent = [
                 'transactionId' => $transactionId,
                 'chemical' => $chemical,

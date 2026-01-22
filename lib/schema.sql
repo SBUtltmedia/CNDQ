@@ -97,12 +97,17 @@ CREATE TABLE IF NOT EXISTS negotiations (
     last_offer_by TEXT,
     accepted_by TEXT,
     rejected_by TEXT,
+    rejection_reason TEXT,            -- Reason for rejection (e.g., "Insufficient inventory")
     created_at INTEGER DEFAULT (strftime('%s', 'now')),
     updated_at INTEGER DEFAULT (strftime('%s', 'now')),
     accepted_at INTEGER,
     rejected_at INTEGER,
     ad_id TEXT                        -- Reference to marketplace ad if negotiation started from ad
 );
+
+-- Migration: Add rejection_reason column to existing negotiations table (safe to run multiple times)
+-- SQLite doesn't support ADD COLUMN IF NOT EXISTS, so we check and add programmatically
+-- This is handled in Database.php updateSchema() method
 
 CREATE INDEX IF NOT EXISTS idx_negotiations_initiator ON negotiations(initiator_id, status);
 CREATE INDEX IF NOT EXISTS idx_negotiations_responder ON negotiations(responder_id, status);
