@@ -49,8 +49,11 @@ try {
     $listingFound = false;
     $listingChemical = null;
 
-    foreach ($myListings['ads'] ?? [] as $ad) {
-        if ($ad['id'] === $listingId) {
+    $adsList = $myListings['ads'] ?? $myListings; // Handle both wrapped and unwrapped cases for safety
+    if (!is_array($adsList)) $adsList = [];
+
+    foreach ($adsList as $ad) {
+        if (($ad['id'] ?? '') === $listingId) {
             $listingFound = true;
             $listingChemical = $ad['chemical'] ?? null;
             break;
