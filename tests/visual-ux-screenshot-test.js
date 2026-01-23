@@ -231,12 +231,12 @@ class VisualUXTest {
                  // Wait for ad to appear
                  await this.browser.sleep(2000);
                  
-                 // Access 'Sell to' button inside advertisement-item, which is inside chemical-card's shadow DOM
-                 // advertisement-item also has its own shadow DOM!
+                 // Access 'Sell to' button inside listing-item, which is inside chemical-card's shadow DOM
+                 // listing-item also has its own shadow DOM!
                               const sellToBtn = await page.evaluateHandle(() => {
                                  const card = document.querySelector('chemical-card[chemical="C"]');
                                  if (!card || !card.shadowRoot) return null;
-                                 const adItem = card.shadowRoot.querySelector('advertisement-item:not([isMyAd])');
+                                 const adItem = card.shadowRoot.querySelector('listing-item:not([isMyAd])');
                                  return adItem ? adItem.shadowRoot.querySelector('.btn') : null;
                               });    
                  if (sellToBtn && await sellToBtn.asElement()) {

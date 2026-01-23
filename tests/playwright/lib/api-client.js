@@ -158,7 +158,7 @@ class ApiClient {
     async acceptNegotiation(id) { return this.negotiations.accept(id); }
     async rejectNegotiation(id) { return this.negotiations.reject(id); }
     async createBuyOrder(c, q, p) { return this.offers.bid(c, q, p); }
-    async postAdvertisement(c, t, m) { return this.advertisements.post(c, t, m); }
+    async postListing(c, t, m) { return this.listings.post(c, t, m); }
     async getLeaderboard() { return this.leaderboard.getStandings(); }
 }
 
