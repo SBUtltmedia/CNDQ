@@ -148,7 +148,7 @@ class TeamHelper {
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
             if (!card || !card.shadowRoot) return null;
 
-            const adItems = card.shadowRoot.querySelectorAll('advertisement-item');
+            const adItems = card.shadowRoot.querySelectorAll('listing-item');
             
             for (const item of adItems) {
                 const type = item.type || item.getAttribute('type');
@@ -175,7 +175,7 @@ class TeamHelper {
             const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
             if (!card || !card.shadowRoot) return false;
 
-            const adItems = card.shadowRoot.querySelectorAll('advertisement-item');
+            const adItems = card.shadowRoot.querySelectorAll('listing-item');
             for (const item of adItems) {
                 const teamId = item.teamId || item.getAttribute('teamid') || item.getAttribute('teamId');
                 if (teamId === targetTeamId) {

@@ -178,7 +178,7 @@ class UIPlayabilityTest {
             // Pierce Shadow DOM to find the specific "Sell to" button
             const btnHandle = await this.findInShadow(page, [
                 `chemical-card[chemical="${chemical}"]`,
-                `advertisement-item[teamname="${responderName}"]`, 
+                `listing-item[teamname="${responderName}"]`, 
                 'button.btn'
             ]);
 

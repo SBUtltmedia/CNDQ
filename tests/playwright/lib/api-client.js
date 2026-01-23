@@ -77,12 +77,12 @@ class ApiClient {
     };
 
     // ==========================================
-    // Advertisement APIs
+    // Listings APIs
     // ==========================================
-    advertisements = {
-        list: async () => this.get('advertisements/list.php'),
-        post: async (chemical, type, message = '') => this.post('advertisements/post.php', { chemical, type, message }),
-        getMyAds: async () => this.get('advertisements/my-ads.php')
+    listings = {
+        list: async () => this.get('listings/list.php'),
+        post: async (chemical, type, message = '') => this.post('listings/post.php', { chemical, type, message }),
+        getMyListings: async () => this.get('listings/my-listings.php')
     };
 
     // ==========================================

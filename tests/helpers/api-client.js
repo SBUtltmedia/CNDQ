@@ -151,19 +151,19 @@ class ApiClient {
     }
 
     // ===================
-    // ADVERTISEMENTS ENDPOINTS
+    // LISTINGS ENDPOINTS
     // ===================
 
-    async listAdvertisements() {
-        return this.get('advertisements/list.php');
+    async listListings() {
+        return this.get('listings/list.php');
     }
 
-    async getMyAdvertisements() {
-        return this.get('advertisements/my-ads.php');
+    async getMyListings() {
+        return this.get('listings/my-listings.php');
     }
 
-    async postAdvertisement(chemical, type, message) {
-        return this.post('advertisements/post.php', { chemical, type, message });
+    async postListing(chemical, type, message) {
+        return this.post('listings/post.php', { chemical, type, message });
     }
 
     // ===================
