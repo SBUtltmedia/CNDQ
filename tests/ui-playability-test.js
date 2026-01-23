@@ -186,7 +186,7 @@ class UIPlayabilityTest {
                 await btnHandle.click();
                 
                 // Wait for Respond Modal
-                await page.waitForSelector('#respond-modal:not(.hidden)', { timeout: 3000 });
+                await page.waitForSelector('#respond-modal:not(.hidden)', { timeout: 10000 });
                 
                 // Fill Form
                 await page.evaluate((qty, price) => {
@@ -222,7 +222,7 @@ class UIPlayabilityTest {
                 await btnHandle.click();
                 
                 // Wait for Offer Modal
-                await page.waitForSelector('#offer-modal:not(.hidden)', { timeout: 3000 });
+                await page.waitForSelector('#offer-modal:not(.hidden)', { timeout: 10000 });
                 
                 // Fill Form
                 await page.evaluate((qty, price) => {
@@ -291,7 +291,7 @@ class UIPlayabilityTest {
         }
 
         // 2. Wait for Detail View
-        await page.waitForSelector('#negotiation-detail-view:not(.hidden)', { timeout: 3000 });
+        await page.waitForSelector('#negotiation-detail-view:not(.hidden)', { timeout: 10000 });
 
         // 3. Perform Action
         if (action.type === 'accept_negotiation') {

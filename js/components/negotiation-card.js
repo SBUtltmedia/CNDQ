@@ -152,8 +152,8 @@ class NegotiationCard extends HTMLElement {
             const totalValue = lastOffer.quantity * lastOffer.price;
             
             wrapper.innerHTML = `
-                <button class="dismiss-btn absolute top-2 right-2 text-gray-400 hover:text-white transition" aria-label="Dismiss">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <button class="dismiss-btn absolute top-2 right-2 text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 rounded-full p-1 transition shadow-sm z-10" aria-label="Dismiss">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                 </button>
@@ -201,12 +201,11 @@ class NegotiationCard extends HTMLElement {
         } else {
             // ACTIVE CARD STATE
             let statusBadge = '';
-            if (neg.status === 'pending') {
-                statusBadge = isMyTurn ?
-                    '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Your Turn</span>' :
-                    '<span class="px-2 py-1 bg-gray-600 text-gray-300 rounded text-xs">Waiting</span>';
-            } else if (neg.status === 'accepted') {
-                statusBadge = '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Accepted</span>';
+                    if (neg.status === 'pending') {
+                        statusBadge = isMyTurn ?
+                            '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Your Turn</span>' :
+                            '<span class="px-2 py-1 rounded text-xs font-semibold" style="background-color: var(--color-waiting); color: white;">Waiting...</span>';
+                    } else if (neg.status === 'accepted') {                statusBadge = '<span class="px-2 py-1 bg-green-600 text-white rounded text-xs font-semibold">Accepted</span>';
             } else {
                 statusBadge = '<span class="px-2 py-1 bg-red-600 text-white rounded text-xs font-semibold">Rejected</span>';
             }
@@ -218,8 +217,8 @@ class NegotiationCard extends HTMLElement {
 
             // Card Content
             wrapper.innerHTML = `
-                <button class="cancel-btn absolute top-2 right-2 text-gray-500 hover:text-white transition z-10" aria-label="Cancel Negotiation" title="Cancel/Reject Negotiation">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <button class="cancel-btn absolute -top-2 -right-2 bg-gray-700 text-gray-400 hover:bg-red-600 hover:text-white rounded-full p-1 shadow-md transition z-20 border border-gray-600 hover:border-red-500" aria-label="Cancel Negotiation" title="Withdraw/Cancel Negotiation">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                 </button>

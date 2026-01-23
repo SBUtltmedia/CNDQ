@@ -120,7 +120,7 @@ class ListingItem extends LitElement {
                 </div>
                 ${!this.isMyListing ? html`
                     <button class="btn" @click=${this.handleNegotiate} ?disabled=${this.disabled}>
-                        ${this.disabled ? 'Negotiating...' : 'Sell to'}
+                        Sell to
                     </button>
                 ` : ''}
             </div>

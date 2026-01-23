@@ -818,9 +818,20 @@ class MarketplaceApp {
         const modal = document.getElementById('offer-modal');
         document.getElementById('offer-chemical').value = `Chemical ${chemical}`;
         document.getElementById('offer-shadow-hint').textContent = this.formatCurrency(this.shadowPrices[chemical]);
-        document.getElementById('offer-quantity').value = 100;
-        document.getElementById('offer-quantity-slider').value = 100;
-        document.getElementById('offer-price').value = '5.00';
+        
+        // Populate with existing values if revising
+        const existingAd = existingAds.find(ad => ad.teamId === this.currentUser);
+        if (existingAd) {
+            document.getElementById('offer-quantity').value = existingAd.quantity;
+            document.getElementById('offer-quantity-slider').value = existingAd.quantity;
+            document.getElementById('offer-price').value = parseFloat(existingAd.maxPrice).toFixed(2);
+            document.getElementById('offer-submit-btn').textContent = 'Update Buy Request';
+        } else {
+            document.getElementById('offer-quantity').value = 100;
+            document.getElementById('offer-quantity-slider').value = 100;
+            document.getElementById('offer-price').value = '5.00';
+            document.getElementById('offer-submit-btn').textContent = 'Post Buy Request';
+        }
 
         // Store current chemical for later
         this.currentOfferChemical = chemical;
@@ -1050,6 +1061,12 @@ class MarketplaceApp {
             if (response.success) {
                 notifications.showToast(`Offer sent to ${buyerTeamName} for ${quantity} gallons of ${chemical}`, 'success');
                 
+                // OPTIMISTIC UPDATE: Remove the listing from UI immediately
+                if (this.listings[chemical] && this.listings[chemical].buy) {
+                    this.listings[chemical].buy = this.listings[chemical].buy.filter(l => l.id !== listingId);
+                    this.renderListings();
+                }
+
                 // Teachable moment: Remind about stale shadow prices
                 if (this.lastStalenessLevel === 'stale') {
                     notifications.showToast('💡 Tip: Before sending more offers, recalculate your shadow prices. Your inventory has changed!', 'info', 6000);
@@ -1057,7 +1074,7 @@ class MarketplaceApp {
 
                 this.closeRespondModal();
                 await stateManager.loadNegotiations();
-                await stateManager.loadListings(); // Refresh to remove the listing we just responded to
+                await stateManager.loadListings(); // Refresh to ensure sync
             } else {
                 notifications.showToast(response.message || 'Failed to send offer', 'error');
             }
@@ -1559,19 +1576,41 @@ class MarketplaceApp {
     /**
      * Reject/cancel negotiation
      */
-    async rejectNegotiation() {
-        const confirmed = await this.showConfirm('Cancel this negotiation?', 'Cancel Negotiation');
+    async rejectNegotiation(negotiationId = null) {
+        // Support passing ID directly (from card) or using current active one
+        const idToReject = negotiationId || this.currentNegotiation?.id;
+        if (!idToReject) return;
+
+        // Find the negotiation object for the confirmation message
+        const negotiation = this.myNegotiations.find(n => n.id === idToReject);
+        const name = negotiation 
+            ? (negotiation.initiatorId === this.currentUser ? negotiation.responderName : negotiation.initiatorName)
+            : 'this negotiation';
+
+        const confirmed = await this.showConfirm(`Cancel negotiation with ${name}?`, 'Cancel Negotiation');
         if (!confirmed) return;
 
+        // OPTIMISTIC UPDATE: Immediately remove from UI
+        this.closeNegotiationModal();
+        
+        // Remove from local state
+        this.myNegotiations = this.myNegotiations.filter(n => n.id !== idToReject);
+        this.renderNegotiations();
+        this.renderNegotiationsInModal();
+
         try {
-            await api.negotiations.reject(this.currentNegotiation.id);
-            notifications.showToast('Negotiation cancelled', 'success');
+            await api.negotiations.reject(idToReject);
+            notifications.showToast('Negotiation cancelled', 'info');
+            
+            // Background sync to ensure state is consistent
             await stateManager.loadNegotiations();
-            this.showNegotiationListView();
-            this.renderNegotiationsInModal();
+            // No need to re-render here unless the server state differs, 
+            // but loadNegotiations triggers 'negotiationsUpdated' event which will re-render.
         } catch (error) {
             console.error('Failed to cancel negotiation:', error);
             notifications.showToast('Failed to cancel negotiation: ' + error.message, 'error');
+            // Revert on error
+            await stateManager.loadNegotiations();
         }
     }
 
@@ -1874,9 +1913,15 @@ class MarketplaceApp {
 
         // Web Component Events: View negotiation detail (from negotiation-card)
         document.addEventListener('view-detail', (e) => {
-            const { negotiationId } = e.detail;
-            console.log('📢 View-detail caught for:', negotiationId);
-            this.viewNegotiationDetail(negotiationId);
+            const { negotiationId, listingId, chemical, isBuyRequest } = e.detail;
+            
+            if (isBuyRequest) {
+                console.log('📢 View-detail caught for buy request:', chemical);
+                this.openBuyRequestModal(chemical);
+            } else {
+                console.log('📢 View-detail caught for negotiation:', negotiationId);
+                this.viewNegotiationDetail(negotiationId);
+            }
         });
 
         // Event listener for dismissing a synopsis card
@@ -1897,13 +1942,33 @@ class MarketplaceApp {
         // Event listener for cancelling a buy request from the buy-request-card
         document.addEventListener('cancel-buy-request', async (e) => {
             const { listingId, chemical } = e.detail;
+            
+            // OPTIMISTIC UPDATE: Remove card immediately
+            const container = document.getElementById('my-negotiations');
+            const cardToRemove = container.querySelector(`buy-request-card[listing-id="${listingId}"]`);
+            if (cardToRemove) {
+                cardToRemove.remove();
+            }
+
+            // Update local state (listings)
+            if (this.listings[chemical] && this.listings[chemical].buy) {
+                this.listings[chemical].buy = this.listings[chemical].buy.filter(l => l.id !== listingId);
+            }
+            
+            // If container is empty, show empty message
+            if (container.children.length === 0) {
+                 container.innerHTML = '<p class="text-gray-300 text-center py-8">You have no active negotiations</p>';
+            }
+
             try {
                 // Direct API call to bypass potential caching issues with api.js
                 await api.post('api/listings/cancel.php', { listingId });
-                notifications.showToast(`Cancelled buy request for Chemical ${chemical}`, 'success');
+                notifications.showToast(`Cancelled buy request for Chemical ${chemical}`, 'info');
                 await stateManager.loadListings();
             } catch (error) {
                 notifications.showToast('Failed to cancel: ' + error.message, 'error');
+                // Revert on error
+                await stateManager.loadListings();
             }
         });
 

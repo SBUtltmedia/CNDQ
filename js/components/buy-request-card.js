@@ -43,9 +43,23 @@ class BuyRequestCard extends HTMLElement {
     connectedCallback() {
         if (!this.querySelector('.card-wrapper')) {
             this.innerHTML = `
-                <div class="card-wrapper bg-gray-800 rounded p-4 border-2 border-cyan-600 shadow-lg transition relative">
+                <div class="card-wrapper bg-gray-800 rounded p-4 border-2 border-cyan-600 shadow-lg transition relative hover:border-gray-500 cursor-pointer" role="button" tabindex="0">
                 </div>
             `;
+            // Add global event listeners to the wrapper once
+            const wrapper = this.querySelector('.card-wrapper');
+            wrapper.addEventListener('click', (e) => {
+                // Don't trigger view detail if clicking a button
+                if (e.target.closest('button')) return;
+                this.handleViewDetail();
+            });
+            wrapper.addEventListener('keydown', (e) => {
+                if (e.target.closest('button')) return;
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.handleViewDetail();
+                }
+            });
         }
         this.render();
     }
@@ -89,12 +103,12 @@ class BuyRequestCard extends HTMLElement {
         const statusBadge = '<span class="px-2 py-1 rounded text-xs font-semibold" style="background-color: var(--color-waiting); color: white;">Waiting...</span>';
 
         // Update wrapper border color - using CSS variable
-        wrapper.className = 'card-wrapper bg-gray-800 rounded p-4 border-2 shadow-lg transition relative';
+        wrapper.className = 'card-wrapper bg-gray-800 rounded p-4 border-2 shadow-lg transition relative hover:border-gray-500 cursor-pointer';
         wrapper.style.borderColor = 'var(--color-waiting)';
 
         wrapper.innerHTML = `
-            <button class="cancel-btn absolute top-2 right-2 text-gray-500 hover:text-white transition z-10" aria-label="Cancel Buy Request" title="Cancel Buy Request">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <button class="cancel-btn absolute -top-2 -right-2 bg-gray-700 text-gray-400 hover:bg-red-600 hover:text-white rounded-full p-1 shadow-md transition z-20 border border-gray-600 hover:border-red-500" aria-label="Cancel Buy Request" title="Cancel Buy Request">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
             </button>
@@ -136,6 +150,18 @@ class BuyRequestCard extends HTMLElement {
             detail: {
                 listingId: this._listing.id,
                 chemical: this._listing.chemical
+            }
+        }));
+    }
+
+    handleViewDetail() {
+        this.dispatchEvent(new CustomEvent('view-detail', {
+            bubbles: true,
+            composed: true,
+            detail: {
+                listingId: this._listing.id,
+                chemical: this._listing.chemical,
+                isBuyRequest: true
             }
         }));
     }

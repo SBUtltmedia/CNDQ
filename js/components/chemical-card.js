@@ -211,7 +211,6 @@ class ChemicalCard extends LitElement {
                                             .quantity=${listing.quantity}
                                             .maxPrice=${listing.maxPrice}
                                             ?isMyListing=${listing.teamId === this.currentUserId}
-                                            ?disabled=${this.hasActiveNegotiation}
                                         ></listing-item>
                                     `;
                                 })
