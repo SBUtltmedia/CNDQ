@@ -3,15 +3,23 @@
  * Test Controller - Unified test runner for CNDQ test suite
  *
  * Runs any combination of tests using a shared JSON config file.
+ * Each test is isolated with try/catch - one failure won't crash others.
+ * Generates a consolidated JSON report at the end.
  *
  * Usage:
- *   node tests/controller.js                      # Run all tests
+ *   node tests/controller.js                      # Run dual test (default)
  *   node tests/controller.js --test dual          # Run dual playability test
  *   node tests/controller.js --test stress        # Run stress test
  *   node tests/controller.js --test lighthouse    # Run lighthouse audit
  *   node tests/controller.js --test accessibility # Run accessibility test
  *   node tests/controller.js --test visual        # Run visual screenshot test
  *   node tests/controller.js --test dual,stress   # Run multiple tests
+ *   node tests/controller.js --test all           # Run all tests
+ *
+ * Background & Reporting:
+ *   --background        Run in background mode (no interactive output)
+ *   --report <path>     Output report file (default: test-report-{timestamp}.json)
+ *   --quiet, -q         Minimal output (just summary)
  *
  * Config:
  *   --config <path>     Use custom config file (default: test-config.json)
@@ -63,6 +71,9 @@ function parseArgs() {
     const args = {
         tests: [],
         configPath: path.join(__dirname, 'test-config.json'),
+        reportPath: null,
+        background: false,
+        quiet: false,
         overrides: {}
     };
 
@@ -76,7 +87,11 @@ function parseArgs() {
             case '--test':
             case '-t':
                 if (nextArg) {
-                    args.tests = nextArg.split(',').map(t => t.trim().toLowerCase());
+                    if (nextArg.toLowerCase() === 'all') {
+                        args.tests = Object.keys(AVAILABLE_TESTS);
+                    } else {
+                        args.tests = nextArg.split(',').map(t => t.trim().toLowerCase());
+                    }
                     i++;
                 }
                 break;
@@ -86,6 +101,22 @@ function parseArgs() {
                     args.configPath = path.resolve(nextArg);
                     i++;
                 }
+                break;
+            case '--report':
+            case '-r':
+                if (nextArg) {
+                    args.reportPath = path.resolve(nextArg);
+                    i++;
+                }
+                break;
+            case '--background':
+            case '-b':
+                args.background = true;
+                args.overrides.headless = true; // Background implies headless
+                break;
+            case '--quiet':
+            case '-q':
+                args.quiet = true;
                 break;
             case '--headless':
                 args.overrides.headless = true;
@@ -136,9 +167,14 @@ function parseArgs() {
         }
     }
 
-    // Default to all tests if none specified
+    // Default to dual test if none specified
     if (args.tests.length === 0) {
         args.tests = ['dual'];
+    }
+
+    // Default report path
+    if (!args.reportPath) {
+        args.reportPath = path.join(__dirname, `test-report-${Date.now()}.json`);
     }
 
     return args;
@@ -152,8 +188,11 @@ Usage:
   node tests/controller.js [options]
 
 Options:
-  --test, -t <tests>    Tests to run (comma-separated): dual, stress, lighthouse, accessibility, visual
+  --test, -t <tests>    Tests to run (comma-separated): dual, stress, lighthouse, accessibility, visual, all
   --config, -c <path>   Config file path (default: test-config.json)
+  --report, -r <path>   Output report file path
+  --background, -b      Run in background mode (headless, minimal output)
+  --quiet, -q           Minimal output (just summary)
   --headless            Run browsers in headless mode
   --verbose, -v         Enable verbose output
   --npcs <n>            Number of NPCs to create
@@ -166,6 +205,7 @@ Options:
 
 Examples:
   node tests/controller.js --test dual --headless
+  node tests/controller.js --test all --background --report results.json
   node tests/controller.js --test dual,stress --npcs 10 --duration 120
   node tests/controller.js --config my-config.json --test accessibility
 `);
@@ -186,14 +226,9 @@ function loadConfig(configPath, overrides) {
     if (fs.existsSync(configPath)) {
         try {
             config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            console.log(`📄 Loaded config from: ${configPath}`);
         } catch (e) {
-            console.error(`⚠️  Failed to parse config: ${e.message}`);
-            console.log('   Using default config...');
+            // Silent fail, use defaults
         }
-    } else {
-        console.log(`⚠️  Config file not found: ${configPath}`);
-        console.log('   Using default config...');
     }
 
     // Apply defaults
@@ -272,122 +307,227 @@ function loadConfig(configPath, overrides) {
     return config;
 }
 
-async function runTest(testKey, config) {
+/**
+ * Run a single test with full isolation
+ * Catches all errors so one test can't crash others
+ */
+async function runTest(testKey, config, quiet = false) {
     const testInfo = AVAILABLE_TESTS[testKey];
+    const startTime = Date.now();
+
+    const result = {
+        test: testKey,
+        name: testInfo?.name || testKey,
+        success: false,
+        error: null,
+        errorStack: null,
+        startTime: new Date().toISOString(),
+        endTime: null,
+        durationMs: 0,
+        details: {}
+    };
 
     if (!testInfo) {
-        console.error(`❌ Unknown test: ${testKey}`);
-        console.log('   Use --list to see available tests');
-        return { success: false, error: 'Unknown test' };
+        result.error = `Unknown test: ${testKey}`;
+        result.endTime = new Date().toISOString();
+        return result;
     }
 
-    console.log(`\n${'█'.repeat(80)}`);
-    console.log(`█ ${testInfo.name.toUpperCase().padEnd(76)} █`);
-    console.log(`█ ${testInfo.description.padEnd(76)} █`);
-    console.log(`${'█'.repeat(80)}\n`);
+    if (!quiet) {
+        console.log(`\n${'█'.repeat(80)}`);
+        console.log(`█ ${testInfo.name.toUpperCase().padEnd(76)} █`);
+        console.log(`█ ${testInfo.description.padEnd(76)} █`);
+        console.log(`${'█'.repeat(80)}\n`);
+    }
 
     try {
+        let testResult;
+
         switch (testKey) {
             case 'dual': {
                 const DualPlayabilityTest = require(testInfo.file);
                 const test = new DualPlayabilityTest(config);
                 await test.run();
-                return { success: true };
+                testResult = { success: true };
+                break;
             }
 
             case 'stress': {
-                // Stress test has hardcoded config, we need to modify it
                 const StressTest = require(testInfo.file);
-                // Override the module's CONFIG if possible, or just run it
                 const test = new StressTest();
                 // Inject config values
-                test.browserHelper.config = { ...test.browserHelper.config, ...config };
+                if (test.browserHelper) {
+                    test.browserHelper.config = { ...test.browserHelper.config, ...config };
+                }
                 await test.run();
-                return { success: true };
+                testResult = { success: true };
+                break;
             }
 
             case 'lighthouse': {
                 const LighthouseTest = require(testInfo.file);
                 const BrowserHelper = require('./helpers/browser');
                 const browserHelper = new BrowserHelper(config);
-                await browserHelper.launch();
-                const test = new LighthouseTest(config, browserHelper);
-                const result = await test.run();
-                await browserHelper.close();
-                return result;
+                try {
+                    await browserHelper.launch();
+                    const test = new LighthouseTest(config, browserHelper);
+                    testResult = await test.run();
+                } finally {
+                    try { await browserHelper.close(); } catch (e) { /* ignore cleanup errors */ }
+                }
+                break;
             }
 
             case 'accessibility': {
                 const AccessibilityTest = require(testInfo.file);
                 const BrowserHelper = require('./helpers/browser');
                 const browserHelper = new BrowserHelper(config);
-                await browserHelper.launch();
-                const test = new AccessibilityTest(config, browserHelper);
-                const result = await test.run();
-                await browserHelper.close();
-                return result;
+                try {
+                    await browserHelper.launch();
+                    const test = new AccessibilityTest(config, browserHelper);
+                    testResult = await test.run();
+                } finally {
+                    try { await browserHelper.close(); } catch (e) { /* ignore cleanup errors */ }
+                }
+                break;
             }
 
             case 'visual': {
                 const VisualTest = require(testInfo.file);
                 const test = new VisualTest(config);
                 await test.run();
-                return { success: true };
+                testResult = { success: true };
+                break;
             }
 
             default:
-                return { success: false, error: 'Test not implemented' };
+                testResult = { success: false, error: 'Test not implemented' };
         }
+
+        result.success = testResult?.success !== false;
+        result.details = testResult || {};
+
     } catch (error) {
-        console.error(`\n❌ ${testInfo.name} failed:`, error.message);
-        if (config.verbose) {
-            console.error(error.stack);
+        result.success = false;
+        result.error = error.message;
+        result.errorStack = error.stack;
+
+        if (!quiet) {
+            console.error(`\n❌ ${testInfo.name} failed:`, error.message);
+            if (config.verbose) {
+                console.error(error.stack);
+            }
         }
-        return { success: false, error: error.message };
     }
+
+    result.endTime = new Date().toISOString();
+    result.durationMs = Date.now() - startTime;
+
+    if (!quiet) {
+        const status = result.success ? '✅' : '❌';
+        const duration = (result.durationMs / 1000).toFixed(1);
+        console.log(`\n${status} ${testInfo.name} completed in ${duration}s`);
+    }
+
+    return result;
 }
 
-async function main() {
-    console.log('🎮 CNDQ Test Controller');
-    console.log('='.repeat(80));
+/**
+ * Generate consolidated report
+ */
+function generateReport(results, config, args) {
+    const report = {
+        timestamp: new Date().toISOString(),
+        controller: {
+            version: '1.0.0',
+            configPath: args.configPath,
+            testsRequested: args.tests
+        },
+        config: {
+            baseUrl: config.baseUrl,
+            npcCount: config.npcCount,
+            rpcCount: config.rpcCount,
+            tradingDuration: config.tradingDuration,
+            headless: config.headless
+        },
+        summary: {
+            total: results.length,
+            passed: results.filter(r => r.success).length,
+            failed: results.filter(r => !r.success).length,
+            totalDurationMs: results.reduce((sum, r) => sum + r.durationMs, 0)
+        },
+        tests: results
+    };
 
+    report.summary.passRate = report.summary.total > 0
+        ? Math.round((report.summary.passed / report.summary.total) * 100)
+        : 0;
+
+    return report;
+}
+
+/**
+ * Main entry point
+ */
+async function main() {
     const args = parseArgs();
     const config = loadConfig(args.configPath, args.overrides);
 
-    console.log(`\n📋 Configuration:`);
-    console.log(`   Base URL: ${config.baseUrl}`);
-    console.log(`   Headless: ${config.headless}`);
-    console.log(`   Verbose: ${config.verbose}`);
-    console.log(`   NPCs: ${config.npcCount}`);
-    console.log(`   RPCs: ${config.rpcCount}`);
-    console.log(`   Duration: ${config.tradingDuration}s`);
-    console.log(`\n🧪 Tests to run: ${args.tests.join(', ')}`);
+    if (!args.quiet) {
+        console.log('🎮 CNDQ Test Controller');
+        console.log('='.repeat(80));
+        console.log(`📄 Config: ${args.configPath}`);
+        console.log(`📋 Tests: ${args.tests.join(', ')}`);
+        console.log(`📊 Report: ${args.reportPath}`);
+        if (args.background) console.log('🔇 Running in background mode');
+        console.log('='.repeat(80));
+    }
 
-    const results = {};
-    let allPassed = true;
+    const results = [];
 
+    // Run each test sequentially with full isolation
     for (const testKey of args.tests) {
-        results[testKey] = await runTest(testKey, config);
-        if (!results[testKey].success) {
-            allPassed = false;
+        const result = await runTest(testKey, config, args.quiet);
+        results.push(result);
+
+        // Small delay between tests to let resources clean up
+        if (args.tests.indexOf(testKey) < args.tests.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
     }
 
-    // Summary
+    // Generate and save report
+    const report = generateReport(results, config, args);
+
+    try {
+        fs.writeFileSync(args.reportPath, JSON.stringify(report, null, 2));
+        if (!args.quiet) {
+            console.log(`\n📄 Report saved to: ${args.reportPath}`);
+        }
+    } catch (e) {
+        console.error(`⚠️  Failed to save report: ${e.message}`);
+    }
+
+    // Print summary
     console.log(`\n${'='.repeat(80)}`);
     console.log('📊 TEST SUMMARY');
     console.log('='.repeat(80));
 
-    Object.entries(results).forEach(([testKey, result]) => {
-        const testInfo = AVAILABLE_TESTS[testKey];
+    results.forEach(result => {
         const status = result.success ? '✅ PASSED' : '❌ FAILED';
-        console.log(`   ${testInfo.name.padEnd(30)} ${status}`);
+        const duration = (result.durationMs / 1000).toFixed(1);
+        console.log(`   ${result.name.padEnd(30)} ${status} (${duration}s)`);
         if (!result.success && result.error) {
             console.log(`      Error: ${result.error}`);
         }
     });
 
+    console.log('-'.repeat(80));
+    console.log(`   Total: ${report.summary.total} | Passed: ${report.summary.passed} | Failed: ${report.summary.failed} | Pass Rate: ${report.summary.passRate}%`);
+    console.log(`   Total Duration: ${(report.summary.totalDurationMs / 1000).toFixed(1)}s`);
     console.log('='.repeat(80));
+
+    const allPassed = report.summary.failed === 0;
     console.log(allPassed ? '\n🎉 All tests passed!' : '\n⚠️  Some tests failed');
 
     process.exit(allPassed ? 0 : 1);
@@ -396,9 +536,10 @@ async function main() {
 // Run if called directly
 if (require.main === module) {
     main().catch(error => {
-        console.error('Fatal error:', error);
+        console.error('Fatal controller error:', error);
+        // Still try to exit gracefully
         process.exit(1);
     });
 }
 
-module.exports = { runTest, loadConfig, AVAILABLE_TESTS };
+module.exports = { runTest, loadConfig, generateReport, AVAILABLE_TESTS };
