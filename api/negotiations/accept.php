@@ -74,14 +74,21 @@ try {
     }
 
     // Execute the trade
+    error_log("ACCEPT DEBUG: About to execute trade - Seller: $sellerId, Buyer: $buyerId, Chemical: {$negotiation['chemical']}, Qty: {$finalOffer['quantity']}, Price: {$finalOffer['price']}");
+    error_log("ACCEPT DEBUG: Current user (accepting): $currentUserEmail");
+
     $executor = new TradeExecutor();
     $trade = $executor->executeTrade(
         $sellerId,
         $buyerId,
         $negotiation['chemical'],
         $finalOffer['quantity'],
-        $finalOffer['price']
+        $finalOffer['price'],
+        $negotiationId,      // Pass negotiation ID as offerId for tracking
+        $currentUserEmail    // Pass accepting user as actingTeamId
     );
+
+    error_log("ACCEPT DEBUG: Trade result - " . json_encode($trade));
 
     if (!$trade['success']) {
         error_log("Trade execution failed: " . ($trade['message'] ?? 'Unknown error'));
