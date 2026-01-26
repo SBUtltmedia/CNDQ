@@ -20,10 +20,19 @@ if (!$currentUserEmail || trim($currentUserEmail) === '') {
 try {
     $storage = new TeamStorage($currentUserEmail);
     $history = $storage->getTransactions(); // returns ['transactions' => [...]]
+    $transactions = $history['transactions'] ?? [];
+
+    // Debug: Log transaction count
+    error_log("Transaction History for $currentUserEmail: " . count($transactions) . " transactions");
 
     echo json_encode([
         'success' => true,
-        'transactions' => $history['transactions'] ?? []
+        'transactions' => $transactions,
+        'debug' => [
+            'teamEmail' => $currentUserEmail,
+            'teamName' => $storage->getTeamName(),
+            'transactionCount' => count($transactions)
+        ]
     ]);
 
 } catch (Exception $e) {

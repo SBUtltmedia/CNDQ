@@ -481,6 +481,40 @@ class NegotiationManager {
                 throw new Exception('This negotiation was already accepted by someone else');
             }
 
+            // Execute the actual trade (transfer inventory and funds)
+            require_once __DIR__ . '/TradeExecutor.php';
+            $lastOffer = end($negotiation['offers']);
+            $quantity = $lastOffer['quantity'];
+            $pricePerGallon = $lastOffer['price'];
+
+            // Determine buyer and seller based on negotiation type
+            if ($negotiation['type'] === 'buy') {
+                // Initiator wanted to buy, so initiator is buyer, responder is seller
+                $buyerId = $negotiation['initiatorId'];
+                $sellerId = $negotiation['responderId'];
+            } else {
+                // Initiator wanted to sell, so initiator is seller, responder is buyer
+                $buyerId = $negotiation['responderId'];
+                $sellerId = $negotiation['initiatorId'];
+            }
+
+            $tradeExecutor = new TradeExecutor();
+            $tradeResult = $tradeExecutor->executeTrade(
+                $sellerId,
+                $buyerId,
+                $negotiation['chemical'],
+                $quantity,
+                $pricePerGallon,
+                $negotiationId, // offerId
+                $acceptingTeamId // actingTeamId
+            );
+
+            if (!$tradeResult['success']) {
+                throw new Exception("Trade execution failed: " . ($tradeResult['message'] ?? 'Unknown error'));
+            }
+
+            error_log("NegotiationManager: Trade executed successfully - {$tradeResult['transactionId']}");
+
             // Emit events to both parties
             try {
                 $otherTeamId = ($acceptingTeamId === $negotiation['initiatorId']) ? $negotiation['responderId'] : $negotiation['initiatorId'];
@@ -491,12 +525,8 @@ class NegotiationManager {
                 $aStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
                 $oStorage->emitEvent('close_negotiation', ['negotiationId' => $negotiationId, 'status' => 'accepted']);
 
-                // Add notifications for history
-                $aStorage->addNotification([
-                    'type' => 'trade_completed',
-                    'message' => "Trade accepted! Negotiation with $otherTeamName for Chemical {$negotiation['chemical']} complete."
-                ]);
-                // Counterparty (oStorage) notification is handled by GlobalAggregator reflection
+                // Notification for accepting team - counterparty notification handled by GlobalAggregator reflection
+                // (TradeExecutor already records the transaction, GlobalAggregator reflects it)
             } catch (Exception $e) {
                 error_log("NegotiationManager: Failed to emit accept events: " . $e->getMessage());
             }
