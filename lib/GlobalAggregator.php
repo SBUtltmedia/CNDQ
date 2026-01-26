@@ -75,6 +75,9 @@ class GlobalAggregator {
         $chemical = $txn['chemical'];
         $totalAmount = $txn['totalAmount']; // Amount is always positive here
 
+        // Get inventory BEFORE adjustment for transaction history
+        $invBefore = $counterpartyStorage->getInventory()[$chemical] ?? 0;
+
         // Note: adjustChemical and updateFunds accept negative values for deductions
         if ($role === 'seller') {
             // Actor was buyer, so counterparty is seller
@@ -88,6 +91,12 @@ class GlobalAggregator {
             $counterpartyStorage->updateFunds(-$totalAmount);
         }
 
+        // Get inventory AFTER adjustment for transaction history
+        $invAfter = $counterpartyStorage->getInventory()[$chemical] ?? 0;
+
+        // Get actor's team name for counterpartyName field
+        $actorTeamName = $actorStorage->getTeamName();
+
         $counterpartyStorage->addTransaction([
             'transactionId' => $transactionId,
             'role' => $role,
@@ -96,7 +105,12 @@ class GlobalAggregator {
             'pricePerGallon' => $txn['pricePerGallon'],
             'totalAmount' => $totalAmount,
             'counterparty' => $actorId,
+            'counterpartyName' => $actorTeamName,
             'offerId' => $txn['offerId'] ?? null,
+            'timestamp' => $txn['timestamp'] ?? time(),
+            'status' => 'accepted',
+            'inventoryBefore' => $invBefore,
+            'inventoryAfter' => $invAfter,
             'isReflection' => true,
             'heat' => $txn['heat'] ?? null
         ]);
