@@ -113,17 +113,27 @@
         </header>
 
         <!-- Tabs -->
-        <div class="bg-gray-800 flex justify-center border-b border-gray-700">
-            <button id="tab-leaderboard" class="px-12 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all">Leaderboard</button>
-            <button id="tab-history" class="px-12 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all">Event History</button>
+        <div class="bg-gray-800 flex justify-center border-b border-gray-700 overflow-x-auto">
+            <button id="tab-leaderboard" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all whitespace-nowrap">Scoreboard</button>
+            <button id="tab-history" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all whitespace-nowrap">Market History</button>
+            <button id="tab-team-sheet" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all whitespace-nowrap">Team Sheet</button>
+            <button id="tab-answer-report" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all whitespace-nowrap">Answer Report</button>
+            <button id="tab-sensitivity-report" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all whitespace-nowrap">Sensitivity Report</button>
         </div>
 
         <!-- Content Area -->
         <main class="flex-1 overflow-y-auto p-8 container mx-auto max-w-4xl">
             <!-- Leaderboard Content -->
-            <div id="content-leaderboard" class="block">
+            <div id="content-leaderboard">
                 <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-8">
-                    <h3 class="text-2xl font-bold mb-8 text-center text-gray-300">Final Performance Rankings</h3>
+                    <div class="flex justify-between items-center mb-8">
+                        <div></div>
+                        <h3 class="text-2xl font-bold text-gray-300">Final Performance Rankings</h3>
+                        <button id="export-leaderboard-btn" class="text-gray-400 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            CSV
+                        </button>
+                    </div>
                     <div id="final-leaderboard-container">
                         <!-- Rankings will be injected here -->
                         <div class="animate-pulse space-y-4">
@@ -135,15 +145,56 @@
                 </div>
             </div>
 
-            <!-- History Content -->
+            <!-- History Content (Global Transaction History) -->
             <div id="content-history" class="hidden">
-                <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-8">
-                    <h3 class="text-2xl font-bold mb-8 text-center text-gray-300">Your Activity Report</h3>
-                    <div id="final-history-container" class="space-y-4">
-                        <!-- Notifications will be injected here -->
-                        <p class="text-gray-500 text-center py-12 italic">Loading your activity history...</p>
+                <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div></div>
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-gray-300">Market Transaction History</h3>
+                            <p class="text-gray-500 text-sm">Recent trades across all teams</p>
+                        </div>
+                        <button id="export-global-history-btn" class="text-gray-400 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            CSV
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="text-gray-400 text-sm border-b border-gray-600">
+                                <tr>
+                                    <th class="py-3 font-semibold text-left">Time</th>
+                                    <th class="py-3 font-semibold text-left">Chemical</th>
+                                    <th class="py-3 font-semibold text-right">Quantity</th>
+                                    <th class="py-3 font-semibold text-right">Price/Gal</th>
+                                    <th class="py-3 font-semibold text-right">Total</th>
+                                    <th class="py-3 font-semibold pl-4">Seller</th>
+                                    <th class="py-3 font-semibold pl-4">Buyer</th>
+                                </tr>
+                            </thead>
+                            <tbody id="global-history-table-body" class="text-gray-300 text-sm divide-y divide-gray-700">
+                                <!-- Rows injected via JS -->
+                            </tbody>
+                        </table>
+                        <p id="global-history-empty-msg" class="hidden text-center text-gray-500 py-8">No transactions yet.</p>
+                        <p id="global-history-loading" class="text-center text-gray-500 py-8">Loading market history...</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Team Sheet Content -->
+            <div id="content-team-sheet" class="hidden">
+                <report-viewer id="report-viewer-team-sheet" embedded="true" hide-tabs="true" active-tab="team-sheet"></report-viewer>
+            </div>
+
+            <!-- Answer Report Content -->
+            <div id="content-answer-report" class="hidden">
+                <report-viewer id="report-viewer-answer-report" embedded="true" hide-tabs="true" active-tab="answer"></report-viewer>
+            </div>
+
+            <!-- Sensitivity Report Content -->
+            <div id="content-sensitivity-report" class="hidden">
+                <report-viewer id="report-viewer-sensitivity-report" embedded="true" hide-tabs="true" active-tab="sensitivity"></report-viewer>
             </div>
         </main>
         </div>
@@ -947,7 +998,13 @@
         <div class="bg-gray-800 rounded-lg w-full max-w-4xl max-h-[85vh] flex flex-col border border-gray-700 shadow-2xl">
             <div class="p-6 border-b border-gray-700 flex justify-between items-center">
                 <h3 class="text-2xl font-bold text-white">Transaction History</h3>
-                <button id="history-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                <div class="flex items-center gap-4">
+                    <button id="export-history-btn" class="text-gray-400 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        CSV
+                    </button>
+                    <button id="history-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
             </div>
             <div class="p-6 overflow-y-auto flex-1">
                 <table class="w-full text-left border-collapse">

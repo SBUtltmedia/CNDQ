@@ -324,6 +324,21 @@ class ApiClient {
         }
     };
 
+    // ==========================================
+    // Report APIs
+    // ==========================================
+
+    reports = {
+        /**
+         * Get generated reports
+         * @param {string} type - 'financials', 'transactions', 'optimization', or 'all'
+         * @returns {Promise<{success: boolean, financials?: Object, transactions?: Array, optimization?: Object}>}
+         */
+        get: async (type = 'all') => {
+            return this.get(`api/reports/index.php?type=${type}`);
+        }
+    };
+
     session = {
         /**
          * Get public session status (triggers auto-advance)

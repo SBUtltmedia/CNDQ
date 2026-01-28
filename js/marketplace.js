@@ -11,6 +11,7 @@ import './components/offer-bubble.js';
 import './components/notification-manager.js';
 import './components/leaderboard-modal.js';
 import './components/buy-request-card.js';
+import './components/report-viewer.js';
 
 // Import API client
 import { api } from './api.js';
@@ -593,6 +594,86 @@ class MarketplaceApp {
 
     closeTransactionHistory() {
         modalManager.close('history-modal');
+    }
+
+    /**
+     * Load and render global market transaction history
+     */
+    async loadGlobalTransactions() {
+        const tbody = document.getElementById('global-history-table-body');
+        const emptyMsg = document.getElementById('global-history-empty-msg');
+        const loadingMsg = document.getElementById('global-history-loading');
+
+        if (!tbody) return;
+
+        try {
+            loadingMsg?.classList.remove('hidden');
+            emptyMsg?.classList.add('hidden');
+
+            const response = await fetch('/CNDQ/api/trades/global.php');
+            const data = await response.json();
+
+            loadingMsg?.classList.add('hidden');
+
+            if (!data.success || !data.transactions || data.transactions.length === 0) {
+                emptyMsg?.classList.remove('hidden');
+                tbody.innerHTML = '';
+                return;
+            }
+
+            this.renderGlobalTransactionHistory(data.transactions);
+        } catch (error) {
+            console.error('Failed to load global transactions:', error);
+            loadingMsg?.classList.add('hidden');
+            emptyMsg?.classList.remove('hidden');
+            tbody.innerHTML = '';
+        }
+    }
+
+    /**
+     * Render Global Transaction History Table
+     */
+    renderGlobalTransactionHistory(transactions) {
+        const tbody = document.getElementById('global-history-table-body');
+        const emptyMsg = document.getElementById('global-history-empty-msg');
+
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (!transactions || transactions.length === 0) {
+            emptyMsg?.classList.remove('hidden');
+            return;
+        }
+
+        emptyMsg?.classList.add('hidden');
+
+        transactions.forEach(t => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-700/50 transition';
+
+            let timeStr = 'Unknown';
+            if (t.timestamp) {
+                const date = new Date(t.timestamp * 1000);
+                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+
+            // Hot trade indicator
+            const isHot = t.heat?.isHot;
+            const heatClass = isHot ? 'text-orange-400' : '';
+            const heatIcon = isHot ? '🔥 ' : '';
+
+            row.innerHTML = `
+                <td class="py-3 font-mono text-gray-400">${timeStr}</td>
+                <td class="py-3 font-bold ${heatClass}">${heatIcon}Chemical ${t.chemical}</td>
+                <td class="py-3 text-right font-mono">${this.formatNumber(t.quantity)}</td>
+                <td class="py-3 text-right font-mono">${this.formatCurrency(t.pricePerGallon)}</td>
+                <td class="py-3 text-right font-mono font-bold text-white">${this.formatCurrency(t.totalAmount)}</td>
+                <td class="py-3 pl-4 text-green-400">${t.sellerName}</td>
+                <td class="py-3 pl-4 text-blue-400">${t.buyerName}</td>
+            `;
+
+            tbody.appendChild(row);
+        });
     }
 
     /**
@@ -1779,6 +1860,62 @@ class MarketplaceApp {
      * Setup event listeners
      */
     setupEventListeners() {
+        // Game Over Overlay Tabs
+        const setupGameOverTabs = () => {
+            const tabs = {
+                leaderboard: document.getElementById('tab-leaderboard'),
+                history: document.getElementById('tab-history'),
+                'team-sheet': document.getElementById('tab-team-sheet'),
+                'answer-report': document.getElementById('tab-answer-report'),
+                'sensitivity-report': document.getElementById('tab-sensitivity-report')
+            };
+            
+            const contents = {
+                leaderboard: document.getElementById('content-leaderboard'),
+                history: document.getElementById('content-history'),
+                'team-sheet': document.getElementById('content-team-sheet'),
+                'answer-report': document.getElementById('content-answer-report'),
+                'sensitivity-report': document.getElementById('content-sensitivity-report')
+            };
+
+            const resetTabs = () => {
+                Object.values(tabs).forEach(t => {
+                    if(t) {
+                        t.classList.remove('border-purple-500', 'text-purple-400');
+                        t.classList.add('border-transparent', 'text-gray-500');
+                    }
+                });
+                Object.values(contents).forEach(c => c?.classList.add('hidden'));
+            };
+
+            const activateTab = (tabName) => {
+                resetTabs();
+                const tab = tabs[tabName];
+                tab?.classList.remove('border-transparent', 'text-gray-500');
+                tab?.classList.add('border-purple-500', 'text-purple-400');
+
+                const content = contents[tabName];
+                content?.classList.remove('hidden');
+
+                if (tabName === 'history') {
+                    this.loadGlobalTransactions();
+                } else if (['team-sheet', 'answer-report', 'sensitivity-report'].includes(tabName)) {
+                    // Trigger data fetch for the specific viewer in this tab
+                    const viewerId = `report-viewer-${tabName}`;
+                    const viewer = document.getElementById(viewerId);
+                    if (viewer && typeof viewer.fetchData === 'function') {
+                        viewer.fetchData();
+                    }
+                }
+            };
+
+            // Bind click events
+            Object.keys(tabs).forEach(key => {
+                tabs[key]?.addEventListener('click', () => activateTab(key));
+            });
+        };
+        setupGameOverTabs();
+
         // Recalculate shadow prices
         document.getElementById('recalc-shadow-btn').addEventListener('click', () => {
             this.recalculateShadowPrices();
@@ -2138,27 +2275,6 @@ class MarketplaceApp {
         if (historyCloseBtn) {
             historyCloseBtn.addEventListener('click', () => {
                 this.closeTransactionHistory();
-            });
-        }
-
-        const tabLeaderboard = document.getElementById('tab-leaderboard');
-        const tabHistory = document.getElementById('tab-history');
-        const contentLeaderboard = document.getElementById('content-leaderboard');
-        const contentHistory = document.getElementById('content-history');
-
-        if (tabLeaderboard && tabHistory) {
-            tabLeaderboard.addEventListener('click', () => {
-                tabLeaderboard.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all';
-                tabHistory.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all';
-                contentLeaderboard?.classList.remove('hidden');
-                contentHistory?.classList.add('hidden');
-            });
-
-            tabHistory.addEventListener('click', () => {
-                tabHistory.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all';
-                tabLeaderboard.className = 'px-12 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all';
-                contentHistory?.classList.remove('hidden');
-                contentLeaderboard?.classList.add('hidden');
             });
         }
     }
@@ -2796,6 +2912,112 @@ class MarketplaceApp {
         if (seconds < 3600) return Math.floor(seconds / 60) + ' minutes ago';
         if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
         return Math.floor(seconds / 86400) + ' days ago';
+    }
+
+    /**
+     * Download data as CSV file
+     */
+    downloadCSV(data, filename, headers) {
+        // Escape CSV values (handle commas, quotes, newlines)
+        const escapeCSV = (val) => {
+            if (val === null || val === undefined) return '';
+            const str = String(val);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
+        };
+
+        // Build CSV content
+        let csv = headers.map(escapeCSV).join(',') + '\n';
+        data.forEach(row => {
+            csv += row.map(escapeCSV).join(',') + '\n';
+        });
+
+        // Create and trigger download
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    /**
+     * Export Leaderboard/Rankings to CSV
+     */
+    exportLeaderboardCSV() {
+        const headers = ['Rank', 'Team Name', 'Initial Profit', 'Current Profit', '% Increase', 'ROI'];
+        const data = (this.leaderboard || []).map((team, idx) => [
+            idx + 1,
+            team.teamName || team.teamEmail,
+            team.initialProfit?.toFixed(2) || '0.00',
+            team.currentProfit?.toFixed(2) || '0.00',
+            ((team.percentIncrease || 0) * 100).toFixed(1) + '%',
+            team.roi?.toFixed(2) || '0.00'
+        ]);
+        this.downloadCSV(data, 'leaderboard.csv', headers);
+    }
+
+    /**
+     * Export Personal Transaction History to CSV
+     */
+    exportTransactionHistoryCSV() {
+        const headers = ['Time', 'Type', 'Chemical', 'Quantity', 'Price/Gal', 'Total', 'Inv Before', 'Inv After', 'Counterparty'];
+        const data = (this.transactions || [])
+            .filter(t => !t.status || t.status === 'accepted')
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+            .map(t => {
+                const date = t.timestamp ? new Date(t.timestamp * 1000) : null;
+                const timeStr = date ? date.toLocaleString() : 'Unknown';
+                return [
+                    timeStr,
+                    t.role === 'seller' ? 'SALE' : 'BUY',
+                    'Chemical ' + t.chemical,
+                    t.quantity,
+                    t.pricePerGallon?.toFixed(2) || '0.00',
+                    t.totalAmount?.toFixed(2) || '0.00',
+                    t.inventoryBefore ?? '-',
+                    t.inventoryAfter ?? '-',
+                    t.counterpartyName || t.counterparty || 'Unknown'
+                ];
+            });
+        this.downloadCSV(data, 'my-transaction-history.csv', headers);
+    }
+
+    /**
+     * Export Global Market History to CSV
+     */
+    async exportGlobalHistoryCSV() {
+        try {
+            const response = await fetch('/CNDQ/api/trades/global.php?limit=100');
+            const data = await response.json();
+
+            if (!data.success || !data.transactions) {
+                notifications.showToast('No transactions to export', 'error');
+                return;
+            }
+
+            const headers = ['Time', 'Chemical', 'Quantity', 'Price/Gal', 'Total', 'Seller', 'Buyer', 'Hot Trade'];
+            const rows = data.transactions.map(t => {
+                const date = t.timestamp ? new Date(t.timestamp * 1000) : null;
+                const timeStr = date ? date.toLocaleString() : 'Unknown';
+                return [
+                    timeStr,
+                    'Chemical ' + t.chemical,
+                    t.quantity,
+                    t.pricePerGallon?.toFixed(2) || '0.00',
+                    t.totalAmount?.toFixed(2) || '0.00',
+                    t.sellerName,
+                    t.buyerName,
+                    t.heat?.isHot ? 'Yes' : 'No'
+                ];
+            });
+            this.downloadCSV(rows, 'market-history.csv', headers);
+        } catch (error) {
+            console.error('Failed to export global history:', error);
+            notifications.showToast('Export failed', 'error');
+        }
     }
 }
 

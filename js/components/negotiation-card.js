@@ -112,8 +112,15 @@ class NegotiationCard extends HTMLElement {
         const currentUserId = this.currentUserId;
         
         // Common Data & Calculations
-        const chemicalStyle = `background-color: var(--color-chemical-${chemical.toLowerCase()}); color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);`;
-        const chemicalBadge = `<span class="font-bold px-2 py-0.5 rounded text-sm" style="${chemicalStyle}">Chemical ${chemical}</span>`;
+        const chemicalColors = {
+            C: { bg: '#1d4ed8', border: 'var(--color-chemical-c)' },
+            N: { bg: '#7c3aed', border: 'var(--color-chemical-n)' },
+            D: { bg: '#b45309', border: 'var(--color-chemical-d)' },
+            Q: { bg: '#b91c1c', border: 'var(--color-chemical-q)' }
+        };
+        const colors = chemicalColors[chemical] || chemicalColors.C;
+        const chemicalStyle = `background-color: ${colors.bg}; color: white; border: 1px solid ${colors.border}; font-weight: 700;`;
+        const chemicalBadge = `<span class="font-bold px-2 py-0.5 rounded text-sm shadow-sm" style="${chemicalStyle}">Chemical ${chemical}</span>`;
 
         // Convert to strings for safe comparison
         const initiatorId = String(neg.initiatorId);
