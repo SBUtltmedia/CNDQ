@@ -57,7 +57,9 @@ export class StateManager extends EventTarget {
 
     /**
      * Load shadow prices (read-only, does NOT recalculate)
-     * Auto-recalculates if shadow prices are all zeros but inventory isn't
+     * Auto-recalculates if:
+     * - Shadow prices are all zeros but inventory isn't
+     * - Ranges are missing (not stored, only calculated by LP solver)
      */
     async loadShadowPrices() {
         try {
@@ -67,8 +69,11 @@ export class StateManager extends EventTarget {
                 const allShadowZero = Object.values(data.shadowPrices).every(v => v === 0);
                 const hasInventory = data.inventory && Object.values(data.inventory).some(v => v > 0);
 
-                if (allShadowZero && hasInventory) {
-                    console.log('StateManager: Shadow prices are zero but inventory exists - auto-recalculating');
+                // Check if ranges are missing (ranges aren't stored, only from recalculate)
+                const rangesMissing = !this.state.ranges || Object.keys(this.state.ranges).length === 0;
+
+                if ((allShadowZero && hasInventory) || (rangesMissing && hasInventory)) {
+                    console.log('StateManager: Auto-recalculating (shadow prices zero or ranges missing)');
                     await this.recalculateShadowPrices();
                     return; // recalculateShadowPrices already notifies
                 }

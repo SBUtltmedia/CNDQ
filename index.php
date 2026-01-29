@@ -371,8 +371,8 @@
         </div>
     </div>
 
-    <!-- Toast Notifications Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-[9999] space-y-2" role="region" aria-live="polite" aria-atomic="false" aria-label="Notifications"></div>
+    <!-- Toast Notifications Container - Horizontal bottom bar -->
+    <div id="toast-container" class="fixed bottom-0 left-0 right-0 z-[9999] flex flex-row gap-2 p-2 pointer-events-none justify-center flex-wrap" role="region" aria-live="polite" aria-atomic="false" aria-label="Notifications"></div>
 
     <!-- Main App Container -->
     <div id="app">
@@ -466,15 +466,23 @@
             </div>
 
             <!-- Financial Summary Panel -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
-                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Projected production profit</span>
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Production Rev</span>
                     <span class="text-xl font-mono text-blue-400" id="fin-production-rev">$0.00</span>
                     <span class="text-[10px] text-gray-500 uppercase mt-1" id="fin-production-delta"></span>
                 </div>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Sales Rev</span>
+                    <span class="text-xl font-mono text-green-400" id="fin-sales-rev">$0.00</span>
+                </div>
+                <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
+                    <span class="text-xs text-gray-400 uppercase font-bold mb-1">Purchase Cost</span>
+                    <span class="text-xl font-mono text-red-400" id="fin-purchase-cost">$0.00</span>
+                </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-green-600 opacity-10"></div>
-                    <span class="text-xs text-green-300 uppercase font-bold mb-1 z-10">Projected total profit</span>
+                    <span class="text-xs text-green-300 uppercase font-bold mb-1 z-10">Net Profit</span>
                     <span class="text-2xl font-mono font-bold text-white z-10" id="fin-net-profit">$0.00</span>
                     <span class="text-[10px] text-gray-400 uppercase mt-1 z-10" id="fin-total-delta"></span>
                 </div>

@@ -62,7 +62,14 @@ class TeamStorage {
      * Initialize a new team with starting inventory
      */
     private function initializeNewTeam() {
-        $this->teamName = TeamNameGenerator::generate($this->teamEmail);
+        // Get all existing team names to prevent collisions
+        $existingNames = $this->db->query(
+            'SELECT DISTINCT team_name FROM team_events WHERE event_type = "init"'
+        );
+        $existingNamesList = array_column($existingNames, 'team_name');
+
+        // Generate unique name (appends number if collision)
+        $this->teamName = TeamNameGenerator::generateUnique($this->teamEmail, $existingNamesList);
 
         $timestamp = microtime(true);
 

@@ -486,6 +486,8 @@ class MarketplaceApp {
         const els = {
             inventory: document.getElementById('fin-production-rev'),
             inventoryDelta: document.getElementById('fin-production-delta'),
+            salesRev: document.getElementById('fin-sales-rev'),
+            purchaseCost: document.getElementById('fin-purchase-cost'),
             totalValue: document.getElementById('fin-net-profit'),
             totalDelta: document.getElementById('fin-total-delta'),
             improvement: document.getElementById('fin-improvement'),
@@ -494,6 +496,14 @@ class MarketplaceApp {
 
         if (els.inventory) {
             els.inventory.textContent = this.formatCurrency(inventoryValue);
+        }
+
+        if (els.salesRev) {
+            els.salesRev.textContent = this.formatCurrency(salesRevenue);
+        }
+
+        if (els.purchaseCost) {
+            els.purchaseCost.textContent = this.formatCurrency(purchaseCosts);
         }
 
         if (els.inventoryDelta) {

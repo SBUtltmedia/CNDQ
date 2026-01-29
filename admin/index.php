@@ -38,8 +38,8 @@ if (!isAdmin()) {
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen p-8">
-    <!-- Toast Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    <!-- Toast Container - Horizontal bottom bar -->
+    <div id="toast-container" class="fixed bottom-0 left-0 right-0 z-50 flex flex-row gap-2 p-2 pointer-events-none justify-center flex-wrap"></div>
 
     <div class="max-w-4xl mx-auto">
         <header class="mb-8">
@@ -262,12 +262,11 @@ if (!isAdmin()) {
             });
         }
 
-        // Toast notification system
+        // Toast notification system - horizontal bottom bar
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
 
-            // Get actual background color values from CSS
             const bgColors = {
                 success: '#15803d',
                 error: '#dc2626',
@@ -275,25 +274,31 @@ if (!isAdmin()) {
             };
             const bgColor = bgColors[type] || bgColors.info;
 
-            toast.className = `text-white px-6 py-3 rounded-lg shadow-lg min-w-[300px] max-w-md transform transition-all duration-300 ease-in-out`;
+            toast.className = `text-white px-4 py-2 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out pointer-events-auto text-sm`;
             toast.style.backgroundColor = bgColor;
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(100%)';
             toast.innerHTML = `
-                <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
                     <span>${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200 ml-2">✕</button>
                 </div>
             `;
 
             container.appendChild(toast);
 
+            // Animate in (slide up)
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateY(0)';
+                });
+            });
+
             // Auto-remove after 4 seconds
             setTimeout(() => {
                 toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
+                toast.style.transform = 'translateY(100%)';
                 setTimeout(() => toast.remove(), 300);
             }, 4000);
         }

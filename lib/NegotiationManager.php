@@ -462,7 +462,8 @@ class NegotiationManager {
                     $this->db->rollback();
                     // Then reject the negotiation with the reason
                     $this->rejectNegotiation($negotiationId, 'system', $e->getMessage());
-                    throw new Exception("Trade invalidated: " . $e->getMessage());
+                    // Provide helpful message - inventory may have changed due to other trades
+                    throw new Exception("Trade cancelled: " . $e->getMessage() . " (Your inventory may have changed from other completed trades.)");
                 }
             }
 

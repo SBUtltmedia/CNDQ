@@ -39,13 +39,13 @@ class TradeExecutor {
                 // Seller Counterparty: needs inventory
                 $inv = $counterpartyStorage->getInventory()[$chemical] ?? 0;
                 if ($inv < $quantity) {
-                    throw new Exception("The seller has insufficient inventory to fulfill this trade.");
+                    throw new Exception("The seller no longer has enough inventory (needs {$quantity}, has {$inv}). They may have completed other trades.");
                 }
             } else {
                 // Seller Actor: needs inventory
                 $inv = $actorStorage->getInventory()[$chemical] ?? 0;
                 if ($inv < $quantity) {
-                    throw new Exception("You have insufficient inventory (need $quantity, have $inv)");
+                    throw new Exception("Insufficient inventory: you need {$quantity} gallons but only have {$inv}. Your inventory may have changed from other completed trades.");
                 }
                 // Buyer Counterparty: needs funds - CHECK REMOVED (Infinite Capital)
             }

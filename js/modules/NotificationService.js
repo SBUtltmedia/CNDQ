@@ -52,12 +52,16 @@ export class NotificationService {
         }
 
         const toast = document.createElement('div');
-        toast.className = `${colors[type] || colors.info} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center gap-2`;
+        toast.className = `${colors[type] || colors.info} text-white px-4 py-2 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center gap-2 pointer-events-auto`;
 
         // Apply gradient styles if available for this type
         if (gradientStyles[type]) {
             toast.style.cssText += gradientStyles[type];
         }
+
+        // Start hidden below
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(100%)';
 
         toast.setAttribute('role', 'alert');
         toast.setAttribute('aria-live', 'assertive');
@@ -66,30 +70,29 @@ export class NotificationService {
         if (icons[type]) {
             const iconSpan = document.createElement('span');
             iconSpan.textContent = icons[type];
-            iconSpan.className = 'text-xl';
+            iconSpan.className = 'text-lg';
             toast.appendChild(iconSpan);
         }
 
         const messageSpan = document.createElement('span');
+        messageSpan.className = 'text-sm';
         messageSpan.textContent = message;
         toast.appendChild(messageSpan);
 
         container.appendChild(toast);
 
-        // Animate in
+        // Animate in (slide up from below)
         requestAnimationFrame(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
             requestAnimationFrame(() => {
                 toast.style.opacity = '1';
-                toast.style.transform = 'translateX(0)';
+                toast.style.transform = 'translateY(0)';
             });
         });
 
         // Remove after specified duration
         setTimeout(() => {
             toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
+            toast.style.transform = 'translateY(100%)';
             setTimeout(() => {
                 toast.remove();
             }, 300);
