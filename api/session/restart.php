@@ -2,7 +2,7 @@
 /**
  * Public Restart Game API
  * POST: Restarts the game with existing NPC count
- * ONLY allowed if the game is already finished
+ * Allowed when: game is finished, game is stopped (market closed), or user is admin
  */
 
 require_once __DIR__ . '/../../lib/SessionManager.php';
@@ -18,22 +18,27 @@ try {
     $sessionManager = new SessionManager();
     $state = $sessionManager->getState();
 
-    // Safety: Only allow non-admins to restart if game is actually finished
-    // or if the user IS an admin.
+    // Safety: Allow restart if game is finished OR if game is stopped (market closed)
+    // This allows unattended operation where users can restart themselves
     require_once __DIR__ . '/../../userData.php';
     $isGameFinished = $state['gameFinished'] ?? false;
-    
-    if (!$isGameFinished && !isAdmin()) {
+    $isGameStopped = $state['gameStopped'] ?? true;
+
+    // Allow restart if: admin, game finished, OR game is stopped (market closed)
+    if (!$isGameFinished && !$isGameStopped && !isAdmin()) {
         http_response_code(403);
-        echo json_encode(['error' => 'Game is still in progress. Only admins can restart early.']);
+        echo json_encode(['error' => 'Game is still in progress. Wait for market to close or contact admin.']);
         exit;
     }
 
-    $newState = $sessionManager->restartGame();
+    $sessionManager->restartGame();
+
+    // Auto-start the game so users don't have to wait for admin
+    $newState = $sessionManager->toggleGameStop(false);
 
     echo json_encode([
         'success' => true,
-        'message' => 'Game restarted successfully!',
+        'message' => 'Game restarted and started!',
         'session' => $newState
     ]);
 

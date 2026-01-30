@@ -2384,6 +2384,14 @@ class MarketplaceApp {
             this.restartGame();
         });
 
+        // Market Closed Overlay restart button
+        const restartBtnClosed = document.getElementById('restart-game-btn-closed');
+        if (restartBtnClosed) {
+            restartBtnClosed.addEventListener('click', () => {
+                this.restartGame('restart-game-btn-closed');
+            });
+        }
+
         // Transaction History
         const viewHistoryBtn = document.getElementById('view-history-btn');
         if (viewHistoryBtn) {
@@ -2969,8 +2977,9 @@ class MarketplaceApp {
 
     /**
      * Restart the game
+     * @param {string} buttonId - ID of the button that triggered restart (for UI feedback)
      */
-    async restartGame() {
+    async restartGame(buttonId = 'restart-game-btn') {
         const confirmed = await this.showConfirm(
             'This will reset the entire simulation for ALL players and start over with the current NPC count. Are you sure?',
             'Restart Simulation'
@@ -2979,9 +2988,11 @@ class MarketplaceApp {
         if (!confirmed) return;
 
         try {
-            const btn = document.getElementById('restart-game-btn');
-            btn.disabled = true;
-            btn.textContent = 'Restarting...';
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Restarting...';
+            }
 
             const data = await api.post('api/session/restart.php');
 
@@ -2990,12 +3001,19 @@ class MarketplaceApp {
                 setTimeout(() => window.location.reload(), 1500);
             } else {
                 notifications.showToast(data.error || 'Failed to restart', 'error');
-                btn.disabled = false;
-                btn.textContent = 'Restart Simulation';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Restart Simulation';
+                }
             }
         } catch (error) {
             console.error('Restart failed:', error);
-            notifications.showToast('Network error during restart', 'error');
+            notifications.showToast(error.message || 'Network error during restart', 'error');
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Restart Simulation';
+            }
         }
     }
 
