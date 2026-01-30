@@ -14,5 +14,6 @@
     "maxAcceptableErrors": 2
   },
   "headless": true,
-  "verbose": false
+  "verbose": false,
+  "screenshotTutorial": false
 }

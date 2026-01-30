@@ -97,14 +97,14 @@ class BuyRequestCard extends HTMLElement {
 
         // Chemical badge styling
         const chemicalColors = {
-            C: { bg: '#1d4ed8', border: 'var(--color-chemical-c)' },
-            N: { bg: '#7c3aed', border: 'var(--color-chemical-n)' },
-            D: { bg: '#b45309', border: 'var(--color-chemical-d)' },
-            Q: { bg: '#b91c1c', border: 'var(--color-chemical-q)' }
+            C: { bg: '#1d4ed8', border: 'var(--color-chemical-c)', symbol: '●' },
+            N: { bg: '#7c3aed', border: 'var(--color-chemical-n)', symbol: '▲' },
+            D: { bg: '#b45309', border: 'var(--color-chemical-d)', symbol: '■' },
+            Q: { bg: '#b91c1c', border: 'var(--color-chemical-q)', symbol: '◆' }
         };
         const colors = chemicalColors[chemical] || chemicalColors.C;
         const chemicalStyle = `background-color: ${colors.bg}; color: white; border: 1px solid ${colors.border}; font-weight: 700;`;
-        const chemicalBadge = `<span class="font-bold px-2 py-0.5 rounded text-sm shadow-sm" style="${chemicalStyle}">Chemical ${chemical}</span>`;
+        const chemicalBadge = `<span class="font-bold px-2 py-0.5 rounded text-sm shadow-sm" style="${chemicalStyle}"><span aria-hidden="true">${colors.symbol}</span> Chemical ${chemical}</span>`;
 
         // Status badge - waiting for sellers (using CSS variable)
         const statusBadge = '<span class="px-2 py-1 rounded text-xs font-semibold" style="background-color: var(--color-waiting); color: white;">Waiting...</span>';
@@ -112,9 +112,13 @@ class BuyRequestCard extends HTMLElement {
         // Update wrapper border color - using CSS variable
         wrapper.className = 'card-wrapper bg-gray-800 rounded p-4 border-2 shadow-lg transition relative hover:border-gray-500 cursor-pointer';
         wrapper.style.borderColor = 'var(--color-waiting)';
+        wrapper.setAttribute('role', 'article');
+        wrapper.setAttribute('aria-label', `Buy Request: ${quantity} gallons of Chemical ${chemical} at max ${this.formatCurrency(maxPrice)} per gallon`);
 
         wrapper.innerHTML = `
-            <button class="cancel-btn absolute -top-2 -right-2 bg-gray-700 text-gray-400 hover:bg-red-600 hover:text-white rounded-full p-1 shadow-md transition z-20 border border-gray-600 hover:border-red-500" aria-label="Cancel Buy Request" title="Cancel Buy Request">
+            <button class="cancel-btn absolute -top-2 -right-2 bg-gray-700 text-gray-400 hover:bg-red-600 hover:text-white rounded-full p-1 shadow-md transition z-20 border border-gray-600 hover:border-red-500" 
+                    aria-label="Cancel buy request for Chemical ${chemical}" 
+                    title="Cancel buy request for Chemical ${chemical}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>

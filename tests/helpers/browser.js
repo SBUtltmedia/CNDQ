@@ -4,11 +4,14 @@
 
 const puppeteer = require('puppeteer');
 const path = require('path');
+const fs = require('fs');
 
 class BrowserHelper {
     constructor(config) {
         this.config = config;
         this.browser = null;
+        this.screenshotCounter = 0;
+        this.screenshotDir = path.join(__dirname, '..', 'screenshots');
     }
 
     /**

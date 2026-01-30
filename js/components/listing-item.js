@@ -103,7 +103,8 @@ class ListingItem extends LitElement {
     render() {
         console.log(`🎪 Rendering listing-item: ${this.teamName} (${this.listingId}), isMyListing=${this.isMyListing}, disabled=${this.disabled}`);
         
-        const showDetails = this.quantity && this.maxPrice;
+        const price = (this.maxPrice ?? 0).toFixed(2);
+        const showDetails = this.quantity && this.maxPrice !== null;
 
         return html`
             <div class="listing-item ${this.isMyListing ? 'listing-item-mine' : ''}">
@@ -112,14 +113,18 @@ class ListingItem extends LitElement {
                         <span class="team-name">${this.teamName}</span>
                         ${showDetails ? html`
                             <span style="font-size: 0.65rem; color: var(--color-text-secondary, #9ca3af);">
-                                Wants ${this.quantity} gal @ ${this.maxPrice.toFixed(2)}/gal
+                                Wants ${this.quantity} gal @ ${price}/gal
                             </span>
                         ` : ''}
                     </div>
                     ${this.isMyListing ? html`<span class="your-listing"> (Your Request)</span>` : ''}
                 </div>
                 ${!this.isMyListing ? html`
-                    <button class="btn" @click=${this.handleNegotiate} ?disabled=${this.disabled}>
+                    <button class="btn" 
+                            @click=${this.handleNegotiate} 
+                            ?disabled=${this.disabled}
+                            aria-label="Sell ${this.quantity} gallons of Chemical ${this.chemical} to ${this.teamName} at ${price} dollars per gallon"
+                            title="Sell ${this.quantity} gal of ${this.chemical} to ${this.teamName}">
                         Sell to
                     </button>
                 ` : ''}

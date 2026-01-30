@@ -118,10 +118,10 @@ class ChemicalCard extends LitElement {
 
     getChemicalColor(chemical) {
         const colors = {
-            C: { border: 'var(--color-chemical-c, #6eb5ff)', header: '#1d4ed8' },
-            N: { border: 'var(--color-chemical-n, #d4a8fc)', header: '#7c3aed' },
-            D: { border: 'var(--color-chemical-d, #fcd34d)', header: '#b45309' },
-            Q: { border: 'var(--color-chemical-q, #ffa0a0)', header: '#b91c1c' }
+            C: { border: 'var(--color-chemical-c, #6eb5ff)', header: '#1d4ed8', symbol: '●' },
+            N: { border: 'var(--color-chemical-n, #d4a8fc)', header: '#7c3aed', symbol: '▲' },
+            D: { border: 'var(--color-chemical-d, #fcd34d)', header: '#b45309', symbol: '■' },
+            Q: { border: 'var(--color-chemical-q, #ffa0a0)', header: '#b91c1c', symbol: '◆' }
         };
         return colors[chemical] || colors.C;
     }
@@ -146,7 +146,7 @@ class ChemicalCard extends LitElement {
     }
 
     render() {
-        const { border, header } = this.getChemicalColor(this.chemical);
+        const { border, header, symbol } = this.getChemicalColor(this.chemical);
         const hasActiveBuyListing = this.buyListings.some(listing => listing.teamId === this.currentUserId);
         
         const increase = this.ranges?.allowableIncrease ?? 0;
@@ -156,7 +156,7 @@ class ChemicalCard extends LitElement {
         return html`
             <div class="card" style="--border-color: ${border};">
                 <div class="header" style="--header-bg-color: ${header};">
-                    <h2>Chemical ${this.chemical}</h2>
+                    <h2><span aria-hidden="true">${symbol}</span> Chemical ${this.chemical}</h2>
                 </div>
                 <div class="content">
                     <div class="info-box">
@@ -186,7 +186,9 @@ class ChemicalCard extends LitElement {
                             id="post-buy-btn"
                             class="btn ${hasActiveBuyListing ? 'btn-disabled' : ''}"
                             ?disabled=${hasActiveBuyListing}
-                            @click=${this.handlePostBuyRequest}>
+                            @click=${this.handlePostBuyRequest}
+                            aria-label="Post buy request for Chemical ${this.chemical}"
+                            title="Post buy request for Chemical ${this.chemical}">
                             📋 Post Buy Request
                         </button>
                         <p class="empty-listings" style="margin: 0.5rem 0 0; text-align: center;">

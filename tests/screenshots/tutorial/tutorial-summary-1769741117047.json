@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-01-30T02:45:17.047Z",
+  "user": "test_mail1@stonybrook.edu",
+  "preState": {
+    "shadowPrices": {
+      "C": 0.57,
+      "N": 0,
+      "D": 8.57,
+      "Q": 0,
+      "maxProfit": 8112.57
+    },
+    "inventory": {
+      "C": 1897,
+      "N": 1833,
+      "D": 820,
+      "Q": 595,
+      "transactionsSinceLastShadowCalc": 0,
+      "stalenessLevel": "fresh"
+    },
+    "optimalMix": {
+      "deicer": 3794,
+      "solvent": 174.85
+    },
+    "constraints": [
+      {
+        "name": "C",
+        "slack": 0,
+        "status": "Binding"
+      },
+      {
+        "name": "N",
+        "slack": 651.09,
+        "status": "Not Binding"
+      },
+      {
+        "name": "D",
+        "slack": 0,
+        "status": "Binding"
+      },
+      {
+        "name": "Q",
+        "slack": 525.06,
+        "status": "Not Binding"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "step": 1,
+      "displayStep": "1",
+      "displayTotal": "6",
+      "title": "Welcome to CNDQ Trading!",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-1-1769741114013.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 2,
+      "displayStep": "2",
+      "displayTotal": "6",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-2-1769741114493.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 3,
+      "displayStep": "3",
+      "displayTotal": "6",
+      "title": "What are Shadow Prices?",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-3-1769741114943.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 4,
+      "displayStep": "4",
+      "displayTotal": "6",
+      "title": "Your Chemical Analysis",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-4-1769741115374.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 5,
+      "displayStep": "5",
+      "displayTotal": "6",
+      "title": "Your First Trade Recommendation",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-5-1769741115793.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 6,
+      "displayStep": "6",
+      "displayTotal": "6",
+      "title": "Making Hot Trades 🔥",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-6-1769741116224.png",
+      "nextButtonText": "Got It!"
+    },
+    {
+      "step": 7,
+      "displayStep": "Bonus",
+      "displayTotal": "Deep Dive",
+      "title": "The Bigger Picture (Optional)Optional",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-7-1769741116644.png",
+      "nextButtonText": "Done!"
+    }
+  ]
+}

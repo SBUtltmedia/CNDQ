@@ -1,0 +1,209 @@
+{
+  "timestamp": "2026-01-30T03:52:10.070Z",
+  "user": "test_mail1@stonybrook.edu",
+  "preState": {
+    "shadowPrices": {
+      "C": 0.57,
+      "N": 0,
+      "D": 8.57,
+      "Q": 0,
+      "maxProfit": 7405.14
+    },
+    "inventory": {
+      "C": 1784,
+      "N": 1690,
+      "D": 745,
+      "Q": 574,
+      "transactionsSinceLastShadowCalc": 0,
+      "stalenessLevel": "fresh"
+    },
+    "optimalMix": {
+      "deicer": 3568,
+      "solvent": 89.71
+    },
+    "constraints": [
+      {
+        "name": "C",
+        "slack": 0,
+        "status": "Binding"
+      },
+      {
+        "name": "N",
+        "slack": 597.17,
+        "status": "Not Binding"
+      },
+      {
+        "name": "D",
+        "slack": 0,
+        "status": "Binding"
+      },
+      {
+        "name": "Q",
+        "slack": 538.11,
+        "status": "Not Binding"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "step": 1,
+      "displayStep": "1",
+      "displayTotal": "8",
+      "title": "Welcome to CNDQ Trading!",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-1-1769745121249.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 2,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-2-1769745121744.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 3,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-3-1769745122199.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 4,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-4-1769745122625.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 5,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-5-1769745123037.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 6,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-6-1769745123454.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 7,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-7-1769745123871.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 8,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-8-1769745124287.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 9,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-9-1769745124694.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 10,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-10-1769745125113.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 11,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-11-1769745125529.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 12,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-12-1769745125947.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 13,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-13-1769745126388.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 14,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-14-1769745126833.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 15,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-15-1769745127253.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 16,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-16-1769745127668.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 17,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-17-1769745128082.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 18,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-18-1769745128480.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 19,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-19-1769745128898.png",
+      "nextButtonText": "Next"
+    },
+    {
+      "step": 20,
+      "displayStep": "2",
+      "displayTotal": "8",
+      "title": "Your Chemical Inputs",
+      "screenshot": "C:\\Users\\pauls\\HerdRoot\\CNDQ\\tests\\screenshots\\tutorial\\tutorial-step-20-1769745129315.png",
+      "nextButtonText": "Next"
+    }
+  ]
+}

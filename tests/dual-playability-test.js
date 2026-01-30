@@ -25,6 +25,7 @@
  *   node tests/dual-playability-test.js --ui-only
  *   node tests/dual-playability-test.js --api-only
  *   node tests/dual-playability-test.js --verbose
+ *   node tests/dual-playability-test.js --screenshot-tutorial  (captures tutorial screenshots)
  */
 
 const UIPlayabilityTest = require('./ui-playability-test');
@@ -45,6 +46,7 @@ const getArgValue = (flag) => {
 // Apply CLI Overrides
 if (process.argv.includes('--headless')) CONFIG.headless = true;
 if (process.argv.includes('--verbose') || process.argv.includes('-v')) CONFIG.verbose = true;
+if (process.argv.includes('--screenshot-tutorial')) CONFIG.screenshotTutorial = true;
 
 const argNpcs = getArgValue('--npcs');
 if (argNpcs) CONFIG.npcCount = parseInt(argNpcs);
@@ -120,6 +122,12 @@ class DualPlayabilityTest {
                 // Modular run: setup then play
                 await uiTest.browser.launch();
                 await uiTest.setupGame();
+
+                // Optional: Screenshot tutorial to verify dynamic content
+                if (this.config.screenshotTutorial) {
+                    this.tutorialResults = await uiTest.screenshotTutorial();
+                }
+
                 await uiTest.playMarketplace();
                 await uiTest.endGameAndCheckResults();
                 uiTest.printResults();
@@ -506,7 +514,12 @@ class DualPlayabilityTest {
             }
         };
 
-        const reportFile = `dual-test-report-${Date.now()}.json`;
+        const reportDir = path.join(__dirname, '..', 'artifacts');
+        if (!fs.existsSync(reportDir)) {
+            fs.mkdirSync(reportDir, { recursive: true });
+        }
+        
+        const reportFile = path.join(reportDir, `dual-test-report-${Date.now()}.json`);
         fs.writeFileSync(reportFile, JSON.stringify(report, null, 2));
         console.log(`📄 Full comparison report written to: ${reportFile}\n`);
     }

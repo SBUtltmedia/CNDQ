@@ -15,7 +15,7 @@ header('Content-Type: application/json');
 
 $currentUserEmail = getCurrentUserEmail();
 
-if (!$currentUserEmail || $currentUserEmail === 'dev_user') {
+if (!$currentUserEmail) {
     http_response_code(401);
     echo json_encode(['error' => 'Not authenticated']);
     exit;
@@ -39,6 +39,17 @@ try {
     $shadowPrices = $result['shadowPrices'];
     $optimalMix = $result['optimalMix'];
     $maxProfit = $result['maxProfit'];
+    $rawConstraints = $result['constraints'];
+
+    // Format constraints for frontend (array of objects with 'name')
+    $constraints = [];
+    foreach ($rawConstraints as $chem => $data) {
+        $constraints[] = [
+            'name' => $chem,
+            'slack' => $data['slack'],
+            'status' => $data['status']
+        ];
+    }
 
     // Save new shadow prices to team storage
     $storage->updateShadowPrices($shadowPrices);
@@ -55,6 +66,7 @@ try {
             'Q' => $shadowPrices['Q']
         ],
         'ranges' => $result['ranges'], // Include ranges for sensitivity analysis UI
+        'constraints' => $constraints, // NEW: Include constraints for tutorial
         'optimalMix' => [
             'deicer' => $optimalMix['deicer'],
             'solvent' => $optimalMix['solvent']

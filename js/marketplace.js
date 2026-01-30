@@ -21,6 +21,7 @@ import { notifications } from './modules/NotificationService.js';
 import { stateManager } from './modules/StateManager.js';
 import { PollingService } from './modules/PollingService.js';
 import { modalManager } from './components/ModalManager.js';
+import { sounds } from './modules/SoundService.js';
 
 class MarketplaceApp {
     constructor() {
@@ -29,11 +30,19 @@ class MarketplaceApp {
         this.profile = null;
         this.inventory = { C: 0, N: 0, D: 0, Q: 0 };
         this.shadowPrices = { C: 0, N: 0, D: 0, Q: 0 };
+        this.constraints = [];
         this.listings = { C: { buy: [], sell: [] }, N: { buy: [], sell: [] }, D: { buy: [], sell: [] }, Q: { buy: [], sell: [] } };
         this.myNegotiations = [];
         this.notifications = [];
         this.settings = { showTradingHints: false };
         this.productionResultsShown = false; // Flag to prevent showing modal multiple times
+
+        // Tutorial State
+        this.tutorialStep = 0;
+        this.tutorialSteps = [];
+
+        // Global reference for tests
+        window.marketplaceApp = this;
 
         // Polling (Delegated)
         this.pollingService = new PollingService({
@@ -76,9 +85,11 @@ class MarketplaceApp {
         });
 
         stateManager.addEventListener('shadowPricesUpdated', (e) => {
-            const { shadowPrices, ranges, staleness } = e.detail;
+            const { shadowPrices, ranges, constraints, optimalMix, staleness } = e.detail;
             this.shadowPrices = shadowPrices;
             this.ranges = ranges;
+            this.constraints = constraints || [];
+            this.optimalMix = optimalMix || { deicer: 0, solvent: 0 };
             this.updateShadowPricesUI();
             this.renderFinancialSummary();
             // Update staleness indicator if staleness info is included
@@ -173,10 +184,16 @@ class MarketplaceApp {
             this.startPolling();
             console.log('✓ Polling started');
 
+            // Initialize audio service
+            sounds.init();
+
             // Hide loading, show app
             const overlay = document.getElementById('loading-overlay');
             if (overlay) overlay?.classList.add('hidden');
             console.log('✓ Marketplace initialized successfully');
+
+            // Check if first visit tutorial should show
+            this.checkFirstVisitTutorial();
 
         } catch (error) {
             console.error('Failed to initialize marketplace:', error);
@@ -386,6 +403,7 @@ class MarketplaceApp {
         try {
             await stateManager.recalculateShadowPrices();
             notifications.showToast('Shadow prices updated successfully', 'success');
+            sounds.playNotification();
         } catch (error) {
             console.error('Failed to recalculate shadow prices:', error);
             notifications.showToast('Failed to recalculate shadow prices', 'error');
@@ -496,6 +514,18 @@ class MarketplaceApp {
 
         if (els.inventory) {
             els.inventory.textContent = this.formatCurrency(inventoryValue);
+        }
+
+        // Show projected production mix (Deicer + Solvent)
+        const mixEl = document.getElementById('fin-production-mix');
+        if (mixEl && this.optimalMix) {
+            const deicer = Math.round(this.optimalMix.deicer || 0);
+            const solvent = Math.round(this.optimalMix.solvent || 0);
+            if (deicer > 0 || solvent > 0) {
+                mixEl.textContent = `${deicer} gal Deicer + ${solvent} gal Solvent`;
+            } else {
+                mixEl.textContent = 'Calculating...';
+            }
         }
 
         if (els.salesRev) {
@@ -2058,6 +2088,46 @@ class MarketplaceApp {
             this.updateRespondTotal();
         });
 
+        // Tutorial Navigation
+        const nextBtn = document.getElementById('tutorial-next');
+        if (nextBtn) {
+            // Remove old listeners by cloning (extreme robust approach)
+            const newNextBtn = nextBtn.cloneNode(true);
+            nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+            newNextBtn.addEventListener('click', () => {
+                console.log('🔘 Tutorial NEXT clicked');
+                this.tutorialNext();
+            });
+        }
+
+        const prevBtn = document.getElementById('tutorial-prev');
+        if (prevBtn) {
+            const newPrevBtn = prevBtn.cloneNode(true);
+            prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+            newPrevBtn.addEventListener('click', () => {
+                console.log('🔘 Tutorial PREV clicked');
+                this.tutorialPrev();
+            });
+        }
+
+        const diveBtn = document.getElementById('tutorial-deep-dive');
+        if (diveBtn) {
+            const newDiveBtn = diveBtn.cloneNode(true);
+            diveBtn.parentNode.replaceChild(newDiveBtn, diveBtn);
+            newDiveBtn.addEventListener('click', () => {
+                console.log('🔘 Tutorial DEEP DIVE clicked');
+                this.tutorialDeepDive();
+            });
+        }
+
+        const helpBtn = document.getElementById('help-btn');
+        if (helpBtn) {
+            helpBtn.addEventListener('click', () => {
+                console.log('🔘 Help Button clicked');
+                this.showTutorial();
+            });
+        }
+
         // Web Component Events: View negotiation detail (from negotiation-card)
         document.addEventListener('view-detail', (e) => {
             const { negotiationId, listingId, chemical, isBuyRequest } = e.detail;
@@ -2241,6 +2311,36 @@ class MarketplaceApp {
             this.setTheme(e.target.value);
         });
 
+        // Audio Settings
+        const audioToggle = document.getElementById('audio-enabled-toggle');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeLabel = document.getElementById('volume-value-label');
+        const audioStatus = document.getElementById('audio-status-label');
+
+        if (audioToggle) {
+            audioToggle.checked = !sounds.muted;
+            audioToggle.addEventListener('change', (e) => {
+                sounds.setMuted(!e.target.checked);
+                if (audioStatus) audioStatus.textContent = e.target.checked ? 'Enabled' : 'Muted';
+                if (e.target.checked) sounds.playNotification();
+            });
+        }
+
+        if (volumeSlider) {
+            volumeSlider.value = sounds.volume * 100;
+            if (volumeLabel) volumeLabel.textContent = `${Math.round(sounds.volume * 100)}%`;
+            
+            volumeSlider.addEventListener('input', (e) => {
+                const val = e.target.value;
+                sounds.setVolume(val / 100);
+                if (volumeLabel) volumeLabel.textContent = `${val}%`;
+            });
+
+            volumeSlider.addEventListener('change', () => {
+                sounds.playTrade(); // Test sound
+            });
+        }
+
         // Leaderboard
         document.getElementById('leaderboard-btn').addEventListener('click', () => {
             this.openLeaderboard();
@@ -2268,6 +2368,17 @@ class MarketplaceApp {
             this.closeProductionResults();
         });
 
+        // Production insight toggle (collapsible section)
+        document.getElementById('prod-insight-toggle')?.addEventListener('click', () => {
+            const content = document.getElementById('prod-insight-content');
+            const chevron = document.getElementById('prod-insight-chevron');
+            if (content && chevron) {
+                const isHidden = content.classList.contains('hidden');
+                content.classList.toggle('hidden');
+                chevron.style.transform = isHidden ? 'rotate(180deg)' : '';
+            }
+        });
+
         // Game Over Overlay event listeners
         document.getElementById('restart-game-btn').addEventListener('click', () => {
             this.restartGame();
@@ -2287,6 +2398,11 @@ class MarketplaceApp {
                 this.closeTransactionHistory();
             });
         }
+
+        // CSV Export Buttons
+        document.getElementById('export-leaderboard-btn')?.addEventListener('click', () => this.exportLeaderboardCSV());
+        document.getElementById('export-history-btn')?.addEventListener('click', () => this.exportTransactionHistoryCSV());
+        document.getElementById('export-global-history-btn')?.addEventListener('click', () => this.exportGlobalHistoryCSV());
     }
 
 
@@ -3027,6 +3143,627 @@ class MarketplaceApp {
         } catch (error) {
             console.error('Failed to export global history:', error);
             notifications.showToast('Export failed', 'error');
+        }
+    }
+
+    /**
+     * Highlight a specific UI element during tutorial
+     */
+    highlightElement(selector) {
+        this.clearHighlights();
+        
+        // Handle shadow DOM selectors
+        let element = null;
+        if (Array.isArray(selector)) {
+            // Shadow DOM chain
+            let root = document;
+            for (const sel of selector) {
+                element = (root.shadowRoot || root).querySelector(sel);
+                if (!element) break;
+                root = element;
+            }
+        } else {
+            element = document.querySelector(selector);
+        }
+
+        if (element) {
+            element.classList.add('tutorial-highlight');
+            element.classList.add('tutorial-pulse');
+            
+            // Scroll element into view if not in viewport
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    /**
+     * Remove all tutorial highlights
+     */
+    clearHighlights() {
+        document.querySelectorAll('.tutorial-highlight').forEach(el => {
+            el.classList.remove('tutorial-highlight');
+            el.classList.remove('tutorial-pulse');
+        });
+        
+        // Also check shadow DOM components
+        ['C', 'N', 'D', 'Q'].forEach(chem => {
+            const card = document.querySelector(`chemical-card[chemical="${chem}"]`);
+            if (card && card.shadowRoot) {
+                card.shadowRoot.querySelectorAll('.tutorial-highlight').forEach(el => {
+                    el.classList.remove('tutorial-highlight');
+                    el.classList.remove('tutorial-pulse');
+                });
+            }
+        });
+    }
+
+    // ==================== TUTORIAL SYSTEM ====================
+
+    /**
+     * Check if tutorial should show on first load
+     */
+    checkFirstVisitTutorial() {
+        const seen = localStorage.getItem('cndq_tutorial_seen');
+        if (!seen) {
+            // Wait for data to be fully loaded before auto-showing
+            const checkData = setInterval(() => {
+                if (this.shadowPrices && this.constraints && this.constraints.length > 0) {
+                    clearInterval(checkData);
+                    setTimeout(() => this.showTutorial(), 1500);
+                }
+            }, 500);
+            
+            // Safety timeout
+            setTimeout(() => clearInterval(checkData), 10000);
+        }
+    }
+
+    /**
+     * Show the trading tutorial with dynamic content
+     */
+    showTutorial() {
+        // Ensure data is ready
+        if (!this.shadowPrices || !this.constraints || this.constraints.length === 0) {
+            notifications.showToast('Waiting for production data...', 'info');
+            stateManager.recalculateShadowPrices().then(() => {
+                this.showTutorial();
+            });
+            return;
+        }
+
+        this.buildTutorialSteps();
+        this.tutorialStep = 0;
+        this.renderTutorialStep();
+        document.getElementById('tutorial-modal')?.classList.remove('hidden');
+    }
+
+    /**
+     * Build tutorial steps based on current player data
+     */
+    buildTutorialSteps() {
+        const chemicals = ['C', 'N', 'D', 'Q'];
+
+        // Analyze each chemical
+        const analysis = chemicals.map(chem => {
+            const shadowPrice = this.shadowPrices[chem] || 0;
+            const constraint = this.constraints?.find(c => c.name === chem) || {};
+            const isBinding = constraint.slack < 0.01 || shadowPrice > 0;
+            const slack = constraint.slack || 0;
+            const inventory = this.inventory[chem] || 0;
+
+            return { chem, shadowPrice, isBinding, slack, inventory };
+        });
+
+        // Find best to buy (highest shadow price) and best to sell (lowest/zero shadow price with inventory)
+        const sortedByValue = [...analysis].sort((a, b) => b.shadowPrice - a.shadowPrice);
+        const buyTargets = sortedByValue.filter(a => a.shadowPrice > 0);
+        const sellTargets = sortedByValue.filter(a => a.shadowPrice === 0 && a.inventory > 0).reverse();
+
+        // Get projected production
+        const deicer = Math.round(this.optimalMix?.deicer || 0);
+        const solvent = Math.round(this.optimalMix?.solvent || 0);
+
+        this.tutorialSteps = [
+            // Step 1: Welcome - What are you making?
+            {
+                title: 'Welcome to CNDQ Trading!',
+                content: `
+                    <div class="text-center mb-4">
+                        <div class="text-5xl mb-3">🏭</div>
+                        <p class="text-lg text-gray-300">You're running a chemical plant that makes <strong>two products</strong>:</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-blue-900/40 border border-blue-500 rounded-lg p-4 text-center">
+                            <div class="text-3xl mb-2">🧊</div>
+                            <div class="text-blue-400 font-bold text-lg">DE-ICER</div>
+                            <div class="text-gray-400 text-sm">$2 profit/gallon</div>
+                            <div class="text-xs text-gray-500 mt-2">Uses: C, N, D</div>
+                        </div>
+                        <div class="bg-purple-900/40 border border-purple-500 rounded-lg p-4 text-center">
+                            <div class="text-3xl mb-2">🧪</div>
+                            <div class="text-purple-400 font-bold text-lg">SOLVENT</div>
+                            <div class="text-gray-400 text-sm">$3 profit/gallon</div>
+                            <div class="text-xs text-gray-500 mt-2">Uses: N, D, Q</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-700 rounded-lg p-3 text-center">
+                        <p class="text-gray-300 text-sm">Your current optimal production:</p>
+                        <p class="text-white font-bold">${deicer} gal De-Icer + ${solvent} gal Solvent</p>
+                    </div>
+                `
+            },
+
+            // Step 2: The Chemical Inputs
+            {
+                title: 'Your Chemical Inputs',
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-300">You have 4 chemicals (C, N, D, Q) that are <strong class="text-yellow-400">ingredients</strong> for making De-Icer and Solvent.</p>
+
+                        <div class="bg-gray-700 rounded-lg p-4">
+                            <div class="text-sm text-gray-400 mb-3">Production recipes:</div>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="text-blue-400 font-bold">🧊 De-Icer</span>
+                                    <div class="text-gray-300 mt-1">= 0.5C + 0.3N + 0.2D</div>
+                                </div>
+                                <div>
+                                    <span class="text-purple-400 font-bold">🧪 Solvent</span>
+                                    <div class="text-gray-300 mt-1">= 0.25N + 0.35D + 0.4Q</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-green-900/30 border border-green-500 rounded-lg p-3">
+                            <p class="text-green-400 text-sm"><strong>The key insight:</strong> Some chemicals limit your production more than others. Those are the ones you should <strong>BUY</strong>!</p>
+                        </div>
+                    </div>
+                `,
+                elementToHighlight: '.grid-cols-4' // Highlight the 4 chemical cards
+            },
+
+            // Step 3: What are Shadow Prices?
+            {
+                title: 'What are Shadow Prices?',
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-300">A <strong class="text-purple-400">Shadow Price</strong> tells you how much your profit increases for each additional gallon of a chemical.</p>
+
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div class="bg-red-900/30 border border-red-500 rounded-lg p-4">
+                                <div class="text-red-400 font-bold mb-2">🔥 High Shadow Price</div>
+                                <p class="text-sm text-gray-300">You're using ALL of this chemical (binding constraint). You need MORE!</p>
+                                <p class="text-sm text-green-400 mt-2">→ <strong>BUY</strong> this chemical</p>
+                            </div>
+                            <div class="bg-blue-900/30 border border-blue-500 rounded-lg p-4">
+                                <div class="text-blue-400 font-bold mb-2">❄️ Zero Shadow Price</div>
+                                <p class="text-sm text-gray-300">You have EXCESS of this chemical (slack). It's sitting unused!</p>
+                                <p class="text-sm text-yellow-400 mt-2">→ <strong>SELL</strong> this chemical</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                elementToHighlight: '.bg-gray-700.rounded-lg.p-3.md\:p-4.border.border-gray-600' // Highlight top Shadow Price bar
+            },
+
+            // Step 4: Your Chemical Analysis
+            {
+                title: 'Your Chemical Analysis',
+                content: `
+                    <div class="space-y-3">
+                        <p class="text-gray-400 text-sm mb-4">Based on your current inventory and production needs:</p>
+                        ${analysis.map(a => `
+                            <div class="flex items-center justify-between bg-gray-700 rounded-lg p-3 ${a.isBinding ? 'border-l-4 border-red-500' : 'border-l-4 border-blue-500'}">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl font-bold ${a.isBinding ? 'text-red-400' : 'text-blue-400'}">${a.chem}</span>
+                                    <div>
+                                        <div class="text-white font-semibold">
+                                            ${a.isBinding ? '🔥 BINDING' : '❄️ EXCESS'}
+                                        </div>
+                                        <div class="text-xs text-gray-400">
+                                            ${a.isBinding ? 'Using every drop!' : `${this.formatNumber(a.slack)} gal unused`}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-mono ${a.shadowPrice > 0 ? 'text-green-400' : 'text-gray-500'}">
+                                        ${this.formatCurrency(a.shadowPrice)}
+                                    </div>
+                                    <div class="text-xs ${a.shadowPrice > 0 ? 'text-green-400' : 'text-yellow-400'}">
+                                        ${a.shadowPrice > 0 ? '→ BUY' : '→ SELL'}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `
+            },
+
+            // Step 5: Your Trading Recommendation
+            {
+                title: 'Your First Trade Recommendation',
+                content: `
+                    <div class="space-y-4">
+                        ${buyTargets.length > 0 ? `
+                            <div class="bg-green-900/30 border border-green-500 rounded-lg p-4">
+                                <div class="text-green-400 font-bold text-lg mb-2">📈 You Should BUY:</div>
+                                <div class="text-2xl font-bold text-white mb-2">Chemical ${buyTargets[0].chem}</div>
+                                <p class="text-gray-300 text-sm">
+                                    Shadow price: <strong class="text-green-400">${this.formatCurrency(buyTargets[0].shadowPrice)}</strong> per gallon
+                                </p>
+                                <p class="text-gray-400 text-xs mt-2">
+                                    Every gallon you buy increases your profit by ${this.formatCurrency(buyTargets[0].shadowPrice)}!
+                                </p>
+                            </div>
+                        ` : `
+                            <div class="bg-gray-700 rounded-lg p-4 text-gray-400">
+                                No chemicals are binding - you have excess of everything!
+                            </div>
+                        `}
+
+                        ${sellTargets.length > 0 ? `
+                            <div class="bg-yellow-900/30 border border-yellow-500 rounded-lg p-4">
+                                <div class="text-yellow-400 font-bold text-lg mb-2">📤 You Should SELL:</div>
+                                <div class="text-2xl font-bold text-white mb-2">Chemical ${sellTargets[0].chem}</div>
+                                <p class="text-gray-300 text-sm">
+                                    You have <strong class="text-yellow-400">${this.formatNumber(sellTargets[0].inventory)}</strong> gallons
+                                    with <strong>${this.formatNumber(sellTargets[0].slack)}</strong> sitting unused
+                                </p>
+                                <p class="text-gray-400 text-xs mt-2">
+                                    Sell at ANY price > $0 to convert waste into profit!
+                                </p>
+                            </div>
+                        ` : `
+                            <div class="bg-gray-700 rounded-lg p-4 text-gray-400">
+                                You don't have excess inventory to sell right now.
+                            </div>
+                        `}
+                    </div>
+                `,
+                elementToHighlight: buyTargets.length > 0 ? `chemical-card[chemical="${buyTargets[0].chem}"]` : null
+            },
+
+            // Step 6: How to Sell
+            {
+                title: 'Responding to Others',
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-300">You don't always have to post your own requests. You can also <strong class="text-green-400">respond to others</strong>!</p>
+                        
+                        <div class="bg-gray-700 rounded-lg p-4">
+                            <p class="text-sm text-gray-400 mb-2">Look at the chemical cards. If you see other teams listed under <strong>"Buy Requests"</strong>, you can sell to them!</p>
+                            <div class="mt-3 bg-green-600/20 border border-green-500 rounded p-2 text-xs text-center">
+                                Click <strong>"Sell to"</strong> to start a negotiation.
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-900/30 border border-blue-500 rounded-lg p-3">
+                            <p class="text-blue-400 text-sm"><strong>Strategy:</strong> If your Shadow Price is $0 for a chemical, sell it to anyone willing to pay more than $0!</p>
+                        </div>
+                    </div>
+                `,
+                elementToHighlight: '.listings-container'
+            },
+
+            // Step 7: The Haggling System
+            {
+                title: 'Mastering the Haggle 🤝',
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-300">Negotiations aren't just one-click. You can <strong class="text-blue-400">haggle</strong> over price and quantity!</p>
+
+                        <div class="bg-gray-700 rounded-lg p-4 space-y-3">
+                            <div>
+                                <div class="text-yellow-400 font-bold text-sm">⚖️ The Greed Bar</div>
+                                <p class="text-xs text-gray-400">Higher prices make you more profit, but test the merchant's patience.</p>
+                            </div>
+                            <div>
+                                <div class="text-red-400 font-bold text-sm">⏳ Merchant Patience</div>
+                                <p class="text-xs text-gray-400">If you push too hard, the merchant will walk away from the deal!</p>
+                            </div>
+                        </div>
+
+                        <p class="text-sm text-gray-400">Keep an eye on the <strong>Patience Meter</strong> during negotiations.</p>
+                    </div>
+                `,
+                elementToHighlight: '#my-negotiations'
+            },
+
+            // Step 8: How to Win
+            {
+                title: 'How to Win the Game 🏆',
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-300">Success in CNDQ is measured by how much you <strong class="text-green-400">improve</strong> your starting position.</p>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-800 border border-gray-700 rounded-lg p-3 text-center">
+                                <div class="text-gray-500 text-xs uppercase">Your Goal</div>
+                                <div class="text-xl font-bold text-white">Maximize ROI</div>
+                            </div>
+                            <div class="bg-gray-800 border border-gray-700 rounded-lg p-3 text-center">
+                                <div class="text-gray-500 text-xs uppercase">Check Progress</div>
+                                <div class="text-xl font-bold text-yellow-500">Scoreboard</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-purple-900/30 border border-purple-500 rounded-lg p-3">
+                            <p class="text-purple-400 text-sm">The team with the highest <strong>% Improvement</strong> at the end of the simulation wins!</p>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p class="text-white font-semibold">Ready to dominate the market? 🚀</p>
+                        </div>
+                    </div>
+                `,
+                elementToHighlight: '#leaderboard-btn',
+                isLastBasicStep: true
+            },
+
+            // Step 9: Optional Deep Dive - LP Generalization
+            {
+                title: 'The Bigger Picture (Optional)',
+                isOptional: true,
+                content: `
+                    <div class="space-y-4">
+                        <div class="bg-indigo-900/30 border border-indigo-500 rounded-lg p-4 mb-4">
+                            <div class="text-center mb-2">
+                                <span class="text-3xl">🎓</span>
+                            </div>
+                            <p class="text-indigo-300 text-sm text-center">This is an optional deep dive for those curious about the math!</p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <p class="text-gray-300">Here's a powerful insight: <strong class="text-yellow-400">De-Icer and Solvent are just labels.</strong></p>
+
+                            <p class="text-gray-300">What really matters are the <strong class="text-purple-400">recipes</strong> - the ratios of chemicals needed:</p>
+
+                            <div class="bg-gray-700 rounded-lg p-4 font-mono text-sm">
+                                <div class="text-blue-400 mb-2">Product A = 0.5C + 0.3N + 0.2D</div>
+                                <div class="text-purple-400">Product B = 0.25N + 0.35D + 0.4Q</div>
+                            </div>
+
+                            <p class="text-gray-300">This same LP model works for <strong class="text-green-400">ANY two-product scenario</strong> with shared inputs:</p>
+
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div class="bg-gray-800 rounded-lg p-3 border border-gray-600">
+                                    <div class="text-yellow-400 font-bold">Bakery</div>
+                                    <div class="text-gray-400 text-xs">Bread & Pastries sharing flour, sugar, eggs</div>
+                                </div>
+                                <div class="bg-gray-800 rounded-lg p-3 border border-gray-600">
+                                    <div class="text-yellow-400 font-bold">Refinery</div>
+                                    <div class="text-gray-400 text-xs">Gasoline & Diesel sharing crude oil fractions</div>
+                                </div>
+                                <div class="bg-gray-800 rounded-lg p-3 border border-gray-600">
+                                    <div class="text-yellow-400 font-bold">Furniture</div>
+                                    <div class="text-gray-400 text-xs">Tables & Chairs sharing wood, labor, hardware</div>
+                                </div>
+                                <div class="bg-gray-800 rounded-lg p-3 border border-gray-600">
+                                    <div class="text-yellow-400 font-bold">Software</div>
+                                    <div class="text-gray-400 text-xs">Products sharing dev time, servers, support</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-green-900/30 border border-green-500 rounded-lg p-4 mt-4">
+                                <p class="text-green-400 text-sm"><strong>The Takeaway:</strong> Shadow prices and binding constraints are universal concepts. Master them here, apply them everywhere!</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            }
+        ];
+
+        document.getElementById('tutorial-step-total').textContent = this.tutorialSteps.length;
+    }
+
+    /**
+     * Position the tutorial modal relative to a target element
+     */
+    positionTutorial(targetSelector) {
+        const modal = document.getElementById('tutorial-modal');
+        const container = modal?.querySelector('div');
+        
+        if (!modal || !container) return;
+
+        // Handle shadow DOM selectors
+        let target = null;
+        if (Array.isArray(targetSelector)) {
+            let root = document;
+            for (const sel of targetSelector) {
+                target = (root.shadowRoot || root).querySelector(sel);
+                if (!target) break;
+                root = target;
+            }
+        } else {
+            target = document.querySelector(targetSelector);
+        }
+
+        if (!target) {
+            // Reset to centered modal
+            modal.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[3000] p-4';
+            container.classList.remove('tutorial-popover');
+            container.style.top = '';
+            container.style.left = '';
+            container.style.transform = '';
+            return;
+        }
+
+        const rect = target.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const padding = 30;
+        const popoverWidth = 380;
+
+        // Apply popover styles
+        modal.className = 'fixed inset-0 z-[3000] p-4 tutorial-overlay-transparent';
+        container.classList.add('tutorial-popover');
+
+        // Calculate Horizontal Positioning
+        let left;
+        const targetCenterX = rect.left + rect.width / 2;
+        
+        if (targetCenterX > viewportWidth / 2) {
+            // Target is on the RIGHT side - place modal to its LEFT
+            left = rect.left - popoverWidth - padding;
+            // If it would go off screen, snap to left padding
+            if (left < padding) left = padding;
+        } else {
+            // Target is on the LEFT side - place modal to its RIGHT
+            left = rect.right + padding;
+            // If it would go off screen, snap to right
+            if (left + popoverWidth > viewportWidth - padding) {
+                left = viewportWidth - popoverWidth - padding;
+            }
+        }
+
+        // Calculate Vertical Positioning
+        let top;
+        // Try to align top of modal with top of card
+        top = rect.top;
+        
+        // Ensure it doesn't go off bottom
+        if (top + 450 > viewportHeight) {
+            top = Math.max(padding, viewportHeight - 450 - padding);
+        }
+        
+        // Ensure it doesn't go off top
+        if (top < padding) top = padding;
+
+        container.style.top = `${top}px`;
+        container.style.left = `${left}px`;
+        container.style.transform = 'none'; // Disable any inherited transforms
+    }
+
+    /**
+     * Render current tutorial step
+     */
+    renderTutorialStep() {
+        const step = this.tutorialSteps[this.tutorialStep];
+        if (!step) return;
+
+        // Reset scroll position of content
+        const contentContainer = document.getElementById('tutorial-content');
+        if (contentContainer) contentContainer.scrollTop = 0;
+
+        // For display purposes, don't count optional steps in total
+        const basicStepsCount = this.tutorialSteps.filter(s => !s.isOptional).length;
+        const displayStep = step.isOptional ? 'Bonus' : (this.tutorialStep + 1);
+        const displayTotal = step.isOptional ? 'Deep Dive' : basicStepsCount;
+
+        document.getElementById('tutorial-step-num').textContent = displayStep;
+        document.getElementById('tutorial-step-total').textContent = displayTotal;
+
+        // Add optional badge if applicable
+        const optionalBadge = step.isOptional ? '<span class="text-xs bg-indigo-600 text-indigo-100 px-2 py-1 rounded-full ml-2">Optional</span>' : '';
+
+        document.getElementById('tutorial-content').innerHTML = `
+            <h3 class="text-xl font-bold text-white mb-4">${step.title}${optionalBadge}</h3>
+            ${step.content}
+        `;
+
+        // Announce to screen readers
+        const announcement = `Step ${displayStep} of ${displayTotal}: ${step.title}. ${step.content.replace(/<[^>]*>/g, '')}`;
+        notifications.announce(announcement);
+
+        // Update button states
+        const prevBtn = document.getElementById('tutorial-prev');
+        const nextBtn = document.getElementById('tutorial-next');
+        const deepDiveBtn = document.getElementById('tutorial-deep-dive');
+
+        prevBtn.disabled = this.tutorialStep === 0;
+
+        // Handle Highlights and Positioning
+        this.clearHighlights();
+        if (step.elementToHighlight) {
+            this.highlightElement(step.elementToHighlight);
+            this.positionTutorial(step.elementToHighlight);
+        } else {
+            this.positionTutorial(null); // Reset to center
+        }
+
+        // Show Deep Dive option on last basic step
+        if (step.isLastBasicStep) {
+            nextBtn.textContent = 'Got It!';
+            if (deepDiveBtn) {
+                deepDiveBtn.classList.remove('hidden');
+                deepDiveBtn.textContent = 'Deep Dive →';
+            }
+        } else if (step.isOptional) {
+            nextBtn.textContent = 'Done!';
+            if (deepDiveBtn) deepDiveBtn.classList.add('hidden');
+        } else {
+            nextBtn.textContent = 'Next';
+            if (deepDiveBtn) deepDiveBtn.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Go to previous tutorial step
+     */
+    tutorialPrev() {
+        console.log(`📖 Tutorial: Prev clicked. Current step index: ${this.tutorialStep}`);
+        if (this.tutorialStep > 0) {
+            this.tutorialStep--;
+            this.renderTutorialStep();
+        }
+    }
+
+    /**
+     * Go to next tutorial step or close
+     */
+    tutorialNext() {
+        if (!this.tutorialSteps || this.tutorialSteps.length === 0) {
+            console.warn('📖 Tutorial: tutorialSteps is empty, rebuilding...');
+            this.buildTutorialSteps();
+        }
+        
+        const currentStep = this.tutorialSteps[this.tutorialStep];
+        console.log(`📖 Tutorial: Next clicked. Current step index: ${this.tutorialStep}, Total steps: ${this.tutorialSteps.length}`);
+
+        // If on last basic step, close (unless they clicked Deep Dive)
+        if (currentStep?.isLastBasicStep) {
+            console.log('📖 Tutorial: Last basic step reached, closing.');
+            this.closeTutorial();
+            return;
+        }
+
+        // If on optional step or last step, close
+        if (currentStep?.isOptional || this.tutorialStep >= this.tutorialSteps.length - 1) {
+            console.log('📖 Tutorial: Optional or final step reached, closing.');
+            this.closeTutorial();
+            return;
+        }
+
+        // Otherwise advance to next step
+        this.tutorialStep++;
+        console.log(`📖 Tutorial: Advancing to step index: ${this.tutorialStep}`);
+        this.renderTutorialStep();
+    }
+
+    /**
+     * Jump to the optional deep dive step
+     */
+    tutorialDeepDive() {
+        // Find the first optional step
+        const optionalIndex = this.tutorialSteps.findIndex(s => s.isOptional);
+        if (optionalIndex !== -1) {
+            this.tutorialStep = optionalIndex;
+            this.renderTutorialStep();
+        }
+    }
+
+    /**
+     * Close the tutorial
+     */
+    closeTutorial() {
+        document.getElementById('tutorial-modal')?.classList.add('hidden');
+        this.clearHighlights();
+        this.positionTutorial(null); // Reset position for next time
+
+        // Save preference if checkbox is checked
+        if (document.getElementById('tutorial-dont-show')?.checked) {
+            localStorage.setItem('cndq_tutorial_seen', 'true');
         }
     }
 }

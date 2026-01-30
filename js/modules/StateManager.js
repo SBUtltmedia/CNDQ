@@ -12,6 +12,7 @@ export class StateManager extends EventTarget {
             inventory: { C: 0, N: 0, D: 0, Q: 0 },
             shadowPrices: { C: 0, N: 0, D: 0, Q: 0, maxProfit: 0 },
             ranges: {},
+            constraints: [],
             listings: { C: { buy: [], sell: [] }, N: { buy: [], sell: [] }, D: { buy: [], sell: [] }, Q: { buy: [], sell: [] } },
             myNegotiations: [],
             transactions: [],
@@ -82,6 +83,14 @@ export class StateManager extends EventTarget {
                     ...data.shadowPrices,
                     maxProfit: this.state.shadowPrices?.maxProfit || 0
                 };
+                // Store optimal production mix (Deicer/Solvent quantities)
+                if (data.optimalMix) {
+                    this.state.optimalMix = data.optimalMix;
+                }
+                // Store constraints if available
+                if (data.constraints) {
+                    this.state.constraints = data.constraints;
+                }
                 // Update staleness from read endpoint
                 if (data.staleness) {
                     this.state.lastStalenessLevel = data.staleness.level;
@@ -91,6 +100,8 @@ export class StateManager extends EventTarget {
                 this.notify('shadowPricesUpdated', {
                     shadowPrices: this.state.shadowPrices,
                     ranges: this.state.ranges,
+                    constraints: this.state.constraints,
+                    optimalMix: this.state.optimalMix,
                     staleness: data.staleness
                 });
             }
@@ -109,12 +120,16 @@ export class StateManager extends EventTarget {
             maxProfit: data.maxProfit || 0
         };
         this.state.ranges = data.ranges || {};
+        this.state.constraints = data.constraints || [];
+        this.state.optimalMix = data.optimalMix || { deicer: 0, solvent: 0 };
         this.state.lastStalenessLevel = 'fresh';
         this.state.lastStalenessCount = 0;
 
         this.notify('shadowPricesUpdated', {
             shadowPrices: this.state.shadowPrices,
             ranges: this.state.ranges,
+            constraints: this.state.constraints,
+            optimalMix: this.state.optimalMix,
             staleness: { level: 'fresh', count: 0 }
         });
 

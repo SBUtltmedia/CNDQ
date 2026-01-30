@@ -1,55 +1,63 @@
-# CNDQ Project Improvement Roadmap
+# CNDQ Accessibility & UX Roadmap (Priority: Accessibility-First)
 
-This document outlines architectural and quality improvements to enhance developer experience, maintainability, and code quality.
+> **Context:** This simulation must be fully accessible to users who are legally blind. Accessibility is not a separate phase; it is the foundation of every visual and functional update.
 
-## 1. 🧹 Immediate Housekeeping (High Impact, Low Risk)
-**Goal:** Clean up the project root and organize artifacts.
+---
 
-*   **Action:** Create a `logs/` or `artifacts/` directory.
-*   **Action:** Move temporary files (`api-call-log-*.json`, `screenshot-*.png`, `test_output.log`) to this directory.
-*   **Action:** Update `.gitignore` to exclude these files but keep the directory structure.
+## 🟢 Phase 0: Accessibility Foundation (IMMEDIATE)
+*Goal: Ensure the game is fully navigable and understandable via Screen Readers and Keyboard.*
 
-## 2. 📚 Documentation (The "Welcome Mat")
-**Goal:** Provide a standard entry point for new developers.
+| Feature | Description | Implementation Detail |
+| :--- | :--- | :--- |
+| **ARIA Live Notifications** | Announcements for trade completions, price changes, and NPC responses. | Use `aria-live="polite"` for background updates and `"assertive"` for alerts. |
+| **Semantic Sectioning** | Ensure every component uses correct HTML5 tags (`<section>`, `<h3>`, etc.). | Wrap chemical cards in `<article>` tags with descriptive headings. |
+| **Screen Reader Summary** | A hidden-from-view summary that tells the player their total health in one sentence. | "You have $5,000. Your primary bottleneck is Chemical N. Your profit is up 5%." |
+| **Descriptive Labels** | Buttons should describe exactly what they do. | Change "Sell" to "Sell [Quantity] of [Chemical] to [Team]." |
+| **Keyboard Focus Traps** | Ensure modals (like the Haggle modal) correctly trap focus for users not using a mouse. | Update `ModalManager.js` to handle Tab and Shift+Tab focus cycling. |
 
-*   **Action:** Create a root `README.md`.
-*   **Content:**
-    *   Project Overview (What is CNDQ?)
-    *   **Environment Note:** "Windows Users: Use Git Bash. Avoid WSL."
-    *   Quick Start (Link to `SETUP.md`)
-    *   Architecture Summary (Link to `topology.md`)
-    *   Testing Guide (How to run `dual-playability-test.js`)
+## 🟡 Phase 1: High-Visibility & Audio (Visual Polish)
+*Goal: Provide redundant feedback loops (Sound + Sight + Touch).*
 
-## 3. 🏗️ Refactoring & Modernization
-**Goal:** Decouple the monolithic `marketplace.js` and improve build processes.
+| Feature | Description | Implementation Detail |
+| :--- | :--- | :--- |
+| **Audio "Earcons"** | Sound effects for success, warning, and urgency. | Use Web Audio API for subtle, non-intrusive chimes. |
+| **True High Contrast** | A black-and-yellow theme designed for maximum legibility. | `[data-theme="high-contrast"]` update with thicker borders and larger text. |
+| **Pulsing Focus** | Highly visible focus rings (4px thickness) for all interactive elements. | Update `styles.css` `:focus-visible` styles. |
+| **Haptic Feedback** | Vibration on mobile when trades occur or buttons are clicked. | `navigator.vibrate([100])` for tactical feedback. |
 
-*   **Code Structure:**
-    *   Break `js/marketplace.js` (~2800 lines) into:
-        *   `services/NotificationService.js` (Toasts/Alerts)
-        *   `services/StateManager.js` (Inventory, User, Prices)
-        *   `services/PollingService.js` (Game loop)
-        *   `components/ModalManager.js` (Dialogs)
-        *   `MarketplaceApp.js` (Main Controller)
-*   **Build System:**
-    *   **Decision:** Maintain "No-Build" architecture (Runtime CDNs) to ensure code remains readable, hackable, and debuggable directly in the browser.
-    *   **Optimization:** Focus on efficient Import Maps and browser caching strategies rather than compilation.
+## 🔵 Phase 2: Simplified Concepts (Pedagogy)
+*Goal: Explain complex Linear Programming in plain language.*
 
-## 4. 🚫 Ad Blocker Compliance (Renaming "Ads" to "Listings")
-**Goal:** Prevent ad blockers from hiding critical UI elements.
+| Feature | Description | Implementation Detail |
+| :--- | :--- | :--- |
+| **The "Why" Tooltip** | Plain-English explanations of Shadow Prices and Slack. | Hover/Focus tooltip: "This is the value of 1 more gallon to you." |
+| **Impact Preview** | Real-time calculation of ROI % change before sending an offer. | "This trade will increase your final profit by X%." |
+| **Recipe Visuals** | Screen-reader friendly breakdown of ingredient requirements. | Use lists instead of just icons for recipes. |
 
-*   **Context:** See `docs/AD_BLOCKER_REFACTOR.md`.
-*   **Action:** Rename all CSS selectors, IDs, and internal variables from `ad`/`advertisement` to `listing` or `trade`.
-*   **Scope:** Frontend selectors (Immediate), Backend Logic (Follow-up), API Endpoints (Final).
+## 🟣 Phase 3: Market Presence & Narrative
+*Goal: Make the simulation feel alive and provide meaningful reflection.*
 
-## 5. 🛡️ Code Quality Checks
-**Goal:** Automate style enforcement and catch errors early.
+| Feature | Description | Implementation Detail |
+| :--- | :--- | :--- |
+| **Live Market Ticker** | A ticker that is also accessible as a list of recent events. | Horizontal scroll for sighted users; accessible list for SR users. |
+| **Infographic Summary** | Narrative-driven end-of-game summary (e.g., "The Master of Chemical D"). | Text-based summary of trading style and successes. |
+| **"What If" Analysis** | Post-game tip showing missed opportunities based on shadow prices. | "You left $200 on the table by not buying more N." |
 
-*   **Action:** Add **Prettier** and **ESLint** to `package.json`.
-*   **Action:** Configure `.eslintrc` and `.prettierrc` to match existing style (mostly).
-*   **Action:** Add pre-commit hooks (Husky) or CI checks.
+---
 
-## 5. 🧪 Testing Strategy
-**Goal:** Ensure robust regression testing during refactoring.
+## Implementation Priority
 
-*   **Strategy:** Use `tests/dual-playability-test.js` as the primary gatekeeper.
-*   **Protocol:** Run tests *before* and *after* each refactoring step.
+### 1. Accessibility & Screen Reader Support (Phase 0)
+*   ARIA Live regions for notifications.
+*   Keyboard navigation fixes for all modals.
+*   Descriptive button labels.
+
+### 2. Low-Vision Optimization (Phase 1)
+*   Yellow/Black High Contrast theme.
+*   Audio cues for key events.
+*   Scalable text (rem units).
+
+### 3. Visual & Tactical Polish (Phase 2 & 3)
+*   Bottleneck Glows.
+*   Price Trend Arrows.
+*   Infographic Narratives.

@@ -74,6 +74,14 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen">
 
+    <!-- ARIA Live Region for Screen Reader Announcements -->
+    <div id="sr-announcer" 
+         class="sr-only" 
+         aria-live="polite" 
+         aria-atomic="true" 
+         style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">
+    </div>
+
     <!-- Skip Navigation Link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -205,6 +213,45 @@
         <div class="text-center">
             <div class="inline-block h-16 w-16 animate-spin rounded-full border-4 border-solid border-green-500 border-r-transparent"></div>
             <p class="mt-4 text-green-500 font-mono text-lg">Loading Marketplace...</p>
+        </div>
+    </div>
+
+    <!-- Trading Tutorial Modal -->
+    <div id="tutorial-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] p-4">
+        <div class="bg-gray-800 rounded-2xl w-full max-w-2xl border-2 border-purple-500 shadow-2xl overflow-hidden">
+            <!-- Header -->
+            <div class="bg-purple-900 p-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-2xl">📊</span> Trading Strategy Guide
+                </h2>
+                <div class="flex items-center gap-2 text-sm text-purple-300">
+                    Step <span id="tutorial-step-num">1</span> of <span id="tutorial-step-total">5</span>
+                </div>
+            </div>
+
+            <!-- Content - dynamically populated -->
+            <div id="tutorial-content" class="p-6 min-h-[300px]">
+                <!-- Steps injected by JS -->
+            </div>
+
+            <!-- Footer with navigation -->
+            <div class="bg-gray-900 p-4 flex justify-between items-center">
+                <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                    <input type="checkbox" id="tutorial-dont-show" class="rounded">
+                    Don't show again
+                </label>
+                <div class="flex gap-3">
+                    <button id="tutorial-prev" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        Back
+                    </button>
+                    <button id="tutorial-deep-dive" class="hidden px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-semibold transition text-sm">
+                        Deep Dive →
+                    </button>
+                    <button id="tutorial-next" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-semibold transition">
+                        Next
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -360,6 +407,61 @@
                         </div>
                     </div>
 
+                    <!-- LP Generalization Insight (Collapsible) -->
+                    <div id="prod-insight-section" class="mb-8 max-w-2xl mx-auto">
+                        <button id="prod-insight-toggle" class="w-full flex items-center justify-between bg-indigo-900/30 hover:bg-indigo-900/50 border border-indigo-500/50 rounded-xl p-4 transition group">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">🎓</span>
+                                <span class="text-indigo-300 font-semibold">The Bigger Picture: Why This Matters Beyond CNDQ</span>
+                            </div>
+                            <svg id="prod-insight-chevron" class="w-6 h-6 text-indigo-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="prod-insight-content" class="hidden mt-4 bg-gray-800 border border-indigo-500/30 rounded-xl p-6 space-y-4">
+                            <p class="text-gray-300">
+                                <strong class="text-yellow-400">Here's the powerful insight:</strong> De-Icer and Solvent are just labels.
+                                What really matters are the <strong class="text-purple-400">recipes</strong> - the ratios of inputs each product requires.
+                            </p>
+
+                            <div class="bg-gray-700 rounded-lg p-4 font-mono text-sm">
+                                <div class="text-blue-400 mb-2">Product A = 0.5C + 0.3N + 0.2D</div>
+                                <div class="text-purple-400">Product B = 0.25N + 0.35D + 0.4Q</div>
+                            </div>
+
+                            <p class="text-gray-300">
+                                This same Linear Programming model works for <strong class="text-green-400">ANY two-product scenario</strong> where products share inputs:
+                            </p>
+
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                <div class="bg-gray-900 rounded-lg p-3 text-center">
+                                    <div class="text-yellow-400 font-bold">🥐 Bakery</div>
+                                    <div class="text-gray-500 text-xs mt-1">Bread & Pastries</div>
+                                </div>
+                                <div class="bg-gray-900 rounded-lg p-3 text-center">
+                                    <div class="text-yellow-400 font-bold">⛽ Refinery</div>
+                                    <div class="text-gray-500 text-xs mt-1">Gas & Diesel</div>
+                                </div>
+                                <div class="bg-gray-900 rounded-lg p-3 text-center">
+                                    <div class="text-yellow-400 font-bold">🪑 Furniture</div>
+                                    <div class="text-gray-500 text-xs mt-1">Tables & Chairs</div>
+                                </div>
+                                <div class="bg-gray-900 rounded-lg p-3 text-center">
+                                    <div class="text-yellow-400 font-bold">💻 Software</div>
+                                    <div class="text-gray-500 text-xs mt-1">Products A & B</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-green-900/30 border border-green-500 rounded-lg p-4">
+                                <p class="text-green-400 text-sm">
+                                    <strong>The Takeaway:</strong> Shadow prices tell you the value of acquiring more of each input.
+                                    Binding constraints identify your bottlenecks. These concepts apply universally -
+                                    from manufacturing to finance to resource allocation. Master them here, apply them everywhere!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Continue Button -->
                     <div class="max-w-md mx-auto">
                         <button id="prod-result-continue" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-6 px-8 rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-2xl text-2xl uppercase tracking-tighter">
@@ -402,6 +504,13 @@
                         <button id="production-guide-btn" class="bg-blue-600 hover:bg-blue-700 p-2 md:p-3 rounded-lg transition" aria-label="View production formulas" title="View production formulas">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Help/Tutorial -->
+                        <button id="help-btn" class="bg-purple-600 hover:bg-purple-700 p-2 md:p-3 rounded-lg transition" aria-label="Trading Guide" title="Trading Guide">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </button>
 
@@ -466,38 +575,39 @@
             </div>
 
             <!-- Financial Summary Panel -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" role="region" aria-label="Financial Summary">
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
                     <span class="text-xs text-gray-400 uppercase font-bold mb-1">Production Rev</span>
-                    <span class="text-xl font-mono text-blue-400" id="fin-production-rev">$0.00</span>
-                    <span class="text-[10px] text-gray-500 uppercase mt-1" id="fin-production-delta"></span>
+                    <span class="text-xl font-mono text-blue-400" id="fin-production-rev" aria-live="polite">$0.00</span>
+                    <span class="text-[10px] text-gray-500 mt-1" id="fin-production-mix"></span>
+                    <span class="text-[10px] text-gray-500 uppercase" id="fin-production-delta"></span>
                 </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
                     <span class="text-xs text-gray-400 uppercase font-bold mb-1">Sales Rev</span>
-                    <span class="text-xl font-mono text-green-400" id="fin-sales-rev">$0.00</span>
+                    <span class="text-xl font-mono text-green-400" id="fin-sales-rev" aria-live="polite">$0.00</span>
                 </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
                     <span class="text-xs text-gray-400 uppercase font-bold mb-1">Purchase Cost</span>
-                    <span class="text-xl font-mono text-red-400" id="fin-purchase-cost">$0.00</span>
+                    <span class="text-xl font-mono text-red-400" id="fin-purchase-cost" aria-live="polite">$0.00</span>
                 </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-green-600 opacity-10"></div>
                     <span class="text-xs text-green-300 uppercase font-bold mb-1 z-10">Net Profit</span>
-                    <span class="text-2xl font-mono font-bold text-white z-10" id="fin-net-profit">$0.00</span>
+                    <span class="text-2xl font-mono font-bold text-white z-10" id="fin-net-profit" aria-live="polite">$0.00</span>
                     <span class="text-[10px] text-gray-400 uppercase mt-1 z-10" id="fin-total-delta"></span>
                 </div>
             </div>
             
             <!-- Button to view history -->
             <div class="flex justify-end mb-4">
-                <button id="view-history-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded shadow flex items-center gap-1 transition">
+                <button id="view-history-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded shadow flex items-center gap-1 transition" aria-label="Open your personal transaction history">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     View Transaction History
                 </button>
             </div>
 
             <!-- 4-Column Chemical Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6" role="region" aria-label="Chemical Marketplace">
                 <chemical-card chemical="C"></chemical-card>
                 <chemical-card chemical="N"></chemical-card>
                 <chemical-card chemical="D"></chemical-card>
@@ -505,7 +615,7 @@
             </div>
 
             <!-- My Negotiations -->
-            <div class="bg-gray-800 rounded-lg p-4 md:p-6 border-2 border-gray-700 shadow-xl">
+            <div class="bg-gray-800 rounded-lg p-4 md:p-6 border-2 border-gray-700 shadow-xl" role="region" aria-label="My Active Negotiations and Buy Requests">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-2xl font-bold text-green-500 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -684,6 +794,28 @@
                         <option value="light">Light</option>
                         <option value="high-contrast">High Contrast</option>
                     </select>
+                </div>
+
+                <!-- Audio Settings -->
+                <div class="border-t border-gray-700 pt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex-1">
+                            <label for="mute-toggle" class="block text-sm font-semibold mb-1">Audio Cues</label>
+                            <p class="text-xs text-gray-300">Enable sound effects for game events</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400" id="audio-status-label">Enabled</span>
+                            <input type="checkbox" id="audio-enabled-toggle" checked class="accent-green-500">
+                        </div>
+                    </div>
+                    
+                    <div id="volume-control-group">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="volume-slider" class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Volume</label>
+                            <span id="volume-value-label" class="text-xs font-mono text-green-400">50%</span>
+                        </div>
+                        <input type="range" id="volume-slider" min="0" max="100" value="50" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500">
+                    </div>
                 </div>
             </div>
 

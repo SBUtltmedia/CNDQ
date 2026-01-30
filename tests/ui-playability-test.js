@@ -219,6 +219,13 @@ class UIPlayabilityTest {
             ]);
             
             if (btnHandle && !await btnHandle.evaluate(el => !el)) {
+                // Check if button is disabled
+                const isDisabled = await btnHandle.evaluate(el => el.disabled);
+                if (isDisabled) {
+                    console.log(`         ⚠️ Button disabled: Buy request already exists for ${chemical}. Skipping.`);
+                    return;
+                }
+
                 await btnHandle.click();
                 
                 // Wait for Offer Modal
@@ -592,9 +599,225 @@ class UIPlayabilityTest {
 
     async screenshot(page, name) {
         if (this.config.headless) return;
-        const path = `ui-test-${name}-${Date.now()}.png`;
-        await page.screenshot({ path });
-        console.log(`   📸 Screenshot saved: ${path}`);
+        const fs = require('fs');
+        const path = require('path');
+        const screenshotDir = path.join(__dirname, 'screenshots');
+        if (!fs.existsSync(screenshotDir)) {
+            fs.mkdirSync(screenshotDir, { recursive: true });
+        }
+        const filePath = path.join(screenshotDir, `ui-test-${name}-${Date.now()}.png`);
+        await page.screenshot({ path: filePath, fullPage: false });
+        console.log(`   📸 Screenshot saved: ${filePath}`);
+        return filePath;
+    }
+
+    /**
+     * Screenshot the tutorial - captures each step to verify dynamic content
+     * @param {string} userId - User to test tutorial with
+     * @returns {Object} Tutorial data extracted from each step
+     */
+    async screenshotTutorial(userId = null) {
+        const testUser = userId || this.config.testUsers[0];
+        console.log(`\n📚 TUTORIAL SCREENSHOT TEST`);
+        console.log('-'.repeat(80));
+        console.log(`   Testing tutorial for: ${testUser}`);
+
+        const fs = require('fs');
+        const path = require('path');
+        const screenshotDir = path.join(__dirname, 'screenshots', 'tutorial');
+        if (!fs.existsSync(screenshotDir)) {
+            fs.mkdirSync(screenshotDir, { recursive: true });
+        }
+
+        const page = await this.browser.loginAndNavigate(testUser, '');
+        await this.setupApiMonitoring(page, testUser);
+
+        // Capture JS console errors
+        const consoleErrors = [];
+        page.on('console', msg => {
+            if (msg.type() === 'error') {
+                consoleErrors.push(msg.text());
+            }
+        });
+        page.on('pageerror', err => {
+            consoleErrors.push(`PAGE ERROR: ${err.message}`);
+        });
+
+        // Wait for app data to load (check inventory which is populated from profile API)
+        console.log('   ⏳ Waiting for app data to load...');
+        let dataLoaded = false;
+        try {
+            await page.waitForFunction(() => {
+                const app = window.marketplaceApp;
+                if (!app?.inventory) return false;
+                // Inventory populated = profile loaded
+                const inv = app.inventory;
+                return inv.C > 0 || inv.N > 0 || inv.D > 0 || inv.Q > 0;
+            }, { timeout: 15000 });
+            dataLoaded = true;
+            console.log('   ✅ App data loaded');
+        } catch (e) {
+            console.log('   ⚠️  Data timeout after 15s');
+        }
+
+        // Debug: Get app state
+        const appState = await page.evaluate(() => {
+            const app = window.marketplaceApp;
+            return {
+                appExists: !!app,
+                shadowPrices: app?.shadowPrices,
+                inventory: app?.inventory,
+                constraints: app?.constraints?.length || 0,
+                profile: app?.profile ? 'loaded' : 'null'
+            };
+        });
+        console.log('   📊 App state:', JSON.stringify(appState));
+
+        // Report any JS errors
+        if (consoleErrors.length > 0) {
+            console.log('   🚨 JS Console Errors:');
+            consoleErrors.slice(0, 5).forEach(err => console.log(`      - ${err}`));
+            this.results.warnings.push(`JS errors during tutorial: ${consoleErrors.length}`);
+        }
+
+        if (!dataLoaded) {
+            console.log('   ❌ Cannot test tutorial - app data not loaded');
+            this.results.errors.push({ user: testUser, error: 'App data never loaded for tutorial test' });
+            await page.close();
+            return null;
+        }
+
+        await this.browser.sleep(500); // Small buffer for UI
+
+        // Extract current state before opening tutorial
+        const preState = await page.evaluate(() => {
+            const app = window.marketplaceApp;
+            return {
+                shadowPrices: app?.shadowPrices || {},
+                inventory: app?.inventory || {},
+                optimalMix: app?.optimalMix || {},
+                constraints: app?.constraints || []
+            };
+        });
+        console.log('   📊 Pre-tutorial state:', JSON.stringify(preState, null, 2));
+
+        // Click help button to open tutorial
+        console.log('   🔘 Opening tutorial...');
+        const helpBtn = await page.$('#help-btn');
+        if (!helpBtn) {
+            console.log('   ❌ Help button not found!');
+            this.results.errors.push({ user: testUser, error: 'Tutorial help button not found' });
+            await page.close();
+            return null;
+        }
+
+        await helpBtn.click();
+        await this.browser.sleep(500);
+
+        // Verify tutorial modal is open
+        const modalVisible = await page.evaluate(() => {
+            const modal = document.getElementById('tutorial-modal');
+            return modal && !modal.classList.contains('hidden');
+        });
+
+        if (!modalVisible) {
+            console.log('   ❌ Tutorial modal did not open!');
+            this.results.errors.push({ user: testUser, error: 'Tutorial modal failed to open' });
+            await page.close();
+            return null;
+        }
+
+        console.log('   ✅ Tutorial modal opened');
+
+        // Navigate through each step and capture screenshots
+        const tutorialData = [];
+        let stepNum = 1;
+        let hasMoreSteps = true;
+
+        while (hasMoreSteps) {
+            // Extract step content
+            const stepData = await page.evaluate(() => {
+                const stepNumEl = document.getElementById('tutorial-step-num');
+                const stepTotalEl = document.getElementById('tutorial-step-total');
+                const contentEl = document.getElementById('tutorial-content');
+                const nextBtn = document.getElementById('tutorial-next');
+
+                return {
+                    stepNum: stepNumEl?.textContent || '?',
+                    stepTotal: stepTotalEl?.textContent || '?',
+                    title: contentEl?.querySelector('h3')?.textContent || '',
+                    contentHtml: contentEl?.innerHTML || '',
+                    nextButtonText: nextBtn?.textContent || ''
+                };
+            });
+
+            console.log(`   📖 Step ${stepData.stepNum}/${stepData.stepTotal}: ${stepData.title}`);
+
+            // Take screenshot
+            const filename = `tutorial-step-${stepNum}-${Date.now()}.png`;
+            const filePath = path.join(screenshotDir, filename);
+            await page.screenshot({ path: filePath, fullPage: false });
+            console.log(`      📸 ${filename}`);
+
+            tutorialData.push({
+                step: stepNum,
+                displayStep: stepData.stepNum,
+                displayTotal: stepData.stepTotal,
+                title: stepData.title,
+                screenshot: filePath,
+                nextButtonText: stepData.nextButtonText
+            });
+
+            // Check if this is the last step
+            if (stepData.nextButtonText === 'Got It!' || stepData.nextButtonText === 'Done!') {
+                // Check if there's a Deep Dive button visible
+                const deepDiveVisible = await page.evaluate(() => {
+                    const btn = document.getElementById('tutorial-deep-dive');
+                    return btn && !btn.classList.contains('hidden');
+                });
+
+                if (deepDiveVisible) {
+                    console.log('   🎓 Deep Dive option available, clicking it...');
+                    await page.click('#tutorial-deep-dive');
+                    await this.browser.sleep(300);
+                    stepNum++;
+                    continue;
+                }
+
+                hasMoreSteps = false;
+            } else {
+                // Click Next button
+                await page.click('#tutorial-next');
+                await this.browser.sleep(300);
+                stepNum++;
+            }
+
+            // Safety limit
+            if (stepNum > 20) {
+                console.log('   ⚠️  Too many steps, breaking loop');
+                break;
+            }
+        }
+
+        // Close tutorial
+        await page.click('#tutorial-next');
+        await this.browser.sleep(300);
+
+        console.log(`   ✅ Captured ${tutorialData.length} tutorial steps`);
+        console.log(`   📁 Screenshots saved to: ${screenshotDir}`);
+
+        // Write tutorial data summary
+        const summaryPath = path.join(screenshotDir, `tutorial-summary-${Date.now()}.json`);
+        fs.writeFileSync(summaryPath, JSON.stringify({
+            timestamp: new Date().toISOString(),
+            user: testUser,
+            preState,
+            steps: tutorialData
+        }, null, 2));
+        console.log(`   📄 Summary written to: ${summaryPath}`);
+
+        await page.close();
+        return { preState, steps: tutorialData };
     }
 
     printResults() {

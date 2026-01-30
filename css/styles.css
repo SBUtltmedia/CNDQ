@@ -1052,7 +1052,75 @@ td {
 /* Tracking Utilities */
 .tracking-wider { letter-spacing: 0.05em; }
 .tracking-widest { letter-spacing: 0.1em; }
-.tracking-tighter { letter-spacing: -0.05em; }
+/* ==========================================================================
+   Accessibility & High Contrast Support
+   ========================================================================== */
 
-/* Line Height */
-.leading-tight { line-height: 1.25; }
+/* Superior Focus Indicator - Crucial for Low Vision */
+*:focus-visible {
+    outline: 4px solid #facc15 !important; /* Bright Yellow */
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.8) !important;
+    z-index: 9999 !important;
+}
+
+/* Support for OS-Level High Contrast Mode (Windows/macOS) */
+@media (forced-colors: active) {
+    .card, .listing-item, .notif-item {
+        border: 2px solid CanvasText !important;
+    }
+    
+    .btn-primary, .btn-success, .btn-error {
+        background-color: ButtonFace !important;
+        color: ButtonText !important;
+        border: 2px solid ButtonText !important;
+    }
+
+    .stat-value {
+        text-decoration: underline;
+    }
+
+    /* Ensure chemical symbols are visible even if backgrounds are stripped */
+    [style*="--color-chemical"] {
+        border: 1px solid CanvasText !important;
+    }
+}
+
+/* Tutorial Highlighting */
+.tutorial-highlight {
+    position: relative;
+    z-index: 2010 !important;
+    box-shadow: 0 0 0 6px var(--color-brand-primary), 0 0 30px 15px rgba(16, 185, 129, 0.6);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+@keyframes pulse-highlight {
+    0% { box-shadow: 0 0 0 0px var(--color-brand-primary), 0 0 0 0px rgba(16, 185, 129, 0.6); }
+    70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0), 0 0 40px 20px rgba(16, 185, 129, 0.3); }
+    100% { box-shadow: 0 0 0 0px rgba(16, 185, 129, 0), 0 0 0 0px rgba(16, 185, 129, 0); }
+}
+
+.tutorial-pulse {
+    animation: pulse-highlight 2s infinite;
+}
+
+.tutorial-popover {
+    position: fixed !important;
+    width: 380px !important;
+    max-width: 95vw !important;
+    z-index: 2020 !important;
+    margin: 0 !important;
+    border: 3px solid var(--color-brand-primary) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tutorial-overlay-transparent {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    z-index: 2000 !important;
+    pointer-events: none !important;
+}
+
+
+

@@ -2,9 +2,29 @@
  * NotificationService
  * Handles toast notifications
  */
+import { sounds } from './SoundService.js';
+
 export class NotificationService {
     constructor() {
         this.containerId = 'toast-container';
+    }
+
+    /**
+     * Announce a message to screen readers without showing a visual toast
+     * @param {string} message 
+     * @param {boolean} assertive - If true, use assertive live region (interrupts current speech)
+     */
+    announce(message, assertive = false) {
+        const announcer = document.getElementById('sr-announcer');
+        if (!announcer) return;
+
+        announcer.setAttribute('aria-live', assertive ? 'assertive' : 'polite');
+        
+        // Clear and set to force re-announcement if message is the same
+        announcer.textContent = '';
+        setTimeout(() => {
+            announcer.textContent = message;
+        }, 50);
     }
 
     /**
@@ -14,6 +34,20 @@ export class NotificationService {
      * @param {number} duration - Duration in milliseconds
      */
     showToast(message, type = 'info', duration = 3000) {
+        // Automatically announce toasts to screen readers
+        this.announce(message, type === 'error' || type === 'bad');
+
+        // Play audio earcon
+        if (type === 'success' || type === 'excellent') {
+            sounds.playSuccess();
+        } else if (type === 'error' || type === 'bad') {
+            sounds.playError();
+        } else if (type === 'hot') {
+            sounds.playTrade();
+        } else {
+            sounds.playNotification();
+        }
+
         // Use solid bg classes that are definitely in the Tailwind build
         const colors = {
             success: 'bg-green-600',
