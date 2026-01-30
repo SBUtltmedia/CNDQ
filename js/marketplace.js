@@ -22,6 +22,7 @@ import { stateManager } from './modules/StateManager.js';
 import { PollingService } from './modules/PollingService.js';
 import { modalManager } from './components/ModalManager.js';
 import { sounds } from './modules/SoundService.js';
+import { financialRenderer } from './modules/FinancialRenderer.js';
 
 class MarketplaceApp {
     constructor() {
@@ -421,210 +422,22 @@ class MarketplaceApp {
 
 
     /**
-     * Render Financial Summary Panel
+     * Render Financial Summary Panel (delegated to FinancialRenderer module)
      */
     renderFinancialSummary() {
-        if (!this.transactions || !this.profile) return;
-
-        // If shadow prices haven't loaded yet, wait for them
-        if (!this.shadowPrices || !this.shadowPrices.hasOwnProperty('maxProfit')) {
-            console.log('Waiting for shadow prices to load before rendering financial summary...');
-            return;
-        }
-
-        let salesRevenue = 0;
-        let purchaseCosts = 0;
-
-        this.transactions.forEach(t => {
-            const amount = parseFloat(t.totalAmount) || 0;
-            if (t.role === 'seller') {
-                salesRevenue += amount;
-            } else if (t.role === 'buyer') {
-                purchaseCosts += amount;
-            }
+        financialRenderer.renderFinancialSummary({
+            transactions: this.transactions,
+            profile: this.profile,
+            shadowPrices: this.shadowPrices,
+            optimalMix: this.optimalMix
         });
-
-        const tradingNet = salesRevenue - purchaseCosts;
-
-        // Financial Summary:
-        // - currentFunds: Current money (realized profit from trading)
-        const realizedProfit = (this.profile.currentFunds || 0) - (this.profile.startingFunds || 0);
-
-        // Inventory Value (Projected Production):
-        const hasProduction = (this.profile.productions?.length ?? 0) > 0;
-        const projectedRevenue = this.shadowPrices?.maxProfit || 0;
-        const inventoryValue = hasProduction ? (realizedProfit - tradingNet) : projectedRevenue;
-
-        // Total Projected Value:
-        const totalValue = realizedProfit + (hasProduction ? 0 : projectedRevenue);
-
-        // Success Metric: % Improvement over initial production potential
-        const initialPotential = this.profile.initialProductionPotential || 0;
-        let percentImprovement = 0;
-        if (initialPotential > 0) {
-            percentImprovement = ((totalValue - initialPotential) / initialPotential) * 100;
-        }
-
-        // Calculate delta from last transaction
-        // Simple approach: The delta is just the financial impact of the last transaction
-        let inventoryDelta = 0;
-        let totalDelta = 0;
-
-        if (this.transactions.length > 0) {
-            const lastTransaction = this.transactions[this.transactions.length - 1];
-            const lastAmount = Math.abs(lastTransaction.totalAmount || (lastTransaction.quantity * lastTransaction.pricePerGallon));
-
-            // For sellers: positive delta (gained money)
-            // For buyers: negative delta (spent money)
-            if (lastTransaction.role === 'seller') {
-                totalDelta = lastAmount;
-                inventoryDelta = lastAmount;
-            } else if (lastTransaction.role === 'buyer') {
-                totalDelta = -lastAmount;
-                inventoryDelta = -lastAmount;
-            }
-
-            console.log('[DEBUG] Financial Delta from Last Transaction:', {
-                transactionCount: this.transactions.length,
-                lastTransaction: {
-                    role: lastTransaction.role,
-                    chemical: lastTransaction.chemical,
-                    quantity: lastTransaction.quantity,
-                    pricePerGallon: lastTransaction.pricePerGallon,
-                    totalAmount: lastAmount
-                },
-                inventoryDelta,
-                totalDelta
-            });
-        } else {
-            console.log('[DEBUG] No transactions yet, deltas = 0');
-        }
-
-        // Update DOM
-        const els = {
-            inventory: document.getElementById('fin-production-rev'),
-            inventoryDelta: document.getElementById('fin-production-delta'),
-            salesRev: document.getElementById('fin-sales-rev'),
-            purchaseCost: document.getElementById('fin-purchase-cost'),
-            totalValue: document.getElementById('fin-net-profit'),
-            totalDelta: document.getElementById('fin-total-delta'),
-            improvement: document.getElementById('fin-improvement'),
-            improvementBadge: document.getElementById('improvement-badge')
-        };
-
-        if (els.inventory) {
-            els.inventory.textContent = this.formatCurrency(inventoryValue);
-        }
-
-        // Show projected production mix (Deicer + Solvent)
-        const mixEl = document.getElementById('fin-production-mix');
-        if (mixEl && this.optimalMix) {
-            const deicer = Math.round(this.optimalMix.deicer || 0);
-            const solvent = Math.round(this.optimalMix.solvent || 0);
-            if (deicer > 0 || solvent > 0) {
-                mixEl.textContent = `${deicer} gal Deicer + ${solvent} gal Solvent`;
-            } else {
-                mixEl.textContent = 'Calculating...';
-            }
-        }
-
-        if (els.salesRev) {
-            els.salesRev.textContent = this.formatCurrency(salesRevenue);
-        }
-
-        if (els.purchaseCost) {
-            els.purchaseCost.textContent = this.formatCurrency(purchaseCosts);
-        }
-
-        if (els.inventoryDelta) {
-            const deltaSign = inventoryDelta >= 0 ? '+' : '';
-            const deltaColor = inventoryDelta >= 0 ? 'text-green-400' : 'text-red-400';
-            els.inventoryDelta.textContent = inventoryDelta !== 0 ? `${deltaSign}${this.formatCurrency(inventoryDelta)} from last trade` : 'No change yet';
-            els.inventoryDelta.className = `text-[10px] uppercase mt-1 ${inventoryDelta !== 0 ? deltaColor : 'text-gray-500'}`;
-        }
-
-        if (els.totalValue) {
-            els.totalValue.textContent = this.formatCurrency(totalValue);
-            els.totalValue.className = `text-2xl font-mono font-bold z-10 ${totalValue >= 0 ? 'text-green-400' : 'text-red-400'}`;
-        }
-
-        if (els.totalDelta) {
-            const deltaSign = totalDelta >= 0 ? '+' : '';
-            const deltaColor = totalDelta >= 0 ? 'text-green-400' : 'text-red-400';
-            els.totalDelta.textContent = totalDelta !== 0 ? `${deltaSign}${this.formatCurrency(totalDelta)} from last trade` : 'No change yet';
-            els.totalDelta.className = `text-[10px] uppercase mt-1 z-10 ${totalDelta !== 0 ? deltaColor : 'text-gray-400'}`;
-        }
-
-        // Display Growth Badge
-        if (els.improvement) {
-            const sign = percentImprovement >= 0 ? '+' : '';
-            els.improvement.textContent = `${sign}${percentImprovement.toFixed(1)}%`;
-            els.improvement.className = `text-sm font-mono font-bold ml-1 ${percentImprovement >= 0 ? 'text-green-400' : 'text-red-400'}`;
-
-            if (els.improvementBadge) {
-                els.improvementBadge.classList.remove('hidden');
-            }
-        }
     }
 
     /**
-     * Render Transaction History Table
+     * Render Transaction History Table (delegated to FinancialRenderer module)
      */
     renderTransactionHistoryTable() {
-        const tbody = document.getElementById('history-table-body');
-        const emptyMsg = document.getElementById('history-empty-msg');
-        
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        if (!this.transactions || this.transactions.length === 0) {
-            emptyMsg?.classList.remove('hidden');
-            return;
-        }
-
-        // Filter accepted and Sort by time desc
-        const sorted = [...this.transactions]
-            .filter(t => !t.status || t.status === 'accepted')
-            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-        if (sorted.length === 0) {
-             emptyMsg?.classList.remove('hidden');
-             return;
-        }
-        emptyMsg?.classList.add('hidden');
-
-        sorted.forEach(t => {
-            const row = document.createElement('tr');
-            row.className = 'hover:bg-gray-700/50 transition';
-            
-            let timeStr = 'Unknown';
-            if (t.timestamp) {
-                const date = new Date(t.timestamp * 1000);
-                timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            }
-            
-            const isSale = t.role === 'seller';
-            const typeColor = isSale ? 'text-green-400' : 'text-blue-400';
-            const typeIcon = isSale ? '↗' : '↙';
-            const counterpartyName = t.counterpartyName || t.counterparty || 'Unknown';
-            const invBefore = t.inventoryBefore !== undefined ? this.formatNumber(t.inventoryBefore) : '-';
-            const invAfter = t.inventoryAfter !== undefined ? this.formatNumber(t.inventoryAfter) : '-';
-            
-            row.innerHTML = `
-                <td class="py-3 font-mono text-gray-400">${timeStr}</td>
-                <td class="py-3 font-bold ${typeColor}">${typeIcon} ${isSale ? 'SALE' : 'BUY'}</td>
-                <td class="py-3 font-bold">Chemical ${t.chemical}</td>
-                <td class="py-3 text-right font-mono">${this.formatNumber(t.quantity)}</td>
-                <td class="py-3 text-right font-mono">${this.formatCurrency(t.pricePerGallon)}</td>
-                <td class="py-3 text-right font-mono font-bold text-white">${this.formatCurrency(t.totalAmount)}</td>
-                <td class="py-3 text-right font-mono text-gray-400">${invBefore}</td>
-                <td class="py-3 text-right font-mono text-gray-400">${invAfter}</td>
-                <td class="py-3 pl-4 text-gray-400">vs ${counterpartyName}</td>
-            `;
-            
-            tbody.appendChild(row);
-        });
+        financialRenderer.renderTransactionHistoryTable(this.transactions);
     }
 
     openTransactionHistory() {
