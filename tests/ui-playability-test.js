@@ -172,13 +172,16 @@ class UIPlayabilityTest {
         if (action.type === 'initiate_negotiation') {
             const chemical = action.chemical;
             const responderName = action.responderName;
-            
+
             console.log(`         👉 Oracle: Attempting to SELL ${chemical} to ${responderName}`);
+
+            // Close production modal if present (it blocks other modals)
+            await this.browser.closeProductionModalIfPresent(page);
 
             // Pierce Shadow DOM to find the specific "Sell to" button
             const btnHandle = await this.findInShadow(page, [
                 `chemical-card[chemical="${chemical}"]`,
-                `listing-item[teamname="${responderName}"]`, 
+                `listing-item[teamname="${responderName}"]`,
                 'button.btn'
             ]);
 
@@ -211,13 +214,31 @@ class UIPlayabilityTest {
         } else if (action.type === 'create_buy_order') {
             const chemical = action.chemical;
             console.log(`         👉 Oracle: Posting Buy Request for ${chemical}`);
-            
+
+            // Close production modal if present (it blocks other modals)
+            await this.browser.closeProductionModalIfPresent(page);
+
+            // Debug: Check for blocking conditions before click
+            const blockingState = await page.evaluate(() => {
+                const prodModal = document.getElementById('production-results-modal');
+                const offerModal = document.getElementById('offer-modal');
+                return {
+                    prodModalHidden: prodModal?.classList.contains('hidden'),
+                    prodModalExists: !!prodModal,
+                    offerModalHidden: offerModal?.classList.contains('hidden'),
+                    lastOpenedModal: window.LAST_OPENED_MODAL
+                };
+            });
+            if (this.config.verbose) {
+                console.log('         📊 Pre-click state:', JSON.stringify(blockingState));
+            }
+
             // Find "Post Buy Request" button in chemical card
             const btnHandle = await this.findInShadow(page, [
                 `chemical-card[chemical="${chemical}"]`,
                 '#post-buy-btn'
             ]);
-            
+
             if (btnHandle && !await btnHandle.evaluate(el => !el)) {
                 // Check if button is disabled
                 const isDisabled = await btnHandle.evaluate(el => el.disabled);
@@ -226,8 +247,30 @@ class UIPlayabilityTest {
                     return;
                 }
 
+                // Click and dispatch event (click through shadow DOM can be unreliable)
                 await btnHandle.click();
-                
+
+                // Also dispatch the event directly to ensure it's received
+                await page.evaluate((chem) => {
+                    document.dispatchEvent(new CustomEvent('post-interest', {
+                        detail: { chemical: chem, type: 'buy' },
+                        bubbles: true,
+                        composed: true
+                    }));
+                }, chemical);
+
+                // Debug: Check state after click
+                const postClickState = await page.evaluate(() => {
+                    const offerModal = document.getElementById('offer-modal');
+                    return {
+                        offerModalHidden: offerModal?.classList.contains('hidden'),
+                        lastOpenedModal: window.LAST_OPENED_MODAL
+                    };
+                });
+                if (this.config.verbose) {
+                    console.log('         📊 Post-click state:', JSON.stringify(postClickState));
+                }
+
                 // Wait for Offer Modal
                 await page.waitForSelector('#offer-modal:not(.hidden)', { timeout: 10000 });
                 
@@ -258,9 +301,12 @@ class UIPlayabilityTest {
      * Execute a NEGOTIATION RESPONSE action suggested by the Oracle
      */
     async executeOracleNegotiationAction(page, action) {
+        // Close production modal if present (it blocks other modals)
+        await this.browser.closeProductionModalIfPresent(page);
+
         // 1. Open Negotiation List if needed (or ensure we are on the page)
         // Ideally, we find the specific card.
-        
+
         const negId = action.negotiationId;
         
         // Find the specific negotiation-card element
