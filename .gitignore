@@ -36,3 +36,7 @@ Thumbs.db
 
 vendor
 .vscode
+
+tests/screenshots/
+
+artifacts/

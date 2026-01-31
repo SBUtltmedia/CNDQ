@@ -48,6 +48,23 @@ class UIPlayabilityTest {
      * Setup API call monitoring on a page
      */
     async setupApiMonitoring(page, teamId) {
+        // Capture console errors
+        page.on('console', msg => {
+            if (msg.type() === 'error') {
+                this.results.errors.push({ 
+                    user: teamId, 
+                    error: `Console Error: ${msg.text()}`
+                });
+            }
+        });
+
+        page.on('pageerror', err => {
+            this.results.errors.push({ 
+                user: teamId, 
+                error: `Page Runtime Error: ${err.message}` 
+            });
+        });
+
         await page.evaluateOnNewDocument(() => {
             window.__apiCalls = [];
 

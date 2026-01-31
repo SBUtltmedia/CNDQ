@@ -221,7 +221,7 @@
     </div>
 
     <!-- Trading Tutorial Modal -->
-    <div id="tutorial-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] p-4">
+    <div id="tutorial-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[120] p-4">
         <div class="bg-gray-800 rounded-2xl w-full max-w-2xl border-2 border-purple-500 shadow-2xl overflow-hidden">
             <!-- Header -->
             <div class="bg-purple-900 p-4 flex justify-between items-center">
@@ -286,6 +286,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span id="prod-result-title">Production Results</span>
+                    <span id="prod-result-session" class="hidden"></span>
                 </h3>
                 <button id="prod-result-close" class="text-gray-400 hover:text-white text-4xl font-bold transition-colors">&times;</button>
             </div>

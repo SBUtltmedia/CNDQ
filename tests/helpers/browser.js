@@ -146,6 +146,11 @@ class BrowserHelper {
         // dev_login.php redirects to index.php, which is our main app page.
         await this.login(page, userEmail);
 
+        // Mark tutorial as seen so it doesn't pop up and block the test
+        await page.evaluate(() => {
+            localStorage.setItem('cndq_tutorial_seen', 'true');
+        });
+
         // If we want a specific path OTHER than index.php, navigate there
         if (pathStr && !pathStr.includes('index.php')) {
             await this.navigateTo(page, pathStr);

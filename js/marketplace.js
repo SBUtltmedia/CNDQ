@@ -60,8 +60,6 @@ class MarketplaceApp {
         this.gameFinished = false;
 
         // Modal state
-        this.currentNegotiation = null;
-        this.focusBeforeModal = null;
         this.currentModal = null;
 
         // Track pending ad posts to prevent race conditions
@@ -1904,41 +1902,34 @@ class MarketplaceApp {
         // Tutorial Navigation
         const nextBtn = document.getElementById('tutorial-next');
         if (nextBtn) {
-            // Remove old listeners by cloning (extreme robust approach)
-            const newNextBtn = nextBtn.cloneNode(true);
-            nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-            newNextBtn.addEventListener('click', () => {
+            nextBtn.onclick = () => {
                 console.log('🔘 Tutorial NEXT clicked');
                 this.tutorialNext();
-            });
+            };
         }
 
         const prevBtn = document.getElementById('tutorial-prev');
         if (prevBtn) {
-            const newPrevBtn = prevBtn.cloneNode(true);
-            prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-            newPrevBtn.addEventListener('click', () => {
+            prevBtn.onclick = () => {
                 console.log('🔘 Tutorial PREV clicked');
                 this.tutorialPrev();
-            });
+            };
         }
 
         const diveBtn = document.getElementById('tutorial-deep-dive');
         if (diveBtn) {
-            const newDiveBtn = diveBtn.cloneNode(true);
-            diveBtn.parentNode.replaceChild(newDiveBtn, diveBtn);
-            newDiveBtn.addEventListener('click', () => {
+            diveBtn.onclick = () => {
                 console.log('🔘 Tutorial DEEP DIVE clicked');
                 this.tutorialDeepDive();
-            });
+            };
         }
 
         const helpBtn = document.getElementById('help-btn');
         if (helpBtn) {
-            helpBtn.addEventListener('click', () => {
+            helpBtn.onclick = () => {
                 console.log('🔘 Help Button clicked');
                 this.showTutorial();
-            });
+            };
         }
 
         // Web Component Events: View negotiation detail (from negotiation-card)
@@ -3412,7 +3403,7 @@ class MarketplaceApp {
 
         if (!target) {
             // Reset to centered modal
-            modal.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[3000] p-4';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[120] p-4';
             container.classList.remove('tutorial-popover');
             container.style.top = '';
             container.style.left = '';
@@ -3427,7 +3418,7 @@ class MarketplaceApp {
         const popoverWidth = 380;
 
         // Apply popover styles
-        modal.className = 'fixed inset-0 z-[3000] p-4 tutorial-overlay-transparent';
+        modal.className = 'fixed inset-0 z-[120] p-4 tutorial-overlay-transparent';
         container.classList.add('tutorial-popover');
 
         // Calculate Horizontal Positioning
@@ -3498,11 +3489,11 @@ class MarketplaceApp {
         notifications.announce(announcement);
 
         // Update button states
-        const prevBtn = document.getElementById('tutorial-prev');
-        const nextBtn = document.getElementById('tutorial-next');
-        const deepDiveBtn = document.getElementById('tutorial-deep-dive');
+        const tutorialPrevBtn = document.getElementById('tutorial-prev');
+        const tutorialNextBtn = document.getElementById('tutorial-next');
+        const tutorialDeepDiveBtn = document.getElementById('tutorial-deep-dive');
 
-        prevBtn.disabled = this.tutorialStep === 0;
+        if (tutorialPrevBtn) tutorialPrevBtn.disabled = this.tutorialStep === 0;
 
         // Handle Highlights and Positioning
         this.clearHighlights();
@@ -3515,17 +3506,17 @@ class MarketplaceApp {
 
         // Show Deep Dive option on last basic step
         if (step.isLastBasicStep) {
-            nextBtn.textContent = 'Got It!';
-            if (deepDiveBtn) {
-                deepDiveBtn.classList.remove('hidden');
-                deepDiveBtn.textContent = 'Deep Dive →';
+            if (tutorialNextBtn) tutorialNextBtn.textContent = 'Got It!';
+            if (tutorialDeepDiveBtn) {
+                tutorialDeepDiveBtn.classList.remove('hidden');
+                tutorialDeepDiveBtn.textContent = 'Deep Dive →';
             }
         } else if (step.isOptional) {
-            nextBtn.textContent = 'Done!';
-            if (deepDiveBtn) deepDiveBtn.classList.add('hidden');
+            if (tutorialNextBtn) tutorialNextBtn.textContent = 'Done!';
+            if (tutorialDeepDiveBtn) tutorialDeepDiveBtn.classList.add('hidden');
         } else {
-            nextBtn.textContent = 'Next';
-            if (deepDiveBtn) deepDiveBtn.classList.add('hidden');
+            if (tutorialNextBtn) tutorialNextBtn.textContent = 'Next';
+            if (tutorialDeepDiveBtn) tutorialDeepDiveBtn.classList.add('hidden');
         }
     }
 
