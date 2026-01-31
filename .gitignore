@@ -38,5 +38,12 @@ vendor
 .vscode
 
 tests/screenshots/
+tests/debug-*.php
+tests/debug-*.js
 
 artifacts/
+
+# Editor/IDE temp files
+*.swp
+*.swo
+*~
