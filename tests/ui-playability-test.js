@@ -862,9 +862,26 @@ class UIPlayabilityTest {
             }
         }
 
-        // Close tutorial
+        // Close tutorial and VERIFY it actually closed
         await page.click('#tutorial-next');
         await this.browser.sleep(300);
+
+        // Verify the modal is actually hidden
+        const modalHidden = await page.evaluate(() => {
+            const modal = document.getElementById('tutorial-modal');
+            return modal && modal.classList.contains('hidden');
+        });
+
+        if (!modalHidden) {
+            console.log('   ❌ FAILURE: Tutorial modal did not close after clicking final button!');
+            this.results.errors.push({ user: testUser, error: 'Tutorial modal failed to close' });
+            // Take a screenshot of the failure state
+            const failPath = path.join(screenshotDir, `tutorial-close-FAILED-${Date.now()}.png`);
+            await page.screenshot({ path: failPath, fullPage: false });
+            console.log(`   📸 Failure screenshot: ${failPath}`);
+        } else {
+            console.log('   ✅ Tutorial modal closed successfully');
+        }
 
         console.log(`   ✅ Captured ${tutorialData.length} tutorial steps`);
         console.log(`   📁 Screenshots saved to: ${screenshotDir}`);

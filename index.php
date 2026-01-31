@@ -530,7 +530,7 @@
                 </div>
 
                 <!-- Shadow Prices & Recalculate -->
-                <div class="mt-3 md:mt-4 bg-gray-700 rounded-lg p-3 md:p-4 border border-gray-600">
+                <div id="shadow-price-bar" class="mt-3 md:mt-4 bg-gray-700 rounded-lg p-3 md:p-4 border border-gray-600">
                     <div class="flex items-center justify-between flex-wrap gap-3 md:gap-4">
                         <div class="flex items-center gap-3 md:gap-6 flex-wrap w-full lg:w-auto">
                             <div class="text-xs md:text-sm w-full lg:w-auto">
@@ -558,6 +558,11 @@
 
         <!-- Main Content -->
         <main id="main-content" class="container mx-auto px-4 py-4 md:py-6" role="main">
+
+            <!-- Screen Reader Game Summary (Hidden) -->
+            <div id="sr-game-summary" class="sr-only" aria-live="polite">
+                Loading game state...
+            </div>
 
             <!-- Session Status Bar -->
             <div class="bg-gray-800 border-l-4 border-purple-500 p-4 mb-6 rounded shadow-lg flex flex-wrap items-center justify-between gap-4">
@@ -612,7 +617,7 @@
             </div>
 
             <!-- 4-Column Chemical Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6" role="region" aria-label="Chemical Marketplace">
+            <div id="chemical-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6" role="region" aria-label="Chemical Marketplace">
                 <chemical-card chemical="C"></chemical-card>
                 <chemical-card chemical="N"></chemical-card>
                 <chemical-card chemical="D"></chemical-card>

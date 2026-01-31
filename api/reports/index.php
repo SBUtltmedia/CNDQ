@@ -101,65 +101,89 @@ try {
         $solver = new LPSolver();
         $result = $solver->solve($inventory);
 
-        // Format for Answer Report
-        $answerReport = [
-            'objective' => [
-                'name' => 'Profit Total',
-                'finalValue' => $result['maxProfit']
-            ],
-            'variables' => [
-                [
-                    'name' => 'Gallons Deicer',
-                    'finalValue' => $result['deicer'],
-                    'objectiveCoef' => 2.0 // From LPSolver
-                ],
-                [
-                    'name' => 'Gallons Solvent',
-                    'finalValue' => $result['solvent'],
-                    'objectiveCoef' => 3.0 // From LPSolver
-                ]
-            ],
-            'constraints' => []
+        // --- ANSWER REPORT ---
+        // Mimics Excel "Answer Report" but focuses on Current State (no "Original Value")
+        
+        // 1. Target Cell (Objective)
+        $objective = [
+            'name' => 'Total Profit (Projected)',
+            'finalValue' => $result['maxProfit']
         ];
 
-        // Format Constraints for Answer Report
+        // 2. Adjustable Cells (Decision Variables)
+        $variables = [
+            [
+                'name' => 'Gallons Deicer',
+                'finalValue' => $result['deicer'],
+                'type' => 'Decision Variable'
+            ],
+            [
+                'name' => 'Gallons Solvent',
+                'finalValue' => $result['solvent'],
+                'type' => 'Decision Variable'
+            ]
+        ];
+
+        // 3. Constraints
+        $constraints = [];
         foreach ($result['constraints'] as $chem => $data) {
             $slack = $data['slack'] ?? 0;
-            $answerReport['constraints'][] = [
+            $available = $inventory[$chem] ?? 0;
+            $used = $available - $slack; // Value = RHS - Slack (for <= constraint)
+            
+            // Determine binding status explicitly if missing
+            $status = $data['status'] ?? ($slack < 0.001 ? 'Binding' : 'Not Binding');
+
+            $constraints[] = [
                 'name' => "Liquid $chem Used",
-                'status' => $data['status'] ?? 'Unknown',
-                'slack' => $slack,
-                // Calculate used amount: Available - Slack
-                'available' => $inventory[$chem] ?? 0,
-                'used' => ($inventory[$chem] ?? 0) - $slack
+                'cellValue' => round($used, 2), // The "Value" in Excel
+                'formula' => "Used <= Available", // Descriptive formula
+                'status' => $status,
+                'slack' => round($slack, 2)
             ];
         }
 
-        // Format for Sensitivity Report
-        $sensitivityReport = [
-            'shadowPrices' => []
+        $answerReport = [
+            'objective' => $objective,
+            'variables' => $variables,
+            'constraints' => $constraints
         ];
+
+        // --- SENSITIVITY REPORT ---
+        // Mimics Excel "Sensitivity Report"
+        // We currently only calculate sensitivity for Constraints (Shadow Prices), not Variables (Reduced Cost)
+        
+        $sensitivityConstraints = [];
 
         foreach ($result['shadowPrices'] as $chem => $price) {
             $allowableIncrease = $result['ranges'][$chem]['allowableIncrease'] ?? 'INF';
             $allowableDecrease = $result['ranges'][$chem]['allowableDecrease'] ?? 0;
+            $available = $inventory[$chem] ?? 0;
+            $used = $available - ($result['constraints'][$chem]['slack'] ?? 0);
 
             // JSON does not support INF constant, convert to string
-            if (is_float($allowableIncrease) && is_infinite($allowableIncrease)) {
-                $allowableIncrease = 'INF';
+            // LPSolver returns 9999 for infinite increase
+            if ((is_float($allowableIncrease) && is_infinite($allowableIncrease)) || $allowableIncrease >= 9999) {
+                $allowableIncrease = '1E+30'; // Excel notation for infinity
             }
             if (is_float($allowableDecrease) && is_infinite($allowableDecrease)) {
-                $allowableDecrease = 'INF';
+                $allowableDecrease = '1E+30';
             }
 
-            $sensitivityReport['shadowPrices'][] = [
-                'chemical' => $chem,
-                'shadowPrice' => $price,
+            $sensitivityConstraints[] = [
+                'name' => "Liquid $chem",
+                'finalValue' => round($used, 2),
+                'shadowPrice' => $price, // The core value
+                'constraintRHS' => $available, // Right Hand Side = Available Inventory
                 'allowableIncrease' => $allowableIncrease,
-                'allowableDecrease' => $allowableDecrease,
-                'currentInventory' => $inventory[$chem] ?? 0
+                'allowableDecrease' => $allowableDecrease
             ];
         }
+
+        $sensitivityReport = [
+            'constraints' => $sensitivityConstraints
+            // 'adjustableCells' => [] // We omit this as we don't calc Reduced Costs yet
+        ];
 
         $response['optimization'] = [
             'answerReport' => $answerReport,

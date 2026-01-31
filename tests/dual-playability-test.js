@@ -33,69 +33,89 @@ const APIPlayabilityTest = require('./api-playability-test');
 const fs = require('fs');
 const path = require('path');
 
-// Load default config
-const configPath = path.join(__dirname, 'test-config.json');
-let CONFIG = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-
-// Parse dynamic arguments for overrides
-const getArgValue = (flag) => {
-    const idx = process.argv.indexOf(flag);
-    return (idx > -1 && process.argv[idx + 1]) ? process.argv[idx + 1] : null;
-};
-
-// Apply CLI Overrides
-if (process.argv.includes('--headless')) CONFIG.headless = true;
-if (process.argv.includes('--verbose') || process.argv.includes('-v')) CONFIG.verbose = true;
-if (process.argv.includes('--screenshot-tutorial')) CONFIG.screenshotTutorial = true;
-
-const argNpcs = getArgValue('--npcs');
-if (argNpcs) CONFIG.npcCount = parseInt(argNpcs);
-
-const argRpcs = getArgValue('--rpcs');
-if (argRpcs) CONFIG.rpcCount = parseInt(argRpcs);
-
-const argDuration = getArgValue('--duration');
-if (argDuration) CONFIG.tradingDuration = parseInt(argDuration);
-
-const argSkill = getArgValue('--skill');
-if (argSkill) {
-    CONFIG.npcSkillMix = Array(CONFIG.npcCount).fill(argSkill);
-    CONFIG.rpcSkillMix = Array(CONFIG.rpcCount).fill(argSkill);
-}
-
-// Final derivation of levels based on count and mix
-const npcLevels = CONFIG.npcSkillMix.slice(0, CONFIG.npcCount);
-const rpcLevels = CONFIG.rpcSkillMix.slice(0, CONFIG.rpcCount);
-
-// Final CONFIG mapping for child tests
-const TEST_CONFIG = {
-    ...CONFIG,
-    baseUrl: CONFIG.baseUrl,
-    testUsers: [
-        'test_mail1@stonybrook.edu',
-        'test_mail2@stonybrook.edu',
-        'test_mail3@stonybrook.edu',
-        'test_mail4@stonybrook.edu',
-        'test_mail5@stonybrook.edu',
-        'test_mail6@stonybrook.edu'
-    ].slice(0, CONFIG.rpcCount),
-    npcLevels: npcLevels,
-    rpcLevels: rpcLevels,
-    skillLevels: rpcLevels, // API test expects this field
-    keepOpen: false,
-    
-    // Pass criteria (flattened for easy access)
-    minPositiveRoiTeams: CONFIG.passCriteria.minPositiveRoiTeams,
-    minAverageRoi: CONFIG.passCriteria.minAverageRoi,
-    minTotalTrades: CONFIG.passCriteria.minTotalTrades,
-    maxAcceptableErrors: CONFIG.passCriteria.maxAcceptableErrors
-};
-
 class DualPlayabilityTest {
-    constructor(config) {
+    constructor(config, dependencies = {}) {
         this.config = config;
+        this.uiTestClass = dependencies.uiTestClass || UIPlayabilityTest;
+        this.apiTestClass = dependencies.apiTestClass || APIPlayabilityTest;
         this.uiResults = null;
         this.apiResults = null;
+        this.standings = [];
+        this.totalTrades = 0;
+    }
+
+    /**
+     * Load configuration from file and CLI arguments
+     */
+    static loadConfig() {
+        const defaultPath = path.join(__dirname, 'test-config.json');
+        let config = JSON.parse(fs.readFileSync(defaultPath, 'utf8'));
+
+        // Helper to get arg value
+        const getArgValue = (flag) => {
+            const idx = process.argv.indexOf(flag);
+            return (idx > -1 && process.argv[idx + 1]) ? process.argv[idx + 1] : null;
+        };
+
+        // Helper to ensure skill arrays match count
+        const ensureLength = (arr, length, fillValue = 1) => {
+            if (!arr) return Array(length).fill(fillValue);
+            if (arr.length >= length) return arr.slice(0, length);
+            // Pad with the last value or a default
+            const lastVal = arr.length > 0 ? arr[arr.length - 1] : fillValue;
+            return [...arr, ...Array(length - arr.length).fill(lastVal)];
+        };
+
+        // Apply CLI Overrides
+        if (process.argv.includes('--headless')) config.headless = true;
+        if (process.argv.includes('--verbose') || process.argv.includes('-v')) config.verbose = true;
+        if (process.argv.includes('--screenshot-tutorial')) config.screenshotTutorial = true;
+
+        const argNpcs = getArgValue('--npcs');
+        if (argNpcs) config.npcCount = parseInt(argNpcs);
+
+        const argRpcs = getArgValue('--rpcs');
+        if (argRpcs) config.rpcCount = parseInt(argRpcs);
+
+        const argDuration = getArgValue('--duration');
+        if (argDuration) config.tradingDuration = parseInt(argDuration);
+
+        const argSkill = getArgValue('--skill');
+        if (argSkill) {
+            config.npcSkillMix = Array(config.npcCount).fill(argSkill);
+            config.rpcSkillMix = Array(config.rpcCount).fill(argSkill);
+        }
+
+        // Final derivation of levels based on count and mix
+        const npcLevels = ensureLength(config.npcSkillMix, config.npcCount);
+        const rpcLevels = ensureLength(config.rpcSkillMix, config.rpcCount);
+
+        // Inter-test delay configuration (default 10s)
+        config.interTestDelay = config.interTestDelay || 10000;
+
+        // Final CONFIG mapping for child tests
+        return {
+            ...config,
+            baseUrl: config.baseUrl,
+            testUsers: [
+                'test_mail1@stonybrook.edu',
+                'test_mail2@stonybrook.edu',
+                'test_mail3@stonybrook.edu',
+                'test_mail4@stonybrook.edu',
+                'test_mail5@stonybrook.edu',
+                'test_mail6@stonybrook.edu'
+            ].slice(0, config.rpcCount),
+            npcLevels: npcLevels,
+            rpcLevels: rpcLevels,
+            skillLevels: rpcLevels, // API test expects this field
+            keepOpen: false,
+            
+            // Pass criteria (flattened for easy access)
+            minPositiveRoiTeams: config.passCriteria.minPositiveRoiTeams,
+            minAverageRoi: config.passCriteria.minAverageRoi,
+            minTotalTrades: config.passCriteria.minTotalTrades,
+            maxAcceptableErrors: config.passCriteria.maxAcceptableErrors
+        };
     }
 
     async run() {
@@ -118,7 +138,7 @@ class DualPlayabilityTest {
                 console.log('█'.repeat(80));
                 console.log('');
 
-                const uiTest = new UIPlayabilityTest(this.config);
+                const uiTest = new this.uiTestClass(this.config);
                 // Modular run: setup then play
                 await uiTest.browser.launch();
                 await uiTest.setupGame();
@@ -143,8 +163,9 @@ class DualPlayabilityTest {
 
                 // Wait between tests to let server settle
                 if (!runUiOnly) {
-                    console.log('\n⏸️  Waiting 10 seconds before API test (time-freeze aware)...\n');
-                    await new Promise(resolve => setTimeout(resolve, 10000));
+                    const delaySec = this.config.interTestDelay / 1000;
+                    console.log(`\n⏸️  Waiting ${delaySec} seconds before API test (time-freeze aware)...\n`);
+                    await new Promise(resolve => setTimeout(resolve, this.config.interTestDelay));
                 }
             }
 
@@ -157,7 +178,7 @@ class DualPlayabilityTest {
                 console.log('█'.repeat(80));
                 console.log('');
 
-                const apiTest = new APIPlayabilityTest(this.config);
+                const apiTest = new this.apiTestClass(this.config);
                 await apiTest.run().catch(err => {
                     console.error('API test failed:', err.message);
                 });
@@ -229,7 +250,7 @@ class DualPlayabilityTest {
         }
 
         // 4. Check for errors
-        const totalErrors = this.uiResults.errors.length + this.apiResults.errors.length;
+        const totalErrors = (this.uiResults?.errors?.length || 0) + (this.apiResults?.errors?.length || 0);
         if (totalErrors > this.config.maxAcceptableErrors) {
             validations.passed = false;
             validations.failures.push(
@@ -253,7 +274,112 @@ class DualPlayabilityTest {
         return validations;
     }
 
+    /**
+     * Normalizes API paths for comparison (e.g., removes base URL and .php extension)
+     */
+    normalizeEndpoint(url) {
+        if (!url) return '';
+        // Strip domain and base path if full URL
+        let normalized = url.replace(this.config.baseUrl, '');
+        // Strip query parameters
+        normalized = normalized.split('?')[0];
+        // Ensure leading slash
+        if (!normalized.startsWith('/')) normalized = '/' + normalized;
+        // Strip .php extension
+        normalized = normalized.replace(/\.php$/, '');
+        // Strip trailing slash
+        normalized = normalized.replace(/\/$/, '');
+        return normalized;
+    }
+
+    /**
+     * Compare results from UI and API tests
+     */
     compareResults() {
+        // Extract standings and trades from API test results for analysis
+        if (this.apiResults && this.apiResults.apiCallLog) {
+            const leaderboardCall = this.apiResults.apiCallLog.find(c => c.endpoint === '/api/leaderboard/standings');
+            if (leaderboardCall && leaderboardCall.response && leaderboardCall.response.data) {
+                this.standings = leaderboardCall.response.data.standings || [];
+            }
+            this.totalTrades = this.apiResults.apiCallLog.filter(c => c.endpoint === '/api/negotiations/accept' && c.response.ok).length;
+        }
+
+        // Validation logic
+        const validation = this.validateRoiCriteria(this.standings, this.totalTrades);
+
+        // Generate report structure
+        const report = this.generateReportPayload(validation);
+
+        // Print to console
+        this.printConsoleReport(validation, report);
+
+        // Save to file
+        this.saveArtifact(report);
+    }
+
+    /**
+     * Generate the full report object
+     */
+    generateReportPayload(validation) {
+        // Build endpoint lists
+        const uiEndpoints = new Set();
+        this.uiResults.apiCallLog.forEach(call => {
+            uiEndpoints.add(this.normalizeEndpoint(call.url));
+        });
+
+        const apiEndpoints = new Set();
+        this.apiResults.apiCallLog.forEach(call => {
+            apiEndpoints.add(this.normalizeEndpoint(call.endpoint));
+        });
+
+        const commonEndpoints = [...apiEndpoints].filter(ep => uiEndpoints.has(ep));
+        const apiOnlyEndpoints = [...apiEndpoints].filter(ep => !uiEndpoints.has(ep));
+
+        return {
+            timestamp: new Date().toISOString(),
+            passed: validation.passed,
+            roiValidation: {
+                passed: validation.passed,
+                failures: validation.failures,
+                warnings: validation.warnings,
+                criteria: {
+                    minPositiveRoiTeams: this.config.minPositiveRoiTeams,
+                    minAverageRoi: this.config.minAverageRoi,
+                    minTotalTrades: this.config.minTotalTrades,
+                    maxAcceptableErrors: this.config.maxAcceptableErrors
+                },
+                actual: this.standings.length > 0 ? {
+                    positiveRoiTeams: this.standings.filter(t => (t.roi || 0) > 0).length,
+                    averageRoi: this.standings.reduce((sum, t) => sum + (t.roi || 0), 0) / this.standings.length,
+                    totalTrades: this.totalTrades,
+                    totalErrors: (this.uiResults?.errors?.length || 0) + (this.apiResults?.errors?.length || 0),
+                    standings: this.standings
+                } : null
+            },
+            uiResults: this.uiResults,
+            apiResults: this.apiResults,
+            comparison: {
+                commonEndpoints: commonEndpoints.length,
+                apiOnlyEndpoints: apiOnlyEndpoints.length,
+                uiEndpointsCovered: uiEndpoints.size,
+                apiEndpointsTested: apiEndpoints.size,
+                totalErrors: (this.uiResults?.errors?.length || 0) + (this.apiResults?.errors?.length || 0),
+                totalWarnings: (this.uiResults?.warnings?.length || 0) + (this.apiResults?.warnings?.length || 0)
+            },
+            endpoints: {
+                ui: [...uiEndpoints],
+                api: [...apiEndpoints],
+                common: commonEndpoints,
+                apiOnly: apiOnlyEndpoints
+            }
+        };
+    }
+
+    /**
+     * Print the report to the console
+     */
+    printConsoleReport(validation, report) {
         console.log('\n' + '█'.repeat(80));
         console.log('█' + ' '.repeat(78) + '█');
         console.log('█' + '  COMPARISON REPORT'.padEnd(78) + '█');
@@ -271,29 +397,21 @@ class DualPlayabilityTest {
         console.log(`API - Failed Calls:          ${this.apiResults.failed}`);
         console.log('-'.repeat(80));
 
-        // Market Activity (from API test as it has more detailed results)
-        if (this.apiResults && this.apiResults.apiCallLog) {
-            const leaderboardCall = this.apiResults.apiCallLog.find(c => c.endpoint === '/api/leaderboard/standings');
-            if (leaderboardCall && leaderboardCall.response && leaderboardCall.response.data) {
-                const standings = leaderboardCall.response.data.standings || [];
-                const improved = standings.filter(t => (t.roi || 0) > 0).length;
-                const totalTrades = this.apiResults.apiCallLog.filter(c => c.endpoint === '/api/negotiations/accept' && c.response.ok).length;
-
-                console.log('\n📈 MARKET ACTIVITY SUMMARY:');
-                console.log('-'.repeat(80));
-                console.log(`Total Teams:                 ${standings.length}`);
-                console.log(`Teams with Positive ROI:     ${improved} (${Math.round(improved / (standings.length || 1) * 100)}%)`);
-                console.log(`Total Trades Executed:       ${totalTrades}`);
-                
-                if (standings.length > 0) {
-                    console.log('\nFinal Standings (Top 5):');
-                    standings.slice(0, 5).forEach((team, i) => {
-                        console.log(`   ${i + 1}. ${team.teamName.padEnd(20)} ROI: ${team.roi?.toFixed(1) || '0.0'}%`);
-                    });
-                }
-                console.log('-'.repeat(80));
-            }
+        // Market Activity
+        const improved = this.standings.filter(t => (t.roi || 0) > 0).length;
+        console.log('\n📈 MARKET ACTIVITY SUMMARY:');
+        console.log('-'.repeat(80));
+        console.log(`Total Teams:                 ${this.standings.length}`);
+        console.log(`Teams with Positive ROI:     ${improved} (${Math.round(improved / (this.standings.length || 1) * 100)}%)`);
+        console.log(`Total Trades Executed:       ${this.totalTrades}`);
+        
+        if (this.standings.length > 0) {
+            console.log('\nFinal Standings (Top 5):');
+            this.standings.slice(0, 5).forEach((team, i) => {
+                console.log(`   ${i + 1}. ${team.teamName.padEnd(20)} ROI: ${team.roi?.toFixed(1) || '0.0'}%`);
+            });
         }
+        console.log('-'.repeat(80));
 
         // Error comparison
         console.log('\n🚨 ERROR COMPARISON:');
@@ -324,51 +442,18 @@ class DualPlayabilityTest {
         // API endpoint coverage comparison
         console.log('\n📡 API ENDPOINT COVERAGE:');
         console.log('-'.repeat(80));
+        console.log(`UI touched ${report.comparison.uiEndpointsCovered} unique normalized endpoints`);
+        console.log(`API tested ${report.comparison.apiEndpointsTested} unique normalized endpoints`);
 
-        // Helper to normalize endpoint strings for comparison
-        const normalizeEndpoint = (ep) => {
-            if (!ep) return '';
-            // Strip domain and base path if full URL
-            let normalized = ep.replace(this.config.baseUrl, '');
-            // Strip query parameters
-            normalized = normalized.split('?')[0];
-            // Ensure leading slash
-            if (!normalized.startsWith('/')) normalized = '/' + normalized;
-            // Strip .php extension
-            normalized = normalized.replace(/\.php$/, '');
-            // Strip trailing slash
-            normalized = normalized.replace(/\/$/, '');
-            return normalized;
-        };
-
-        // Build endpoint lists
-        const uiEndpoints = new Set();
-        this.uiResults.apiCallLog.forEach(call => {
-            uiEndpoints.add(normalizeEndpoint(call.url));
-        });
-
-        const apiEndpoints = new Set();
-        this.apiResults.apiCallLog.forEach(call => {
-            apiEndpoints.add(normalizeEndpoint(call.endpoint));
-        });
-
-        console.log(`UI touched ${uiEndpoints.size} unique normalized endpoints`);
-        console.log(`API tested ${apiEndpoints.size} unique normalized endpoints`);
-
-        // Find endpoints only in API test (not triggered by UI)
-        const apiOnlyEndpoints = [...apiEndpoints].filter(ep => !uiEndpoints.has(ep));
-
-        if (apiOnlyEndpoints.length > 0) {
+        if (report.endpoints.apiOnly.length > 0) {
             console.log('\n⚠️  Endpoints tested by API but not triggered by UI:');
-            apiOnlyEndpoints.forEach(ep => {
+            report.endpoints.apiOnly.forEach(ep => {
                 console.log(`   - ${ep}`);
             });
             console.log('\n   💡 Consider adding UI elements to trigger these endpoints.');
         }
 
-        // Find common endpoints
-        const commonEndpoints = [...apiEndpoints].filter(ep => uiEndpoints.has(ep));
-
+        const commonEndpoints = report.endpoints.common;
         if (commonEndpoints.length > 0) {
             console.log(`\n✅ ${commonEndpoints.length} endpoints tested by both UI and API`);
         }
@@ -381,13 +466,13 @@ class DualPlayabilityTest {
 
         const uiFreq = {};
         this.uiResults.apiCallLog.forEach(call => {
-            const normalized = normalizeEndpoint(call.url);
+            const normalized = this.normalizeEndpoint(call.url);
             uiFreq[normalized] = (uiFreq[normalized] || 0) + 1;
         });
 
         const apiFreq = {};
         this.apiResults.apiCallLog.forEach(call => {
-            const normalized = normalizeEndpoint(call.endpoint);
+            const normalized = this.normalizeEndpoint(call.endpoint);
             apiFreq[normalized] = (apiFreq[normalized] || 0) + 1;
         });
 
@@ -411,21 +496,6 @@ class DualPlayabilityTest {
         // ROI-based validation
         console.log('\n💰 ROI-BASED VALIDATION:');
         console.log('='.repeat(80));
-
-        let standings = [];
-        let totalTrades = 0;
-
-        // Extract standings and trades from API test results
-        if (this.apiResults && this.apiResults.apiCallLog) {
-            const leaderboardCall = this.apiResults.apiCallLog.find(c => c.endpoint === '/api/leaderboard/standings');
-            if (leaderboardCall && leaderboardCall.response && leaderboardCall.response.data) {
-                standings = leaderboardCall.response.data.standings || [];
-            }
-            totalTrades = this.apiResults.apiCallLog.filter(c => c.endpoint === '/api/negotiations/accept' && c.response.ok).length;
-        }
-
-        const validation = this.validateRoiCriteria(standings, totalTrades);
-
         console.log('Pass Criteria:');
         console.log(`   • Minimum positive ROI teams: ${this.config.minPositiveRoiTeams}`);
         console.log(`   • Minimum average ROI: ${this.config.minAverageRoi}%`);
@@ -433,15 +503,15 @@ class DualPlayabilityTest {
         console.log(`   • Maximum acceptable errors: ${this.config.maxAcceptableErrors}`);
         console.log('');
 
-        if (standings.length > 0) {
-            const positiveRoiCount = standings.filter(t => (t.roi || 0) > 0).length;
-            const avgRoi = standings.reduce((sum, t) => sum + (t.roi || 0), 0) / standings.length;
+        if (this.standings.length > 0) {
+            const positiveRoiCount = this.standings.filter(t => (t.roi || 0) > 0).length;
+            const avgRoi = this.standings.reduce((sum, t) => sum + (t.roi || 0), 0) / this.standings.length;
 
             console.log('Actual Results:');
-            console.log(`   • Teams with positive ROI: ${positiveRoiCount}/${standings.length} ${positiveRoiCount >= this.config.minPositiveRoiTeams ? '✅' : '❌'}`);
+            console.log(`   • Teams with positive ROI: ${positiveRoiCount}/${this.standings.length} ${positiveRoiCount >= this.config.minPositiveRoiTeams ? '✅' : '❌'}`);
             console.log(`   • Average ROI: ${avgRoi.toFixed(1)}% ${avgRoi >= this.config.minAverageRoi ? '✅' : '❌'}`);
-            console.log(`   • Total trades executed: ${totalTrades} ${totalTrades >= this.config.minTotalTrades ? '✅' : '❌'}`);
-            console.log(`   • Total errors: ${this.uiResults.errors.length + this.apiResults.errors.length} ${(this.uiResults.errors.length + this.apiResults.errors.length) <= this.config.maxAcceptableErrors ? '✅' : '❌'}`);
+            console.log(`   • Total trades executed: ${this.totalTrades} ${this.totalTrades >= this.config.minTotalTrades ? '✅' : '❌'}`);
+            console.log(`   • Total errors: ${report.comparison.totalErrors} ${report.comparison.totalErrors <= this.config.maxAcceptableErrors ? '✅' : '❌'}`);
         }
 
         console.log('='.repeat(80));
@@ -467,53 +537,14 @@ class DualPlayabilityTest {
             }
         }
 
-        // Technical metrics (for info only)
-        const goodCoverage = commonEndpoints.length >= apiEndpoints.size * 0.7;
-        const apiSuccessRate = this.apiResults.successful / this.apiResults.apiCalls;
-
-        console.log('\nTechnical Metrics (informational):');
-        console.log(`   • API success rate: ${Math.round(apiSuccessRate * 100)}%`);
-        console.log(`   • Endpoint coverage: ${Math.round((commonEndpoints.length / apiEndpoints.size) * 100)}%`);
-        console.log(`   • UI/API consistency: ${goodCoverage ? 'Good' : 'Needs improvement'}`);
-
         console.log('='.repeat(80));
         console.log('');
+    }
 
-        // Write comparison report to file
-        const fs = require('fs');
-        const report = {
-            timestamp: new Date().toISOString(),
-            passed: validation.passed,
-            roiValidation: {
-                passed: validation.passed,
-                failures: validation.failures,
-                warnings: validation.warnings,
-                criteria: {
-                    minPositiveRoiTeams: this.config.minPositiveRoiTeams,
-                    minAverageRoi: this.config.minAverageRoi,
-                    minTotalTrades: this.config.minTotalTrades,
-                    maxAcceptableErrors: this.config.maxAcceptableErrors
-                },
-                actual: standings.length > 0 ? {
-                    positiveRoiTeams: standings.filter(t => (t.roi || 0) > 0).length,
-                    averageRoi: standings.reduce((sum, t) => sum + (t.roi || 0), 0) / standings.length,
-                    totalTrades: totalTrades,
-                    totalErrors: this.uiResults.errors.length + this.apiResults.errors.length,
-                    standings: standings
-                } : null
-            },
-            uiResults: this.uiResults,
-            apiResults: this.apiResults,
-            comparison: {
-                commonEndpoints: commonEndpoints.length,
-                apiOnlyEndpoints: apiOnlyEndpoints.length,
-                uiEndpointsCovered: uiEndpoints.size,
-                apiEndpointsTested: apiEndpoints.size,
-                totalErrors: this.uiResults.errors.length + this.apiResults.errors.length,
-                totalWarnings: this.uiResults.warnings.length + this.apiResults.warnings.length
-            }
-        };
-
+    /**
+     * Save the report artifact
+     */
+    saveArtifact(report) {
         const reportDir = path.join(__dirname, '..', 'artifacts');
         if (!fs.existsSync(reportDir)) {
             fs.mkdirSync(reportDir, { recursive: true });
@@ -527,7 +558,8 @@ class DualPlayabilityTest {
 
 // Run the dual test
 if (require.main === module) {
-    const test = new DualPlayabilityTest(TEST_CONFIG);
+    const config = DualPlayabilityTest.loadConfig();
+    const test = new DualPlayabilityTest(config);
     test.run().catch(error => {
         console.error('Fatal error:', error);
         process.exit(1);

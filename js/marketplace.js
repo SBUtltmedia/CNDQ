@@ -315,6 +315,46 @@ class MarketplaceApp {
                 card.inventory = this.inventory[chem];
             }
         });
+
+        this.updateScreenReaderSummary();
+    }
+
+    /**
+     * Update the hidden screen reader summary with current game state
+     */
+    updateScreenReaderSummary() {
+        if (!this.profile) return;
+
+        const funds = this.formatCurrency(this.profile.currentFunds);
+        
+        // Calculate total inventory
+        const totalGallons = Object.values(this.inventory).reduce((a, b) => a + b, 0);
+        
+        // Identify lowest inventory (bottleneck candidate) if production enabled
+        // Simple heuristic: lowest absolute amount
+        let bottleneck = 'None';
+        let minAmount = Infinity;
+        for (const [chem, amount] of Object.entries(this.inventory)) {
+            if (amount < minAmount) {
+                minAmount = amount;
+                bottleneck = `Chemical ${chem}`;
+            }
+        }
+
+        // Profit/Improvement
+        // Calculate improvement %
+        const initialPotential = this.profile.initialProductionPotential || 0;
+        const totalValue = (this.profile.currentFunds || 0) + (this.shadowPrices?.maxProfit || 0);
+        let improvement = 0;
+        if (initialPotential > 0) {
+            improvement = ((totalValue - initialPotential) / initialPotential) * 100;
+        }
+        const trend = improvement >= 0 ? "up" : "down";
+
+        const summary = `Game State Update: You have ${funds}. Total inventory is ${Math.round(totalGallons)} gallons. Lowest stock is ${bottleneck}. Your profit is ${trend} ${Math.abs(improvement).toFixed(1)}%.`;
+
+        const el = document.getElementById('sr-game-summary');
+        if (el) el.textContent = summary;
     }
 
 
@@ -2973,7 +3013,7 @@ class MarketplaceApp {
      */
     highlightElement(selector) {
         this.clearHighlights();
-        
+
         // Handle shadow DOM selectors
         let element = null;
         if (Array.isArray(selector)) {
@@ -2991,9 +3031,14 @@ class MarketplaceApp {
         if (element) {
             element.classList.add('tutorial-highlight');
             element.classList.add('tutorial-pulse');
-            
-            // Scroll element into view if not in viewport
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Only scroll into view for elements that are likely below the fold
+            // Skip scrolling for header elements to avoid disrupting modal positioning
+            const rect = element.getBoundingClientRect();
+            const isInHeader = rect.top < 100;
+            if (!isInHeader && rect.bottom > window.innerHeight) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     }
 
@@ -3142,7 +3187,7 @@ class MarketplaceApp {
                         </div>
                     </div>
                 `,
-                elementToHighlight: '.grid-cols-4' // Highlight the 4 chemical cards
+                elementToHighlight: '#chemical-cards-grid' // Highlight the 4 chemical cards
             },
 
             // Step 3: What are Shadow Prices?
@@ -3166,7 +3211,7 @@ class MarketplaceApp {
                         </div>
                     </div>
                 `,
-                elementToHighlight: '.bg-gray-700.rounded-lg.p-3.md\:p-4.border.border-gray-600' // Highlight top Shadow Price bar
+                elementToHighlight: '#shadow-price-bar' // Highlight top Shadow Price bar
             },
 
             // Step 4: Your Chemical Analysis
@@ -3381,80 +3426,25 @@ class MarketplaceApp {
 
     /**
      * Position the tutorial modal relative to a target element
+     *
+     * NOTE: Popover positioning is disabled due to pointer-events issues.
+     * When the overlay has pointer-events: none, clicks pass through to
+     * elements BEHIND the overlay (not to child elements within it).
+     * The modal stays centered and the highlight draws attention to elements.
      */
-    positionTutorial(targetSelector) {
+    positionTutorial(_targetSelector) {
         const modal = document.getElementById('tutorial-modal');
         const container = modal?.querySelector('div');
-        
+
         if (!modal || !container) return;
 
-        // Handle shadow DOM selectors
-        let target = null;
-        if (Array.isArray(targetSelector)) {
-            let root = document;
-            for (const sel of targetSelector) {
-                target = (root.shadowRoot || root).querySelector(sel);
-                if (!target) break;
-                root = target;
-            }
-        } else {
-            target = document.querySelector(targetSelector);
-        }
-
-        if (!target) {
-            // Reset to centered modal
-            modal.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[120] p-4';
-            container.classList.remove('tutorial-popover');
-            container.style.top = '';
-            container.style.left = '';
-            container.style.transform = '';
-            return;
-        }
-
-        const rect = target.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const padding = 30;
-        const popoverWidth = 380;
-
-        // Apply popover styles
-        modal.className = 'fixed inset-0 z-[120] p-4 tutorial-overlay-transparent';
-        container.classList.add('tutorial-popover');
-
-        // Calculate Horizontal Positioning
-        let left;
-        const targetCenterX = rect.left + rect.width / 2;
-        
-        if (targetCenterX > viewportWidth / 2) {
-            // Target is on the RIGHT side - place modal to its LEFT
-            left = rect.left - popoverWidth - padding;
-            // If it would go off screen, snap to left padding
-            if (left < padding) left = padding;
-        } else {
-            // Target is on the LEFT side - place modal to its RIGHT
-            left = rect.right + padding;
-            // If it would go off screen, snap to right
-            if (left + popoverWidth > viewportWidth - padding) {
-                left = viewportWidth - popoverWidth - padding;
-            }
-        }
-
-        // Calculate Vertical Positioning
-        let top;
-        // Try to align top of modal with top of card
-        top = rect.top;
-        
-        // Ensure it doesn't go off bottom
-        if (top + 450 > viewportHeight) {
-            top = Math.max(padding, viewportHeight - 450 - padding);
-        }
-        
-        // Ensure it doesn't go off top
-        if (top < padding) top = padding;
-
-        container.style.top = `${top}px`;
-        container.style.left = `${left}px`;
-        container.style.transform = 'none'; // Disable any inherited transforms
+        // Always keep modal centered - popover positioning causes click issues
+        // (_targetSelector is kept for API compatibility but not used)
+        modal.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[120] p-4';
+        container.classList.remove('tutorial-popover');
+        container.style.top = '';
+        container.style.left = '';
+        container.style.transform = '';
     }
 
     /**
@@ -3579,9 +3569,17 @@ class MarketplaceApp {
      * Close the tutorial
      */
     closeTutorial() {
-        document.getElementById('tutorial-modal')?.classList.add('hidden');
+        const modal = document.getElementById('tutorial-modal');
         this.clearHighlights();
-        this.positionTutorial(null); // Reset position for next time
+
+        // Reset position BEFORE hiding (positionTutorial overwrites className)
+        this.positionTutorial(null);
+
+        // Now hide the modal
+        if (modal) {
+            modal.classList.add('hidden');
+            console.log('📖 Tutorial: Modal hidden');
+        }
 
         // Save preference if checkbox is checked
         if (document.getElementById('tutorial-dont-show')?.checked) {
