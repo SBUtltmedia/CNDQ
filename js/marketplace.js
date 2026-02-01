@@ -70,6 +70,10 @@ class MarketplaceApp {
         this.processedGlobalTrades = new Set();
         this.seenCompletedNegotiations = new Set();
 
+        // Global history complexity state
+        this.globalHistoryComplexity = 'simple'; // simple | detailed
+        this.cachedGlobalTransactions = []; // Cache for re-rendering on complexity change
+
         // Bind StateManager events
         this.bindStateEvents();
     }
@@ -523,21 +527,60 @@ class MarketplaceApp {
     }
 
     /**
+     * Set Global History Complexity and re-render
+     */
+    setGlobalHistoryComplexity(complexity) {
+        this.globalHistoryComplexity = complexity;
+
+        // Update button states
+        const selector = document.getElementById('global-history-complexity');
+        if (selector) {
+            selector.querySelectorAll('button').forEach(btn => {
+                const isActive = btn.dataset.complexity === complexity;
+                btn.classList.toggle('active', isActive);
+                btn.classList.toggle('bg-green-600', isActive);
+                btn.classList.toggle('text-white', isActive);
+                btn.classList.toggle('text-gray-400', !isActive);
+                btn.classList.toggle('hover:text-white', !isActive);
+                btn.classList.toggle('hover:bg-gray-600', !isActive);
+            });
+        }
+
+        // Re-render with cached data
+        if (this.cachedGlobalTransactions.length > 0) {
+            this.renderGlobalTransactionHistory(this.cachedGlobalTransactions);
+        }
+    }
+
+    /**
      * Render Global Transaction History Table
      */
     renderGlobalTransactionHistory(transactions) {
+        const thead = document.getElementById('global-history-thead');
         const tbody = document.getElementById('global-history-table-body');
         const emptyMsg = document.getElementById('global-history-empty-msg');
 
-        if (!tbody) return;
+        if (!tbody || !thead) return;
+
+        // Cache transactions for complexity changes
+        this.cachedGlobalTransactions = transactions || [];
+
         tbody.innerHTML = '';
+        thead.innerHTML = '';
 
         if (!transactions || transactions.length === 0) {
             emptyMsg?.classList.remove('hidden');
+            // Still render headers
+            thead.innerHTML = this.getGlobalHistoryHeaders();
             return;
         }
 
         emptyMsg?.classList.add('hidden');
+
+        // Render headers based on complexity
+        thead.innerHTML = this.getGlobalHistoryHeaders();
+
+        const complexity = this.globalHistoryComplexity;
 
         transactions.forEach(t => {
             const row = document.createElement('tr');
@@ -554,9 +597,10 @@ class MarketplaceApp {
             const heatClass = isHot ? 'text-orange-400' : '';
             const heatIcon = isHot ? '🔥 ' : '';
 
-            row.innerHTML = `
+            // Build row HTML based on complexity
+            let rowHtml = `
                 <td class="py-3 font-mono text-gray-400">${timeStr}</td>
-                <td class="py-3 font-bold ${heatClass}">${heatIcon}Chemical ${t.chemical}</td>
+                <td class="py-3 font-bold ${heatClass}">${heatIcon}${t.chemical}</td>
                 <td class="py-3 text-right font-mono">${this.formatNumber(t.quantity)}</td>
                 <td class="py-3 text-right font-mono">${this.formatCurrency(t.pricePerGallon)}</td>
                 <td class="py-3 text-right font-mono font-bold text-white">${this.formatCurrency(t.totalAmount)}</td>
@@ -564,8 +608,52 @@ class MarketplaceApp {
                 <td class="py-3 pl-4 text-blue-400">${t.buyerName}</td>
             `;
 
+            // Detailed: Add heat columns
+            if (complexity === 'detailed') {
+                const heatLabel = t.heat?.isHot ? '🔥 Hot' : t.heat?.total > 0 ? '✓ Good' : '—';
+                const heatBgClass = t.heat?.isHot ? 'bg-red-500/20 text-red-400' : t.heat?.total > 0 ? 'bg-green-500/20 text-green-400' : 'text-gray-500';
+                const totalHeat = t.heat?.total ?? 0;
+
+                rowHtml += `
+                    <td class="py-3 text-center">
+                        <span class="px-2 py-0.5 rounded text-xs font-semibold ${heatBgClass}">${heatLabel}</span>
+                    </td>
+                    <td class="py-3 text-right font-mono ${totalHeat > 0 ? 'text-green-400' : 'text-gray-500'}">
+                        ${totalHeat > 0 ? '+' : ''}$${totalHeat.toFixed(2)}
+                    </td>
+                `;
+            }
+
+            row.innerHTML = rowHtml;
             tbody.appendChild(row);
         });
+    }
+
+    /**
+     * Get Global History Table Headers based on complexity
+     */
+    getGlobalHistoryHeaders() {
+        const complexity = this.globalHistoryComplexity;
+        let headers = `
+            <tr>
+                <th class="py-3 font-semibold text-left">Time</th>
+                <th class="py-3 font-semibold text-left">Chem</th>
+                <th class="py-3 font-semibold text-right">Qty</th>
+                <th class="py-3 font-semibold text-right">Price</th>
+                <th class="py-3 font-semibold text-right">Total</th>
+                <th class="py-3 font-semibold pl-4">Seller</th>
+                <th class="py-3 font-semibold pl-4">Buyer</th>
+        `;
+
+        if (complexity === 'detailed') {
+            headers += `
+                <th class="py-3 font-semibold text-center">Heat</th>
+                <th class="py-3 font-semibold text-right">Value</th>
+            `;
+        }
+
+        headers += '</tr>';
+        return headers;
     }
 
     /**
@@ -2252,6 +2340,16 @@ class MarketplaceApp {
             });
         }
 
+        // Global History Complexity Selector
+        const complexitySelector = document.getElementById('global-history-complexity');
+        if (complexitySelector) {
+            complexitySelector.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.setGlobalHistoryComplexity(btn.dataset.complexity);
+                });
+            });
+        }
+
         // CSV Export Buttons
         document.getElementById('export-leaderboard-btn')?.addEventListener('click', () => this.exportLeaderboardCSV());
         document.getElementById('export-history-btn')?.addEventListener('click', () => this.exportTransactionHistoryCSV());
@@ -3012,22 +3110,39 @@ class MarketplaceApp {
                 return;
             }
 
-            const headers = ['Time', 'Chemical', 'Quantity', 'Price/Gal', 'Total', 'Seller', 'Buyer', 'Hot Trade'];
+            const complexity = this.globalHistoryComplexity;
+
+            // Headers based on complexity
+            let headers = ['Time', 'Chemical', 'Quantity', 'Price/Gal', 'Total', 'Seller', 'Buyer'];
+            if (complexity === 'detailed') {
+                headers.push('Heat', 'Heat Value');
+            }
+
             const rows = data.transactions.map(t => {
                 const date = t.timestamp ? new Date(t.timestamp * 1000) : null;
                 const timeStr = date ? date.toLocaleString() : 'Unknown';
-                return [
+                const row = [
                     timeStr,
-                    'Chemical ' + t.chemical,
+                    t.chemical,
                     t.quantity,
                     t.pricePerGallon?.toFixed(2) || '0.00',
                     t.totalAmount?.toFixed(2) || '0.00',
                     t.sellerName,
-                    t.buyerName,
-                    t.heat?.isHot ? 'Yes' : 'No'
+                    t.buyerName
                 ];
+
+                if (complexity === 'detailed') {
+                    row.push(
+                        t.heat?.isHot ? 'Hot' : t.heat?.total > 0 ? 'Good' : 'Fair',
+                        t.heat?.total?.toFixed(2) || '0.00'
+                    );
+                }
+
+                return row;
             });
-            this.downloadCSV(rows, 'market-history.csv', headers);
+
+            const filename = complexity === 'detailed' ? 'market-history-detailed.csv' : 'market-history.csv';
+            this.downloadCSV(rows, filename, headers);
         } catch (error) {
             console.error('Failed to export global history:', error);
             notifications.showToast('Export failed', 'error');

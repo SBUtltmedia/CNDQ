@@ -161,7 +161,11 @@
             <div id="content-history" class="hidden">
                 <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <div></div>
+                        <!-- Complexity Selector -->
+                        <div id="global-history-complexity" class="flex items-center gap-1 bg-gray-700 p-1 rounded-lg">
+                            <button data-complexity="simple" class="active px-3 py-1.5 text-xs font-semibold rounded transition-all bg-green-600 text-white">Simple</button>
+                            <button data-complexity="detailed" class="px-3 py-1.5 text-xs font-semibold rounded transition-all text-gray-400 hover:text-white hover:bg-gray-600">Detailed</button>
+                        </div>
                         <div class="text-center">
                             <h3 class="text-2xl font-bold text-gray-300">Market Transaction History</h3>
                             <p class="text-gray-400 text-sm">Recent trades across all teams</p>
@@ -172,17 +176,9 @@
                         </button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="text-gray-400 text-sm border-b border-gray-600">
-                                <tr>
-                                    <th class="py-3 font-semibold text-left">Time</th>
-                                    <th class="py-3 font-semibold text-left">Chemical</th>
-                                    <th class="py-3 font-semibold text-right">Quantity</th>
-                                    <th class="py-3 font-semibold text-right">Price/Gal</th>
-                                    <th class="py-3 font-semibold text-right">Total</th>
-                                    <th class="py-3 font-semibold pl-4">Seller</th>
-                                    <th class="py-3 font-semibold pl-4">Buyer</th>
-                                </tr>
+                        <table class="w-full" id="global-history-table">
+                            <thead id="global-history-thead" class="text-gray-400 text-sm border-b border-gray-600">
+                                <!-- Headers injected via JS based on complexity -->
                             </thead>
                             <tbody id="global-history-table-body" class="text-gray-300 text-sm divide-y divide-gray-700">
                                 <!-- Rows injected via JS -->

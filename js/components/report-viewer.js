@@ -472,7 +472,7 @@ class ReportViewer extends LitElement {
         const columns = {
             simple: ['Date', 'Type', 'Chem', 'Qty', 'Price', 'Total', 'Counterparty'],
             detailed: ['Date', 'Type', 'Chem', 'Qty', 'Price', 'Total', 'Counterparty', 'Inv Before', 'Inv After', 'Change'],
-            full: ['Date', 'Type', 'Chem', 'Qty', 'Price', 'Total', 'Counterparty', 'Inv Before', 'Inv After', 'Change', 'Heat', 'Your Gain', 'Txn ID']
+            full: ['Date', 'Type', 'Chem', 'Qty', 'Price', 'Total', 'Counterparty', 'Inv Before', 'Inv After', 'Change', 'Heat', 'Your Gain']
         };
 
         const currentColumns = columns[complexity] || columns.simple;
@@ -492,7 +492,7 @@ class ReportViewer extends LitElement {
                     row.push(t.inventoryBefore ?? '', t.inventoryAfter ?? '', invChange);
                 }
                 if (complexity === 'full') {
-                    row.push(heatLabel, yourGain, t.id);
+                    row.push(heatLabel, yourGain);
                 }
                 return row;
             });
@@ -540,7 +540,6 @@ class ReportViewer extends LitElement {
                             ${complexity === 'full' ? html`
                                 <th>Heat</th>
                                 <th class="num">Your Gain</th>
-                                <th>Txn ID</th>
                             ` : ''}
                         </tr>
                     </thead>
@@ -578,9 +577,6 @@ class ReportViewer extends LitElement {
                                         <td>${this.getHeatIndicator(t)}</td>
                                         <td class="num" style="${t.heat?.yourGain >= 0 ? 'color: var(--color-success)' : 'color: var(--color-error)'}">
                                             ${t.heat?.yourGain !== undefined ? `${t.heat.yourGain >= 0 ? '+' : ''}$${t.heat.yourGain.toFixed(2)}` : '—'}
-                                        </td>
-                                        <td style="font-family: monospace; font-size: 0.7rem; max-width: 100px; overflow: hidden; text-overflow: ellipsis;">
-                                            ${t.id}
                                         </td>
                                     ` : ''}
                                 </tr>
