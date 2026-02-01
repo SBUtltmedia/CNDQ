@@ -40,7 +40,8 @@ class UIPlayabilityTest {
             uiActions: 0,
             apiCallsCaptured: 0,
             errors: [],
-            warnings: []
+            warnings: [],
+            a11y: { passed: 0, failed: 0, skipped: 0, details: [] }
         };
     }
 
@@ -898,6 +899,159 @@ class UIPlayabilityTest {
 
         await page.close();
         return { preState, steps: tutorialData };
+    }
+
+    /**
+     * Run accessibility checks using the element registry
+     * @param {Page} page - Puppeteer page to test
+     * @returns {Object} - A11y results summary
+     */
+    async runAccessibilityChecks(page) {
+        const { getA11yElements } = require('./element-registry');
+        const elements = getA11yElements();
+
+        console.log('\n♿ ACCESSIBILITY CHECKS');
+        console.log('-'.repeat(70));
+        console.log(`   Testing ${elements.length} elements from registry...`);
+
+        for (const element of elements) {
+            const result = await this.checkElementAccessibility(page, element);
+            this.results.a11y.details.push(result);
+
+            if (result.status === 'passed') {
+                this.results.a11y.passed++;
+            } else if (result.status === 'skipped') {
+                this.results.a11y.skipped++;
+            } else {
+                this.results.a11y.failed++;
+                console.log(`   ❌ ${element.id}: ${result.errors.join(', ')}`);
+            }
+        }
+
+        console.log(`   ✅ ${this.results.a11y.passed} passed, ❌ ${this.results.a11y.failed} failed, ⏭️ ${this.results.a11y.skipped} skipped`);
+
+        return this.results.a11y;
+    }
+
+    /**
+     * Check a single element's accessibility
+     */
+    async checkElementAccessibility(page, element) {
+        const result = {
+            id: element.id,
+            selector: element.selector,
+            status: 'pending',
+            errors: []
+        };
+
+        try {
+            const elementHandle = await this.findElement(page, element.selector);
+            if (!elementHandle) {
+                result.status = 'skipped';
+                result.reason = 'element not found';
+                return result;
+            }
+
+            const a11yInfo = await elementHandle.evaluate((el) => {
+                const info = {
+                    tagName: el.tagName.toLowerCase(),
+                    role: el.getAttribute('role') || el.tagName.toLowerCase(),
+                    ariaLabel: el.getAttribute('aria-label'),
+                    ariaLabelledBy: el.getAttribute('aria-labelledby'),
+                    title: el.getAttribute('title'),
+                    textContent: el.textContent?.trim().substring(0, 50),
+                    tabIndex: el.tabIndex,
+                    type: el.type
+                };
+
+                // Compute accessible name
+                let accessibleName = info.ariaLabel;
+                if (!accessibleName && info.ariaLabelledBy) {
+                    const labelEl = document.getElementById(info.ariaLabelledBy);
+                    accessibleName = labelEl?.textContent?.trim();
+                }
+                if (!accessibleName) {
+                    accessibleName = info.title || info.textContent;
+                }
+                info.accessibleName = accessibleName;
+
+                // Check if focusable
+                const focusableElements = ['a', 'button', 'input', 'select', 'textarea'];
+                info.isFocusable = focusableElements.includes(info.tagName) ||
+                    info.tabIndex >= 0 ||
+                    el.getAttribute('contenteditable') === 'true';
+
+                return info;
+            });
+
+            // Validate against expected a11y requirements
+            const a11y = element.a11y || {};
+
+            if (a11y.role && !this.matchesRole(a11yInfo, a11y.role)) {
+                result.errors.push(`expected role "${a11y.role}", got "${a11yInfo.role}"`);
+            }
+
+            if (a11y.label) {
+                const labelMatch = a11y.label instanceof RegExp
+                    ? a11y.label.test(a11yInfo.accessibleName || '')
+                    : (a11yInfo.accessibleName || '').toLowerCase().includes(a11y.label.toLowerCase());
+
+                if (!labelMatch) {
+                    result.errors.push(`missing accessible label matching "${a11y.label}"`);
+                }
+            }
+
+            if (a11y.focusable === true && !a11yInfo.isFocusable) {
+                result.errors.push('should be focusable but is not');
+            }
+
+            result.status = result.errors.length === 0 ? 'passed' : 'failed';
+            return result;
+
+        } catch (error) {
+            result.status = 'failed';
+            result.errors.push(error.message);
+            return result;
+        }
+    }
+
+    /**
+     * Check if element role matches expected
+     */
+    matchesRole(a11yInfo, expectedRole) {
+        const role = a11yInfo.role?.toLowerCase();
+        const tagName = a11yInfo.tagName;
+
+        const implicitRoles = {
+            'button': 'button',
+            'a': 'link',
+            'input': a11yInfo.type === 'checkbox' ? 'checkbox' : 'textbox',
+            'select': 'combobox',
+            'dialog': 'dialog',
+            'div': 'generic'
+        };
+
+        const actualRole = role || implicitRoles[tagName] || tagName;
+        return actualRole === expectedRole.toLowerCase();
+    }
+
+    /**
+     * Find element, handling shadow DOM chains
+     */
+    async findElement(page, selector) {
+        if (Array.isArray(selector)) {
+            return await page.evaluateHandle((selectors) => {
+                let root = document;
+                for (const sel of selectors) {
+                    const el = (root.shadowRoot || root).querySelector(sel);
+                    if (!el) return null;
+                    root = el;
+                }
+                return root;
+            }, selector);
+        } else {
+            return await page.$(selector);
+        }
     }
 
     printResults() {

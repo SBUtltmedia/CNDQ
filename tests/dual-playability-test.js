@@ -26,6 +26,7 @@
  *   node tests/dual-playability-test.js --api-only
  *   node tests/dual-playability-test.js --verbose
  *   node tests/dual-playability-test.js --screenshot-tutorial  (captures tutorial screenshots)
+ *   node tests/dual-playability-test.js --a11y                 (include accessibility checks)
  */
 
 const UIPlayabilityTest = require('./ui-playability-test');
@@ -70,6 +71,7 @@ class DualPlayabilityTest {
         if (process.argv.includes('--headless')) config.headless = true;
         if (process.argv.includes('--verbose') || process.argv.includes('-v')) config.verbose = true;
         if (process.argv.includes('--screenshot-tutorial')) config.screenshotTutorial = true;
+        if (process.argv.includes('--a11y')) config.runA11y = true;
 
         const argNpcs = getArgValue('--npcs');
         if (argNpcs) config.npcCount = parseInt(argNpcs);
@@ -150,6 +152,15 @@ class DualPlayabilityTest {
 
                 await uiTest.playMarketplace();
                 await uiTest.endGameAndCheckResults();
+
+                // Optional: Run accessibility checks using element registry
+                if (this.config.runA11y) {
+                    const testPage = await uiTest.browser.loginAndNavigate(this.config.testUsers[0], '');
+                    await testPage.waitForFunction(() => window.marketplaceApp?.profile, { timeout: 15000 });
+                    this.a11yResults = await uiTest.runAccessibilityChecks(testPage);
+                    await testPage.close();
+                }
+
                 uiTest.printResults();
                 await uiTest.browser.close();
 
@@ -158,7 +169,8 @@ class DualPlayabilityTest {
                     apiCallsCaptured: uiTest.results.apiCallsCaptured,
                     errors: uiTest.results.errors,
                     warnings: uiTest.results.warnings,
-                    apiCallLog: uiTest.apiCallLog
+                    apiCallLog: uiTest.apiCallLog,
+                    a11y: uiTest.results.a11y
                 };
 
                 // Wait between tests to let server settle
@@ -438,6 +450,25 @@ class DualPlayabilityTest {
         }
 
         console.log('-'.repeat(80));
+
+        // Accessibility results (if run)
+        if (this.uiResults.a11y && this.uiResults.a11y.details && this.uiResults.a11y.details.length > 0) {
+            console.log('\n♿ ACCESSIBILITY RESULTS:');
+            console.log('-'.repeat(80));
+            console.log(`   Passed:  ${this.uiResults.a11y.passed}`);
+            console.log(`   Failed:  ${this.uiResults.a11y.failed}`);
+            console.log(`   Skipped: ${this.uiResults.a11y.skipped}`);
+
+            if (this.uiResults.a11y.failed > 0) {
+                console.log('\n   Failures:');
+                this.uiResults.a11y.details
+                    .filter(r => r.status === 'failed')
+                    .forEach(r => {
+                        console.log(`      ❌ ${r.id}: ${r.errors.join(', ')}`);
+                    });
+            }
+            console.log('-'.repeat(80));
+        }
 
         // API endpoint coverage comparison
         console.log('\n📡 API ENDPOINT COVERAGE:');

@@ -34,17 +34,18 @@ const path = require('path');
 const fs = require('fs');
 
 const TESTS = {
-    ui: {
-        name: 'UI & Accessibility',
-        file: 'comprehensive-ui-test.js',
-        description: 'Tests all interactive elements and accessibility compliance',
-        passThrough: ['--headless', '--verbose', '--a11y-only', '--ui-only']
-    },
     gameplay: {
         name: 'Gameplay & ROI',
         file: 'dual-playability-test.js',
         description: 'Tests trading mechanics and validates ROI-based pass criteria',
-        passThrough: ['--headless', '--verbose', '--ui-only', '--api-only', '--npcs', '--duration', '--skill']
+        passThrough: ['--headless', '--verbose', '--ui-only', '--api-only', '--npcs', '--duration', '--skill', '--a11y']
+    },
+    a11y: {
+        name: 'Accessibility Only',
+        file: 'dual-playability-test.js',
+        description: 'Runs accessibility checks using element registry (via dual-playability with --a11y --ui-only)',
+        passThrough: ['--headless', '--verbose'],
+        extraArgs: ['--a11y', '--ui-only']  // Always add these for a11y mode
     },
     visual: {
         name: 'Visual Regression',
@@ -77,14 +78,14 @@ class TestController {
         };
 
         // Determine which tests to run
-        if (this.args.includes('--ui')) config.tests.push('ui');
         if (this.args.includes('--gameplay')) config.tests.push('gameplay');
+        if (this.args.includes('--a11y') || this.args.includes('--accessibility')) config.tests.push('a11y');
         if (this.args.includes('--visual')) config.tests.push('visual');
-        if (this.args.includes('--a11y') || this.args.includes('--accessibility')) config.tests.push('accessibility');
+        if (this.args.includes('--lighthouse')) config.tests.push('accessibility');
 
-        // If no specific tests requested, run essential ones (ui + gameplay)
+        // If no specific tests requested, run the main gameplay test
         if (config.tests.length === 0 && !config.help) {
-            config.tests = ['ui', 'gameplay'];
+            config.tests = ['gameplay'];
         }
 
         return config;
@@ -155,6 +156,15 @@ AVAILABLE TEST SUITES:
         }
         if (this.config.verbose && !passArgs.includes('--verbose')) {
             passArgs.push('--verbose');
+        }
+
+        // Add any extra args defined for this test type
+        if (test.extraArgs) {
+            for (const arg of test.extraArgs) {
+                if (!passArgs.includes(arg)) {
+                    passArgs.push(arg);
+                }
+            }
         }
 
         return passArgs;
