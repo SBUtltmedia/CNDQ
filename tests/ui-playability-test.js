@@ -41,7 +41,10 @@ class UIPlayabilityTest {
             apiCallsCaptured: 0,
             errors: [],
             warnings: [],
-            a11y: { passed: 0, failed: 0, skipped: 0, details: [] }
+            a11y: { passed: 0, failed: 0, skipped: 0, details: [] },
+            axe: null,
+            keyboard: null,
+            contrast: null
         };
     }
 
@@ -1052,6 +1055,255 @@ class UIPlayabilityTest {
         } else {
             return await page.$(selector);
         }
+    }
+
+    /**
+     * Run axe-core accessibility audit (WCAG 2.1 AA)
+     * @param {Page} page - Puppeteer page to test
+     * @returns {Object} - Axe results
+     */
+    async runAxeAudit(page) {
+        console.log('\n🔍 AXE-CORE ACCESSIBILITY AUDIT');
+        console.log('-'.repeat(70));
+
+        try {
+            const AxePuppeteer = require('@axe-core/puppeteer').AxePuppeteer;
+
+            const results = await new AxePuppeteer(page)
+                .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+                .analyze();
+
+            // Store results
+            this.results.axe = {
+                violations: results.violations.length,
+                passes: results.passes.length,
+                incomplete: results.incomplete.length,
+                details: results.violations
+            };
+
+            if (results.violations.length === 0) {
+                console.log('   ✅ No WCAG 2.1 AA violations found!');
+            } else {
+                console.log(`   ❌ ${results.violations.length} violations found:\n`);
+                results.violations.forEach((violation, i) => {
+                    console.log(`   ${i + 1}. [${violation.impact}] ${violation.id}`);
+                    console.log(`      ${violation.description}`);
+                    console.log(`      Help: ${violation.helpUrl}`);
+                    console.log(`      Affected: ${violation.nodes.length} element(s)`);
+                    if (this.config.verbose) {
+                        violation.nodes.slice(0, 3).forEach(node => {
+                            console.log(`        - ${node.target.join(' > ')}`);
+                        });
+                    }
+                    console.log('');
+                });
+            }
+
+            console.log(`   Summary: ${results.passes.length} passed, ${results.violations.length} violations, ${results.incomplete.length} incomplete`);
+
+            return this.results.axe;
+        } catch (error) {
+            console.log(`   ⚠️  Axe-core not available: ${error.message}`);
+            console.log('   Install with: npm install @axe-core/puppeteer');
+            return null;
+        }
+    }
+
+    /**
+     * Test keyboard navigation - verify all interactive elements are reachable via Tab
+     * @param {Page} page - Puppeteer page to test
+     * @returns {Object} - Keyboard nav results
+     */
+    async testKeyboardNavigation(page) {
+        console.log('\n⌨️  KEYBOARD NAVIGATION TEST');
+        console.log('-'.repeat(70));
+
+        const { getInteractiveElements } = require('./element-registry');
+        const interactiveElements = getInteractiveElements().filter(el =>
+            el.a11y?.focusable === true && !el.precondition
+        );
+
+        const results = {
+            total: interactiveElements.length,
+            reachable: 0,
+            unreachable: [],
+            tabOrder: []
+        };
+
+        // Get all focusable elements in tab order
+        const focusableInOrder = await page.evaluate(() => {
+            const focusable = [];
+            const walker = document.createTreeWalker(
+                document.body,
+                NodeFilter.SHOW_ELEMENT,
+                {
+                    acceptNode: (node) => {
+                        const style = getComputedStyle(node);
+                        if (style.display === 'none' || style.visibility === 'hidden') {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                        const focusableTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
+                        if (focusableTags.includes(node.tagName) || node.tabIndex >= 0) {
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                        return NodeFilter.FILTER_SKIP;
+                    }
+                }
+            );
+
+            let node;
+            while (node = walker.nextNode()) {
+                if (!node.disabled) {
+                    focusable.push({
+                        tag: node.tagName.toLowerCase(),
+                        id: node.id,
+                        class: node.className?.split?.(' ')?.[0] || '',
+                        ariaLabel: node.getAttribute('aria-label'),
+                        tabIndex: node.tabIndex
+                    });
+                }
+            }
+            return focusable;
+        });
+
+        results.tabOrder = focusableInOrder;
+        console.log(`   Found ${focusableInOrder.length} focusable elements in DOM`);
+
+        // Check each interactive element from registry
+        for (const element of interactiveElements) {
+            const isReachable = focusableInOrder.some(f =>
+                f.id === element.selector.replace('#', '') ||
+                (element.a11y?.label && f.ariaLabel?.toLowerCase()?.includes(
+                    element.a11y.label.source?.toLowerCase?.() || element.a11y.label
+                ))
+            );
+
+            if (isReachable) {
+                results.reachable++;
+            } else {
+                results.unreachable.push(element.id);
+            }
+        }
+
+        if (results.unreachable.length === 0) {
+            console.log(`   ✅ All ${results.total} interactive elements are keyboard reachable`);
+        } else {
+            console.log(`   ❌ ${results.unreachable.length} elements NOT keyboard reachable:`);
+            results.unreachable.forEach(id => console.log(`      - ${id}`));
+        }
+
+        // Store results
+        this.results.keyboard = results;
+        return results;
+    }
+
+    /**
+     * Check color contrast ratios
+     * @param {Page} page - Puppeteer page to test
+     * @returns {Object} - Contrast results
+     */
+    async checkColorContrast(page) {
+        console.log('\n🎨 COLOR CONTRAST CHECK');
+        console.log('-'.repeat(70));
+
+        const results = await page.evaluate(() => {
+            const getLuminance = (r, g, b) => {
+                const [rs, gs, bs] = [r, g, b].map(c => {
+                    c = c / 255;
+                    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+                });
+                return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+            };
+
+            const getContrastRatio = (l1, l2) => {
+                const lighter = Math.max(l1, l2);
+                const darker = Math.min(l1, l2);
+                return (lighter + 0.05) / (darker + 0.05);
+            };
+
+            const parseColor = (color) => {
+                const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                if (match) {
+                    return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+                }
+                return null;
+            };
+
+            const issues = [];
+            const textElements = document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, a, button, label, li');
+
+            textElements.forEach(el => {
+                const style = getComputedStyle(el);
+                if (style.display === 'none' || style.visibility === 'hidden') return;
+
+                const fgColor = parseColor(style.color);
+                const bgColor = parseColor(style.backgroundColor);
+
+                if (fgColor && bgColor) {
+                    const fgLum = getLuminance(...fgColor);
+                    const bgLum = getLuminance(...bgColor);
+                    const ratio = getContrastRatio(fgLum, bgLum);
+
+                    const fontSize = parseFloat(style.fontSize);
+                    const isBold = parseInt(style.fontWeight) >= 700;
+                    const isLargeText = fontSize >= 24 || (fontSize >= 18.66 && isBold);
+                    const minRatio = isLargeText ? 3 : 4.5;
+
+                    if (ratio < minRatio) {
+                        issues.push({
+                            element: el.tagName.toLowerCase() + (el.id ? '#' + el.id : ''),
+                            text: el.textContent?.substring(0, 30),
+                            ratio: ratio.toFixed(2),
+                            required: minRatio,
+                            fg: style.color,
+                            bg: style.backgroundColor
+                        });
+                    }
+                }
+            });
+
+            return issues;
+        });
+
+        this.results.contrast = results;
+
+        if (results.length === 0) {
+            console.log('   ✅ All text elements meet WCAG AA contrast requirements');
+        } else {
+            console.log(`   ❌ ${results.length} elements have insufficient contrast:`);
+            results.slice(0, 5).forEach(issue => {
+                console.log(`      - ${issue.element}: ratio ${issue.ratio} (need ${issue.required})`);
+            });
+            if (results.length > 5) {
+                console.log(`      ... and ${results.length - 5} more`);
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Run all accessibility tests
+     * @param {Page} page - Puppeteer page to test
+     */
+    async runFullAccessibilityAudit(page) {
+        console.log('\n' + '═'.repeat(70));
+        console.log('♿ FULL ACCESSIBILITY AUDIT');
+        console.log('═'.repeat(70));
+
+        // 1. Element registry checks
+        await this.runAccessibilityChecks(page);
+
+        // 2. Axe-core WCAG audit
+        await this.runAxeAudit(page);
+
+        // 3. Keyboard navigation
+        await this.testKeyboardNavigation(page);
+
+        // 4. Color contrast
+        await this.checkColorContrast(page);
+
+        console.log('\n' + '═'.repeat(70));
     }
 
     printResults() {

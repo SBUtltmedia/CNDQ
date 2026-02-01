@@ -153,11 +153,12 @@ class DualPlayabilityTest {
                 await uiTest.playMarketplace();
                 await uiTest.endGameAndCheckResults();
 
-                // Optional: Run accessibility checks using element registry
+                // Optional: Run full accessibility audit (registry + axe-core + keyboard + contrast)
                 if (this.config.runA11y) {
                     const testPage = await uiTest.browser.loginAndNavigate(this.config.testUsers[0], '');
                     await testPage.waitForFunction(() => window.marketplaceApp?.profile, { timeout: 15000 });
-                    this.a11yResults = await uiTest.runAccessibilityChecks(testPage);
+                    await uiTest.runFullAccessibilityAudit(testPage);
+                    this.a11yResults = uiTest.results.a11y;
                     await testPage.close();
                 }
 
@@ -170,7 +171,10 @@ class DualPlayabilityTest {
                     errors: uiTest.results.errors,
                     warnings: uiTest.results.warnings,
                     apiCallLog: uiTest.apiCallLog,
-                    a11y: uiTest.results.a11y
+                    a11y: uiTest.results.a11y,
+                    axe: uiTest.results.axe,
+                    keyboard: uiTest.results.keyboard,
+                    contrast: uiTest.results.contrast
                 };
 
                 // Wait between tests to let server settle
