@@ -31,6 +31,17 @@ const ELEMENT_REGISTRY = [
     // HEADER / NAVIGATION
     // ============================================================
     {
+        id: 'quick-actions-toolbar',
+        selector: '[role="toolbar"][aria-label="Quick actions"]',
+        type: 'component',
+        interaction: null,
+        a11y: {
+            role: 'toolbar',
+            label: /quick actions/i,
+            focusable: false
+        }
+    },
+    {
         id: 'help-button',
         selector: '#help-btn',
         type: 'button',
@@ -82,6 +93,17 @@ const ELEMENT_REGISTRY = [
         a11y: {
             role: 'button',
             label: /production|formula/i,
+            focusable: true
+        }
+    },
+    {
+        id: 'settings-button',
+        selector: '#settings-btn',
+        type: 'button',
+        interaction: 'click',
+        a11y: {
+            role: 'button',
+            label: /settings/i,
             focusable: true
         }
     },

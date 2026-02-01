@@ -493,7 +493,7 @@
                         <p class="text-xs md:text-sm text-gray-300 mt-1">Team: <span id="team-name" class="text-white font-semibold"></span></p>
                     </div>
 
-                    <div class="flex items-center gap-2 md:gap-4">
+                    <div role="toolbar" aria-label="Quick actions" class="flex items-center gap-2 md:gap-4">
 
                         <!-- Notifications -->
                         <notification-manager id="notification-manager"></notification-manager>
