@@ -80,6 +80,17 @@ try {
             // Use counterpartyName if available, fall back to counterparty ID
             $counterparty = $txn['counterpartyName'] ?? $txn['counterparty'] ?? 'Unknown';
 
+            // Extract heat data if available
+            $heat = $txn['heat'] ?? null;
+            $heatInfo = null;
+            if ($heat) {
+                $heatInfo = [
+                    'total' => $heat['total'] ?? 0,
+                    'isHot' => $heat['isHot'] ?? false,
+                    'yourGain' => $isSeller ? ($heat['sellerGain'] ?? 0) : ($heat['buyerGain'] ?? 0)
+                ];
+            }
+
             $formattedTransactions[] = [
                 'id' => $txn['transactionId'] ?? $txn['id'] ?? uniqid(),
                 'type' => $isSeller ? 'Sale' : 'Purchase',
@@ -89,7 +100,11 @@ try {
                 'totalPrice' => $txn['totalPrice'] ?? $txn['totalAmount'] ?? (($txn['quantity'] ?? 0) * ($txn['pricePerGallon'] ?? 0)),
                 'counterparty' => $counterparty,
                 'timestamp' => $txn['timestamp'] ?? time(),
-                'date' => date('Y-m-d H:i:s', floor($txn['timestamp'] ?? time()))
+                'date' => date('Y-m-d H:i:s', floor($txn['timestamp'] ?? time())),
+                // Expanded data for detailed view
+                'inventoryBefore' => $txn['inventoryBefore'] ?? null,
+                'inventoryAfter' => $txn['inventoryAfter'] ?? null,
+                'heat' => $heatInfo
             ];
         }
 
