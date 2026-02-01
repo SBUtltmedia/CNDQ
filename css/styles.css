@@ -151,6 +151,68 @@ body {
 }
 
 /* ==========================================================================
+   Custom Scrollbars - Theme Aware
+   ========================================================================== */
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 5px;
+    border: 2px solid var(--color-bg-secondary);
+    transition: background-color 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-chemical-n); /* Purple accent on hover */
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: var(--color-brand-primary); /* Green when dragging */
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--color-bg-primary);
+}
+
+/* Firefox scrollbar */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) var(--color-bg-secondary);
+}
+
+/* Smaller scrollbars for overflow containers (tables, modals) */
+.overflow-x-auto,
+.overflow-y-auto,
+.overflow-auto,
+[style*="overflow"] {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) var(--color-bg-tertiary);
+}
+
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-auto::-webkit-scrollbar-track {
+    background: var(--color-bg-tertiary);
+}
+
+/* ==========================================================================
    Typography
    ========================================================================== */
 

@@ -220,3 +220,14 @@ body {
 .border-color {
     border-color: var(--border);
 }
+
+/* ==========================================================================
+   Chemical-themed Scrollbar Variants
+   (Main scrollbar styles are in styles.css with theme-aware variables)
+   ========================================================================== */
+
+/* Optional: Add these classes to containers for chemical-colored scroll accents */
+.scroll-chem-c::-webkit-scrollbar-thumb:hover { background: var(--chem-c, #3b82f6) !important; }
+.scroll-chem-n::-webkit-scrollbar-thumb:hover { background: var(--chem-n, #a855f7) !important; }
+.scroll-chem-d::-webkit-scrollbar-thumb:hover { background: var(--chem-d, #f59e0b) !important; }
+.scroll-chem-q::-webkit-scrollbar-thumb:hover { background: var(--chem-q, #ef4444) !important; }
