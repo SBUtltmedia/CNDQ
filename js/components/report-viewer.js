@@ -137,85 +137,80 @@ class ReportViewer extends LitElement {
                 text-align: right;
             }
 
-            /* Expandable Transaction Rows */
-            .txn-row {
-                cursor: pointer;
-                transition: background-color 0.15s;
-            }
-            .txn-row:hover {
+            /* Complexity Radio Bank */
+            .complexity-selector {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
                 background-color: var(--color-bg-tertiary);
+                padding: 0.25rem;
+                border-radius: 0.5rem;
+                margin-right: auto;
             }
-            .txn-row.expanded {
-                background-color: var(--color-bg-tertiary);
-                border-bottom: none;
-            }
-            .txn-row td:first-child {
-                position: relative;
-                padding-left: 2rem;
-            }
-            .expand-icon {
-                position: absolute;
-                left: 0.5rem;
-                top: 50%;
-                transform: translateY(-50%);
-                font-size: 0.75rem;
-                color: var(--color-text-tertiary);
-                transition: transform 0.2s;
-            }
-            .txn-row.expanded .expand-icon {
-                transform: translateY(-50%) rotate(90deg);
-            }
-
-            /* Detail Row */
-            .txn-detail-row {
-                background-color: var(--color-bg-primary);
-                border-bottom: 2px solid var(--color-border);
-            }
-            .txn-detail-row td {
-                padding: 0;
-            }
-            .txn-detail-content {
-                padding: 1rem 1.5rem;
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1rem;
-                font-size: 0.813rem;
-            }
-            .detail-card {
-                background-color: var(--color-bg-secondary);
-                padding: 0.75rem 1rem;
+            .complexity-selector label {
+                display: flex;
+                align-items: center;
+                gap: 0.375rem;
+                padding: 0.5rem 0.75rem;
                 border-radius: 0.375rem;
-                border-left: 3px solid var(--color-border);
-            }
-            .detail-card.inventory {
-                border-left-color: var(--color-info);
-            }
-            .detail-card.heat {
-                border-left-color: var(--color-warning);
-            }
-            .detail-card.heat.hot {
-                border-left-color: var(--color-error);
-            }
-            .detail-card.heat.good {
-                border-left-color: var(--color-success);
-            }
-            .detail-label {
-                font-size: 0.75rem;
+                cursor: pointer;
+                font-size: 0.813rem;
+                font-weight: 500;
                 color: var(--color-text-tertiary);
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                margin-bottom: 0.25rem;
+                transition: all 0.15s;
             }
-            .detail-value {
-                font-weight: 600;
-                color: var(--color-text-primary);
+            .complexity-selector label:hover {
+                color: var(--color-text-secondary);
+                background-color: var(--color-bg-secondary);
             }
-            .detail-change {
-                font-size: 0.75rem;
+            .complexity-selector input[type="radio"] {
+                display: none;
+            }
+            .complexity-selector input[type="radio"]:checked + label {
+                background-color: var(--color-brand-primary);
+                color: white;
+            }
+            .complexity-hint {
+                font-size: 0.7rem;
+                color: var(--color-text-tertiary);
                 margin-left: 0.5rem;
             }
-            .detail-change.positive { color: var(--color-success); }
-            .detail-change.negative { color: var(--color-error); }
+
+            /* Scrollable Table Container */
+            .table-scroll-container {
+                overflow-x: auto;
+                margin-top: 1rem;
+                border: 1px solid var(--color-border);
+                border-radius: 0.375rem;
+            }
+            .table-scroll-container .report-table {
+                margin-top: 0;
+                border: none;
+                min-width: max-content;
+            }
+
+            /* Heat indicator styles */
+            .heat-indicator {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.25rem;
+                padding: 0.125rem 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+            .heat-indicator.hot {
+                background-color: rgba(239, 68, 68, 0.2);
+                color: var(--color-error);
+            }
+            .heat-indicator.good {
+                background-color: rgba(16, 185, 129, 0.2);
+                color: var(--color-success);
+            }
+            .heat-indicator.fair {
+                background-color: rgba(107, 114, 128, 0.2);
+                color: var(--color-text-tertiary);
+            }
 
             /* Financial Cards */
             .financial-grid {
@@ -270,7 +265,7 @@ class ReportViewer extends LitElement {
         data: { type: Object },
         embedded: { type: Boolean },
         hideTabs: { type: Boolean, attribute: 'hide-tabs' },
-        expandedRows: { type: Object, state: true }
+        txnComplexity: { type: String, state: true }
     };
 
     constructor() {
@@ -281,7 +276,7 @@ class ReportViewer extends LitElement {
         this.data = null;
         this.embedded = false;
         this.hideTabs = false;
-        this.expandedRows = new Set();
+        this.txnComplexity = 'simple'; // simple | detailed | full
     }
 
     updated(changedProperties) {
@@ -456,139 +451,145 @@ class ReportViewer extends LitElement {
         return this.renderTeamSheet();
     }
 
-    toggleRowExpanded(txnId) {
-        const newSet = new Set(this.expandedRows);
-        if (newSet.has(txnId)) {
-            newSet.delete(txnId);
-        } else {
-            newSet.add(txnId);
-        }
-        this.expandedRows = newSet;
+    setTxnComplexity(level) {
+        this.txnComplexity = level;
     }
 
-    renderTransactionDetail(t) {
-        const hasInventory = t.inventoryBefore !== null && t.inventoryAfter !== null;
-        const hasHeat = t.heat && typeof t.heat.yourGain === 'number';
-
-        const invChange = hasInventory ? (t.inventoryAfter - t.inventoryBefore) : 0;
-        const changeClass = invChange > 0 ? 'positive' : invChange < 0 ? 'negative' : '';
-
-        // Determine heat quality
-        let heatClass = '';
-        if (hasHeat) {
-            if (t.heat.isHot) heatClass = 'hot';
-            else if (t.heat.yourGain > 0) heatClass = 'good';
-        }
-
-        return html`
-            <tr class="txn-detail-row">
-                <td colspan="7">
-                    <div class="txn-detail-content">
-                        ${hasInventory ? html`
-                            <div class="detail-card inventory">
-                                <div class="detail-label">Your ${t.chemical} Inventory</div>
-                                <div class="detail-value">
-                                    ${t.inventoryBefore?.toFixed(1)} → ${t.inventoryAfter?.toFixed(1)} gal
-                                    <span class="detail-change ${changeClass}">
-                                        (${invChange > 0 ? '+' : ''}${invChange.toFixed(1)})
-                                    </span>
-                                </div>
-                            </div>
-                        ` : html`
-                            <div class="detail-card">
-                                <div class="detail-label">Inventory Data</div>
-                                <div class="detail-value text-tertiary">Not recorded</div>
-                            </div>
-                        `}
-
-                        ${hasHeat ? html`
-                            <div class="detail-card heat ${heatClass}">
-                                <div class="detail-label">Trade Heat</div>
-                                <div class="detail-value">
-                                    ${t.heat.isHot ? '🔥 Hot Trade!' : t.heat.yourGain > 0 ? '✓ Good Deal' : 'Fair Trade'}
-                                    <span class="detail-change ${t.heat.yourGain >= 0 ? 'positive' : 'negative'}">
-                                        ${t.heat.yourGain >= 0 ? '+' : ''}$${t.heat.yourGain.toFixed(2)}
-                                    </span>
-                                </div>
-                            </div>
-                        ` : ''}
-
-                        <div class="detail-card">
-                            <div class="detail-label">Transaction ID</div>
-                            <div class="detail-value" style="font-family: monospace; font-size: 0.75rem;">
-                                ${t.id}
-                            </div>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        `;
+    getHeatIndicator(t) {
+        if (!t.heat || typeof t.heat.yourGain !== 'number') return '';
+        const heatClass = t.heat.isHot ? 'hot' : t.heat.yourGain > 0 ? 'good' : 'fair';
+        const label = t.heat.isHot ? '🔥 Hot' : t.heat.yourGain > 0 ? '✓ Good' : '— Fair';
+        return html`<span class="heat-indicator ${heatClass}">${label}</span>`;
     }
 
     renderTransactions() {
         if (!this.data?.transactions) return html`<div>No transactions found</div>`;
 
         const txns = this.data.transactions;
+        const complexity = this.txnComplexity;
+
+        // Define columns for each complexity level
+        const columns = {
+            simple: ['Date', 'Type', 'Chem', 'Qty', 'Price', 'Total', 'Counterparty'],
+            detailed: ['Date', 'Type', 'Chem', 'Qty', 'Price', 'Total', 'Counterparty', 'Inv Before', 'Inv After', 'Change'],
+            full: ['Date', 'Type', 'Chem', 'Qty', 'Price', 'Total', 'Counterparty', 'Inv Before', 'Inv After', 'Change', 'Heat', 'Your Gain', 'Txn ID']
+        };
+
+        const currentColumns = columns[complexity] || columns.simple;
+        const colCount = currentColumns.length;
 
         const downloadTransactions = () => {
-            this.downloadCSV('transaction_history.csv',
-                ['ID', 'Date', 'Type', 'Chemical', 'Quantity', 'Price/Gal', 'Total', 'Counterparty', 'Inv Before', 'Inv After'],
-                txns.map(t => [t.id, t.date, t.type, t.chemical, t.quantity, t.pricePerGallon, t.totalPrice, t.counterparty, t.inventoryBefore ?? '', t.inventoryAfter ?? ''])
-            );
+            // CSV always exports based on current complexity
+            const headers = currentColumns;
+            const rows = txns.map(t => {
+                const invChange = (t.inventoryBefore !== null && t.inventoryAfter !== null)
+                    ? (t.inventoryAfter - t.inventoryBefore) : '';
+                const heatLabel = t.heat ? (t.heat.isHot ? 'Hot' : t.heat.yourGain > 0 ? 'Good' : 'Fair') : '';
+                const yourGain = t.heat?.yourGain ?? '';
+
+                const row = [t.date, t.type, t.chemical, t.quantity, t.pricePerGallon, t.totalPrice, t.counterparty];
+                if (complexity === 'detailed' || complexity === 'full') {
+                    row.push(t.inventoryBefore ?? '', t.inventoryAfter ?? '', invChange);
+                }
+                if (complexity === 'full') {
+                    row.push(heatLabel, yourGain, t.id);
+                }
+                return row;
+            });
+            this.downloadCSV(`transaction_history_${complexity}.csv`, headers, rows);
         };
 
         return html`
             <div class="action-bar">
+                <div class="complexity-selector">
+                    <input type="radio" id="txn-simple" name="txn-complexity" value="simple"
+                        ?checked=${complexity === 'simple'}
+                        @change=${() => this.setTxnComplexity('simple')}>
+                    <label for="txn-simple">Simple</label>
+
+                    <input type="radio" id="txn-detailed" name="txn-complexity" value="detailed"
+                        ?checked=${complexity === 'detailed'}
+                        @change=${() => this.setTxnComplexity('detailed')}>
+                    <label for="txn-detailed">Detailed</label>
+
+                    <input type="radio" id="txn-full" name="txn-complexity" value="full"
+                        ?checked=${complexity === 'full'}
+                        @change=${() => this.setTxnComplexity('full')}>
+                    <label for="txn-full">Full</label>
+                </div>
+                ${complexity !== 'simple' ? html`<span class="complexity-hint">← Scroll table for more columns</span>` : ''}
                 <button class="btn btn-secondary" @click=${downloadTransactions}>Download CSV</button>
-                <span style="margin-left: 1rem; font-size: 0.75rem; color: var(--color-text-tertiary);">
-                    Click any row for details
-                </span>
             </div>
 
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Chem</th>
-                        <th class="num">Qty</th>
-                        <th class="num">Price</th>
-                        <th class="num">Total</th>
-                        <th>Counterparty</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${txns.map(t => {
-                        const isExpanded = this.expandedRows.has(t.id);
-                        return html`
-                            <tr class="txn-row ${isExpanded ? 'expanded' : ''}"
-                                @click=${() => this.toggleRowExpanded(t.id)}
-                                title="Click to ${isExpanded ? 'collapse' : 'expand'} details">
-                                <td>
-                                    <span class="expand-icon">▶</span>
-                                    ${t.date}
-                                </td>
-                                <td>
-                                    <span class="px-2 py-1 rounded text-xs font-bold ${t.type === 'Sale' ? 'bg-green-600' : 'bg-red-600'} text-white">
-                                        ${t.type.toUpperCase()}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="font-bold" style="color: var(--color-chemical-${t.chemical.toLowerCase()})">
-                                        ${t.chemical}
-                                    </span>
-                                </td>
-                                <td class="num">${t.quantity}</td>
-                                <td class="num">$${t.pricePerGallon.toFixed(2)}</td>
-                                <td class="num">$${t.totalPrice.toFixed(2)}</td>
-                                <td>${t.counterparty}</td>
-                            </tr>
-                            ${isExpanded ? this.renderTransactionDetail(t) : ''}
-                        `;
-                    })}
-                    ${txns.length === 0 ? html`<tr><td colspan="7" class="text-center p-4">No transactions yet</td></tr>` : ''}
-                </tbody>
-            </table>
+            <div class="table-scroll-container">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Chem</th>
+                            <th class="num">Qty</th>
+                            <th class="num">Price</th>
+                            <th class="num">Total</th>
+                            <th>Counterparty</th>
+                            ${complexity === 'detailed' || complexity === 'full' ? html`
+                                <th class="num">Inv Before</th>
+                                <th class="num">Inv After</th>
+                                <th class="num">Change</th>
+                            ` : ''}
+                            ${complexity === 'full' ? html`
+                                <th>Heat</th>
+                                <th class="num">Your Gain</th>
+                                <th>Txn ID</th>
+                            ` : ''}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txns.map(t => {
+                            const invChange = (t.inventoryBefore !== null && t.inventoryAfter !== null)
+                                ? (t.inventoryAfter - t.inventoryBefore) : null;
+                            const changeClass = invChange !== null ? (invChange > 0 ? 'color: var(--color-success)' : invChange < 0 ? 'color: var(--color-error)' : '') : '';
+
+                            return html`
+                                <tr>
+                                    <td>${t.date}</td>
+                                    <td>
+                                        <span class="px-2 py-1 rounded text-xs font-bold ${t.type === 'Sale' ? 'bg-green-600' : 'bg-red-600'} text-white">
+                                            ${t.type.toUpperCase()}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="font-bold" style="color: var(--color-chemical-${t.chemical.toLowerCase()})">
+                                            ${t.chemical}
+                                        </span>
+                                    </td>
+                                    <td class="num">${t.quantity}</td>
+                                    <td class="num">$${t.pricePerGallon.toFixed(2)}</td>
+                                    <td class="num">$${t.totalPrice.toFixed(2)}</td>
+                                    <td>${t.counterparty}</td>
+                                    ${complexity === 'detailed' || complexity === 'full' ? html`
+                                        <td class="num">${t.inventoryBefore?.toFixed(1) ?? '—'}</td>
+                                        <td class="num">${t.inventoryAfter?.toFixed(1) ?? '—'}</td>
+                                        <td class="num" style="${changeClass}">
+                                            ${invChange !== null ? `${invChange > 0 ? '+' : ''}${invChange.toFixed(1)}` : '—'}
+                                        </td>
+                                    ` : ''}
+                                    ${complexity === 'full' ? html`
+                                        <td>${this.getHeatIndicator(t)}</td>
+                                        <td class="num" style="${t.heat?.yourGain >= 0 ? 'color: var(--color-success)' : 'color: var(--color-error)'}">
+                                            ${t.heat?.yourGain !== undefined ? `${t.heat.yourGain >= 0 ? '+' : ''}$${t.heat.yourGain.toFixed(2)}` : '—'}
+                                        </td>
+                                        <td style="font-family: monospace; font-size: 0.7rem; max-width: 100px; overflow: hidden; text-overflow: ellipsis;">
+                                            ${t.id}
+                                        </td>
+                                    ` : ''}
+                                </tr>
+                            `;
+                        })}
+                        ${txns.length === 0 ? html`<tr><td colspan="${colCount}" class="text-center p-4">No transactions yet</td></tr>` : ''}
+                    </tbody>
+                </table>
+            </div>
         `;
     }
 
