@@ -105,7 +105,7 @@
             <p class="text-2xl md:text-3xl text-gray-300 font-light mb-8">Trading is currently suspended.</p>
             <div class="w-24 h-1 bg-red-600 mx-auto mb-8"></div>
             <p class="text-gray-400 mb-8">The session has ended or is paused.</p>
-            <button id="restart-game-btn-closed" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg flex items-center gap-2 mx-auto">
+            <button id="restart-game-btn-closed" style="display:none" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg flex items-center gap-2 mx-auto">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 Restart Simulation
             </button>
@@ -118,7 +118,7 @@
         <!-- Header -->
         <header class="bg-gray-800 border-b-2 border-purple-500 p-6 flex items-center justify-between shadow-2xl">
             <h2 class="text-4xl font-black text-purple-500 tracking-tighter uppercase">Simulation Complete</h2>
-            <button id="restart-game-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg flex items-center gap-2">
+            <button id="restart-game-btn" style="display:none" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 Restart Simulation
             </button>

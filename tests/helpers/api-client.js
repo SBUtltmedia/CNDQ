@@ -275,6 +275,14 @@ class ApiClient {
     }
 
     // ===================
+    // REPORTS ENDPOINTS
+    // ===================
+
+    async getReports(type = 'all') {
+        return this.get(`reports/index.php?type=${type}`);
+    }
+
+    // ===================
     // UTILITIES
     // ===================
 

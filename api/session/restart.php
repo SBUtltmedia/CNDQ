@@ -18,17 +18,27 @@ try {
     $sessionManager = new SessionManager();
     $state = $sessionManager->getState();
 
-    // Safety: Allow restart if game is finished OR if game is stopped (market closed)
+    // Safety: Allow restart only when autoAdvance (24/7 mode) is enabled
     // This allows unattended operation where users can restart themselves
     require_once __DIR__ . '/../../userData.php';
+    $isAutoAdvance = $state['autoAdvance'] ?? false;
     $isGameFinished = $state['gameFinished'] ?? false;
     $isGameStopped = $state['gameStopped'] ?? true;
 
-    // Allow restart if: admin, game finished, OR game is stopped (market closed)
-    if (!$isGameFinished && !$isGameStopped && !isAdmin()) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Game is still in progress. Wait for market to close or contact admin.']);
-        exit;
+    // Non-admins can only restart when:
+    // 1. autoAdvance (24/7 mode) is enabled, AND
+    // 2. Game is finished OR game is stopped (market closed)
+    if (!isAdmin()) {
+        if (!$isAutoAdvance) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Restart not available. Admin must enable Auto-Cycle (24/7 Mode) first.']);
+            exit;
+        }
+        if (!$isGameFinished && !$isGameStopped) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Game is still in progress. Wait for market to close.']);
+            exit;
+        }
     }
 
     $sessionManager->restartGame();

@@ -42,9 +42,11 @@ try {
 
         foreach ($transactions as $txn) {
             $amount = $txn['totalPrice'] ?? $txn['totalAmount'] ?? (($txn['quantity'] ?? 0) * ($txn['pricePerGallon'] ?? 0));
-            if (($txn['sellerId'] ?? '') === $currentUserEmail) {
+            // TradeExecutor stores 'role' (buyer/seller) not sellerId/buyerId
+            $role = $txn['role'] ?? null;
+            if ($role === 'seller') {
                 $salesRevenue += $amount;
-            } elseif (($txn['buyerId'] ?? '') === $currentUserEmail) {
+            } elseif ($role === 'buyer') {
                 $purchaseCosts += $amount;
             }
         }
@@ -71,14 +73,13 @@ try {
         });
 
         foreach ($rawTransactions as $txn) {
-            $isSeller = ($txn['sellerId'] ?? '') === $currentUserEmail;
-            
-            // Determine counterparty name (might be just ID if name not stored in txn)
-            // Ideally we'd look up the name, but for now ID is safer than nothing.
-            // Some txns store team names.
-            $counterparty = $isSeller ? ($txn['buyerId'] ?? 'Unknown') : ($txn['sellerId'] ?? 'Unknown');
-            // Try to use helper if available or simple check
-            
+            // TradeExecutor stores 'role' (buyer/seller) and 'counterparty'/'counterpartyName'
+            $role = $txn['role'] ?? null;
+            $isSeller = ($role === 'seller');
+
+            // Use counterpartyName if available, fall back to counterparty ID
+            $counterparty = $txn['counterpartyName'] ?? $txn['counterparty'] ?? 'Unknown';
+
             $formattedTransactions[] = [
                 'id' => $txn['transactionId'] ?? $txn['id'] ?? uniqid(),
                 'type' => $isSeller ? 'Sale' : 'Purchase',
@@ -111,15 +112,18 @@ try {
         ];
 
         // 2. Adjustable Cells (Decision Variables)
+        // Deicer profit: $2/gal, Solvent profit: $3/gal (from LPSolver coefficients)
         $variables = [
             [
                 'name' => 'Gallons Deicer',
-                'finalValue' => $result['deicer'],
+                'finalValue' => round($result['deicer'], 2),
+                'objectiveCoef' => 2, // $2 profit per gallon
                 'type' => 'Decision Variable'
             ],
             [
                 'name' => 'Gallons Solvent',
-                'finalValue' => $result['solvent'],
+                'finalValue' => round($result['solvent'], 2),
+                'objectiveCoef' => 3, // $3 profit per gallon
                 'type' => 'Decision Variable'
             ]
         ];
@@ -130,7 +134,7 @@ try {
             $slack = $data['slack'] ?? 0;
             $available = $inventory[$chem] ?? 0;
             $used = $available - $slack; // Value = RHS - Slack (for <= constraint)
-            
+
             // Determine binding status explicitly if missing
             $status = $data['status'] ?? ($slack < 0.001 ? 'Binding' : 'Not Binding');
 
@@ -139,7 +143,9 @@ try {
                 'cellValue' => round($used, 2), // The "Value" in Excel
                 'formula' => "Used <= Available", // Descriptive formula
                 'status' => $status,
-                'slack' => round($slack, 2)
+                'slack' => round($slack, 2),
+                'used' => round($used, 2),
+                'available' => round($available, 2)
             ];
         }
 
@@ -153,7 +159,7 @@ try {
         // Mimics Excel "Sensitivity Report"
         // We currently only calculate sensitivity for Constraints (Shadow Prices), not Variables (Reduced Cost)
         
-        $sensitivityConstraints = [];
+        $shadowPrices = [];
 
         foreach ($result['shadowPrices'] as $chem => $price) {
             $allowableIncrease = $result['ranges'][$chem]['allowableIncrease'] ?? 'INF';
@@ -170,19 +176,21 @@ try {
                 $allowableDecrease = '1E+30';
             }
 
-            $sensitivityConstraints[] = [
+            $shadowPrices[] = [
+                'chemical' => $chem,  // UI expects 'chemical' not 'name'
                 'name' => "Liquid $chem",
                 'finalValue' => round($used, 2),
                 'shadowPrice' => $price, // The core value
-                'constraintRHS' => $available, // Right Hand Side = Available Inventory
+                'currentInventory' => round($available, 2), // UI expects 'currentInventory'
+                'constraintRHS' => $available, // Keep for backward compat
                 'allowableIncrease' => $allowableIncrease,
                 'allowableDecrease' => $allowableDecrease
             ];
         }
 
         $sensitivityReport = [
-            'constraints' => $sensitivityConstraints
-            // 'adjustableCells' => [] // We omit this as we don't calc Reduced Costs yet
+            'shadowPrices' => $shadowPrices,  // UI expects 'shadowPrices' not 'constraints'
+            'constraints' => $shadowPrices    // Keep for backward compat
         ];
 
         $response['optimization'] = [

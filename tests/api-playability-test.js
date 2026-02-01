@@ -477,7 +477,176 @@ class APIPlayabilityTest {
             this.results.warnings.push(`Inventory conservation check failed: ${e.message}`);
         }
 
+        // 5. Reports Validation (verify Excel-style reports are populated)
+        await this.validateReports();
+
         await adminPage.close();
+    }
+
+    /**
+     * Validate that reports API returns properly populated data
+     * This verifies the Excel-style reports (Financial Summary, Transaction History,
+     * Answer Report, Sensitivity Report) are correctly generated from game data.
+     */
+    async validateReports() {
+        console.log('\n   📋 Validating Reports Data (Excel-style reports)...');
+
+        // Use first test user to fetch their reports
+        const testUser = this.config.testUsers[0];
+        const userPage = await this.browser.loginAndNavigate(testUser, '');
+        const api = new ApiClient(userPage, this.config.baseUrl);
+
+        try {
+            const reportsResponse = await api.getReports('all');
+            this.logApiCall('GET', '/api/reports/index', { type: 'all' }, reportsResponse);
+
+            if (!reportsResponse.ok || !reportsResponse.data.success) {
+                this.results.errors.push({
+                    user: 'system',
+                    error: `Reports API failed: ${reportsResponse.data?.error || 'Unknown error'}`
+                });
+                this.results.reportsValidation = { passed: false, reason: 'API failed' };
+                return;
+            }
+
+            const data = reportsResponse.data;
+            const failures = [];
+            const warnings = [];
+
+            // 1. Validate Financial Summary structure
+            if (!data.financials) {
+                failures.push('Missing financials section');
+            } else {
+                const f = data.financials;
+                if (typeof f.productionRevenue !== 'number') failures.push('financials.productionRevenue missing or invalid');
+                if (typeof f.salesRevenue !== 'number') failures.push('financials.salesRevenue missing or invalid');
+                if (typeof f.purchaseCosts !== 'number') failures.push('financials.purchaseCosts missing or invalid');
+                if (typeof f.totalProfit !== 'number') failures.push('financials.totalProfit missing or invalid');
+
+                // Warn if all zeros (might indicate no game activity recorded)
+                if (f.productionRevenue === 0 && f.salesRevenue === 0 && f.purchaseCosts === 0) {
+                    warnings.push('All financial values are zero - game activity may not be recorded');
+                }
+            }
+
+            // 2. Validate Transaction History
+            if (!data.transactions) {
+                failures.push('Missing transactions section');
+            } else if (!Array.isArray(data.transactions)) {
+                failures.push('transactions is not an array');
+            } else {
+                // Check structure of first transaction if any exist
+                if (data.transactions.length > 0) {
+                    const txn = data.transactions[0];
+                    const requiredFields = ['id', 'type', 'chemical', 'quantity', 'pricePerGallon', 'counterparty'];
+                    requiredFields.forEach(field => {
+                        if (!(field in txn)) failures.push(`Transaction missing required field: ${field}`);
+                    });
+
+                    // Validate type is 'Sale' or 'Purchase'
+                    if (txn.type && !['Sale', 'Purchase'].includes(txn.type)) {
+                        failures.push(`Invalid transaction type: ${txn.type}`);
+                    }
+                }
+            }
+
+            // 3. Validate Optimization/Answer Report
+            if (!data.optimization) {
+                failures.push('Missing optimization section');
+            } else {
+                const opt = data.optimization;
+
+                // Answer Report
+                if (!opt.answerReport) {
+                    failures.push('Missing answerReport');
+                } else {
+                    const ar = opt.answerReport;
+                    if (!ar.objective || typeof ar.objective.finalValue !== 'number') {
+                        failures.push('answerReport.objective missing or invalid');
+                    }
+                    if (!Array.isArray(ar.variables) || ar.variables.length !== 2) {
+                        failures.push('answerReport.variables should have 2 items (Deicer, Solvent)');
+                    }
+                    if (!Array.isArray(ar.constraints) || ar.constraints.length !== 4) {
+                        failures.push('answerReport.constraints should have 4 items (C, N, D, Q)');
+                    } else {
+                        // Validate constraint structure
+                        ar.constraints.forEach((c, i) => {
+                            if (!c.name) failures.push(`Constraint ${i} missing name`);
+                            if (!['Binding', 'Not Binding'].includes(c.status)) {
+                                failures.push(`Constraint ${i} has invalid status: ${c.status}`);
+                            }
+                        });
+                    }
+                }
+
+                // Sensitivity Report (Shadow Prices)
+                if (!opt.sensitivityReport) {
+                    failures.push('Missing sensitivityReport');
+                } else {
+                    const sr = opt.sensitivityReport;
+                    if (!Array.isArray(sr.shadowPrices) || sr.shadowPrices.length !== 4) {
+                        failures.push('sensitivityReport.shadowPrices should have 4 items (C, N, D, Q)');
+                    } else {
+                        // Validate all chemicals present
+                        const chemicals = sr.shadowPrices.map(s => s.chemical);
+                        ['C', 'N', 'D', 'Q'].forEach(chem => {
+                            if (!chemicals.includes(chem)) {
+                                failures.push(`Missing shadow price for chemical ${chem}`);
+                            }
+                        });
+
+                        // Validate shadow price structure
+                        sr.shadowPrices.forEach((s, i) => {
+                            if (typeof s.shadowPrice !== 'number') {
+                                failures.push(`Shadow price ${i} missing numeric shadowPrice`);
+                            }
+                            if (typeof s.currentInventory !== 'number') {
+                                failures.push(`Shadow price ${i} missing numeric currentInventory`);
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Report results
+            const passed = failures.length === 0;
+            this.results.reportsValidation = {
+                passed,
+                failures,
+                warnings,
+                transactionCount: data.transactions?.length || 0,
+                hasFinancials: !!data.financials,
+                hasOptimization: !!data.optimization
+            };
+
+            if (passed) {
+                console.log('   ✅ Reports validation PASSED');
+                console.log(`      • Financials: Production=$${data.financials?.productionRevenue?.toFixed(2) || 0}, Sales=$${data.financials?.salesRevenue?.toFixed(2) || 0}, Purchases=$${data.financials?.purchaseCosts?.toFixed(2) || 0}`);
+                console.log(`      • Transactions: ${data.transactions?.length || 0} recorded`);
+                console.log(`      • Optimization: Answer Report ✓, Sensitivity Report ✓`);
+            } else {
+                console.log('   ❌ Reports validation FAILED');
+                failures.forEach(f => {
+                    console.log(`      • ${f}`);
+                    this.results.errors.push({ user: 'system', error: `Reports: ${f}` });
+                });
+            }
+
+            if (warnings.length > 0) {
+                warnings.forEach(w => {
+                    console.log(`      ⚠️  ${w}`);
+                    this.results.warnings.push(`Reports: ${w}`);
+                });
+            }
+
+        } catch (error) {
+            console.log(`   ❌ Reports validation error: ${error.message}`);
+            this.results.errors.push({ user: 'system', error: `Reports validation failed: ${error.message}` });
+            this.results.reportsValidation = { passed: false, reason: error.message };
+        } finally {
+            await userPage.close();
+        }
     }
 
     /**
@@ -517,6 +686,19 @@ class APIPlayabilityTest {
             console.log(`   Final Total:   ${this.finalInventory.total.toFixed(2)} gal`);
             console.log(`   Difference:    ${diff.toFixed(4)} gal`);
             console.log(`   Status:        ${passed ? '✅ PASSED' : '❌ FAILED'}`);
+        }
+
+        // Reports validation summary
+        if (this.results.reportsValidation) {
+            console.log('\n📋 REPORTS VALIDATION (Excel-style):');
+            const rv = this.results.reportsValidation;
+            console.log(`   Status:        ${rv.passed ? '✅ PASSED' : '❌ FAILED'}`);
+            if (rv.transactionCount !== undefined) {
+                console.log(`   Transactions:  ${rv.transactionCount} recorded`);
+            }
+            if (rv.failures && rv.failures.length > 0) {
+                console.log(`   Failures:      ${rv.failures.length}`);
+            }
         }
 
         // API endpoint summary

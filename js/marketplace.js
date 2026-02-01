@@ -58,6 +58,7 @@ class MarketplaceApp {
         this.gameStopped = true;
         this.wasGameStopped = false; // Track previous game stopped state for reload trigger
         this.gameFinished = false;
+        this.autoAdvance = false; // Track if 24/7 mode is enabled (controls restart button visibility)
 
         // Modal state
         this.currentModal = null;
@@ -2339,6 +2340,11 @@ class MarketplaceApp {
 
             this.gameStopped = data.gameStopped;
             this.lastServerTimeRemaining = data.timeRemaining;
+            this.autoAdvance = data.autoAdvance ?? false;
+
+            // Show/hide restart buttons based on autoAdvance (24/7 mode)
+            // Non-admins can only restart when admin has enabled Auto-Cycle mode
+            this.updateRestartButtonVisibility();
 
             // Check for game finished state (End Screen)
             const gameOverOverlay = document.getElementById('game-over-overlay');
@@ -2816,6 +2822,26 @@ class MarketplaceApp {
         } catch (error) {
             console.error('Failed to load final history:', error);
             container.innerHTML = '<p class="text-red-400 text-center">Failed to load activity history</p>';
+        }
+    }
+
+    /**
+     * Update visibility of restart buttons based on autoAdvance (24/7 mode)
+     * Users can only restart when admin has enabled Auto-Cycle mode
+     * (Admins can use the admin panel to restart regardless)
+     */
+    updateRestartButtonVisibility() {
+        const restartBtn = document.getElementById('restart-game-btn');
+        const restartBtnClosed = document.getElementById('restart-game-btn-closed');
+
+        // Show buttons only if autoAdvance (24/7 mode) is enabled
+        const shouldShow = this.autoAdvance;
+
+        if (restartBtn) {
+            restartBtn.style.display = shouldShow ? '' : 'none';
+        }
+        if (restartBtnClosed) {
+            restartBtnClosed.style.display = shouldShow ? '' : 'none';
         }
     }
 
