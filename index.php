@@ -221,11 +221,11 @@
     </div>
 
     <!-- Trading Tutorial Modal -->
-    <div id="tutorial-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[120] p-4">
+    <div id="tutorial-modal" role="dialog" aria-modal="true" aria-labelledby="tutorial-heading" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[120] p-4">
         <div class="bg-gray-800 rounded-2xl w-full max-w-2xl border-2 border-purple-500 shadow-2xl overflow-hidden">
             <!-- Header -->
             <div class="bg-purple-900 p-4 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <h2 id="tutorial-heading" class="text-xl font-bold text-white flex items-center gap-2">
                     <span class="text-2xl">📊</span> Trading Strategy Guide
                 </h2>
                 <div class="flex items-center gap-2 text-sm text-purple-300">
@@ -260,7 +260,7 @@
     </div>
 
     <!-- Confirmation Dialog -->
-    <div id="confirm-dialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-4">
+    <div id="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-4">
         <div class="bg-gray-800 rounded-lg p-4 md:p-6 max-w-md w-full border border-gray-700 shadow-xl">
             <h3 class="text-xl font-bold mb-4 text-white" id="confirm-title">Confirm Action</h3>
             <p class="text-gray-300 mb-6" id="confirm-message"></p>
@@ -568,7 +568,7 @@
             <div class="bg-gray-800 border-l-4 border-purple-500 p-4 mb-6 rounded shadow-lg flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div id="phase-badge" class="bg-green-900/30 px-3 py-1 rounded border border-green-500/50">
-                        <span id="current-phase" class="text-xs text-green-400 uppercase font-bold">TRADING</span>
+                        <span id="current-phase" role="status" aria-live="polite" class="text-xs text-green-400 uppercase font-bold">TRADING</span>
                     </div>
                     <div id="improvement-badge" class="hidden bg-blue-900/30 px-3 py-1 rounded border border-blue-500/50">
                         <span class="text-xs text-blue-400 uppercase font-bold">Growth</span>
@@ -578,7 +578,7 @@
                 
                 <div class="flex items-center gap-3">
                     <span class="text-gray-400 text-xs uppercase font-bold">Time Remaining</span>
-                    <div class="bg-gray-900 px-4 py-2 rounded font-mono text-xl text-yellow-400 border border-gray-700 w-fit min-w-[6rem] text-center" id="session-timer">
+                    <div class="bg-gray-900 px-4 py-2 rounded font-mono text-xl text-yellow-400 border border-gray-700 w-fit min-w-[6rem] text-center" id="session-timer" role="timer" aria-label="Session time remaining">
                         00:00
                     </div>
                 </div>
@@ -744,7 +744,7 @@
                     <input type="range" id="respond-quantity-slider" min="0" max="1000" step="10" value="100" class="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-green-500">
                     <div class="flex items-center gap-2 mt-2">
                         <button type="button" id="respond-qty-minus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition">−</button>
-                        <input type="number" id="respond-quantity" min="1" step="10" value="100" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white text-lg text-center font-bold">
+                        <input type="number" id="respond-quantity" min="1" step="10" value="100" aria-label="Quantity to sell in gallons" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white text-lg text-center font-bold">
                         <button type="button" id="respond-qty-plus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition">+</button>
                     </div>
                     <p id="respond-sensitivity-warning" class="hidden text-[10px] text-yellow-500 mt-1">⚠️ This quantity exceeds the stable range. Shadow price may change.</p>
