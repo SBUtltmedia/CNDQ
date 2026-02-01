@@ -45,6 +45,37 @@ class APIPlayabilityTest {
             errors: [],
             warnings: []
         };
+        // Inventory conservation tracking
+        this.initialInventory = null;
+        this.finalInventory = null;
+    }
+
+    /**
+     * Calculate total inventory across all teams
+     * Returns { C, N, D, Q, total } sums
+     */
+    sumInventory(teams) {
+        const totals = { C: 0, N: 0, D: 0, Q: 0 };
+        for (const team of teams) {
+            const inv = team.inventory || {};
+            totals.C += inv.C || 0;
+            totals.N += inv.N || 0;
+            totals.D += inv.D || 0;
+            totals.Q += inv.Q || 0;
+        }
+        totals.total = totals.C + totals.N + totals.D + totals.Q;
+        return totals;
+    }
+
+    /**
+     * Get total inventory from all teams via admin API
+     */
+    async getSystemInventory(api) {
+        const response = await api.listTeams();
+        if (!response.ok) {
+            throw new Error('Failed to get team list for inventory check');
+        }
+        return this.sumInventory(response.data.teams || []);
     }
 
     /**
@@ -178,6 +209,24 @@ class APIPlayabilityTest {
         }
 
         console.log('   ✅ Game started with NPCs');
+
+        // Initialize all test user teams BEFORE capturing initial inventory
+        // (Logging in creates teams with random inventory - we need to do this before snapshot)
+        console.log('   👥 Initializing test user teams...');
+        for (const email of this.config.testUsers) {
+            const userPage = await this.browser.loginAndNavigate(email, '');
+            const userApi = new ApiClient(userPage, this.config.baseUrl);
+            // Just call any API to ensure team is created
+            await userApi.getSessionStatus();
+            await userPage.close();
+            console.log(`      ✓ ${email.split('@')[0]} team initialized`);
+        }
+
+        // Capture initial inventory AFTER all teams (including NPCs AND test users) are created
+        console.log('   📦 Capturing initial inventory totals (all teams)...');
+        this.initialInventory = await this.getSystemInventory(api);
+        console.log(`      Total: C=${this.initialInventory.C.toFixed(2)}, N=${this.initialInventory.N.toFixed(2)}, D=${this.initialInventory.D.toFixed(2)}, Q=${this.initialInventory.Q.toFixed(2)} (${this.initialInventory.total.toFixed(2)} gal)`);
+
         console.log(`   📡 Admin setup API calls: ${this.results.apiCalls}`);
 
         await adminPage.close();
@@ -325,7 +374,12 @@ class APIPlayabilityTest {
         const adminPage = await this.browser.loginAndNavigate(this.config.adminUser, '');
         const api = new ApiClient(adminPage, this.config.baseUrl);
 
-        // 1. Finalize Game (Ends Round)
+        // Capture inventory BEFORE finalize (production consumes chemicals)
+        console.log('   📦 Capturing pre-production inventory (for conservation check)...');
+        this.finalInventory = await this.getSystemInventory(api);
+        console.log(`      Total: C=${this.finalInventory.C.toFixed(2)}, N=${this.finalInventory.N.toFixed(2)}, D=${this.finalInventory.D.toFixed(2)}, Q=${this.finalInventory.Q.toFixed(2)} (${this.finalInventory.total.toFixed(2)} gal)`);
+
+        // 1. Finalize Game (Ends Round - runs production which consumes chemicals)
         console.log('   ⏩ Finalizing Game (Closing Market)...');
         const finalizeResponse = await api.controlSession('finalize');
         this.logApiCall('POST', '/api/admin/session', { action: 'finalize' }, finalizeResponse);
@@ -385,6 +439,44 @@ class APIPlayabilityTest {
              this.results.errors.push({ user: 'system', error: 'Failed to fetch leaderboard' });
         }
 
+        // 4. Inventory Conservation Check (using pre-production inventory captured above)
+        console.log('\n   📦 Verifying Inventory Conservation (trading phase only)...');
+        try {
+            console.log(`      Initial (after setup):   C=${this.initialInventory.C.toFixed(2)}, N=${this.initialInventory.N.toFixed(2)}, D=${this.initialInventory.D.toFixed(2)}, Q=${this.initialInventory.Q.toFixed(2)} (Total: ${this.initialInventory.total.toFixed(2)})`);
+            console.log(`      Final (before production): C=${this.finalInventory.C.toFixed(2)}, N=${this.finalInventory.N.toFixed(2)}, D=${this.finalInventory.D.toFixed(2)}, Q=${this.finalInventory.Q.toFixed(2)} (Total: ${this.finalInventory.total.toFixed(2)})`);
+
+            // Check each chemical and total (allow small floating point tolerance)
+            const tolerance = 0.01;
+            const chemicals = ['C', 'N', 'D', 'Q'];
+            let conservationPassed = true;
+
+            for (const chem of chemicals) {
+                const diff = Math.abs(this.finalInventory[chem] - this.initialInventory[chem]);
+                if (diff > tolerance) {
+                    conservationPassed = false;
+                    this.results.errors.push({
+                        user: 'system',
+                        error: `Inventory conservation violated for ${chem}: initial=${this.initialInventory[chem].toFixed(2)}, final=${this.finalInventory[chem].toFixed(2)}, diff=${diff.toFixed(4)}`
+                    });
+                }
+            }
+
+            const totalDiff = Math.abs(this.finalInventory.total - this.initialInventory.total);
+            if (totalDiff > tolerance) {
+                conservationPassed = false;
+            }
+
+            if (conservationPassed) {
+                console.log('   ✅ Inventory conservation verified - no chemicals created or destroyed');
+            } else {
+                console.log(`   ❌ Inventory conservation FAILED - difference of ${totalDiff.toFixed(4)} detected`);
+                this.results.failed++;
+            }
+        } catch (e) {
+            console.log(`   ⚠️  Could not verify inventory conservation: ${e.message}`);
+            this.results.warnings.push(`Inventory conservation check failed: ${e.message}`);
+        }
+
         await adminPage.close();
     }
 
@@ -414,6 +506,17 @@ class APIPlayabilityTest {
             this.results.warnings.forEach((warn, i) => {
                 console.log(`   ${i + 1}. ${warn}`);
             });
+        }
+
+        // Inventory conservation summary
+        if (this.initialInventory && this.finalInventory) {
+            console.log('\n📦 INVENTORY CONSERVATION:');
+            const diff = Math.abs(this.finalInventory.total - this.initialInventory.total);
+            const passed = diff < 0.01;
+            console.log(`   Initial Total: ${this.initialInventory.total.toFixed(2)} gal`);
+            console.log(`   Final Total:   ${this.finalInventory.total.toFixed(2)} gal`);
+            console.log(`   Difference:    ${diff.toFixed(4)} gal`);
+            console.log(`   Status:        ${passed ? '✅ PASSED' : '❌ FAILED'}`);
         }
 
         // API endpoint summary

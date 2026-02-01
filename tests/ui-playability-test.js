@@ -1084,16 +1084,38 @@ class UIPlayabilityTest {
             if (results.violations.length === 0) {
                 console.log('   ✅ No WCAG 2.1 AA violations found!');
             } else {
-                console.log(`   ❌ ${results.violations.length} violations found:\n`);
+                console.log(`   ❌ ${results.violations.length} violation type(s) found:\n`);
                 results.violations.forEach((violation, i) => {
                     console.log(`   ${i + 1}. [${violation.impact}] ${violation.id}`);
                     console.log(`      ${violation.description}`);
                     console.log(`      Help: ${violation.helpUrl}`);
-                    console.log(`      Affected: ${violation.nodes.length} element(s)`);
-                    if (this.config.verbose) {
-                        violation.nodes.slice(0, 3).forEach(node => {
-                            console.log(`        - ${node.target.join(' > ')}`);
-                        });
+                    console.log(`      Affected: ${violation.nodes.length} element(s)\n`);
+
+                    // Always show details for color-contrast violations
+                    const showAll = violation.id === 'color-contrast' || this.config.verbose;
+                    const nodesToShow = showAll ? violation.nodes : violation.nodes.slice(0, 3);
+
+                    nodesToShow.forEach((node, j) => {
+                        const selector = node.target.join(' > ');
+                        console.log(`        ${j + 1}. ${selector}`);
+
+                        // Show contrast-specific data if available
+                        if (node.any && node.any[0] && node.any[0].data) {
+                            const data = node.any[0].data;
+                            if (data.fgColor && data.bgColor) {
+                                console.log(`           fg: ${data.fgColor} | bg: ${data.bgColor}`);
+                                console.log(`           ratio: ${data.contrastRatio?.toFixed(2)} (need ${data.expectedContrastRatio})`);
+                            }
+                        }
+                        // Show failure summary
+                        if (node.failureSummary) {
+                            const summary = node.failureSummary.split('\n')[0].substring(0, 80);
+                            console.log(`           ${summary}`);
+                        }
+                    });
+
+                    if (!showAll && violation.nodes.length > 3) {
+                        console.log(`        ... and ${violation.nodes.length - 3} more`);
                     }
                     console.log('');
                 });
@@ -1130,39 +1152,48 @@ class UIPlayabilityTest {
             tabOrder: []
         };
 
-        // Get all focusable elements in tab order
+        // Get all focusable elements in tab order (including Shadow DOM)
         const focusableInOrder = await page.evaluate(() => {
             const focusable = [];
-            const walker = document.createTreeWalker(
-                document.body,
-                NodeFilter.SHOW_ELEMENT,
-                {
-                    acceptNode: (node) => {
-                        const style = getComputedStyle(node);
-                        if (style.display === 'none' || style.visibility === 'hidden') {
-                            return NodeFilter.FILTER_REJECT;
-                        }
-                        const focusableTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
-                        if (focusableTags.includes(node.tagName) || node.tabIndex >= 0) {
+            const focusableTags = ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'];
+
+            // Recursive function to find focusable elements, piercing Shadow DOM
+            function findFocusable(root) {
+                const walker = document.createTreeWalker(
+                    root,
+                    NodeFilter.SHOW_ELEMENT,
+                    {
+                        acceptNode: (node) => {
+                            const style = getComputedStyle(node);
+                            if (style.display === 'none' || style.visibility === 'hidden') {
+                                return NodeFilter.FILTER_REJECT;
+                            }
                             return NodeFilter.FILTER_ACCEPT;
                         }
-                        return NodeFilter.FILTER_SKIP;
+                    }
+                );
+
+                let node;
+                while (node = walker.nextNode()) {
+                    // Check if this element is focusable
+                    if (!node.disabled && (focusableTags.includes(node.tagName) || node.tabIndex >= 0)) {
+                        focusable.push({
+                            tag: node.tagName.toLowerCase(),
+                            id: node.id,
+                            class: node.className?.split?.(' ')?.[0] || '',
+                            ariaLabel: node.getAttribute('aria-label'),
+                            tabIndex: node.tabIndex,
+                            inShadowDOM: root !== document.body
+                        });
+                    }
+                    // Pierce Shadow DOM
+                    if (node.shadowRoot) {
+                        findFocusable(node.shadowRoot);
                     }
                 }
-            );
-
-            let node;
-            while (node = walker.nextNode()) {
-                if (!node.disabled) {
-                    focusable.push({
-                        tag: node.tagName.toLowerCase(),
-                        id: node.id,
-                        class: node.className?.split?.(' ')?.[0] || '',
-                        ariaLabel: node.getAttribute('aria-label'),
-                        tabIndex: node.tabIndex
-                    });
-                }
             }
+
+            findFocusable(document.body);
             return focusable;
         });
 
@@ -1171,8 +1202,13 @@ class UIPlayabilityTest {
 
         // Check each interactive element from registry
         for (const element of interactiveElements) {
+            // Handle both string selectors and array selectors (shadow DOM chains)
+            const selectorId = Array.isArray(element.selector)
+                ? element.selector[element.selector.length - 1].replace('#', '')
+                : element.selector.replace('#', '');
+
             const isReachable = focusableInOrder.some(f =>
-                f.id === element.selector.replace('#', '') ||
+                f.id === selectorId ||
                 (element.a11y?.label && f.ariaLabel?.toLowerCase()?.includes(
                     element.a11y.label.source?.toLowerCase?.() || element.a11y.label
                 ))
@@ -1199,11 +1235,13 @@ class UIPlayabilityTest {
 
     /**
      * Check color contrast ratios
+     * NOTE: This is a supplementary check. axe-core provides the authoritative WCAG contrast audit.
+     * This custom check may have false positives due to complex background inheritance.
      * @param {Page} page - Puppeteer page to test
      * @returns {Object} - Contrast results
      */
     async checkColorContrast(page) {
-        console.log('\n🎨 COLOR CONTRAST CHECK');
+        console.log('\n🎨 COLOR CONTRAST CHECK (Supplementary - see axe-core for authoritative results)');
         console.log('-'.repeat(70));
 
         const results = await page.evaluate(() => {
@@ -1229,15 +1267,39 @@ class UIPlayabilityTest {
                 return null;
             };
 
+            // Walk up DOM tree to find actual visible background color
+            const getEffectiveBackground = (element) => {
+                let current = element;
+                while (current && current !== document.body) {
+                    const style = getComputedStyle(current);
+                    const bg = style.backgroundColor;
+                    const parsed = parseColor(bg);
+                    // Check if not transparent (alpha > 0 or RGB not all zeros with alpha)
+                    if (parsed && (parsed[0] !== 0 || parsed[1] !== 0 || parsed[2] !== 0)) {
+                        return parsed;
+                    }
+                    // Also check for rgba with alpha
+                    const alphaMatch = bg.match(/rgba\(\d+,\s*\d+,\s*\d+,\s*([\d.]+)\)/);
+                    if (alphaMatch && parseFloat(alphaMatch[1]) > 0.5 && parsed) {
+                        return parsed;
+                    }
+                    current = current.parentElement;
+                }
+                // Default to body or dark theme background
+                const bodyBg = parseColor(getComputedStyle(document.body).backgroundColor);
+                return bodyBg || [31, 41, 55]; // gray-800 fallback
+            };
+
             const issues = [];
             const textElements = document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, a, button, label, li');
 
             textElements.forEach(el => {
                 const style = getComputedStyle(el);
                 if (style.display === 'none' || style.visibility === 'hidden') return;
+                if (!el.textContent?.trim()) return; // Skip empty elements
 
                 const fgColor = parseColor(style.color);
-                const bgColor = parseColor(style.backgroundColor);
+                const bgColor = getEffectiveBackground(el);
 
                 if (fgColor && bgColor) {
                     const fgLum = getLuminance(...fgColor);
@@ -1256,7 +1318,9 @@ class UIPlayabilityTest {
                             ratio: ratio.toFixed(2),
                             required: minRatio,
                             fg: style.color,
-                            bg: style.backgroundColor
+                            bg: `rgb(${bgColor.join(', ')})`,
+                            fgLum: fgLum.toFixed(4),
+                            bgLum: bgLum.toFixed(4)
                         });
                     }
                 }
@@ -1273,6 +1337,7 @@ class UIPlayabilityTest {
             console.log(`   ❌ ${results.length} elements have insufficient contrast:`);
             results.slice(0, 5).forEach(issue => {
                 console.log(`      - ${issue.element}: ratio ${issue.ratio} (need ${issue.required})`);
+                console.log(`        fg: ${issue.fg} | bg: ${issue.bg}`);
             });
             if (results.length > 5) {
                 console.log(`      ... and ${results.length - 5} more`);

@@ -270,6 +270,10 @@ class ApiClient {
         return this.post('admin/npc/toggle-system.php', { enabled });
     }
 
+    async listTeams() {
+        return this.get('admin/list-teams.php');
+    }
+
     // ===================
     // UTILITIES
     // ===================

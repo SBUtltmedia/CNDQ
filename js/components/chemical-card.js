@@ -48,7 +48,7 @@ const componentStyles = css`
         margin-top: 0.25rem;
     }
     .shadow-price span {
-        color: var(--color-success, #10b981);
+        color: var(--color-success, #34d399);  /* green-400 for better contrast on gray-700 */
         font-weight: 700;
     }
     .btn {

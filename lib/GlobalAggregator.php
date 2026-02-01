@@ -70,6 +70,22 @@ class GlobalAggregator {
         }
 
         // 2. Check if already reflected to counterparty to avoid duplicate inventory/funds adjustments
+        $counterpartyState = $counterpartyStorage->getState();
+        $alreadyReflected = false;
+        foreach ($counterpartyState['transactions'] ?? [] as $cpTxn) {
+            if (($cpTxn['transactionId'] ?? '') === $transactionId) {
+                $alreadyReflected = true;
+                break;
+            }
+        }
+
+        if ($alreadyReflected) {
+            // Already reflected - just mark as complete on actor side and return
+            error_log("GlobalAggregator: Transaction $transactionId already exists on counterparty $counterpartyId. Marking as reflected without duplicate adjustment.");
+            $actorStorage->emitEvent('mark_reflected', ['transactionId' => $transactionId]);
+            return;
+        }
+
         $role = ($txn['role'] === 'buyer') ? 'seller' : 'buyer';
         $quantity = $txn['quantity'];
         $chemical = $txn['chemical'];

@@ -126,11 +126,11 @@
 
         <!-- Tabs -->
         <div class="bg-gray-800 flex justify-center border-b border-gray-700 overflow-x-auto">
-            <button id="tab-leaderboard" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-400 transition-all whitespace-nowrap">Scoreboard</button>
-            <button id="tab-history" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all whitespace-nowrap">Market History</button>
-            <button id="tab-team-sheet" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all whitespace-nowrap">Team Sheet</button>
-            <button id="tab-answer-report" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all whitespace-nowrap">Answer Report</button>
-            <button id="tab-sensitivity-report" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-500 hover:text-gray-300 transition-all whitespace-nowrap">Sensitivity Report</button>
+            <button id="tab-leaderboard" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-purple-500 text-purple-200 transition-all whitespace-nowrap">Scoreboard</button>
+            <button id="tab-history" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-300 hover:text-white transition-all whitespace-nowrap">Market History</button>
+            <button id="tab-team-sheet" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-300 hover:text-white transition-all whitespace-nowrap">Team Sheet</button>
+            <button id="tab-answer-report" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-300 hover:text-white transition-all whitespace-nowrap">Answer Report</button>
+            <button id="tab-sensitivity-report" class="px-6 md:px-8 py-4 font-black uppercase tracking-widest border-b-4 border-transparent text-gray-300 hover:text-white transition-all whitespace-nowrap">Sensitivity Report</button>
         </div>
 
         <!-- Content Area -->
@@ -141,7 +141,7 @@
                     <div class="flex justify-between items-center mb-8">
                         <div></div>
                         <h3 class="text-2xl font-bold text-gray-300">Final Performance Rankings</h3>
-                        <button id="export-leaderboard-btn" class="text-gray-400 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
+                        <button id="export-leaderboard-btn" class="text-gray-300 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             CSV
                         </button>
@@ -164,9 +164,9 @@
                         <div></div>
                         <div class="text-center">
                             <h3 class="text-2xl font-bold text-gray-300">Market Transaction History</h3>
-                            <p class="text-gray-500 text-sm">Recent trades across all teams</p>
+                            <p class="text-gray-400 text-sm">Recent trades across all teams</p>
                         </div>
-                        <button id="export-global-history-btn" class="text-gray-400 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
+                        <button id="export-global-history-btn" class="text-gray-300 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                             CSV
                         </button>
@@ -288,7 +288,7 @@
                     <span id="prod-result-title">Production Results</span>
                     <span id="prod-result-session" class="hidden"></span>
                 </h3>
-                <button id="prod-result-close" class="text-gray-400 hover:text-white text-4xl font-bold transition-colors">&times;</button>
+                <button id="prod-result-close" class="text-gray-300 hover:text-white text-4xl font-bold transition-colors" aria-label="Close">&times;</button>
             </div>
 
             <div class="flex-1 container mx-auto max-w-4xl py-12 px-6">
@@ -589,8 +589,8 @@
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
                     <span class="text-xs text-gray-400 uppercase font-bold mb-1">Production Rev</span>
                     <span class="text-xl font-mono text-blue-400" id="fin-production-rev" aria-live="polite">$0.00</span>
-                    <span class="text-[10px] text-gray-500 mt-1" id="fin-production-mix"></span>
-                    <span class="text-[10px] text-gray-500 uppercase" id="fin-production-delta"></span>
+                    <span class="text-[10px] text-gray-400 mt-1" id="fin-production-mix"></span>
+                    <span class="text-[10px] text-gray-400 uppercase" id="fin-production-delta"></span>
                 </div>
                 <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 shadow flex flex-col items-center">
                     <span class="text-xs text-gray-400 uppercase font-bold mb-1">Sales Rev</span>
@@ -1149,11 +1149,11 @@
             <div class="p-6 border-b border-gray-700 flex justify-between items-center">
                 <h3 class="text-2xl font-bold text-white">Transaction History</h3>
                 <div class="flex items-center gap-4">
-                    <button id="export-history-btn" class="text-gray-400 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
+                    <button id="export-history-btn" class="text-gray-300 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         CSV
                     </button>
-                    <button id="history-close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                    <button id="history-close-btn" class="text-gray-300 hover:text-white text-2xl" aria-label="Close">&times;</button>
                 </div>
             </div>
             <div class="p-6 overflow-y-auto flex-1">

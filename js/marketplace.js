@@ -1772,8 +1772,8 @@ class MarketplaceApp {
             const resetTabs = () => {
                 Object.values(tabs).forEach(t => {
                     if(t) {
-                        t.classList.remove('border-purple-500', 'text-purple-400');
-                        t.classList.add('border-transparent', 'text-gray-500');
+                        t.classList.remove('border-purple-500', 'text-purple-200');
+                        t.classList.add('border-transparent', 'text-gray-300');
                     }
                 });
                 Object.values(contents).forEach(c => c?.classList.add('hidden'));
@@ -1782,8 +1782,8 @@ class MarketplaceApp {
             const activateTab = (tabName) => {
                 resetTabs();
                 const tab = tabs[tabName];
-                tab?.classList.remove('border-transparent', 'text-gray-500');
-                tab?.classList.add('border-purple-500', 'text-purple-400');
+                tab?.classList.remove('border-transparent', 'text-gray-300');
+                tab?.classList.add('border-purple-500', 'text-purple-200');
 
                 const content = contents[tabName];
                 content?.classList.remove('hidden');
@@ -3143,14 +3143,14 @@ class MarketplaceApp {
                         <div class="bg-blue-900/40 border border-blue-500 rounded-lg p-4 text-center">
                             <div class="text-3xl mb-2">🧊</div>
                             <div class="text-blue-400 font-bold text-lg">DE-ICER</div>
-                            <div class="text-gray-400 text-sm">$2 profit/gallon</div>
-                            <div class="text-xs text-gray-500 mt-2">Uses: C, N, D</div>
+                            <div class="text-gray-300 text-sm">$2 profit/gallon</div>
+                            <div class="text-xs text-blue-300 mt-2">Uses: C, N, D</div>
                         </div>
                         <div class="bg-purple-900/40 border border-purple-500 rounded-lg p-4 text-center">
                             <div class="text-3xl mb-2">🧪</div>
                             <div class="text-purple-400 font-bold text-lg">SOLVENT</div>
-                            <div class="text-gray-400 text-sm">$3 profit/gallon</div>
-                            <div class="text-xs text-gray-500 mt-2">Uses: N, D, Q</div>
+                            <div class="text-gray-300 text-sm">$3 profit/gallon</div>
+                            <div class="text-xs text-purple-300 mt-2">Uses: N, D, Q</div>
                         </div>
                     </div>
 

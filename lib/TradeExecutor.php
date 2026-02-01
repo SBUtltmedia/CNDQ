@@ -73,12 +73,15 @@ class TradeExecutor {
             $counterpartyName = $counterpartyStorage->getTeamName();
             $microtime = microtime(true);
 
-            if ($isBuyerActing) {
-                // Buyer is acting: they lose money, gain chemicals
-                $invBefore = $actorStorage->getInventory()[$chemical] ?? 0;
-                $actorStorage->adjustChemical($chemical, $quantity);
-                $invAfter = $actorStorage->getInventory()[$chemical] ?? 0;
+            // Update BOTH parties synchronously to ensure inventory conservation
+            // (The eventual consistency model caused inventory duplication bugs)
+            $actorName = $actorStorage->getTeamName();
 
+            if ($isBuyerActing) {
+                // === BUYER (Actor) ===
+                $buyerInvBefore = $actorStorage->getInventory()[$chemical] ?? 0;
+                $actorStorage->adjustChemical($chemical, $quantity);
+                $buyerInvAfter = $actorStorage->getInventory()[$chemical] ?? 0;
                 $actorStorage->updateFunds(-$totalCost);
                 $actorStorage->addTransaction([
                     'transactionId' => $transactionId,
@@ -92,9 +95,8 @@ class TradeExecutor {
                     'offerId' => $offerId,
                     'timestamp' => $microtime,
                     'status' => 'accepted',
-                    'inventoryBefore' => $invBefore,
-                    'inventoryAfter' => $invAfter,
-                    'isPendingReflection' => true, // Signal for System Aggregator
+                    'inventoryBefore' => $buyerInvBefore,
+                    'inventoryAfter' => $buyerInvAfter,
                     'heat' => [
                         'total' => $totalHeat,
                         'isHot' => $isHot,
@@ -103,13 +105,37 @@ class TradeExecutor {
                     ]
                 ]);
 
-                // Notification removed - GlobalAggregator will add notification when reflecting to both parties
+                // === SELLER (Counterparty) - Update immediately ===
+                $sellerInvBefore = $counterpartyStorage->getInventory()[$chemical] ?? 0;
+                $counterpartyStorage->adjustChemical($chemical, -$quantity);
+                $sellerInvAfter = $counterpartyStorage->getInventory()[$chemical] ?? 0;
+                $counterpartyStorage->updateFunds($totalCost);
+                $counterpartyStorage->addTransaction([
+                    'transactionId' => $transactionId,
+                    'role' => 'seller',
+                    'chemical' => $chemical,
+                    'quantity' => $quantity,
+                    'pricePerGallon' => $pricePerGallon,
+                    'totalAmount' => $totalCost,
+                    'counterparty' => $buyerId,
+                    'counterpartyName' => $actorName,
+                    'offerId' => $offerId,
+                    'timestamp' => $microtime,
+                    'status' => 'accepted',
+                    'inventoryBefore' => $sellerInvBefore,
+                    'inventoryAfter' => $sellerInvAfter,
+                    'heat' => [
+                        'total' => $totalHeat,
+                        'isHot' => $isHot,
+                        'sellerGain' => $sellerGain,
+                        'buyerGain' => $buyerGain
+                    ]
+                ]);
             } else {
-                // Seller is acting: they lose chemicals, gain money
-                $invBefore = $actorStorage->getInventory()[$chemical] ?? 0;
+                // === SELLER (Actor) ===
+                $sellerInvBefore = $actorStorage->getInventory()[$chemical] ?? 0;
                 $actorStorage->adjustChemical($chemical, -$quantity);
-                $invAfter = $actorStorage->getInventory()[$chemical] ?? 0;
-
+                $sellerInvAfter = $actorStorage->getInventory()[$chemical] ?? 0;
                 $actorStorage->updateFunds($totalCost);
                 $actorStorage->addTransaction([
                     'transactionId' => $transactionId,
@@ -123,9 +149,8 @@ class TradeExecutor {
                     'offerId' => $offerId,
                     'timestamp' => $microtime,
                     'status' => 'accepted',
-                    'inventoryBefore' => $invBefore,
-                    'inventoryAfter' => $invAfter,
-                    'isPendingReflection' => true, // Signal for System Aggregator
+                    'inventoryBefore' => $sellerInvBefore,
+                    'inventoryAfter' => $sellerInvAfter,
                     'heat' => [
                         'total' => $totalHeat,
                         'isHot' => $isHot,
@@ -134,7 +159,32 @@ class TradeExecutor {
                     ]
                 ]);
 
-                // Notification removed - GlobalAggregator will add notification when reflecting to both parties
+                // === BUYER (Counterparty) - Update immediately ===
+                $buyerInvBefore = $counterpartyStorage->getInventory()[$chemical] ?? 0;
+                $counterpartyStorage->adjustChemical($chemical, $quantity);
+                $buyerInvAfter = $counterpartyStorage->getInventory()[$chemical] ?? 0;
+                $counterpartyStorage->updateFunds(-$totalCost);
+                $counterpartyStorage->addTransaction([
+                    'transactionId' => $transactionId,
+                    'role' => 'buyer',
+                    'chemical' => $chemical,
+                    'quantity' => $quantity,
+                    'pricePerGallon' => $pricePerGallon,
+                    'totalAmount' => $totalCost,
+                    'counterparty' => $sellerId,
+                    'counterpartyName' => $actorName,
+                    'offerId' => $offerId,
+                    'timestamp' => $microtime,
+                    'status' => 'accepted',
+                    'inventoryBefore' => $buyerInvBefore,
+                    'inventoryAfter' => $buyerInvAfter,
+                    'heat' => [
+                        'total' => $totalHeat,
+                        'isHot' => $isHot,
+                        'sellerGain' => $sellerGain,
+                        'buyerGain' => $buyerGain
+                    ]
+                ]);
             }
             
             // GLOBAL MARKETPLACE EVENT: Record the trade for all to see

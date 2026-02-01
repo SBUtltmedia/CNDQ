@@ -73,6 +73,6 @@
     --color-text-primary: #f9fafb;
     --color-text-secondary: #e5e7eb;
     --color-text-tertiary: #d1d5db;
-    --color-success: #10b981;
+    --color-success: #34d399;  /* green-400 for 4.5:1+ contrast on gray-700 */
     --color-border: #4b5563;
 }

@@ -496,9 +496,9 @@ class ReportViewer extends LitElement {
                                             ${c.status}
                                         </span>
                                     </td>
-                                    <td class="num">${c.slack.toFixed(2)}</td>
-                                    <td class="num">${c.used.toFixed(2)}</td>
-                                    <td class="num">${c.available.toFixed(2)}</td>
+                                    <td class="num">${c.slack?.toFixed(2) ?? '-'}</td>
+                                    <td class="num">${c.used?.toFixed(2) ?? '-'}</td>
+                                    <td class="num">${c.available?.toFixed(2) ?? '-'}</td>
                                 </tr>
                             `)}
                         </tbody>
@@ -538,17 +538,17 @@ class ReportViewer extends LitElement {
                         </tr>
                     </thead>
                     <tbody>
-                        ${sr.shadowPrices.map(s => html`
+                        ${sr.shadowPrices?.map(s => html`
                             <tr>
-                                <td><span class="font-bold" style="color: var(--color-chemical-${s.chemical.toLowerCase()})">${s.chemical}</span></td>
-                                <td class="num font-bold ${s.shadowPrice > 0 ? 'text-success' : 'text-gray-400'}">
-                                    $${s.shadowPrice.toFixed(2)}
+                                <td><span class="font-bold" style="color: var(--color-chemical-${s.chemical?.toLowerCase() ?? 'c'})">${s.chemical ?? '-'}</span></td>
+                                <td class="num font-bold ${(s.shadowPrice ?? 0) > 0 ? 'text-success' : 'text-gray-400'}">
+                                    $${s.shadowPrice?.toFixed(2) ?? '0.00'}
                                 </td>
-                                <td class="num">${s.currentInventory.toFixed(2)}</td>
-                                <td class="num">${s.allowableIncrease}</td>
-                                <td class="num">${s.allowableDecrease}</td>
+                                <td class="num">${s.currentInventory?.toFixed(2) ?? '-'}</td>
+                                <td class="num">${s.allowableIncrease ?? '-'}</td>
+                                <td class="num">${s.allowableDecrease ?? '-'}</td>
                             </tr>
-                        `)}
+                        `) ?? html`<tr><td colspan="5" class="text-center text-gray-400">No shadow price data available</td></tr>`}
                     </tbody>
                 </table>
             </div>
