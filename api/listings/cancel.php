@@ -69,7 +69,7 @@ try {
         exit;
     }
 
-    // Remove the listing
+    // Remove the listing (snapshot is refreshed automatically in TeamStorage)
     $listingManager->removeListing($listingId);
 
     echo json_encode([

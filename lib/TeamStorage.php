@@ -719,6 +719,12 @@ class TeamStorage {
 
     public function removeListing($adId) {
         $this->emitEvent('remove_listing', ['id' => $adId]);
+
+        // Immediately refresh the marketplace snapshot so NPCs see the updated state
+        // This prevents stale canceled listings from appearing to newly created NPCs
+        require_once __DIR__ . '/MarketplaceAggregator.php';
+        $aggregator = new MarketplaceAggregator();
+        $aggregator->generateSnapshot();
     }
 
     // ==================== Production Methods ====================
