@@ -666,6 +666,11 @@ class TeamStorage {
 
     public function removeBuyOrder($id) {
         $this->emitEvent('remove_buy_order', ['id' => $id]);
+
+        // Immediately refresh the marketplace snapshot so NPCs see the updated state
+        require_once __DIR__ . '/MarketplaceAggregator.php';
+        $aggregator = new MarketplaceAggregator();
+        $aggregator->generateSnapshot();
     }
 
     // ==================== Transactions Methods ====================

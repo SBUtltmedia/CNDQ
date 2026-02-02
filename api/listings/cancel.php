@@ -72,6 +72,19 @@ try {
     // Remove the listing (snapshot is refreshed automatically in TeamStorage)
     $listingManager->removeListing($listingId);
 
+    // Also remove the corresponding buy order for this chemical
+    // (Listings and buy orders are separate - both must be removed)
+    if ($listingChemical) {
+        $buyOrdersData = $storage->getBuyOrders();
+        $buyOrders = $buyOrdersData['interests'] ?? [];
+        foreach ($buyOrders as $order) {
+            if (($order['chemical'] ?? '') === $listingChemical) {
+                $storage->removeBuyOrder($order['id']);
+                break; // Remove one matching buy order
+            }
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Listing cancelled successfully',
