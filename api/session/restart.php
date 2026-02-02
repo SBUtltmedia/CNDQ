@@ -2,7 +2,7 @@
 /**
  * Public Restart Game API
  * POST: Restarts the game with existing NPC count
- * Allowed when: game is finished, game is stopped (market closed), or user is admin
+ * Allowed when: game is finished AND autoAdvance is enabled, or user is admin
  */
 
 require_once __DIR__ . '/../../lib/SessionManager.php';
@@ -19,24 +19,24 @@ try {
     $state = $sessionManager->getState();
 
     // Safety: Allow restart only when autoAdvance (24/7 mode) is enabled
+    // AND the game has finished (Simulation Complete screen)
     // This allows unattended operation where users can restart themselves
     require_once __DIR__ . '/../../userData.php';
     $isAutoAdvance = $state['autoAdvance'] ?? false;
     $isGameFinished = $state['gameFinished'] ?? false;
-    $isGameStopped = $state['gameStopped'] ?? true;
 
     // Non-admins can only restart when:
     // 1. autoAdvance (24/7 mode) is enabled, AND
-    // 2. Game is finished OR game is stopped (market closed)
+    // 2. Game is finished (Simulation Complete screen showing)
     if (!isAdmin()) {
         if (!$isAutoAdvance) {
             http_response_code(403);
             echo json_encode(['error' => 'Restart not available. Admin must enable Auto-Cycle (24/7 Mode) first.']);
             exit;
         }
-        if (!$isGameFinished && !$isGameStopped) {
+        if (!$isGameFinished) {
             http_response_code(403);
-            echo json_encode(['error' => 'Game is still in progress. Wait for market to close.']);
+            echo json_encode(['error' => 'Game is still in progress. Wait for the simulation to complete.']);
             exit;
         }
     }

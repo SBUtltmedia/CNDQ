@@ -2312,18 +2312,10 @@ class MarketplaceApp {
             }
         });
 
-        // Game Over Overlay event listeners
+        // Game Over Overlay restart button (only on Simulation Complete screen)
         document.getElementById('restart-game-btn').addEventListener('click', () => {
             this.restartGame();
         });
-
-        // Market Closed Overlay restart button
-        const restartBtnClosed = document.getElementById('restart-game-btn-closed');
-        if (restartBtnClosed) {
-            restartBtnClosed.addEventListener('click', () => {
-                this.restartGame('restart-game-btn-closed');
-            });
-        }
 
         // Transaction History
         const viewHistoryBtn = document.getElementById('view-history-btn');
@@ -2924,22 +2916,17 @@ class MarketplaceApp {
     }
 
     /**
-     * Update visibility of restart buttons based on autoAdvance (24/7 mode)
-     * Users can only restart when admin has enabled Auto-Cycle mode
+     * Update visibility of restart button on Simulation Complete screen
+     * Users can only restart when admin has enabled Auto-Cycle (24/7 mode)
+     * Note: Restart button is ONLY on Simulation Complete screen, not Market Closed
      * (Admins can use the admin panel to restart regardless)
      */
     updateRestartButtonVisibility() {
         const restartBtn = document.getElementById('restart-game-btn');
-        const restartBtnClosed = document.getElementById('restart-game-btn-closed');
 
-        // Show buttons only if autoAdvance (24/7 mode) is enabled
-        const shouldShow = this.autoAdvance;
-
+        // Show button only if autoAdvance (24/7 mode) is enabled
         if (restartBtn) {
-            restartBtn.style.display = shouldShow ? '' : 'none';
-        }
-        if (restartBtnClosed) {
-            restartBtnClosed.style.display = shouldShow ? '' : 'none';
+            restartBtn.style.display = this.autoAdvance ? '' : 'none';
         }
     }
 

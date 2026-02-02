@@ -107,8 +107,8 @@ if (!isAdmin()) {
                 </div>
                 <div class="text-xs text-blue-300 space-y-1">
                     <p>1. Market runs for the duration below.</p>
-                    <p>2. Game automatically finalizes (Results shown).</p>
-                    <p>3. Users can initiate a <strong>New Game</strong> from the Results screen (via "Restart Simulation" button).</p>
+                    <p>2. Game automatically finalizes (Simulation Complete screen shown).</p>
+                    <p>3. Users can initiate a <strong>New Game</strong> from the Simulation Complete screen (via "Restart Simulation" button).</p>
                 </div>
             </div>
 
