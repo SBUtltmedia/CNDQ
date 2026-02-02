@@ -220,8 +220,15 @@
                 <h2 id="tutorial-heading" class="text-xl font-bold text-white flex items-center gap-2">
                     <span class="text-2xl">📊</span> Trading Strategy Guide
                 </h2>
-                <div class="flex items-center gap-2 text-sm text-purple-300">
-                    Step <span id="tutorial-step-num">1</span> of <span id="tutorial-step-total">5</span>
+                <div class="flex items-center gap-3">
+                    <div class="text-sm text-purple-300">
+                        Step <span id="tutorial-step-num">1</span> of <span id="tutorial-step-total">5</span>
+                    </div>
+                    <button id="tutorial-close" class="text-purple-300 hover:text-white transition p-1" aria-label="Close tutorial">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -231,11 +238,7 @@
             </div>
 
             <!-- Footer with navigation -->
-            <div class="bg-gray-900 p-4 flex justify-between items-center">
-                <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-                    <input type="checkbox" id="tutorial-dont-show" class="rounded">
-                    Don't show again
-                </label>
+            <div class="bg-gray-900 p-4 flex justify-end items-center">
                 <div class="flex gap-3">
                     <button id="tutorial-prev" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed">
                         Back

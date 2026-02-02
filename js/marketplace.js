@@ -2053,6 +2053,14 @@ class MarketplaceApp {
             };
         }
 
+        const closeBtn = document.getElementById('tutorial-close');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                console.log('🔘 Tutorial CLOSE clicked');
+                this.closeTutorial();
+            };
+        }
+
         const helpBtn = document.getElementById('help-btn');
         if (helpBtn) {
             helpBtn.onclick = () => {
@@ -3695,6 +3703,7 @@ class MarketplaceApp {
 
     /**
      * Close the tutorial
+     * Always marks tutorial as seen - user can re-access via Quick Actions
      */
     closeTutorial() {
         const modal = document.getElementById('tutorial-modal');
@@ -3709,10 +3718,9 @@ class MarketplaceApp {
             console.log('📖 Tutorial: Modal hidden');
         }
 
-        // Save preference if checkbox is checked
-        if (document.getElementById('tutorial-dont-show')?.checked) {
-            localStorage.setItem('cndq_tutorial_seen', 'true');
-        }
+        // Always mark tutorial as seen when closed (either via X or completion)
+        // User can still re-access tutorial via Quick Actions menu
+        localStorage.setItem('cndq_tutorial_seen', 'true');
     }
 }
 
