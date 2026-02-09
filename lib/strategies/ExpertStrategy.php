@@ -437,8 +437,14 @@ class ExpertStrategy extends NPCTradingStrategy
         // Correct quantity if it was out of range for the counter-offer
         $targetQuantity = $quantity;
         if (!$withinRange) {
-            if ($npcIsSeller) $targetQuantity = max(1, floor($range['allowableDecrease']));
-            else $targetQuantity = max(1, floor($range['allowableIncrease']));
+            if ($npcIsSeller) $targetQuantity = floor($range['allowableDecrease']);
+            else $targetQuantity = floor($range['allowableIncrease']);
+
+            // Reject if corrected quantity is trivially small (avoid 1-gallon counter offers)
+            if ($targetQuantity < 10) {
+                error_log("NPC {$this->npc['teamName']}: REJECT - quantity too small after range correction ({$targetQuantity} gal)");
+                return ['type' => 'reject_negotiation', 'negotiationId' => $negotiation['id']];
+            }
         }
 
         // Expert NPCs don't get 'annoyed', but we keep a 0 reaction level to avoid UI issues

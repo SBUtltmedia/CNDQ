@@ -916,17 +916,15 @@
                                 <p id="haggle-sensitivity-warning" class="hidden text-[10px] text-yellow-500 mt-1 text-center">⚠️ Quantity exceeds stable range.</p>
                             </div>
 
-                            <!-- Price Slider (The Greed Bar) -->
+                            <!-- Price Input (matches Post Buy Request style) -->
                             <div>
-                                <div class="flex justify-between text-sm mb-2">
-                                    <label class="text-gray-300 font-semibold">Offer Price</label>
-                                    <span class="text-white font-mono"><span id="haggle-price-display">$0.00</span>/gal</span>
+                                <label class="block text-sm font-semibold mb-2 text-gray-300">Offer Price ($ per gallon)</label>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" id="haggle-price-minus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition" aria-label="Decrease price">−</button>
+                                    <input type="number" id="haggle-price-input" min="0" step="0.50" value="0" class="flex-1 bg-gray-700 border border-gray-600 rounded px-4 py-2 text-white text-lg text-center font-bold" aria-label="Price per gallon">
+                                    <button type="button" id="haggle-price-plus" class="w-10 h-10 bg-gray-600 hover:bg-gray-500 rounded font-bold text-lg transition" aria-label="Increase price">+</button>
                                 </div>
-                                <input type="range" id="haggle-price-slider" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-yellow-500">
-                                <div class="flex justify-between text-[10px] text-gray-500 mt-1">
-                                    <span>Generous</span>
-                                    <span>Greedy</span>
-                                </div>
+                                <p class="text-xs text-gray-300 mt-1">💡 Shadow Price: <span class="text-green-400 font-semibold"><span id="haggle-shadow-hint">$0</span></span> (value to you)</p>
                             </div>
 
                             <!-- Player Reaction (Your Annoyance) -->

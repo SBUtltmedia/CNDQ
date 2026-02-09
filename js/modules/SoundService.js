@@ -116,7 +116,7 @@ export class SoundService {
      * MONEY / TRADE - High frequency glissando
      */
     playTrade() {
-        const now = this.ctx?.currentTime || 0;
+        if (this.muted || this.volume <= 0) return;
         this.init();
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();

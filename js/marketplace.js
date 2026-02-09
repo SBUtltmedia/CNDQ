@@ -1331,8 +1331,8 @@ class MarketplaceApp {
             const latestOffer = negotiation.offers[negotiation.offers.length - 1];
 
             const qtySlider = document.getElementById('haggle-qty-slider');
-            const priceSlider = document.getElementById('haggle-price-slider');
-            
+            const priceInput = document.getElementById('haggle-price-input');
+
             // Set Quantity Range
             const maxQty = isBuyer ? 2000 : Math.floor(inventoryVal); // Buyer max is arbitrary/funds-based, Seller max is inventory
             document.getElementById('haggle-qty-max').textContent = maxQty;
@@ -1357,12 +1357,9 @@ class MarketplaceApp {
                 }
             }
 
-            // Set Price Range (0% to 300% of shadow price)
-            priceSlider.min = 0;
-            priceSlider.max = Math.ceil(shadowVal * 3);
-            priceSlider.step = 0.1;
-            priceSlider.value = latestOffer.price;
-            document.getElementById('haggle-price-display').textContent = this.formatCurrency(latestOffer.price);
+            // Set Price Input (pre-populated with last offer price)
+            priceInput.value = latestOffer.price.toFixed(2);
+            document.getElementById('haggle-shadow-hint').textContent = this.formatCurrency(shadowVal);
 
             this.updateHaggleUI(shadowVal, isBuyer);
         } else {
@@ -1455,13 +1452,18 @@ class MarketplaceApp {
 
     async makeCounterOffer() {
         const quantity = parseFloat(document.getElementById('haggle-qty-slider').value);
-        const price = parseFloat(document.getElementById('haggle-price-slider').value);
+        const price = parseFloat(document.getElementById('haggle-price-input').value) || 0;
         const reaction = parseFloat(document.getElementById('haggle-reaction-slider').value);
         const total = quantity * price;
         const chemical = this.currentNegotiation.chemical;
 
         if (!quantity || quantity <= 0) {
             notifications.showToast('Please enter a valid quantity', 'error');
+            return;
+        }
+
+        if (!price || price <= 0) {
+            notifications.showToast('Please enter a valid price', 'error');
             return;
         }
 
@@ -1738,12 +1740,11 @@ class MarketplaceApp {
      */
     updateHaggleUI(shadowPrice, isBuyer) {
         const qty = parseFloat(document.getElementById('haggle-qty-slider').value);
-        const price = parseFloat(document.getElementById('haggle-price-slider').value);
+        const price = parseFloat(document.getElementById('haggle-price-input').value) || 0;
         const reaction = parseFloat(document.getElementById('haggle-reaction-slider').value);
         const total = qty * price;
 
         document.getElementById('haggle-qty-display').textContent = qty;
-        document.getElementById('haggle-price-display').textContent = this.formatCurrency(price);
         document.getElementById('haggle-total').textContent = this.formatCurrency(total);
 
         // Calculate Profit Delta
@@ -2206,19 +2207,32 @@ class MarketplaceApp {
             document.getElementById('negotiation-actions')?.classList.remove('hidden');
         });
 
-        // Haggle Slider Listeners
+        // Haggle Input Listeners
         document.getElementById('haggle-qty-slider').addEventListener('input', () => {
-            const shadowVal = this.shadowPrices[this.currentNegotiation.chemical] || 2.0;
+            const shadowVal = this.shadowPrices[this.currentNegotiation?.chemical] || 2.0;
             this.updateHaggleUI(shadowVal);
         });
 
-        document.getElementById('haggle-price-slider').addEventListener('input', () => {
-            const shadowVal = this.shadowPrices[this.currentNegotiation.chemical] || 2.0;
+        // Price +/- buttons and input
+        document.getElementById('haggle-price-minus').addEventListener('click', () => {
+            const input = document.getElementById('haggle-price-input');
+            input.value = Math.max(0, (parseFloat(input.value) || 0) - 0.5).toFixed(2);
+            const shadowVal = this.shadowPrices[this.currentNegotiation?.chemical] || 2.0;
+            this.updateHaggleUI(shadowVal);
+        });
+        document.getElementById('haggle-price-plus').addEventListener('click', () => {
+            const input = document.getElementById('haggle-price-input');
+            input.value = ((parseFloat(input.value) || 0) + 0.5).toFixed(2);
+            const shadowVal = this.shadowPrices[this.currentNegotiation?.chemical] || 2.0;
+            this.updateHaggleUI(shadowVal);
+        });
+        document.getElementById('haggle-price-input').addEventListener('input', () => {
+            const shadowVal = this.shadowPrices[this.currentNegotiation?.chemical] || 2.0;
             this.updateHaggleUI(shadowVal);
         });
 
         document.getElementById('haggle-reaction-slider').addEventListener('input', () => {
-            const shadowVal = this.shadowPrices[this.currentNegotiation.chemical] || 2.0;
+            const shadowVal = this.shadowPrices[this.currentNegotiation?.chemical] || 2.0;
             this.updateHaggleUI(shadowVal);
         });
 
@@ -2521,10 +2535,11 @@ class MarketplaceApp {
 
                                 if (!involvesMe) {
                                     const isHot = event.heat?.isHot;
-                                    const icon = isHot ? '🔥 ' : '📦 ';
-                                    const message = `${icon}${event.sellerName} sold ${this.formatNumber(event.quantity)} gal of ${event.chemical} to ${event.buyerName}`;
-                                    const type = isHot ? 'hot' : 'info';
-                                    notifications.showToast(message, type, 4000);
+                                    // Only toast hot trades to reduce noise with many players
+                                    if (isHot) {
+                                        const message = `🔥 ${event.sellerName} sold ${this.formatNumber(event.quantity)} gal of ${event.chemical} to ${event.buyerName}`;
+                                        notifications.showToast(message, 'hot', 4000);
+                                    }
                                 }
                             }
                         }
