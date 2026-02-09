@@ -5,8 +5,8 @@ function isAdmin() {
     $adminEmails = [
         'admin@stonybrook.edu',
         'pstdenis@stonybrook.edu',
-        'thomas.sexton@stonybrook.edu',
-        'herbert.lewis@stonybrook.edu',
+        'hlewis@stonybrook.edu',
+        'tsexton@stonybrook.edu',
         'dev_user@localhost', // Local development default user
         'test_mail1@stonybrook.edu', // Test user
         'test_mail2@stonybrook.edu',

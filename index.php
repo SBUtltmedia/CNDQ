@@ -255,7 +255,7 @@
     </div>
 
     <!-- Confirmation Dialog -->
-    <div id="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-4">
+    <div id="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200] p-4">
         <div class="bg-gray-800 rounded-lg p-4 md:p-6 max-w-md w-full border border-gray-700 shadow-xl">
             <h3 class="text-xl font-bold mb-4 text-white" id="confirm-title">Confirm Action</h3>
             <p class="text-gray-300 mb-6" id="confirm-message"></p>
@@ -831,8 +831,8 @@
     </div>
 
     <!-- Negotiation Modal -->
-    <div id="negotiation-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="negotiation-modal-title">
-        <div class="bg-gray-800 rounded-lg p-4 md:p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border-2 border-green-500 shadow-2xl">
+    <div id="negotiation-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-start md:items-center justify-center z-50 p-2 md:p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="negotiation-modal-title">
+        <div class="bg-gray-800 rounded-lg p-3 md:p-6 w-full max-w-4xl my-2 md:my-0 border-2 border-green-500 shadow-2xl">
             <div class="flex items-center justify-between mb-4 md:mb-6">
                 <h3 class="text-xl md:text-2xl font-bold text-green-500" id="negotiation-modal-title">Negotiations</h3>
                 <button id="negotiation-modal-close-btn" class="text-gray-700 hover:text-gray-900 transition" aria-label="Close negotiations" style="background: none; border: none; cursor: pointer; padding: 0;">
@@ -847,13 +847,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div class="bg-gray-700 rounded-lg p-4 flex flex-col">
                         <h4 class="font-bold text-lg mb-2 text-green-400">Pending Negotiations</h4>
-                        <div id="pending-negotiations" class="space-y-2 overflow-y-auto scrollbar-thin flex-1 min-h-[400px] max-h-[600px] pr-2">
+                        <div id="pending-negotiations" class="space-y-2 overflow-y-auto scrollbar-thin flex-1 min-h-[150px] max-h-[40vh] pr-2">
                             <p class="text-gray-300 text-center py-4">No pending negotiations</p>
                         </div>
                     </div>
                     <div class="bg-gray-700 rounded-lg p-4 flex flex-col">
                         <h4 class="font-bold text-lg mb-2 text-gray-400">Completed Negotiations</h4>
-                        <div id="completed-negotiations" class="space-y-2 overflow-y-auto scrollbar-thin flex-1 min-h-[400px] max-h-[600px] pr-2">
+                        <div id="completed-negotiations" class="space-y-2 overflow-y-auto scrollbar-thin flex-1 min-h-[150px] max-h-[40vh] pr-2">
                             <p class="text-gray-300 text-center py-4">No completed negotiations</p>
                         </div>
                     </div>

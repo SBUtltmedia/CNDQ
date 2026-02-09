@@ -29,13 +29,14 @@ try {
 
     // 1. Financial Summary
     if ($type === 'all' || $type === 'financials') {
-        $productionHistory = $storage->getProductionHistory();
         $transactions = $storage->getTransactions()['transactions'];
 
-        $productionRevenue = 0;
-        foreach ($productionHistory as $run) {
-            $productionRevenue += ($run['revenue'] ?? 0);
-        }
+        // Production revenue = current optimal profit from LP solver (matches Excel's D2)
+        // This updates dynamically as inventory changes from trades
+        $inventory = $storage->getInventory();
+        $solver = new LPSolver();
+        $lpResult = $solver->solve($inventory);
+        $productionRevenue = $lpResult['maxProfit'];
 
         $salesRevenue = 0;
         $purchaseCosts = 0;

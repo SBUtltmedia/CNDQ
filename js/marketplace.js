@@ -3203,10 +3203,13 @@ class MarketplaceApp {
 
     /**
      * Check if tutorial should show on first load
+     * Set to false to disable auto-play; users can still access via "?" button
      */
     checkFirstVisitTutorial() {
+        const autoPlayTutorial = false;
+
         const seen = localStorage.getItem('cndq_tutorial_seen');
-        if (!seen) {
+        if (autoPlayTutorial && !seen) {
             // Wait for data to be fully loaded before auto-showing
             const checkData = setInterval(() => {
                 if (this.shadowPrices && this.constraints && this.constraints.length > 0) {
@@ -3214,7 +3217,7 @@ class MarketplaceApp {
                     setTimeout(() => this.showTutorial(), 1500);
                 }
             }, 500);
-            
+
             // Safety timeout
             setTimeout(() => clearInterval(checkData), 10000);
         }
