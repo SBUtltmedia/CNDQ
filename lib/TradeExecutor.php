@@ -189,6 +189,7 @@ class TradeExecutor {
             
             // GLOBAL MARKETPLACE EVENT: Record the trade for all to see
             // This enables global toasts for trades we're NOT part of
+            // Includes complete inventory data for both parties for audit/reporting
             // $microtime is already defined above
             $globalEvent = [
                 'transactionId' => $transactionId,
@@ -198,12 +199,18 @@ class TradeExecutor {
                 'totalAmount' => $totalCost,
                 'sellerId' => $sellerId,
                 'sellerName' => $sellerStorage->getTeamName(),
+                'sellerInvBefore' => $sellerInvBefore,
+                'sellerInvAfter' => $sellerInvAfter,
                 'buyerId' => $buyerId,
                 'buyerName' => $buyerStorage->getTeamName(),
+                'buyerInvBefore' => $buyerInvBefore,
+                'buyerInvAfter' => $buyerInvAfter,
                 'timestamp' => $microtime,
                 'heat' => [
                     'total' => $totalHeat,
-                    'isHot' => $isHot
+                    'isHot' => $isHot,
+                    'sellerGain' => $sellerGain,
+                    'buyerGain' => $buyerGain
                 ]
             ];
             

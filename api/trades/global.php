@@ -34,8 +34,15 @@ try {
                 'quantity' => $payload['quantity'] ?? 0,
                 'pricePerGallon' => $payload['pricePerGallon'] ?? 0,
                 'totalAmount' => $payload['totalAmount'] ?? 0,
+                // Seller info
                 'sellerName' => $payload['sellerName'] ?? 'Unknown',
+                'sellerInvBefore' => $payload['sellerInvBefore'] ?? null,
+                'sellerInvAfter' => $payload['sellerInvAfter'] ?? null,
+                // Buyer info
                 'buyerName' => $payload['buyerName'] ?? 'Unknown',
+                'buyerInvBefore' => $payload['buyerInvBefore'] ?? null,
+                'buyerInvAfter' => $payload['buyerInvAfter'] ?? null,
+                // Metadata
                 'timestamp' => $event['timestamp'],
                 'heat' => $payload['heat'] ?? null
             ];

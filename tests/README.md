@@ -6,23 +6,23 @@ Comprehensive testing suite for CNDQ (Chemical Negotiation & Distribution Quest)
 
 ```bash
 # Run the main test (dual playability)
-node tests/controller.js
+node tests/run.js
 
 # Run all tests
-node tests/controller.js --test all --headless
+node tests/run.js --test all --headless
 
 # Run specific tests
-node tests/controller.js --test dual,lighthouse
+node tests/run.js --test dual,lighthouse
 ```
 
 ## Test Controller
 
-The unified test runner (`controller.js`) manages all tests with a single interface.
+The unified test runner (`run.js`) manages all tests with a single interface.
 
 ### Basic Usage
 
 ```bash
-node tests/controller.js [options]
+node tests/run.js [options]
 ```
 
 ### Available Tests
@@ -70,16 +70,16 @@ node tests/controller.js [options]
 
 ```bash
 # Run dual test in headless mode
-node tests/controller.js --test dual --headless
+node tests/run.js --test dual --headless
 
 # Run all tests in background with custom report
-node tests/controller.js --test all --background --report ./results.json
+node tests/run.js --test all --background --report ./results.json
 
 # Run with custom parameters
-node tests/controller.js --test dual --npcs 10 --duration 120 --skill expert
+node tests/run.js --test dual --npcs 10 --duration 120 --skill expert
 
 # Use custom config file
-node tests/controller.js --config production-config.json --test accessibility
+node tests/run.js --config production-config.json --test accessibility
 ```
 
 ### Output Report

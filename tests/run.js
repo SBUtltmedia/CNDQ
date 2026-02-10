@@ -41,7 +41,7 @@ const path = require('path');
 const AVAILABLE_TESTS = {
     dual: {
         name: 'Dual Playability Test',
-        file: './dual-playability-test.js',
+        file: './test.js',
         description: 'UI vs API comparison with ROI validation'
     },
     stress: {

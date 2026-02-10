@@ -157,14 +157,10 @@
             <div id="content-history" class="hidden">
                 <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <!-- Complexity Selector -->
-                        <div id="global-history-complexity" class="flex items-center gap-1 bg-gray-700 p-1 rounded-lg">
-                            <button data-complexity="simple" class="active px-3 py-1.5 text-xs font-semibold rounded transition-all bg-green-600 text-white">Simple</button>
-                            <button data-complexity="detailed" class="px-3 py-1.5 text-xs font-semibold rounded transition-all text-gray-400 hover:text-white hover:bg-gray-600">Detailed</button>
-                        </div>
+                        <div class="text-gray-400 text-sm">← Scroll for all columns →</div>
                         <div class="text-center">
-                            <h3 class="text-2xl font-bold text-gray-300">Market Transaction History</h3>
-                            <p class="text-gray-400 text-sm">Recent trades across all teams</p>
+                            <h3 class="text-2xl font-bold text-gray-300">Complete Market History</h3>
+                            <p class="text-gray-400 text-sm">All trades with full inventory audit trail</p>
                         </div>
                         <button id="export-global-history-btn" class="text-gray-300 hover:text-white text-sm flex items-center gap-1" title="Download CSV">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -172,9 +168,22 @@
                         </button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full" id="global-history-table">
-                            <thead id="global-history-thead" class="text-gray-400 text-sm border-b border-gray-600">
-                                <!-- Headers injected via JS based on complexity -->
+                        <table class="w-full min-w-max" id="global-history-table">
+                            <thead class="text-gray-400 text-xs border-b border-gray-600 sticky top-0 bg-gray-800">
+                                <tr>
+                                    <th class="py-3 px-2 font-semibold text-left whitespace-nowrap">Time</th>
+                                    <th class="py-3 px-2 font-semibold text-left whitespace-nowrap">Chem</th>
+                                    <th class="py-3 px-2 font-semibold text-right whitespace-nowrap">Qty</th>
+                                    <th class="py-3 px-2 font-semibold text-right whitespace-nowrap">Price</th>
+                                    <th class="py-3 px-2 font-semibold text-right whitespace-nowrap">Total</th>
+                                    <th class="py-3 px-2 font-semibold text-left whitespace-nowrap border-l border-gray-600">Seller</th>
+                                    <th class="py-3 px-2 font-semibold text-right whitespace-nowrap">Before</th>
+                                    <th class="py-3 px-2 font-semibold text-right whitespace-nowrap">After</th>
+                                    <th class="py-3 px-2 font-semibold text-left whitespace-nowrap border-l border-gray-600">Buyer</th>
+                                    <th class="py-3 px-2 font-semibold text-right whitespace-nowrap">Before</th>
+                                    <th class="py-3 px-2 font-semibold text-right whitespace-nowrap">After</th>
+                                    <th class="py-3 px-2 font-semibold text-center whitespace-nowrap border-l border-gray-600">Heat</th>
+                                </tr>
                             </thead>
                             <tbody id="global-history-table-body" class="text-gray-300 text-sm divide-y divide-gray-700">
                                 <!-- Rows injected via JS -->

@@ -70,10 +70,6 @@ class MarketplaceApp {
         this.processedGlobalTrades = new Set();
         this.seenCompletedNegotiations = new Set();
 
-        // Global history complexity state
-        this.globalHistoryComplexity = 'simple'; // simple | detailed
-        this.cachedGlobalTransactions = []; // Cache for re-rendering on complexity change
-
         // Bind StateManager events
         this.bindStateEvents();
     }
@@ -527,64 +523,27 @@ class MarketplaceApp {
     }
 
     /**
-     * Set Global History Complexity and re-render
-     */
-    setGlobalHistoryComplexity(complexity) {
-        this.globalHistoryComplexity = complexity;
-
-        // Update button states
-        const selector = document.getElementById('global-history-complexity');
-        if (selector) {
-            selector.querySelectorAll('button').forEach(btn => {
-                const isActive = btn.dataset.complexity === complexity;
-                btn.classList.toggle('active', isActive);
-                btn.classList.toggle('bg-green-600', isActive);
-                btn.classList.toggle('text-white', isActive);
-                btn.classList.toggle('text-gray-400', !isActive);
-                btn.classList.toggle('hover:text-white', !isActive);
-                btn.classList.toggle('hover:bg-gray-600', !isActive);
-            });
-        }
-
-        // Re-render with cached data
-        if (this.cachedGlobalTransactions.length > 0) {
-            this.renderGlobalTransactionHistory(this.cachedGlobalTransactions);
-        }
-    }
-
-    /**
      * Render Global Transaction History Table
+     * Shows complete audit trail with both parties' inventory
      */
     renderGlobalTransactionHistory(transactions) {
-        const thead = document.getElementById('global-history-thead');
         const tbody = document.getElementById('global-history-table-body');
         const emptyMsg = document.getElementById('global-history-empty-msg');
 
-        if (!tbody || !thead) return;
-
-        // Cache transactions for complexity changes
-        this.cachedGlobalTransactions = transactions || [];
+        if (!tbody) return;
 
         tbody.innerHTML = '';
-        thead.innerHTML = '';
 
         if (!transactions || transactions.length === 0) {
             emptyMsg?.classList.remove('hidden');
-            // Still render headers
-            thead.innerHTML = this.getGlobalHistoryHeaders();
             return;
         }
 
         emptyMsg?.classList.add('hidden');
 
-        // Render headers based on complexity
-        thead.innerHTML = this.getGlobalHistoryHeaders();
-
-        const complexity = this.globalHistoryComplexity;
-
         transactions.forEach(t => {
             const row = document.createElement('tr');
-            row.className = 'hover:bg-gray-700/50 transition';
+            row.className = 'hover:bg-gray-700/50 transition text-sm';
 
             let timeStr = 'Unknown';
             if (t.timestamp) {
@@ -594,66 +553,31 @@ class MarketplaceApp {
 
             // Hot trade indicator
             const isHot = t.heat?.isHot;
-            const heatClass = isHot ? 'text-orange-400' : '';
-            const heatIcon = isHot ? '🔥 ' : '';
+            const heatLabel = isHot ? '🔥 Hot' : t.heat?.total > 0 ? '✓ Good' : '—';
+            const heatBgClass = isHot ? 'bg-red-500/20 text-red-400' : t.heat?.total > 0 ? 'bg-green-500/20 text-green-400' : 'text-gray-500';
 
-            // Build row HTML based on complexity
-            let rowHtml = `
-                <td class="py-3 font-mono text-gray-400">${timeStr}</td>
-                <td class="py-3 font-bold ${heatClass}">${heatIcon}${t.chemical}</td>
-                <td class="py-3 text-right font-mono">${this.formatNumber(t.quantity)}</td>
-                <td class="py-3 text-right font-mono">${this.formatCurrency(t.pricePerGallon)}</td>
-                <td class="py-3 text-right font-mono font-bold text-white">${this.formatCurrency(t.totalAmount)}</td>
-                <td class="py-3 pl-4 text-green-400">${t.sellerName}</td>
-                <td class="py-3 pl-4 text-blue-400">${t.buyerName}</td>
+            // Format inventory values (handle null for old transactions)
+            const formatInv = (val) => val !== null && val !== undefined ? val.toFixed(1) : '—';
+
+            row.innerHTML = `
+                <td class="py-2 px-2 font-mono text-gray-400 whitespace-nowrap">${timeStr}</td>
+                <td class="py-2 px-2 font-bold" style="color: var(--color-chemical-${t.chemical?.toLowerCase() || 'c'})">${t.chemical}</td>
+                <td class="py-2 px-2 text-right font-mono">${this.formatNumber(t.quantity)}</td>
+                <td class="py-2 px-2 text-right font-mono">${this.formatCurrency(t.pricePerGallon)}</td>
+                <td class="py-2 px-2 text-right font-mono font-bold text-white">${this.formatCurrency(t.totalAmount)}</td>
+                <td class="py-2 px-2 text-green-400 border-l border-gray-700">${t.sellerName}</td>
+                <td class="py-2 px-2 text-right font-mono text-gray-400">${formatInv(t.sellerInvBefore)}</td>
+                <td class="py-2 px-2 text-right font-mono text-gray-300">${formatInv(t.sellerInvAfter)}</td>
+                <td class="py-2 px-2 text-blue-400 border-l border-gray-700">${t.buyerName}</td>
+                <td class="py-2 px-2 text-right font-mono text-gray-400">${formatInv(t.buyerInvBefore)}</td>
+                <td class="py-2 px-2 text-right font-mono text-gray-300">${formatInv(t.buyerInvAfter)}</td>
+                <td class="py-2 px-2 text-center border-l border-gray-700">
+                    <span class="px-2 py-0.5 rounded text-xs font-semibold ${heatBgClass}">${heatLabel}</span>
+                </td>
             `;
 
-            // Detailed: Add heat columns
-            if (complexity === 'detailed') {
-                const heatLabel = t.heat?.isHot ? '🔥 Hot' : t.heat?.total > 0 ? '✓ Good' : '—';
-                const heatBgClass = t.heat?.isHot ? 'bg-red-500/20 text-red-400' : t.heat?.total > 0 ? 'bg-green-500/20 text-green-400' : 'text-gray-500';
-                const totalHeat = t.heat?.total ?? 0;
-
-                rowHtml += `
-                    <td class="py-3 text-center">
-                        <span class="px-2 py-0.5 rounded text-xs font-semibold ${heatBgClass}">${heatLabel}</span>
-                    </td>
-                    <td class="py-3 text-right font-mono ${totalHeat > 0 ? 'text-green-400' : 'text-gray-500'}">
-                        ${totalHeat > 0 ? '+' : ''}$${totalHeat.toFixed(2)}
-                    </td>
-                `;
-            }
-
-            row.innerHTML = rowHtml;
             tbody.appendChild(row);
         });
-    }
-
-    /**
-     * Get Global History Table Headers based on complexity
-     */
-    getGlobalHistoryHeaders() {
-        const complexity = this.globalHistoryComplexity;
-        let headers = `
-            <tr>
-                <th class="py-3 font-semibold text-left">Time</th>
-                <th class="py-3 font-semibold text-left">Chem</th>
-                <th class="py-3 font-semibold text-right">Qty</th>
-                <th class="py-3 font-semibold text-right">Price</th>
-                <th class="py-3 font-semibold text-right">Total</th>
-                <th class="py-3 font-semibold pl-4">Seller</th>
-                <th class="py-3 font-semibold pl-4">Buyer</th>
-        `;
-
-        if (complexity === 'detailed') {
-            headers += `
-                <th class="py-3 font-semibold text-center">Heat</th>
-                <th class="py-3 font-semibold text-right">Value</th>
-            `;
-        }
-
-        headers += '</tr>';
-        return headers;
     }
 
     /**
@@ -2354,16 +2278,6 @@ class MarketplaceApp {
             });
         }
 
-        // Global History Complexity Selector
-        const complexitySelector = document.getElementById('global-history-complexity');
-        if (complexitySelector) {
-            complexitySelector.querySelectorAll('button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    this.setGlobalHistoryComplexity(btn.dataset.complexity);
-                });
-            });
-        }
-
         // CSV Export Buttons
         document.getElementById('export-leaderboard-btn')?.addEventListener('click', () => this.exportLeaderboardCSV());
         document.getElementById('export-history-btn')?.addEventListener('click', () => this.exportTransactionHistoryCSV());
@@ -3120,39 +3034,36 @@ class MarketplaceApp {
                 return;
             }
 
-            const complexity = this.globalHistoryComplexity;
-
-            // Headers based on complexity
-            let headers = ['Time', 'Chemical', 'Quantity', 'Price/Gal', 'Total', 'Seller', 'Buyer'];
-            if (complexity === 'detailed') {
-                headers.push('Heat', 'Heat Value');
-            }
+            // Complete audit trail headers
+            const headers = [
+                'Time', 'Chemical', 'Quantity', 'Price/Gal', 'Total',
+                'Seller', 'Seller Inv Before', 'Seller Inv After',
+                'Buyer', 'Buyer Inv Before', 'Buyer Inv After',
+                'Heat'
+            ];
 
             const rows = data.transactions.map(t => {
                 const date = t.timestamp ? new Date(t.timestamp * 1000) : null;
                 const timeStr = date ? date.toLocaleString() : 'Unknown';
-                const row = [
+                const heatLabel = t.heat?.isHot ? 'Hot' : t.heat?.total > 0 ? 'Good' : 'Fair';
+
+                return [
                     timeStr,
                     t.chemical,
                     t.quantity,
                     t.pricePerGallon?.toFixed(2) || '0.00',
                     t.totalAmount?.toFixed(2) || '0.00',
                     t.sellerName,
-                    t.buyerName
+                    t.sellerInvBefore?.toFixed(1) ?? '',
+                    t.sellerInvAfter?.toFixed(1) ?? '',
+                    t.buyerName,
+                    t.buyerInvBefore?.toFixed(1) ?? '',
+                    t.buyerInvAfter?.toFixed(1) ?? '',
+                    heatLabel
                 ];
-
-                if (complexity === 'detailed') {
-                    row.push(
-                        t.heat?.isHot ? 'Hot' : t.heat?.total > 0 ? 'Good' : 'Fair',
-                        t.heat?.total?.toFixed(2) || '0.00'
-                    );
-                }
-
-                return row;
             });
 
-            const filename = complexity === 'detailed' ? 'market-history-detailed.csv' : 'market-history.csv';
-            this.downloadCSV(rows, filename, headers);
+            this.downloadCSV(rows, 'market-history-complete.csv', headers);
         } catch (error) {
             console.error('Failed to export global history:', error);
             notifications.showToast('Export failed', 'error');

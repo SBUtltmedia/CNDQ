@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "Automated testing for CNDQ Chemical Trading Game",
   "scripts": {
-    "test": "node tests/run-tests.js",
-    "test:game": "node tests/run-tests.js game",
-    "test:components": "node tests/run-tests.js components",
-    "test:a11y": "node tests/run-tests.js accessibility",
-    "test:all": "node tests/run-tests.js all",
-    "test:headless": "node tests/run-tests.js all --headless",
-    "simulate": "node tests/run-tests.js game --keep-open",
-    "simulate:continue": "node tests/run-tests.js game --keep-open --skip-reset"
+    "test": "node tests/test.js",
+    "test:game": "node tests/test.js",
+    "test:components": "node tests/run.js --test dual --ui-only",
+    "test:a11y": "node tests/test.js --a11y --ui-only",
+    "test:all": "node tests/run.js --test all",
+    "test:headless": "node tests/run.js --test all --headless",
+    "simulate": "node tests/test.js --keep-open",
+    "simulate:continue": "node tests/test.js --keep-open --skip-reset"
   },
   "dependencies": {
     "lit": "^3.3.2",
