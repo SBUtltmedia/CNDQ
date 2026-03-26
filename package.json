@@ -8,7 +8,9 @@
     "test:sim": "node tests/run.js --test playwright",
     "test:all": "npx playwright test && node tests/run.js --test playwright",
     "test:headed": "npx playwright test --headed",
-    "test:report": "npx playwright show-report tests/playwright-report"
+    "test:report": "npx playwright show-report tests/playwright-report",
+    "test:axe": "npx playwright test tests/playwright/stylesheet.spec.js",
+    "test:accessibility": "node tests/controller.js --test accessibility"
   },
   "dependencies": {
     "lit": "^3.3.2",

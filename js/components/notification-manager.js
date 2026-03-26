@@ -130,7 +130,11 @@ class NotificationManager extends LitElement {
             }
 
             .notif-item:hover {
-                background-color: var(--color-border);
+                /* --color-border is lighter than --color-bg-tertiary in dark mode,
+                   which reduces contrast with small tertiary-coloured labels to near
+                   the WCAG AA floor. Use --color-bg-secondary (darker in dark mode,
+                   safe in all themes) instead. */
+                background-color: var(--color-bg-secondary);
             }
 
             .notif-type {

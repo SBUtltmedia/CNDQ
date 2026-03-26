@@ -23,8 +23,19 @@ export class ModalManager {
         modal.classList.remove('hidden');
         modal.setAttribute('aria-modal', 'true');
         modal.setAttribute('role', 'dialog');
-        
+
         this.currentModal = modal;
+
+        // Hide background from screen readers. aria-modal alone is not reliably
+        // honoured by NVDA+Firefox or JAWS in virtual-cursor mode, so we must
+        // also mark every body-level sibling as aria-hidden while the modal is open.
+        this._hiddenSiblings = [];
+        Array.from(document.body.children).forEach(el => {
+            if (!el.contains(modal) && el !== modal && !el.getAttribute('aria-hidden')) {
+                el.setAttribute('aria-hidden', 'true');
+                this._hiddenSiblings.push(el);
+            }
+        });
 
         // Focus first interactive element or the modal itself
         const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
@@ -34,7 +45,7 @@ export class ModalManager {
 
         // Trap focus and handle Escape key
         this._setupAccessibilityListeners(modal);
-        
+
         // Notify
         document.dispatchEvent(new CustomEvent('modalOpened', { detail: { modalId } }));
     }
@@ -50,6 +61,12 @@ export class ModalManager {
         modal.classList.add('hidden');
         modal.removeAttribute('aria-modal');
         modal.removeAttribute('role');
+
+        // Restore background visibility for screen readers
+        if (this._hiddenSiblings) {
+            this._hiddenSiblings.forEach(el => el.removeAttribute('aria-hidden'));
+            this._hiddenSiblings = null;
+        }
 
         if (this.currentModal === modal) {
             this.currentModal = null;

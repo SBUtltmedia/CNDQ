@@ -86,7 +86,28 @@ class AccessibilityTest {
                 await page.click(buttonSelector);
                 await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Test modal
+                // Check that ModalManager hid background siblings from screen readers.
+                // aria-modal alone is not reliably honoured by NVDA+Firefox or JAWS in
+                // virtual-cursor mode; the fix is aria-hidden on every body-level sibling.
+                const backgroundHidden = await page.evaluate(() => {
+                    const openModal = document.querySelector('[role="dialog"]:not(.hidden)');
+                    if (!openModal) return null; // no open modal found — skip
+                    return Array.from(document.body.children)
+                        .filter(el => !el.contains(openModal) && el !== openModal)
+                        .every(el => el.getAttribute('aria-hidden') === 'true');
+                });
+                if (backgroundHidden === false) {
+                    allViolations.push({
+                        id: 'modal-background-not-hidden',
+                        impact: 'serious',
+                        description: 'Background content must be aria-hidden when a modal is open',
+                        help: 'ModalManager must set aria-hidden="true" on all body-level siblings while a modal is open. aria-modal alone is ignored by NVDA+Firefox and JAWS in browse mode.',
+                        helpUrl: 'https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/',
+                        nodes: [{ target: ['body'], failureSummary: `Modal triggered by ${buttonSelector}: body-level siblings lack aria-hidden="true"` }]
+                    });
+                }
+
+                // Test modal with axe
                 const modalResults = await new AxeBuilder(page)
                     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
                     .analyze();

@@ -956,14 +956,14 @@ td {
 
 /* Listing Items */
 .listing-item {
-    background: #374151;
+    background: var(--color-bg-tertiary);
     border-radius: 0.375rem;
     padding: 0.75rem;
     transition: background-color 0.2s;
 }
 
 .listing-item:hover {
-    background-color: #4b5563;
+    background-color: var(--color-bg-secondary);
 }
 
 /* Staleness Warning - theme-aware for better contrast */

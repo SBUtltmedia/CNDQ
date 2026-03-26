@@ -7,6 +7,16 @@
  * Primary purpose: catch WCAG 2.1 AA violations as they affect a low-vision user.
  * Secondary purpose: confirm every major UI component renders visibly in each theme.
  *
+ * KNOWN AUTOMATED TESTING GAPS — these require manual / assistive-technology testing:
+ *   1. :hover contrast — axe cannot apply CSS pseudo-states, so stylesheet.html exposes
+ *      .is-hovered static replicas that axe CAN scan (see #hover-states section and the
+ *      "hover-state contrast" tests below). :focus-visible and :active states are NOT
+ *      yet replicated this way and still require a human + Colour Contrast Analyser.
+ *   2. Screen-reader virtual-cursor behaviour — aria-modal="true" is not universally
+ *      honoured by NVDA+Firefox or JAWS in browse mode. Background aria-hidden is
+ *      checked in the live-app suite (tests/accessibility.js → testModals) but cannot
+ *      be meaningfully tested against the static gallery page.
+ *
  * Run: npx playwright test stylesheet
  */
 
@@ -77,7 +87,8 @@ test.describe('Component Gallery — Accessibility', () => {
 
             // All major sections must be visible
             const sections = ['#colors', '#typography', '#buttons', '#badges',
-                              '#cards', '#forms', '#tables', '#toasts', '#modals', '#focus'];
+                              '#cards', '#forms', '#tables', '#toasts', '#modals',
+                              '#focus', '#hover-states'];
             for (const id of sections) {
                 await expect(page.locator(id)).toBeVisible();
             }
@@ -169,6 +180,42 @@ test.describe('Component Gallery — Accessibility', () => {
         // If this count goes above 1 we have a regression
         expect(labeledInputs).toBeLessThanOrEqual(1);
     });
+
+    // Hover-state contrast is normally invisible to axe (pseudo-states are never applied
+    // during a static scan). The gallery exposes .is-hovered elements so we can catch
+    // regressions automatically. Run once per theme so variable values are resolved.
+    for (const theme of THEMES) {
+        test(`${theme} theme — hover-state contrast (.is-hovered elements)`, async ({ page, baseURL }) => {
+            await page.goto(`${baseURL}stylesheet.html`);
+            await page.waitForLoadState('domcontentloaded');
+            await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+            await page.waitForTimeout(300);
+
+            await page.addScriptTag({ path: AXE_PATH });
+
+            const results = await page.evaluate(() => {
+                return axe.run('#hover-states', {
+                    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] }
+                });
+            });
+
+            const blocking = results.violations.filter(v =>
+                v.impact === 'critical' || v.impact === 'serious'
+            );
+
+            if (blocking.length > 0) {
+                const summary = blocking.map(v =>
+                    `\n  [${v.impact.toUpperCase()}] ${v.id}: ${v.description}\n` +
+                    v.nodes.slice(0, 3).map(n =>
+                        `    → ${n.target.join(', ')}\n      ${n.failureSummary}`
+                    ).join('\n')
+                ).join('\n');
+                throw new Error(
+                    `${blocking.length} hover-state violation(s) in ${theme} theme:${summary}`
+                );
+            }
+        });
+    }
 
     test('modal demo has aria-labelledby and aria-modal', async ({ page, baseURL }) => {
         await page.goto(`${baseURL}stylesheet.html`);

@@ -173,6 +173,44 @@
             border-color: var(--color-info);
             color: var(--color-text-primary);
         }
+        /* ── Simulated hover states ─────────────────────────────────────────
+           .is-hovered mirrors the matching :hover rule in styles.css so that
+           axe-core can scan the rendered colour combination statically.
+           For Lit Web Components (shadow DOM) we use .sg-* replicas below
+           because axe cannot pierce shadow boundaries without extra config. */
+        .listing-item.is-hovered    { background-color: var(--color-bg-secondary); }
+        .btn-secondary.is-hovered   { background-color: var(--color-bg-secondary); }
+        /* btn-primary/success/error use filter:brightness(0.9) — no colour
+           change to scan; contrast is inherited from the base button colour. */
+
+        /* Static replica of notification-manager.js Lit component internals.
+           The live component uses shadow DOM so axe cannot see it from here. */
+        .sg-notif-item {
+            padding: 0.75rem;
+            background-color: var(--color-bg-tertiary);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--color-border);
+            margin-bottom: 0.5rem;
+            max-width: 320px;
+        }
+        .sg-notif-item.is-hovered   { background-color: var(--color-bg-secondary); }
+        .sg-notif-type {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--color-text-tertiary);
+        }
+        .sg-notif-time {
+            font-size: 0.65rem;
+            color: var(--color-text-tertiary);
+            margin-left: 0.5rem;
+        }
+        .sg-notif-message {
+            font-size: 0.875rem;
+            color: var(--color-text-primary);
+            margin-top: 0.25rem;
+        }
+
         /* Animation demos */
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes pulse-green { 0%,100%{opacity:1} 50%{opacity:.4} }
@@ -210,8 +248,9 @@
         <a href="#tables"     style="color:var(--color-info)">Tables</a>
         <a href="#toasts"     style="color:var(--color-info)">Toasts</a>
         <a href="#modals"     style="color:var(--color-info)">Modals</a>
-        <a href="#focus"      style="color:var(--color-info)">Focus</a>
-        <a href="#animations" style="color:var(--color-info)">Animations</a>
+        <a href="#focus"        style="color:var(--color-info)">Focus</a>
+        <a href="#hover-states" style="color:var(--color-info)">Hover</a>
+        <a href="#animations"   style="color:var(--color-info)">Animations</a>
     </nav>
 </nav>
 
@@ -656,7 +695,67 @@
         </div>
     </section>
 
-    <!-- ── 11. Animations ────────────────────────────────────────────────── -->
+    <!-- ── 11. Hover States (simulated for axe scanning) ────────────────── -->
+    <section id="hover-states" class="sg-section" aria-labelledby="hover-title">
+        <h2 id="hover-title" class="sg-section-title">Hover States — simulated with <code>.is-hovered</code></h2>
+        <p style="font-size:0.875rem;color:var(--color-text-secondary);margin-bottom:1.5rem">
+            CSS <code>:hover</code> pseudo-states are invisible to axe-core because the browser never applies
+            them during a static scan. These elements have <code>.is-hovered</code> applied statically so that
+            the rendered colour combination is present in the DOM and checkable by automated tools.
+            The <code>.sg-notif-item</code> rows are a replica of the Lit shadow-DOM component
+            (which axe cannot pierce) using the same CSS values.
+        </p>
+
+        <h3 style="font-size:0.8rem;margin-bottom:0.75rem;color:var(--color-text-secondary)">.listing-item — marketplace row</h3>
+        <div class="sg-row">
+            <div>
+                <div class="listing-item" style="min-width:280px">
+                    <span style="font-size:0.875rem;color:var(--color-text-primary)">Sell 100 × C · <strong>$4.20/gal</strong></span>
+                    <span style="font-size:0.75rem;color:var(--color-text-tertiary);display:block;margin-top:0.25rem">Team Alpha · posted 2 min ago</span>
+                </div>
+                <p class="sg-label">default</p>
+            </div>
+            <div>
+                <div class="listing-item is-hovered" style="min-width:280px">
+                    <span style="font-size:0.875rem;color:var(--color-text-primary)">Sell 100 × C · <strong>$4.20/gal</strong></span>
+                    <span style="font-size:0.75rem;color:var(--color-text-tertiary);display:block;margin-top:0.25rem">Team Alpha · posted 2 min ago</span>
+                </div>
+                <p class="sg-label">hover (.is-hovered)</p>
+            </div>
+        </div>
+
+        <h3 style="font-size:0.8rem;margin:1.5rem 0 0.75rem;color:var(--color-text-secondary)">.btn-secondary — cancel / secondary action</h3>
+        <div class="sg-row">
+            <div>
+                <button class="btn btn-secondary">Cancel</button>
+                <p class="sg-label">default</p>
+            </div>
+            <div>
+                <button class="btn btn-secondary is-hovered">Cancel</button>
+                <p class="sg-label">hover (.is-hovered)</p>
+            </div>
+        </div>
+
+        <h3 style="font-size:0.8rem;margin:1.5rem 0 0.75rem;color:var(--color-text-secondary)">.sg-notif-item — notification panel row (shadow-DOM replica)</h3>
+        <div class="sg-row">
+            <div>
+                <div class="sg-notif-item">
+                    <div><span class="sg-notif-type">Trade</span><span class="sg-notif-time">2 min ago</span></div>
+                    <div class="sg-notif-message">Sold 50 × N to Team Bravo for $210.00</div>
+                </div>
+                <p class="sg-label">default</p>
+            </div>
+            <div>
+                <div class="sg-notif-item is-hovered">
+                    <div><span class="sg-notif-type">Trade</span><span class="sg-notif-time">2 min ago</span></div>
+                    <div class="sg-notif-message">Sold 50 × N to Team Bravo for $210.00</div>
+                </div>
+                <p class="sg-label">hover (.is-hovered)</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── 12. Animations ────────────────────────────────────────────────── -->
     <section id="animations" class="sg-section" aria-labelledby="animations-title">
         <h2 id="animations-title" class="sg-section-title">Animations (motion — respects prefers-reduced-motion in browsers)</h2>
         <div class="sg-row" style="align-items:center">
