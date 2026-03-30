@@ -11,7 +11,7 @@ class AdminAuth
 
     public function __construct()
     {
-        $this->configFile = __DIR__ . '/../data/admin_config.json';
+        $this->configFile = cndq_data_dir() . '/admin_config.json';
     }
 
     /**

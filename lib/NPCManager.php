@@ -230,7 +230,7 @@ class NPCManager
 
         // Optionally delete team directory
         if ($deleteTeamData && $npcEmail) {
-            $teamDir = __DIR__ . '/../data/teams/' . TeamStorage::sanitizeEmail($npcEmail);
+            $teamDir = cndq_data_dir() . '/teams/' . TeamStorage::sanitizeEmail($npcEmail);
             if (is_dir($teamDir)) {
                 $this->deleteDirectory($teamDir);
             }

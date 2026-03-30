@@ -1,145 +1,61 @@
 # Multi-Instance Deployment
 
-Running multiple simultaneous game sessions (e.g. `fall2026`, `spring2027`) from a single codebase.
+Running multiple simultaneous game sessions (e.g. `CNDQ-fall2026`, `CNDQ-spring2027`) from a single codebase with isolated data directories.
+
+---
+
+## How It Works
+
+Each instance is a directory of symlinks pointing back to the shared repo. The browser's relative API calls (e.g. `./api/session/status.php`) naturally scope to whichever instance URL the user is on — no JS changes needed.
+
+Data isolation is handled by `cndq_data_dir()` in `lib/Database.php`. On production, Apache passes the **unresolved** symlink path in `SCRIPT_FILENAME`, so walking up from that path finds the correct per-instance `data/` directory without any Apache configuration. On Herd (local dev), `SCRIPT_FILENAME` is Valet's own `server.php`, so the function falls back to the `__DIR__`-relative path — local dev is unchanged.
 
 ---
 
 ## Directory Layout
 
 ```
-/var/www/html/CNDQ/
-  template/               ← real files, git repo lives here
+/var/www/html/
+  CNDQ/               ← git repo, real files
     index.php
-    api/
-    css/
-    js/
-    lib/
-    admin/
+    api/  css/  js/  lib/  admin/  …
+    data/             ← this instance's data (real dir or symlink)
+
+  CNDQ-fall2026/      ← symlink farm (see: Creating a New Instance)
+    index.php  → ../CNDQ/index.php
+    api/       → ../CNDQ/api/
+    lib/       → ../CNDQ/lib/
     …
-  templateLink/           ← committed to git, contains only symlinks
-    index.php  → ../template/index.php
-    api/       → ../template/api/
-    css/       → ../template/css/
-    js/        → ../template/js/
-    lib/       → ../template/lib/
-    admin/     → ../template/admin/
-    …                     (no data/ — added per instance)
+    data/             ← unique data dir for this instance (real dir or symlink)
 
-  fall2026/               ← cp -aP templateLink/ fall2026/
-    index.php  → ../template/index.php   (symlinks preserved by cp -aP)
-    api/       → ../template/api/
+  CNDQ-spring2027/    ← same pattern
     …
-    data/      → /var/cndq-data/fall2026/ ← manually: ln -s /var/cndq-data/fall2026 data
-
-  spring2027/             ← same process
-    …
-    data/      → /var/cndq-data/spring2027/
+    data/             ← different data dir
 ```
-
-Users access `/CNDQ/fall2026/`, `/CNDQ/spring2027/` etc.
-Browser-side relative API calls (e.g. `./api/session/status.php`) scope naturally to each instance URL — no JS changes needed.
-
----
-
-## The PHP `__DIR__` Problem
-
-The symlink structure is not enough for data isolation on its own.
-
-When Apache serves `fall2026/index.php` (a symlink), PHP resolves it to the **real file** before execution. Inside `lib/Database.php`:
-
-```
-__DIR__  →  /var/www/html/CNDQ/template/lib/
-data dir →  /var/www/html/CNDQ/template/data/   ← wrong
-```
-
-The manually added `fall2026/data/` symlink is never reached. All instances would share `template/data/`.
-
-This is documented PHP behaviour: `__FILE__` and `__DIR__` always return the `realpath()` of the file, with symlinks resolved.
-
----
-
-## The Fix — Apache `SetEnv` + one line per data-accessing file
-
-### Apache config (one block per instance)
-
-```apache
-<Location /CNDQ/fall2026>
-    SetEnv CNDQ_DATA_DIR /var/cndq-data/fall2026
-</Location>
-
-<Location /CNDQ/spring2027>
-    SetEnv CNDQ_DATA_DIR /var/cndq-data/spring2027
-</Location>
-```
-
-### PHP files — replace the hardcoded data path (4 files)
-
-**`lib/Database.php`** line ~31:
-```php
-// Before
-$dataDir = __DIR__ . '/../data';
-
-// After
-$dataDir = $_SERVER['CNDQ_DATA_DIR'] ?? __DIR__ . '/../data';
-```
-
-**`lib/AdminAuth.php`** constructor:
-```php
-// Before
-$this->configFile = __DIR__ . '/../data/admin_config.json';
-
-// After
-$dataDir = $_SERVER['CNDQ_DATA_DIR'] ?? __DIR__ . '/../data';
-$this->configFile = $dataDir . '/admin_config.json';
-```
-
-**`lib/TeamStorage.php`** `getTeamDirectory()`:
-```php
-// Before
-return __DIR__ . '/../data/teams/' . $this->safeEmail;
-
-// After
-$dataDir = $_SERVER['CNDQ_DATA_DIR'] ?? __DIR__ . '/../data';
-return $dataDir . '/teams/' . $this->safeEmail;
-```
-
-**`lib/NPCManager.php`** line ~233:
-```php
-// Before
-$teamDir = __DIR__ . '/../data/teams/' . TeamStorage::sanitizeEmail($npcEmail);
-
-// After
-$dataDir = $_SERVER['CNDQ_DATA_DIR'] ?? __DIR__ . '/../data';
-$teamDir = $dataDir . '/teams/' . TeamStorage::sanitizeEmail($npcEmail);
-```
-
-`$_SERVER['CNDQ_DATA_DIR']` is populated by Apache's `SetEnv`. Local dev (Herd) never sets it, so the fallback `__DIR__ . '/../data'` keeps existing behaviour exactly.
 
 ---
 
 ## Creating a New Instance
 
 ```bash
-# 1. Copy the template (preserve symlinks)
-cp -aP /var/www/html/CNDQ/templateLink/ /var/www/html/CNDQ/fall2026/
+# 1. Create the instance directory and symlink everything from the repo
+mkdir /var/www/html/CNDQ-fall2026
+cd /var/www/html/CNDQ-fall2026
+ln -s ../CNDQ/* .
 
-# 2. Create the data directory
-mkdir -p /var/cndq-data/fall2026
-
-# 3. Symlink it into the instance
-ln -s /var/cndq-data/fall2026 /var/www/html/CNDQ/fall2026/data
-
-# 4. Add the Apache SetEnv block (see above) and reload
-apachectl graceful
+# 2. Replace the data symlink (which points to CNDQ/data) with a unique one
+rm data
+mkdir /var/cndq-data/fall2026          # wherever instance data lives
+ln -s /var/cndq-data/fall2026 data
 ```
+
+No Apache config changes required.
 
 ### SELinux (if enforcing)
 
 ```bash
-# Apply the correct context so Apache can read/write the data dir
 chcon -R -t httpd_sys_rw_content_t /var/cndq-data/fall2026
-
-# Or persist across relabels with semanage
+# or persist across relabels:
 semanage fcontext -a -t httpd_sys_rw_content_t "/var/cndq-data/fall2026(/.*)?"
 restorecon -R /var/cndq-data/fall2026
 ```
@@ -148,18 +64,45 @@ restorecon -R /var/cndq-data/fall2026
 
 ## Updating All Instances
 
-All instances share `template/` via symlinks, so a single git pull updates every instance simultaneously:
+All instances symlink to the same `CNDQ/` repo, so a single git pull updates every instance simultaneously — no per-instance steps needed:
 
 ```bash
-cd /var/www/html/CNDQ/template
+cd /var/www/html/CNDQ
 git pull
 ```
 
-No per-instance steps needed for code updates.
+---
+
+## How `cndq_data_dir()` Works
+
+Defined in `lib/Database.php` and called by `Database`, `AdminAuth`, `TeamStorage`, and `NPCManager`.
+
+```php
+function cndq_data_dir(): string {
+    $script = $_SERVER['SCRIPT_FILENAME'] ?? '';
+    // Herd/Valet (local dev): SCRIPT_FILENAME is Valet's server.php — fall back
+    if (empty($script) || str_contains($script, 'server.php')) {
+        return __DIR__ . '/../data';
+    }
+    // Production: SCRIPT_FILENAME is the unresolved symlink path set by Apache.
+    // Walk up until we find the directory containing data/.
+    $dir = dirname($script);
+    for ($i = 0; $i < 4; $i++) {
+        if (is_dir($dir . '/data') || is_link($dir . '/data')) {
+            return $dir . '/data';
+        }
+        $parent = dirname($dir);
+        if ($parent === $dir) break;
+        $dir = $parent;
+    }
+    return __DIR__ . '/../data';
+}
+```
+
+**Why `SCRIPT_FILENAME` and not `__DIR__`**: PHP resolves `__FILE__` and `__DIR__` via `realpath()`, which follows symlinks back to the shared `CNDQ/` code. `SCRIPT_FILENAME` is set by Apache before PHP runs and preserves the original symlink path (e.g. `/CNDQ-fall2026/api/session/status.php`), so walking up from it correctly finds `CNDQ-fall2026/data/`.
 
 ---
 
 ## Local Development
 
-Local dev (Herd) runs a single instance. No `SetEnv`, no `templateLink/`, no changes to workflow.
-The `$_SERVER['CNDQ_DATA_DIR']` fallback means the app behaves identically to today.
+Local dev (Herd) runs a single instance at `http://cndq.test/CNDQ/`. No symlinked instances, no extra config. The `cndq_data_dir()` fallback means behaviour is identical to before this feature was added.

@@ -753,7 +753,7 @@ class TeamStorage {
     public function getTeamEmail() { return $this->teamEmail; }
     public function getTeamDirectory() {
         // For backward compatibility - returns legacy directory path
-        return __DIR__ . '/../data/teams/' . $this->safeEmail;
+        return cndq_data_dir() . '/teams/' . $this->safeEmail;
     }
     public function getFullState() { return $this->getState(); }
 }

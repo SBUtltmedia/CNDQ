@@ -6,6 +6,32 @@
  * Designed to start as single database (cndq.db) with easy path to split later.
  */
 
+/**
+ * Resolve the data directory for the current instance.
+ *
+ * On production, SCRIPT_FILENAME carries the unresolved symlink path set by
+ * Apache, so walking up from it finds the correct per-instance data/ directory
+ * even though __DIR__ resolves to the shared template code.
+ * On Herd (local dev) SCRIPT_FILENAME is Valet's server.php, so we fall back
+ * to the __DIR__-relative path which is correct for single-instance dev.
+ */
+function cndq_data_dir(): string {
+    $script = $_SERVER['SCRIPT_FILENAME'] ?? '';
+    if (empty($script) || str_contains($script, 'server.php')) {
+        return __DIR__ . '/../data';
+    }
+    $dir = dirname($script);
+    for ($i = 0; $i < 4; $i++) {
+        if (is_dir($dir . '/data') || is_link($dir . '/data')) {
+            return $dir . '/data';
+        }
+        $parent = dirname($dir);
+        if ($parent === $dir) break;
+        $dir = $parent;
+    }
+    return __DIR__ . '/../data';
+}
+
 class Database {
     private static $instances = [];
     private $pdo;
@@ -28,7 +54,7 @@ class Database {
      * Private constructor - use getInstance() instead
      */
     private function __construct($dbName) {
-        $dataDir = __DIR__ . '/../data';
+        $dataDir = cndq_data_dir();
 
         // Create data directory if it doesn't exist (and isn't a symlink)
         if (!file_exists($dataDir) && !is_link($dataDir)) {
